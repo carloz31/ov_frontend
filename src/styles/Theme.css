@@ -1,0 +1,75 @@
+:root {
+  /* Paleta de marca: edita estas variables para retematizar todo el producto. */
+  --background: #f7f7fb;
+  --foreground: #25243a;
+  --card: #ffffff;
+  --card-foreground: #25243a;
+  --popover: #ffffff;
+  --popover-foreground: #25243a;
+  --primary: #6457dc;
+  --primary-hover: #5548ca;
+  --primary-foreground: #ffffff;
+  --primary-soft: #e9e7ff;
+  --secondary: #eff0f7;
+  --secondary-foreground: #333249;
+  --muted: #f1f1f6;
+  --muted-foreground: #6f6e82;
+  --accent: #ff9f72;
+  --accent-foreground: #4c281a;
+  --success: #32a67b;
+  --success-soft: #daf5e9;
+  --warning: #f1a33c;
+  --warning-soft: #fff0d9;
+  --destructive: #dc4c64;
+  --destructive-foreground: #ffffff;
+  --border: #e2e2eb;
+  --input: #dad9e5;
+  --ring: #6457dc;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #5f5e73;
+  --sidebar-primary: #6457dc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eeecff;
+  --sidebar-accent-foreground: #5548ca;
+  --sidebar-border: #e2e2eb;
+  --sidebar-ring: #6457dc;
+  --case-coral: #ff835f;
+  --case-indigo: #6e67df;
+  --case-mint: #40b594;
+  --case-blue: #4a90d9;
+  --radius: 1rem;
+  --shadow-card: 0 16px 45px rgb(39 36 72 / 8%);
+  --shadow-float: 0 20px 60px rgb(39 36 72 / 16%);
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: var(--font-sans);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 3px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 6px);
+}
