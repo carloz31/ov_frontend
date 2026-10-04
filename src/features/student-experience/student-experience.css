@@ -1042,12 +1042,14 @@ body:has([data-student-experience] .sx-shell) {
   cursor: pointer;
 }
 .sx-root .sx-panel-content {
+  --sx-panel-summary-height: 42px;
   padding: 16px;
 }
 .sx-root .sx-panel-user {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: var(--sx-panel-summary-height);
 }
 .sx-root .sx-panel-avatar {
   display: grid;
@@ -1077,8 +1079,9 @@ body:has([data-student-experience] .sx-shell) {
 .sx-root .sx-panel-level {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 16px 0;
+  gap: 10px;
+  min-height: var(--sx-panel-summary-height);
+  margin: 10px 0 12px;
   color: var(--primary);
 }
 .sx-root .sx-level-medallion {
@@ -1087,24 +1090,24 @@ body:has([data-student-experience] .sx-shell) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 80px;
-  border: 3px solid var(--data-secondary);
-  border-radius: 22px 22px 32px 32px;
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--data-secondary);
+  border-radius: 12px 12px 18px 18px;
   background: linear-gradient(145deg, var(--primary), var(--sx-zone-ciudad));
   color: var(--primary-foreground);
   box-shadow:
     inset 0 2px 0 #ffffff60,
-    0 4px 0 var(--primary-soft),
-    0 7px 16px #2457b825;
+    0 2px 0 var(--primary-soft),
+    0 4px 8px #2457b825;
 }
 .sx-root .sx-level-medallion > span {
-  font-size: 10px;
+  font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.12em;
 }
 .sx-root .sx-level-medallion strong {
-  font-size: 32px;
+  font-size: 20px;
   line-height: 1.1;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
@@ -1112,14 +1115,10 @@ body:has([data-student-experience] .sx-shell) {
 .sx-root .sx-level-rank {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-}
-.sx-root .sx-level-rank small {
-  color: var(--muted-foreground);
-  font-size: 10px;
+  min-width: 0;
 }
 .sx-root .sx-level-rank strong {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1.2;
 }
@@ -1224,11 +1223,78 @@ body:has([data-student-experience] .sx-shell) {
   text-decoration: underline;
 }
 .sx-root .sx-panel-signal {
-  margin-bottom: 8px;
-  font-size: 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border: 1px solid var(--data-secondary);
+  border-radius: 10px 4px 10px 4px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 10px;
 }
 .sx-root .sx-panel-signal strong {
-  font-size: 32px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.sx-root .sx-signal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sx-root .sx-signal-heading h2 {
+  margin-bottom: 0;
+}
+.sx-root .sx-signal-card .sx-panel-subtitle {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.sx-root .sx-signal-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.sx-root .sx-signal-edit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 32px;
+  padding: 6px 8px;
+  border: 1px solid var(--primary-hover);
+  border-radius: 10px 4px 10px 4px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 #ffffff40,
+    0 2px 0 var(--primary-hover);
+  cursor: pointer;
+}
+.sx-root .sx-signal-edit:hover {
+  background: var(--primary-hover);
+}
+.sx-root .sx-signal-edit svg,
+.sx-root .sx-signal-history svg {
+  flex-shrink: 0;
+}
+.sx-root .sx-signal-history {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 32px;
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 .sx-root .sx-panel-return {
   display: flex;

@@ -8,7 +8,9 @@ import {
   HeartHandshake,
   LibraryBig,
   LockKeyhole,
+  PenLine,
   Target,
+  TrendingUp,
 } from 'lucide-react'
 import {
   canAccessFamilyConversations,
@@ -59,7 +61,6 @@ export function AdventurePanel({
           <strong>{String(level.number).padStart(2, '0')}</strong>
         </span>
         <span className="sx-level-rank">
-          <small>Tu rango de viajero</small>
           <strong>{level.label}</strong>
         </span>
       </div>
@@ -115,24 +116,30 @@ export function AdventurePanel({
           </>
         )}
       </section>
-      <section className="sx-panel-section">
-        <h2>
-          <Compass size={18} />
-          Tu señal de hoy
-        </h2>
-        {signal ? (
-          <p className="sx-panel-signal">
-            <strong>{signal.value}</strong> de 10
-          </p>
-        ) : (
-          <p className="sx-panel-subtitle">¿Qué tan seguro te sientes hoy de tu próximo paso?</p>
-        )}
-        <button type="button" className={signal ? 'sx-panel-link' : 'sx-primary-button'} onClick={onCheckIn}>
-          {signal ? 'Cambiar' : 'Registrar mi señal'}
-        </button>
-        <Link className="sx-panel-link" to={appPaths.student.signals}>
-          Ver evolución
-        </Link>
+      <section className="sx-panel-section sx-signal-card">
+        <div className="sx-signal-heading">
+          <h2>
+            <Compass size={18} aria-hidden="true" />
+            Tu señal de hoy
+          </h2>
+          {signal && (
+            <p className="sx-panel-signal" aria-label={`${signal.value} de 10`}>
+              <strong>{signal.value}</strong>
+              <span>/10</span>
+            </p>
+          )}
+        </div>
+        {!signal && <p className="sx-panel-subtitle">¿Qué tan seguro te sientes hoy de tu próximo paso?</p>}
+        <div className="sx-signal-actions">
+          <button type="button" className="sx-signal-edit" onClick={onCheckIn}>
+            <PenLine size={14} aria-hidden="true" />
+            {signal ? 'Cambiar' : 'Registrar mi señal'}
+          </button>
+          <Link className="sx-signal-history" to={appPaths.student.signals}>
+            <TrendingUp size={14} aria-hidden="true" />
+            Ver evolución
+          </Link>
+        </div>
       </section>
       <section className="sx-panel-section">
         <h2>Accesos rápidos</h2>
