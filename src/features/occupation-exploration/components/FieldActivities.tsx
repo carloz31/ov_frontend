@@ -526,7 +526,7 @@ function MissionComplete({
             <RotateCcw /> Volver a recorrerla
           </Button>
           <Button onClick={onJournal} variant="outline">
-            <BookOpen /> Escribir en mi diario
+            <BookOpen /> Contarle a Lumi
           </Button>
           <Button className="bg-[#3f735c] text-white hover:bg-[#335f4b]" onClick={onClose}>
             Volver al mapa <ArrowRight />

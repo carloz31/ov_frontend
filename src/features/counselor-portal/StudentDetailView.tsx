@@ -25,6 +25,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu'
 import { appPaths } from '@/routes/paths'
+import { studentProfiles } from './profile/data'
+import { StudentProfileView } from './profile/StudentProfileView'
 import {
   formatRelative,
   getActivity,
@@ -70,6 +72,8 @@ function StudentDetailView() {
   const [observationOpen, setObservationOpen] = useState(false)
   const [removeObservationOpen, setRemoveObservationOpen] = useState(false)
   const [observationReason, setObservationReason] = useState('')
+  const exampleStudent = studentProfiles.find((item) => item.id === studentId)
+  if (exampleStudent) return <StudentProfileView student={exampleStudent} />
   if (!student)
     return (
       <div className="grid min-h-80 place-items-center p-8 text-center">
@@ -128,14 +132,20 @@ function StudentDetailView() {
             </div>
             <HeaderDatum label="Estado">
               <span className="inline-flex items-center gap-2 font-medium">
-                <span className="size-2 rounded-full bg-green-500" />
+                <span className="size-2 rounded-full bg-primary" />
                 Cuenta activa
               </span>
             </HeaderDatum>
             <HeaderDatum label="Progreso">
               <div className="flex items-center gap-3">
                 <div className="h-2 w-full max-w-36 overflow-hidden rounded-full bg-muted">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${totalPercent}%` }} />
+                  <div
+                    className="h-full rounded-full"
+                    style={{
+                      width: `${totalPercent}%`,
+                      backgroundColor: totalPercent === 100 ? 'var(--success)' : 'var(--primary)',
+                    }}
+                  />
                 </div>
                 <strong className={progressPercentColor(totalPercent)}>{totalPercent}%</strong>
               </div>
@@ -247,10 +257,8 @@ function HeaderDatum({ label, children }: { label: string; children: ReactNode }
   )
 }
 
-function progressPercentColor(percent: number) {
-  if (percent < 35) return 'text-base text-red-600'
-  if (percent < 70) return 'text-base text-amber-600'
-  return 'text-base text-green-600'
+function progressPercentColor(_percent: number) {
+  return 'text-base text-foreground'
 }
 
 function Summary({ stateStudent: student }: { stateStudent: Student }) {
@@ -271,10 +279,10 @@ function Summary({ stateStudent: student }: { stateStudent: Student }) {
           {alerts.length ? (
             alerts.map((alert) => (
               <div
-                className="flex gap-3 rounded-xl border border-red-200 bg-red-50/80 p-4 text-red-950"
+                className="flex gap-3 rounded-xl border border-border bg-warning-soft p-4 text-warning-text"
                 key={alert}
               >
-                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-red-100 text-red-700">
+                <span className="grid size-9 shrink-0 place-items-center rounded-full bg-warning-soft text-warning-text">
                   <AlertTriangle className="size-4" />
                 </span>
                 <p className="self-center text-sm leading-6">
@@ -453,7 +461,7 @@ function ProgressSection({ student }: { student: Student }) {
                     return (
                       <div className="flex flex-wrap items-center gap-4 px-6 py-4" key={activity.id}>
                         <span
-                          className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full ${complete ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}
+                          className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full ${complete ? 'bg-success-soft text-success-text' : 'bg-muted text-muted-foreground'}`}
                         >
                           {complete ? <CircleCheck className="size-4" /> : <Minus className="size-4" />}
                         </span>
@@ -466,7 +474,7 @@ function ProgressSection({ student }: { student: Student }) {
                               <span
                                 aria-label="Registro observado"
                                 title="Registro observado"
-                                className="inline-flex size-5 items-center justify-center rounded-full bg-amber-100 text-amber-700"
+                                className="inline-flex size-5 items-center justify-center rounded-full bg-primary-soft text-primary"
                               >
                                 <CircleHelp className="size-3.5" />
                               </span>
@@ -528,7 +536,7 @@ function ProgressSection({ student }: { student: Student }) {
             total={progress.total}
           />
           <div className="flex min-w-0 flex-col items-center text-center">
-            <div className="grid size-16 place-items-center rounded-full border-8 border-amber-100 text-xl font-bold text-amber-700">
+            <div className="grid size-16 place-items-center rounded-full border-8 border-border text-xl font-bold text-primary">
               {observedCount}
             </div>
             <p className="mt-2 text-[11px] font-semibold leading-tight">Registros observados</p>
@@ -573,12 +581,19 @@ function CircleMetric({
 }) {
   return (
     <div className="flex min-w-0 flex-col items-center text-center">
-      <div
-        className="grid size-16 place-items-center rounded-full"
-        style={{
-          background: `radial-gradient(circle, var(--card) 58%, transparent 60%), conic-gradient(var(--primary) ${percent}%, var(--muted) 0)`,
-        }}
-      >
+      <div className="relative grid size-16 place-items-center">
+        <svg className="absolute inset-0 size-16 -rotate-90" viewBox="0 0 64 64" aria-hidden>
+          <circle cx="32" cy="32" r="28" fill="none" stroke="var(--track)" strokeWidth="6" />
+          <circle
+            cx="32"
+            cy="32"
+            r="28"
+            fill="none"
+            stroke={percent === 100 ? 'var(--success)' : 'var(--primary)'}
+            strokeWidth="6"
+            strokeDasharray={`${percent * 1.7593} 175.93`}
+          />
+        </svg>
         <strong className="text-sm">{percent}%</strong>
       </div>
       <p className="mt-2 text-[11px] font-semibold leading-tight">{label}</p>
@@ -729,8 +744,8 @@ function InterestsSection({ student }: { student: Student }) {
             markers={markers}
             series={[
               { key: 'careers', label: 'Carreras', color: 'var(--primary)' },
-              { key: 'occupations', label: 'Ocupaciones', color: 'var(--case-mint)' },
-              { key: 'institutions', label: 'Instituciones', color: 'var(--warning)' },
+              { key: 'occupations', label: 'Ocupaciones', color: 'var(--data-secondary)' },
+              { key: 'institutions', label: 'Instituciones', color: 'var(--data-baseline)' },
             ]}
           />
         </div>
@@ -846,9 +861,9 @@ function CareerRow({ interest, onView }: { interest: Interest; onView: (interest
   const partKeys: CareerCardPart[] = ['motivation', 'influences', 'knowledge', 'preparations', 'budgets']
   const match =
     interest.riasecMatch === 'GREAT'
-      ? ['Excelente', 'success']
+      ? ['Excelente', 'neutral']
       : interest.riasecMatch === 'GOOD'
-        ? ['Bueno', 'warning']
+        ? ['Bueno', 'neutral']
         : ['Bajo', 'outline']
   return (
     <tr>
@@ -858,7 +873,7 @@ function CareerRow({ interest, onView }: { interest: Interest; onView: (interest
         <Badge variant="outline">{interest.riasecCode ?? '—'}</Badge>
       </td>
       <td>
-        <Badge variant={match[1] as 'success' | 'warning' | 'outline'}>{match[0]}</Badge>
+        <Badge variant={match[1] as 'default' | 'neutral' | 'outline'}>{match[0]}</Badge>
       </td>
       {parts.map((done, index) => (
         <td key={partKeys[index]}>
@@ -891,7 +906,7 @@ function CardPartStatus({ complete, partial }: { complete: boolean; partial: boo
     return (
       <span
         aria-label="En progreso"
-        className="inline-flex size-6 items-center justify-center rounded-full bg-amber-100 text-amber-700"
+        className="inline-flex size-6 items-center justify-center rounded-full bg-primary-soft text-primary"
       >
         <Minus className="size-4" />
       </span>
@@ -900,7 +915,7 @@ function CardPartStatus({ complete, partial }: { complete: boolean; partial: boo
     return (
       <span
         aria-label="Completa"
-        className="inline-flex size-6 items-center justify-center rounded-full bg-green-100 text-green-700"
+        className="inline-flex size-6 items-center justify-center rounded-full bg-success-soft text-success-text"
       >
         <CircleCheck className="size-4" />
       </span>
@@ -908,7 +923,7 @@ function CardPartStatus({ complete, partial }: { complete: boolean; partial: boo
   return (
     <span
       aria-label="Sin completar"
-      className="inline-flex size-6 items-center justify-center rounded-full bg-red-50 text-red-600"
+      className="inline-flex size-6 items-center justify-center rounded-full bg-neutral-soft text-neutral-text"
     >
       <CircleX className="size-4" />
     </span>
@@ -1124,7 +1139,7 @@ function JournalSection({ student }: { student: Student }) {
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
           {points.map((item) => (
-            <Badge key={item.id} variant={item.value <= 2 ? 'warning' : 'outline'}>
+            <Badge key={item.id} variant="neutral">
               {new Date(item.date).toLocaleString('es-PE', { dateStyle: 'short', timeStyle: 'short' })} ·{' '}
               {item.value}
             </Badge>
@@ -1324,7 +1339,7 @@ function CompletionMark({ complete }: { complete: boolean }) {
   return (
     <span
       aria-label={complete ? 'Completada' : 'No completada'}
-      className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full ${complete ? 'bg-green-100 text-green-700' : 'bg-muted text-muted-foreground'}`}
+      className={`inline-flex size-7 shrink-0 items-center justify-center rounded-full ${complete ? 'bg-success-soft text-success-text' : 'bg-muted text-muted-foreground'}`}
       title={complete ? 'Completada' : 'No completada'}
     >
       {complete ? <CircleCheck className="size-4" /> : <Minus className="size-4" />}
@@ -1441,7 +1456,7 @@ function DataSection({ student }: { student: Student }) {
         <div className="mt-4 flex items-center justify-between gap-3">
           <span className="text-sm text-muted-foreground">En observación</span>
           <Badge
-            className={watch ? 'bg-red-50 text-red-700' : undefined}
+            className={watch ? 'bg-warning-soft text-warning-text' : undefined}
             variant={watch ? 'secondary' : 'outline'}
           >
             {watch ? 'Sí' : 'No'}

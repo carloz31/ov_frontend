@@ -3,13 +3,15 @@ import { PageHeader } from '@/components/PageHeader'
 import { Progress } from '@/components/ui/Progress'
 import { appPaths } from '@/routes/paths'
 import { ParentActivityCard } from './components/ParentActivityCard'
-import { parentActivities } from './data/ParentPortalData'
+import { parentRoute } from './selectors'
+import { parentActivities, parentChildren } from './data/ParentPortalData'
 import { useParentPortalContext } from './ParentPortalContext'
 
 function ParentActivitiesView() {
   const navigate = useNavigate()
   const { completedActivityIds } = useParentPortalContext()
-  const percentage = Math.round((completedActivityIds.length / parentActivities.length) * 100)
+  const route = parentRoute(parentActivities, parentChildren, completedActivityIds)
+  const percentage = Math.round(route.percent)
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8">
       <PageHeader
@@ -32,7 +34,7 @@ function ParentActivitiesView() {
           <h2 className="font-bold">Para comprender el proceso</h2>
           <p className="text-sm text-muted-foreground">Contenido común para toda la familia.</p>
         </div>
-        {parentActivities
+        {route.assigned
           .filter((activity) => activity.category === 'informational')
           .map((activity) => (
             <ParentActivityCard
@@ -51,7 +53,7 @@ function ParentActivitiesView() {
             Responde pensando en su historia y momento particular.
           </p>
         </div>
-        {parentActivities
+        {route.assigned
           .filter((activity) => activity.category === 'child')
           .map((activity) => (
             <ParentActivityCard

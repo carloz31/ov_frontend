@@ -138,7 +138,7 @@ function FamilyConversationsView({ audience = 'student' }: { audience?: Conversa
                 onClick={() => setActiveTab(tab.id)}
               >
                 <span>{tab.label}</span>
-                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-white/18 text-[10px]">
+                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-card/18 text-[10px]">
                   {count}
                 </span>
               </button>
@@ -197,10 +197,14 @@ function ConversationTopicCard({
     completed: 'Consultar',
   }
   const cardStyles: Record<ConversationTab, string> = {
-    answer: 'border-[#ecd5a8] bg-[linear-gradient(145deg,#fffaf0,#f8ecd4)]',
-    waiting: 'border-[#cbd9ed] bg-[linear-gradient(145deg,#f7faff,#e9f0fa)]',
-    ready: 'border-[#b9ddce] bg-[linear-gradient(145deg,#f1fbf6,#e1f3ea)]',
-    completed: 'border-[#d5d2e8] bg-[linear-gradient(145deg,#faf9ff,#eceaf7)]',
+    answer:
+      'border-[var(--family-answer-border)] bg-[image:var(--student-family-answer-image)] [.theme-staff_&]:bg-card',
+    waiting:
+      'border-[var(--family-waiting-border)] bg-[image:var(--student-family-waiting-image)] [.theme-staff_&]:bg-card',
+    ready:
+      'border-[var(--family-ready-border)] bg-[image:var(--student-family-ready-image)] [.theme-staff_&]:bg-card',
+    completed:
+      'border-[var(--family-completed-border)] bg-[image:var(--student-family-completed-image)] [.theme-staff_&]:bg-card',
   }
   const statusCopy: Record<ConversationTab, string> = {
     answer: 'Tu respuesta está pendiente',
@@ -210,6 +214,7 @@ function ConversationTopicCard({
   }
   return (
     <article
+      data-family-status={status}
       className={cn(
         'relative flex min-h-[250px] flex-col overflow-hidden rounded-[26px] border p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-6',
         cardStyles[status],
@@ -217,7 +222,7 @@ function ConversationTopicCard({
     >
       <div className="flex items-start justify-between gap-3">
         <Badge
-          className="max-w-[calc(100%-3.5rem)] whitespace-normal border-current/15 bg-white/60"
+          className="max-w-[calc(100%-3.5rem)] whitespace-normal border-current/15 bg-card/60"
           variant="outline"
         >
           <BookOpenText className="size-3.5" /> {topic.block}
@@ -226,7 +231,7 @@ function ConversationTopicCard({
           {topic.symbol}
         </span>
       </div>
-      <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.1em] text-foreground/55">
+      <p className="mt-4 text-[11px] font-bold uppercase tracking-[0.1em] text-foreground/55 [.theme-staff_&]:text-muted-foreground">
         {topic.title}
       </p>
       <h2 className="mt-2 max-w-[34rem] text-lg font-bold leading-7 text-foreground sm:text-xl">
@@ -235,7 +240,12 @@ function ConversationTopicCard({
       <div className="mt-auto flex items-end justify-between gap-3 pt-6">
         <div>
           <ParticipantPair audience={audience} conversation={conversation} />
-          <p className="mt-2 text-[11px] font-semibold text-foreground/55">{statusCopy[status]}</p>
+          <p
+            data-family-status-copy
+            className="mt-2 text-[11px] font-semibold text-foreground/55 [.theme-staff_&]:text-muted-foreground"
+          >
+            {statusCopy[status]}
+          </p>
         </div>
         <Button
           className="shrink-0 rounded-full px-4"
@@ -289,14 +299,16 @@ function ParticipantState({
   return (
     <span
       className={cn(
-        'relative grid size-9 place-items-center rounded-full border-2 border-white text-[11px] font-black shadow-sm',
-        answered ? 'bg-[#54788b] text-white' : 'bg-white/75 text-foreground/40',
+        'relative grid size-9 place-items-center rounded-full border-2 border-[var(--family-white-border)] text-[11px] font-black shadow-sm',
+        answered
+          ? 'bg-[var(--family-participant)] text-primary-foreground'
+          : 'bg-card/75 text-foreground/40 [.theme-staff_&]:text-muted-foreground',
       )}
       title={`${label}: ${answered ? 'respondió' : 'respuesta pendiente'}${marked ? ' y ya conversó' : ''}`}
     >
       {initials}
       {marked && (
-        <span className="absolute -bottom-1 -right-1 grid size-4 place-items-center rounded-full border border-white bg-emerald-500 text-white">
+        <span className="absolute -bottom-1 -right-1 grid size-4 place-items-center rounded-full border border-[var(--family-white-border)] bg-[var(--family-completed)] text-primary-foreground">
           <Check className="!size-2.5" />
         </span>
       )}
@@ -439,7 +451,7 @@ function ConversationTopicDetail({
               <section className="mx-auto mt-6 max-w-2xl rounded-2xl border bg-muted/25 p-5 sm:p-6">
                 {ownMarked ? (
                   <div className="text-center">
-                    <CheckCircle2 className="mx-auto mb-3 size-9 text-emerald-600" />
+                    <CheckCircle2 className="mx-auto mb-3 size-9 text-[var(--family-completed-text)]" />
                     <h2 className="font-bold">Marcaste este tema como conversado</h2>
                     {reflection && (
                       <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
@@ -470,13 +482,13 @@ function ConversationTopicDetail({
               {audience === 'student' && ownMarked && (
                 <section className="mt-6 flex flex-col gap-4 rounded-2xl border border-primary/25 bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h2 className="font-bold">¿Quieres guardar algo en tu diario?</h2>
+                    <h2 className="font-bold">¿Quieres contarle algo a Lumi?</h2>
                     <p className="mt-1 text-sm text-muted-foreground">
                       Es opcional y la entrada se abrirá con una pregunta sobre este tema.
                     </p>
                   </div>
                   <Button onClick={onOpenJournal} variant="outline">
-                    <BookOpenText /> Ir a mi diario
+                    <BookOpenText /> Contarle a Lumi
                   </Button>
                 </section>
               )}
@@ -534,7 +546,7 @@ function GiftProgressCard({
     <section className="mb-6 rounded-3xl border bg-card p-5 shadow-sm sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-amber-100 text-amber-800">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[var(--family-gift-icon-bg)] text-[var(--family-gift-icon-text)]">
             <Gift className="size-5" />
           </span>
           <div>
@@ -561,10 +573,13 @@ function GiftProgressCard({
       </p>
 
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl overflow-hidden border-amber-200 bg-[#fffaf0] p-0">
-          <div className="bg-gradient-to-br from-amber-100 via-orange-50 to-white p-6 sm:p-9">
+        <DialogContent className="max-w-2xl overflow-hidden border-[var(--family-letter-border)] bg-[var(--family-warm-surface)] p-0">
+          <div className="bg-[image:var(--family-letter-image)] [.theme-staff_&]:bg-card p-6 sm:p-9">
             <DialogHeader>
-              <Badge className="w-fit bg-amber-200 text-amber-900" variant="secondary">
+              <Badge
+                className="w-fit bg-[var(--family-letter-badge)] text-[var(--family-letter-label)]"
+                variant="secondary"
+              >
                 <Gift className="size-3.5" /> Una carta para ti
               </Badge>
               <DialogTitle>
@@ -572,15 +587,17 @@ function GiftProgressCard({
               </DialogTitle>
               <DialogDescription>Un recuerdo para volver a leer cuando lo necesites.</DialogDescription>
             </DialogHeader>
-            <div className="rounded-2xl border border-amber-200/80 bg-white/80 p-5 shadow-sm sm:p-7">
-              <p className="whitespace-pre-wrap font-serif text-lg leading-9 text-[#4b4035]">{letter}</p>
-              <p className="mt-6 border-t border-amber-200 pt-5 text-sm leading-7 text-[#705f4c]">
+            <div className="rounded-2xl border border-[var(--family-letter-border)]/80 bg-card/80 p-5 shadow-sm sm:p-7">
+              <p className="whitespace-pre-wrap font-serif text-lg leading-9 text-[var(--family-letter-text)]">
+                {letter}
+              </p>
+              <p className="mt-6 border-t border-[var(--family-letter-border)] pt-5 text-sm leading-7 text-[var(--family-letter-secondary)]">
                 Este espacio seguirá disponible. Pueden revisar sus respuestas y volver a conversar sobre
                 cualquier tema cuando quieran retomarlo.
               </p>
             </div>
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-xs text-amber-900/70">
+              <p data-family-letter-caption className="text-xs text-[var(--family-letter-label)]/70">
                 {saved
                   ? 'La nota está guardada en Mis recursos.'
                   : 'Puedes conservar esta nota en Mis recursos.'}

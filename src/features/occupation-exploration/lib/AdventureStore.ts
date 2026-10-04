@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react'
 import { cityCases, fieldMissions } from '../data/AdventureData'
 import { journalDemoEntries, readinessDemoCheckIns } from '../data/JournalData'
 import type { AdventureState } from '../types/AdventureTypes'
+import { normalizeLumiRegistrations, trackLumiEntries } from './LumiFriendship'
 
 const storageKey = 'ov.student-adventure.v1'
 // Temporary prototype review mode: every section is reachable while progress remains truthful.
@@ -13,6 +14,7 @@ export function createInitialAdventure(): AdventureState {
     parentCompletedActivityIds: [],
     bookmarks: ['first-steps', 'career-route-forum'],
     journal: journalDemoEntries.map((entry) => ({ ...entry, topicTags: [...entry.topicTags] })),
+    lumiRegistrations: [],
     readinessCheckIns: readinessDemoCheckIns.map((checkIn) => ({ ...checkIn })),
     readinessScale: 10,
     journalOnboardingSeen: false,
@@ -27,6 +29,7 @@ export function createInitialAdventure(): AdventureState {
     research: { step: 0, careerId: '', invitees: [], answers: ['', '', ''], videoUrl: '', reflection: '' },
     videos: [],
     reactions: [],
+    interviewModeration: {},
     notices: [],
     conversations: [],
     familyGift: {},
@@ -40,6 +43,7 @@ function readState(): AdventureState {
     if (parsed?.version !== 1) return createInitialAdventure()
     const initial = createInitialAdventure()
     for (const key of Object.keys(initial) as (keyof AdventureState)[]) {
+      if (key === 'lumiRegistrations') continue
       if (Array.isArray(initial[key]) && parsed[key] !== undefined && !Array.isArray(parsed[key]))
         return initial
     }
@@ -78,8 +82,15 @@ function readState(): AdventureState {
       ...initial,
       ...parsed,
       journal: [...journalById.values()],
+      lumiRegistrations: normalizeLumiRegistrations(
+        (Array.isArray(parsed.lumiRegistrations) ? parsed.lumiRegistrations : undefined) ??
+          [...journalById.values()]
+            .filter((entry) => !entry.id.startsWith('demo-'))
+            .map((entry) => ({ entryId: entry.id, createdAt: entry.createdAt })),
+      ),
       readinessCheckIns: [...checkInsById.values()],
       readinessScale: 10,
+      interviewModeration: parsed.interviewModeration && typeof parsed.interviewModeration === 'object' && !Array.isArray(parsed.interviewModeration) ? parsed.interviewModeration : {},
       questionnaire: { ...initial.questionnaire, ...parsed.questionnaire },
       research: { ...initial.research, ...parsed.research },
     }
@@ -103,7 +114,11 @@ window.addEventListener('storage', (event) => {
   }
 })
 export function updateAdventure(update: (current: AdventureState) => AdventureState) {
-  state = update(state)
+  const next = update(state)
+  state = {
+    ...next,
+    lumiRegistrations: trackLumiEntries(state.lumiRegistrations, state.journal, next.journal),
+  }
   try {
     localStorage.setItem(storageKey, JSON.stringify(state))
     storageError = false

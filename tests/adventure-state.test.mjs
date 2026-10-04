@@ -48,9 +48,11 @@ function loadAdventure(saved = null, failWrites = false) {
   }
   const store = load(path.resolve('src/features/occupation-exploration/lib/AdventureStore.ts'))
   const data = load(path.resolve('src/features/occupation-exploration/data/AdventureData.ts'))
+  const friendship = load(path.resolve('src/features/occupation-exploration/lib/LumiFriendship.ts'))
   return {
     store,
     data,
+    friendship,
     persisted: () => persisted,
     externalWrite: (value) => {
       persisted = value
@@ -58,6 +60,90 @@ function loadAdventure(saved = null, failWrites = false) {
     },
   }
 }
+
+test('Lumi awards at most three points per Lima day and resets at local midnight', () => {
+  const { friendship } = loadAdventure()
+  const registrations = ['a', 'b', 'c', 'd'].map((entryId) => ({
+    entryId,
+    createdAt: '2026-10-02T23:00:00Z',
+  }))
+  assert.equal(friendship.getLumiFriendship(registrations, new Date('2026-10-03T04:59:00Z')).points, 3)
+  assert.equal(
+    friendship.getLumiFriendship(registrations, new Date('2026-10-03T04:59:00Z')).remainingToday,
+    0,
+  )
+  assert.equal(
+    friendship.getLumiFriendship(registrations, new Date('2026-10-03T05:00:00Z')).remainingToday,
+    3,
+  )
+  registrations.push({ entryId: 'e', createdAt: '2026-10-03T05:01:00Z' })
+  const next = friendship.getLumiFriendship(registrations, new Date('2026-10-03T05:02:00Z'))
+  assert.equal(next.points, 4)
+  assert.equal(next.todayEarned, 1)
+})
+
+test('Lumi friendship decays once per three inactive days, never below zero', () => {
+  const { friendship } = loadAdventure()
+  const registrations = ['a', 'b', 'c'].map((entryId) => ({ entryId, createdAt: '2026-10-02T18:00:00Z' }))
+  const score = (day) =>
+    friendship.getLumiFriendship(registrations, new Date(`2026-10-${day}T18:00:00Z`)).points
+  assert.equal(score('04'), 3)
+  assert.equal(score('05'), 2)
+  assert.equal(score('08'), 1)
+  assert.equal(score('20'), 0)
+  registrations.push({ entryId: 'new', createdAt: '2026-10-08T18:00:00Z' })
+  assert.equal(score('08'), 2)
+  assert.equal(score('10'), 2)
+  assert.equal(score('11'), 1)
+})
+
+test('Lumi ledger survives edits, deletion and reload; signal-only changes award nothing', () => {
+  const { store, friendship, persisted } = loadAdventure()
+  const entry = {
+    id: 'student-entry',
+    title: 'Lumi',
+    body: 'Una idea',
+    kind: 'open',
+    topicTags: [],
+    createdAt: '2026-10-02T18:00:00Z',
+  }
+  assert.equal(store.useAdventure().lumiRegistrations.length, 0, 'Demo entries do not earn friendship')
+  store.updateAdventure((current) => ({ ...current, journal: [...current.journal, entry] }))
+  store.updateAdventure((current) => ({
+    ...current,
+    journal: current.journal.map((item) => (item.id === entry.id ? { ...item, body: 'Editada' } : item)),
+  }))
+  store.updateAdventure((current) => ({
+    ...current,
+    journal: current.journal.filter((item) => item.id !== entry.id),
+  }))
+  store.updateAdventure((current) => ({
+    ...current,
+    readinessCheckIns: [...current.readinessCheckIns, { id: 'signal', value: 7, createdAt: entry.createdAt }],
+  }))
+  assert.equal(store.useAdventure().lumiRegistrations.length, 1)
+  const restored = loadAdventure(persisted()).store.useAdventure()
+  assert.equal(restored.lumiRegistrations.length, 1)
+  assert.equal(friendship.getLumiFriendship(restored.lumiRegistrations, new Date(entry.createdAt)).points, 1)
+})
+
+test('Lumi migrates real existing entries and ignores duplicate, malformed and future records', () => {
+  const createdAt = '2026-10-02T18:00:00Z'
+  const { store, friendship } = loadAdventure(
+    JSON.stringify({
+      version: 1,
+      journal: [{ id: 'real', title: 'Hola', body: 'Hola Lumi', createdAt, topicTags: [] }],
+    }),
+  )
+  assert.equal(store.useAdventure().lumiRegistrations.length, 1)
+  const records = [
+    { entryId: 'a', createdAt },
+    { entryId: 'a', createdAt },
+    { entryId: 'invalid', createdAt: 'not a date' },
+    { entryId: 'future', createdAt: '2027-10-02T18:00:00Z' },
+  ]
+  assert.equal(friendship.getLumiFriendship(records, new Date(createdAt)).points, 1)
+})
 
 test('review mode opens every destination while completion remains truthful', () => {
   const { store, data } = loadAdventure()

@@ -15,6 +15,7 @@ const context = vm.createContext({
   console,
   Date,
   URL,
+  URLSearchParams,
   Map,
   Set,
   crypto,
@@ -61,6 +62,163 @@ function render(route, patch = {}) {
     React.createElement(MemoryRouter, { initialEntries: [route] }, React.createElement(AppRoutes)),
   )
 }
+
+test('students list shows priority progress and averages the selected classroom before rounding', () => {
+  const { activities, questionnaires, studentProfiles } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+  const { priorityProgress } = load(path.resolve('src/features/counselor-portal/profile/selectors.ts'))
+  const { configuredCatalog, initialPrioritySettings } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const catalog = configuredCatalog(initialPrioritySettings())
+  const fabio = studentProfiles[5]
+  const fabioPriority = priorityProgress(fabio, catalog.activities, catalog.questionnaires)
+  const table = render('/counselor/students?q=Fabio')
+  assert.match(table, /Avance prioritario promedio/)
+  assert.match(table, /Avance prioritario de Fabio/)
+  assert.ok(table.includes(`aria-valuenow="${fabioPriority.percent}"`))
+  for (const salon of [undefined, ...new Set(studentProfiles.map(s => s.salon))]) {
+    const students = studentProfiles.filter(s => !salon || s.salon === salon)
+    const expected = Math.round(students.reduce((sum, s) => sum + priorityProgress(s, catalog.activities, catalog.questionnaires).rawPercent, 0) / students.length)
+    const params = new URLSearchParams({ q: 'Fabio' })
+    if (salon) params.set('salon', salon)
+    const markup = render(`/counselor/students?${params}`)
+    assert.ok(markup.includes(`Avance prioritario promedio</p><p class="text-xl font-bold leading-tight">${expected} %`))
+  }
+  assert.equal(priorityProgress(fabio, activities, questionnaires).percent, 75)
+})
+
+test('staff themes distinguish completion from scores and preserve student progress styling', () => {
+  const { ThemeProvider } = load(path.resolve('src/components/ThemeScope.tsx'))
+  const { Progress } = load(path.resolve('src/components/ui/Progress.tsx'))
+  const { StatusBadge } = load(path.resolve('src/components/ui/Status.tsx'))
+  const themed = (theme, component) =>
+    renderToStaticMarkup(React.createElement(ThemeProvider, { theme }, component))
+  for (const value of [0, 52, 100]) {
+    const markup = themed('staff', React.createElement(Progress, { value }))
+    assert.match(markup, new RegExp(`aria-valuenow="${value}"`))
+    assert.ok(markup.includes(`background-color:var(--${value === 100 ? 'success' : 'primary'})`))
+    const score = themed('staff', React.createElement(Progress, { value, intent: 'data' }))
+    assert.match(score, /background-color:var\(--data-primary\)/)
+    assert.doesNotMatch(score, /background-color:var\(--success\)/)
+    const student = themed('student', React.createElement(Progress, { value }))
+    assert.doesNotMatch(student, /background-color:/)
+  }
+  for (const [status, label] of [
+    ['completed', 'Completado'],
+    ['in-progress', 'En progreso'],
+    ['not-started', 'No iniciado'],
+    ['unavailable', 'Aún no disponible'],
+  ]) {
+    const markup = themed('staff', React.createElement(StatusBadge, { status }))
+    assert.ok(markup.includes(label))
+    assert.match(markup, /<svg/)
+  }
+})
+
+test('staff routes receive the calm theme and the student keeps its own theme', () => {
+  for (const route of ['/counselor/students', '/parent/overview', '/parent/conversations'])
+    assert.match(render(route), /class="[^"]*\btheme-staff /)
+  assert.doesNotMatch(render('/student/conversations'), /class="[^"]*\btheme-staff /)
+  const table = render('/counselor/students')
+  assert.doesNotMatch(table, /y \d+ más/)
+  const { exampleStudents } = load(path.resolve('src/features/counselor-portal/data/StudentsExampleData.ts'))
+  const { profileAlertLabels } = load(path.resolve('src/features/counselor-portal/profile/selectors.ts'))
+  for (const student of exampleStudents)
+    for (const alert of student.alertas) assert.ok(table.includes(profileAlertLabels[alert]))
+})
+
+test('instrument series use emphasis and reference colors, including pending exits and flat profiles', () => {
+  const { ThemeProvider } = load(path.resolve('src/components/ThemeScope.tsx'))
+  const { QuestionnaireBars } = load(path.resolve('src/features/counselor-portal/profile/Questionnaires.tsx'))
+  const { questionnaires, studentProfiles } = load(
+    path.resolve('src/features/counselor-portal/profile/data.ts'),
+  )
+  const renderResult = (student, id) =>
+    renderToStaticMarkup(
+      React.createElement(
+        ThemeProvider,
+        { theme: 'staff' },
+        React.createElement(QuestionnaireBars, {
+          definition: questionnaires.find((q) => q.id === id),
+          result: student.questionnaires.find((q) => q.questionnaireId === id).result,
+        }),
+      ),
+    )
+  const interests = renderResult(studentProfiles[6], 'interests')
+  assert.equal((interests.match(/background-color:var\(--data-primary\)/g) ?? []).length, 3)
+  assert.equal((interests.match(/background-color:var\(--data-secondary\)/g) ?? []).length, 3)
+  assert.doesNotMatch(interests, /background-color:var\(--success\)/)
+  const flat = renderResult(studentProfiles[5], 'interests')
+  assert.match(flat, /Perfil plano/)
+  assert.doesNotMatch(flat, /aria-label="Código de interés"/)
+  const complete = renderResult(studentProfiles[6], 'entry')
+  assert.match(complete, /Comparación de resultados de entrada y salida/)
+  assert.match(complete, /Subió/)
+  assert.match(complete, /Bajó/)
+  assert.match(complete, /Se mantuvo/)
+  assert.doesNotMatch(complete, /role="progressbar"/)
+  const pending = renderResult(studentProfiles[5], 'entry')
+  assert.match(pending, /Cuestionario de salida pendiente/)
+  assert.match(pending, /Pendiente/)
+  assert.match(pending, /40.*%/)
+  assert.doesNotMatch(pending, /role="progressbar"|Se mantuvo/)
+})
+test('highlight results share one prominent summary after bars, including ties and empty values', () => {
+  const { ThemeProvider } = load(path.resolve('src/components/ThemeScope.tsx'))
+  const { QuestionnaireBars } = load(path.resolve('src/features/counselor-portal/profile/Questionnaires.tsx'))
+  const { questionnaires } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+  const renderResult = (definition, values) => renderToStaticMarkup(
+    React.createElement(ThemeProvider, { theme: 'staff' },
+      React.createElement(QuestionnaireBars, { definition, result: { kind: 'highlights', values } })),
+  )
+  for (const definition of questionnaires.filter(q => q.kind === 'highlights')) {
+    const values = definition.dimensions.map((d, i) => ({ dimensionId: d.id, percent: i === 0 ? 80 : 40 }))
+    const single = renderResult(definition, values)
+    assert.match(single, /aria-label="Dimensión destacada"/)
+    assert.equal((single.match(/background-color:var\(--data-primary\)/g) ?? []).length, 1)
+    assert.equal((single.match(/background-color:var\(--data-secondary\)/g) ?? []).length, values.length - 1)
+    assert.ok(single.indexOf('aria-label="Dimensión destacada"') > single.lastIndexOf('role="progressbar"'))
+    values[1].percent = 80
+    const tied = renderResult(definition, [...values].reverse())
+    assert.match(tied, /aria-label="Dimensiones destacadas"/)
+    assert.match(tied, /Empate en el puntaje más alto/)
+    assert.ok(tied.includes(`${definition.dimensions[0].name} · ${definition.dimensions[1].name}`))
+    assert.equal((tied.match(/background-color:var\(--data-primary\)/g) ?? []).length, 2)
+    const allTied = renderResult(definition, values.map(v => ({ ...v, percent: 50 })))
+    assert.match(allTied, /Todas las dimensiones tienen el mismo puntaje/)
+    const empty = renderResult(definition, [])
+    assert.match(empty, /Sin resultados registrados/)
+    assert.doesNotMatch(empty, /aria-label="Dimensió|role="progressbar"/)
+    const detail = render(`/counselor/students/ejemplo-07/questionnaires/${definition.id}`)
+    assert.doesNotMatch(detail, /Sus dimensiones destacadas|Las demás dimensiones/)
+    const summaryIndex = detail.search(/aria-label="Dimensi(?:ón destacada|ones destacadas)"/)
+    assert.ok(summaryIndex > detail.lastIndexOf('role="progressbar"'))
+    assert.ok(summaryIndex < detail.indexOf('Qué significa cada dimensión'))
+  }
+})
+
+test('comparisons render exact changes in a table and mobile facts without duplicate bars', () => {
+  const { QuestionnaireComparison } = load(path.resolve('src/features/counselor-portal/profile/QuestionnaireComparison.tsx'))
+  const { questionnaires } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+  const definition = questionnaires.find(q => q.id === 'entry')
+  const result = {
+    kind: 'comparison', entryDate: '2026-01-01',
+    entry: definition.dimensions.map(d => ({ dimensionId: d.id, level: 2.5, percent: 50 })),
+    exit: definition.dimensions.map((d, i) => ({ dimensionId: d.id, level: [2.6, 2.5, 2.4][i], percent: [52, 50, 48][i] })),
+  }
+  const renderComparison = () => renderToStaticMarkup(React.createElement(QuestionnaireComparison, { definition, result }))
+  const complete = renderComparison()
+  for (const label of ['Dimensión', 'Entrada', 'Salida', 'Cambio', 'Subió', 'Bajó', 'Se mantuvo']) assert.ok(complete.includes(label))
+  assert.match(complete, /scope="col"/)
+  assert.match(complete, /scope="row"/)
+  assert.match(complete, /<dl/)
+  assert.doesNotMatch(complete, /role="progressbar"/)
+  result.exit = undefined
+  const pending = renderComparison()
+  assert.match(pending, /Cuestionario de salida pendiente/)
+  assert.doesNotMatch(pending, /Subió|Bajó|Se mantuvo/)
+  result.entry = []
+  assert.match(renderComparison(), /Sin resultados registrados/)
+})
+
 test('all new student pages and related parent/counselor routes render', () => {
   for (const route of [
     '/student/missions',
@@ -95,26 +253,148 @@ test('all new student pages and related parent/counselor routes render', () => {
     assert.ok(render(route).length > 100, route)
   }
 })
+test('profiles open for every table student and keep read-only controls and return filters', () => {
+  const { studentProfiles } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+  for (const student of studentProfiles) {
+    const markup = render(`/counselor/students/${student.id}`)
+    assert.match(markup, new RegExp(`${student.nombres} ${student.apellidos}`))
+    assert.match(markup, /Avance en lo prioritario/)
+    assert.match(markup, /Avance general/)
+    assert.doesNotMatch(
+      markup,
+      /Identificador:|Agregar a observados|Quitar de observados|Registrar observaci/,
+    )
+  }
+  const returnTo = '/counselor/students?q=Fabio&alertas=with'
+  const markup = render(`/counselor/students/ejemplo-06?returnTo=${encodeURIComponent(returnTo)}`)
+  assert.match(markup, /href="\/counselor\/students\?q=Fabio&amp;alertas=with"/)
+  assert.match(markup, /Perfil plano/)
+  assert.ok(markup.indexOf('Cuestionarios</h2>') < markup.indexOf('Detalle de avance</h2>'))
+})
+
+test('reorganized profile summarizes family before progress and exposes explicit record controls', () => {
+  const summary = render('/counselor/students/ejemplo-06')
+  assert.ok(summary.indexOf('Familia</h2>') < summary.indexOf('Detalle de avance</h2>'))
+  assert.ok(summary.indexOf('Opciones</h2>') < summary.indexOf('Registros</h2>'))
+  assert.match(summary, /Seguridad y check-in/)
+  assert.match(summary, /11 de 21 actividades completadas/)
+  assert.match(summary, /Actividades libres/)
+  assert.doesNotMatch(summary, /Lo que descubro de mí|Mis alternativas/)
+  assert.match(render('/counselor/students/ejemplo-06?section=records'), /Ver respuesta/)
+  assert.match(render('/counselor/students/ejemplo-06?section=records&review=attention'), /Ocultar respuesta/)
+})
+
+test('questionnaire details present one code, dimension cards and visible catalog descriptions', () => {
+  const { questionnaires, profileCatalog, studentProfiles } = load(
+    path.resolve('src/features/counselor-portal/profile/data.ts'),
+  )
+  const interests = render('/counselor/students/ejemplo-07/questionnaires/interests')
+  assert.equal((interests.match(/<h3[^>]*>Código de interés<\/h3>/g) ?? []).length, 1)
+  assert.doesNotMatch(interests, /Su código de interés/)
+  assert.match(interests, /Posibles intereses/)
+  const result = studentProfiles[6].questionnaires.find((q) => q.questionnaireId === 'interests').result
+  for (const match of result.matches) {
+    const occupation = profileCatalog.occupations.find((o) => o.id === match.occupationId)
+    assert.ok(interests.includes(occupation.description), occupation.name)
+    for (const careerId of occupation.careerIds)
+      assert.ok(interests.includes(profileCatalog.careers.find((c) => c.id === careerId).description))
+  }
+  for (const definition of questionnaires) {
+    const markup = render(`/counselor/students/ejemplo-07/questionnaires/${definition.id}`)
+    for (const dimension of definition.dimensions) {
+      assert.ok(markup.includes(dimension.description), `${definition.id}/${dimension.id}`)
+      assert.ok(!markup.includes(dimension.color), `No dimension-specific color: ${dimension.id}`)
+    }
+  }
+  const pending = render('/counselor/students/ejemplo-06/questionnaires/entry')
+  assert.match(pending, /Entrada:.*Bajo/)
+  assert.match(pending, /Cuestionario de salida pendiente/)
+})
+
+test('new profile tabs, result routes, empty states and unknown IDs render', () => {
+  const { studentProfiles } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+  const { studentQuestionnaire } = load(path.resolve('src/routes/paths.ts')).appPaths.counselor
+  for (const section of ['summary', 'questionnaires', 'records', 'options', 'security']) {
+    const markup = render(`/counselor/students/ejemplo-07?section=${section}`)
+    assert.match(markup, /Gabriela García Muñoz/)
+    assert.match(markup, /role="tabpanel"/)
+  }
+  assert.match(
+    render('/counselor/students/ejemplo-06?section=records&review=attention'),
+    /Me preocupa no poder continuar mis estudios/,
+  )
+  assert.doesNotMatch(
+    render('/counselor/students/ejemplo-06?section=summary'),
+    /Me preocupa no poder continuar mis estudios/,
+  )
+  const empty = render('/counselor/students/ejemplo-05?section=options')
+  assert.match(empty, /Plan A sin registrar/)
+  assert.match(empty, /Todavía no marca carreras como favoritas/)
+  assert.match(render('/counselor/students/ejemplo-05?section=security'), /Aún no registra check-ins/)
+  for (const questionnaire of ['interests', 'social', 'intelligences', 'entry', 'perception']) {
+    assert.match(
+      render(studentQuestionnaire(studentProfiles[6].id, questionnaire)),
+      /Qué mide este cuestionario/,
+    )
+  }
+  const pending = render('/counselor/students/ejemplo-06/questionnaires/entry')
+  assert.match(pending, /Cuestionario de salida pendiente/)
+  assert.match(pending, /scope="col"[^>]*>Entrada<\/th>/)
+  assert.match(pending, /<span class="block">Bajo<\/span>/)
+  const flat = render('/counselor/students/ejemplo-06/questionnaires/interests')
+  assert.doesNotMatch(flat, /Ocupaciones afines<\/h2>|Carreras que conducen/)
+  assert.match(
+    render('/counselor/students/ejemplo-05/questionnaires/interests'),
+    /Aún no completa este cuestionario/,
+  )
+  assert.match(render('/counselor/students/unknown'), /Estudiante no encontrado/)
+  assert.match(render('/counselor/students/ejemplo-07/questionnaires/unknown'), /Cuestionario no encontrado/)
+  assert.match(render('/counselor/students/priorities'), /Visible para el apoderado/)
+})
+
+test('profile explains missing priorities and directs to the full questionnaire filter', () => {
+  const { prioritySettingsStore, initialPrioritySettings } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const defaults = initialPrioritySettings()
+  try {
+    defaults.questionnaireIds.forEach(id => prioritySettingsStore.dispatch({ type: 'questionnaire', id, checked: false }))
+    prioritySettingsStore.dispatch({ type: 'all-records', checked: false })
+    const summary = render('/counselor/students/ejemplo-07')
+    assert.match(summary, /Aún no defines prioritarios/)
+    assert.match(summary, /Aún no marcas cuestionarios como prioritarios/)
+    assert.doesNotMatch(summary, /Ver resultado<\/a>/)
+    assert.match(render('/counselor/students/ejemplo-07?section=questionnaires'), /Aún no marcas cuestionarios como prioritarios/)
+    assert.match(render('/counselor/students/ejemplo-07?section=records'), /Aún no marcas actividades de registro como prioritarias/)
+  } finally {
+    defaults.questionnaireIds.forEach(id => prioritySettingsStore.dispatch({ type: 'questionnaire', id, checked: true }))
+    prioritySettingsStore.dispatch({ type: 'all-records', checked: true })
+  }
+})
+
 test('counselor v2 screens expose the revised controls and terminology', () => {
   const home = render('/counselor/home')
-  assert.match(home, /Avance por bloque/)
+  assert.match(home, /Avance prioritario promedio/)
+  assert.match(home, /Avance prioritario promedio/)
   assert.doesNotMatch(home, /Atasco|Mejor/)
 
   const students = render('/counselor/students')
-  assert.match(students, /En observaci.{1,3}n/)
+  assert.match(students, /Mis estudiantes/)
+  assert.match(students, /Filtrar por sal.{1,3}n/)
+  assert.match(students, /Filtrar alertas/)
   assert.match(students, /Acciones/)
-  assert.doesNotMatch(students, />Alertas</)
+  assert.match(students, />Alertas</)
 
   const publications = render('/counselor/publications')
   assert.match(publications, />Publicaciones</)
-  assert.match(publications, />Entrevistas</)
+  assert.match(publications, /Ver entrevista/)
+  assert.doesNotMatch(publications, /Nueva publicación|role="tab"/)
   assert.doesNotMatch(publications, />Disponibilidad</)
   assert.doesNotMatch(publications, /Borrador/)
 
   const priorities = render('/counselor/priorities')
-  assert.match(priorities, /Configuraci.{1,3}n de actividades/)
-  assert.match(priorities, /Editar actividades/)
-  assert.match(priorities, /type="checkbox"/)
+  assert.match(priorities, />Prioritarios</)
+  assert.match(priorities, /Visible para el apoderado/)
+  assert.match(priorities, /role="checkbox"/)
+  assert.doesNotMatch(priorities, /Editar actividades|Guardar cambios/)
   assert.doesNotMatch(priorities, />Prioritaria</)
 
   const instruments = render('/counselor/students/s1?section=instruments')
@@ -864,13 +1144,131 @@ test('family dashboard has four personal states, progress and no streak or deadl
 })
 test('student resources open with backpack before posts, events and investigations', () => {
   const html = render('/student/resources')
-  assert.match(html, /Mi mochila/)
   assert.match(html, /Tu mochila de viaje/)
+  assert.match(html, /Mi mochila/)
+  assert.match(html, /Testimonios/)
+  assert.match(html, /Investigaciones/)
   assert.match(html, /Publicaciones/)
   assert.match(html, /Eventos/)
-  assert.match(html, /Investigaciones/)
-  assert.doesNotMatch(html, />Comunidad</)
   assert.ok(html.indexOf('Mi mochila') < html.indexOf('Publicaciones'))
+  assert.doesNotMatch(html, />Comunidad</)
+  assert.match(html, /Bloqueado/)
+  assert.match(html, /La plaza de los rumores/)
+  assert.match(html, /Incendio forestal/)
+  assert.doesNotMatch(html, /Recursos y novedades|Héroes de la ciudad|Investigaciones de los viajeros/)
+  assert.doesNotMatch(html, /Ver ficha completa|Ver testimonio/)
+  assert.match(render('/student/testimonials'), /Tu mochila de viaje/)
+})
+
+test('resource unlocks follow actual activities and specific cases rather than review mode', () => {
+  const resources = load(path.resolve('src/features/occupation-exploration/lib/TravelerResources.ts'))
+  const entries = resources.getTravelResources()
+  const blank = journeyLogic.initialJourney()
+  const adventure = store.createInitialAdventure()
+  assert.ok(entries.every((item) => !resources.isTravelResourceUnlocked(item, blank, adventure)))
+  assert.equal(
+    resources.isTravelResourceUnlocked(
+      entries.find((item) => item.id === 'ficha-mitos'),
+      { ...blank, resources: ['ficha-mitos'] },
+      adventure,
+    ),
+    false,
+  )
+  const complete = { ...blank, progress: { 'enc-mitos': { estado: 'completada' } } }
+  assert.equal(
+    resources.isTravelResourceUnlocked(
+      entries.find((item) => item.id === 'ficha-mitos'),
+      complete,
+      adventure,
+    ),
+    true,
+  )
+  assert.equal(
+    resources.isTravelResourceUnlocked(
+      entries.find((item) => item.id === 'first-steps'),
+      complete,
+      adventure,
+    ),
+    false,
+  )
+  const solved = { ...adventure, solvedCaseIds: ['forest-fire', 'unknown-case'] }
+  assert.equal(
+    resources.isTravelResourceUnlocked(
+      entries.find((item) => item.id === 'health-response-paramedic'),
+      blank,
+      solved,
+    ),
+    true,
+  )
+  assert.equal(
+    resources.isTravelResourceUnlocked(
+      entries.find((item) => item.id === 'global-event-translator'),
+      blank,
+      solved,
+    ),
+    false,
+  )
+  const community = { requirement: { anyCase: true } }
+  assert.equal(
+    resources.isTravelResourceUnlocked(community, blank, { ...adventure, solvedCaseIds: ['unknown-case'] }),
+    false,
+  )
+  assert.equal(resources.isTravelResourceUnlocked(community, blank, solved), true)
+  assert.match(render('/student/resources?tab=community'), /Completa una misión de Central de Casos/)
+  assert.doesNotMatch(render('/student/resources?tab=community'), /Ver entrevista<|personas la marcaron/)
+  assert.match(render('/student/resources?tab=community', solved), /Ver entrevista/)
+})
+
+test('resource viewers normalize YouTube URLs and reject unsafe file or video URLs', () => {
+  const resources = load(path.resolve('src/features/occupation-exploration/lib/TravelerResources.ts'))
+  assert.equal(
+    resources.youtubeEmbedUrl('https://youtu.be/ysz5S6PUM-U?t=30'),
+    'https://www.youtube-nocookie.com/embed/ysz5S6PUM-U',
+  )
+  assert.equal(
+    resources.youtubeEmbedUrl('https://www.youtube.com/watch?v=ysz5S6PUM-U'),
+    'https://www.youtube-nocookie.com/embed/ysz5S6PUM-U',
+  )
+  for (const url of [
+    'javascript:alert(1)',
+    'https://youtube.com.evil.test/watch?v=ysz5S6PUM-U',
+    'https://example.com/video',
+    'http://youtu.be/ysz5S6PUM-U',
+  ])
+    assert.equal(resources.youtubeEmbedUrl(url), null)
+  assert.equal(resources.resourceFileUrl('/resources/guide.pdf'), '/resources/guide.pdf')
+  for (const url of [
+    'javascript:alert(1)',
+    'data:text/html,<script>alert(1)</script>',
+    '//evil.test/file.pdf',
+    '/\\evil.test/file.pdf',
+  ])
+    assert.equal(resources.resourceFileUrl(url), null)
+})
+
+test('an encounter without written submissions unlocks its resource only after reaching the end and answering', () => {
+  const { activityById } = load(path.resolve('src/features/missions/content.ts'))
+  const activity = activityById('mission-welcome')
+  const blank = journeyLogic.initialJourney()
+  assert.equal(journeyLogic.isActivityComplete(activity, blank), false)
+  const atEnd = { ...blank, progress: { [activity.id]: { estado: 'en_curso', nodoActualId: '$fin' } } }
+  assert.equal(journeyLogic.isActivityComplete(activity, atEnd), false)
+  const answered = {
+    ...atEnd,
+    attempts: [{ actividadId: activity.id, nodoId: 'welcome-03', correcta: true }],
+  }
+  const completed = journeyLogic.applyCompletion(activity, answered)
+  assert.equal(completed.progress[activity.id].estado, 'completada')
+  const resources = load(path.resolve('src/features/occupation-exploration/lib/TravelerResources.ts'))
+  assert.equal(
+    resources.isTravelResourceUnlocked(
+      resources.getTravelResources().find((item) => item.id === 'first-steps'),
+      completed,
+      store.createInitialAdventure(),
+    ),
+    true,
+  )
+  assert.equal(journeyLogic.applyCompletion(activity, completed).rewards.length, 1)
 })
 test('family demo data covers shared and role-specific questions', () => {
   assert.ok(familyConversationTopics.some((topic) => topic.prompts.student === topic.prompts.parent))
@@ -921,7 +1319,9 @@ test('journal home supports topics and keeps readiness separate from entries', (
   assert.match(html, /Solo tú puedes leer este espacio/)
   assert.match(html, /Mi diario/)
   assert.doesNotMatch(html, /Tu señal de hoy|Qué tan seguro te sientes hoy de tu próximo paso/i)
-  assert.match(html, /Tema del día/)
+  assert.match(html, /Entradas sugeridas/)
+  assert.match(html, /Amistad con Lumi/)
+  assert.match(html, /Conversación libre/)
   assert.equal((html.match(/>Conversación libre /g) ?? []).length, 1)
   assert.doesNotMatch(html, /Contarle algo a Lumi|Pulsa aquí para registrarla|Ver historial/)
   const source = readFileSync(
@@ -964,6 +1364,55 @@ test('moderation hides reported content from the classroom feed', () => {
 const journeyStore = load(path.resolve('src/features/missions/store.ts'))
 const journeyLogic = load(path.resolve('src/features/missions/logic.ts'))
 const journeyContent = load(path.resolve('src/features/missions/content.ts'))
+
+test('Lumi suggestions appear only after real completions and disappear after answering', () => {
+  const { getLumiSuggestions } = load(
+    path.resolve('src/features/occupation-exploration/lib/LumiSuggestions.ts'),
+  )
+  const empty = journeyLogic.initialJourney()
+  const adventure = { ...store.createInitialAdventure(), journal: [] }
+  assert.equal(getLumiSuggestions(adventure, empty).length, 0)
+  const progress = {
+    ...empty,
+    progress: { 'mission-welcome': { estado: 'completada' }, 'enc-mitos': { estado: 'en_progreso' } },
+  }
+  const suggestions = getLumiSuggestions(adventure, progress)
+  assert.equal(suggestions.length, 1)
+  assert.equal(suggestions[0].activityId, 'mission-welcome')
+  assert.ok(suggestions[0].prompt.length > 10)
+  assert.ok(suggestions[0].tags.length >= 2)
+  assert.equal(
+    getLumiSuggestions({ ...adventure, journal: [{ linkedActivityId: 'mission-welcome' }] }, progress).length,
+    0,
+  )
+  assert.equal(
+    getLumiSuggestions({ ...adventure, journal: [{ linkedActivityId: 'welcome' }] }, progress).length,
+    0,
+  )
+  assert.equal(
+    getLumiSuggestions({ ...adventure, solvedCaseIds: ['forest-fire', 'unknown'] }, empty).length,
+    1,
+  )
+  const { JournalEntryCard } = load(
+    path.resolve('src/features/occupation-exploration/components/JournalEntryCard.tsx'),
+  )
+  assert.equal(
+    renderToStaticMarkup(React.createElement(JournalEntryCard, { completed: false, onOpen() {} })),
+    '',
+  )
+})
+
+test('Lumi suggested editor includes fixed tags but still allows personal tags', () => {
+  const html = render('/student/journal?activity=act-06&title=Mi+mapa&prompt=Una+pregunta', {
+    journalOnboardingSeen: true,
+  })
+  assert.match(html, /Cuéntale a Lumi/)
+  assert.match(html, /mi futuro/)
+  assert.match(html, /próximos pasos/)
+  assert.match(html, /sugerida/)
+  assert.doesNotMatch(html, /Quitar etiqueta mi futuro/)
+  assert.match(html, /Agregar/)
+})
 
 function immersivePlayerHarness(name, overrides = {}) {
   const file = path.resolve('src/features/student-experience/player', `${name}.tsx`)
@@ -1889,6 +2338,7 @@ test('saved resources and counselor submissions appear in their respective desti
   journeyStore.updateJourney(() => ({
     ...journeyLogic.initialJourney(),
     resources: ['ficha-mitos'],
+    progress: { 'enc-mitos': { estado: 'completada' } },
     submissions: [
       {
         id: 'submission-1',
@@ -1909,6 +2359,187 @@ test('saved resources and counselor submissions appear in their respective desti
   assert.match(render('/counselor/reviews'), /Registros observados/)
   assert.doesNotMatch(render('/parent/activities'), /Consejo de ejemplo compartido con orientación/)
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
+
+test('live priority configuration updates table, header, summary and profile filters consistently', () => {
+  const { prioritySettingsStore, configuredCatalog, initialPrioritySettings } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const { studentProfiles } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+  const { priorityProgress } = load(path.resolve('src/features/counselor-portal/profile/selectors.ts'))
+  const { projectStudents } = load(path.resolve('src/features/counselor-portal/data/StudentsExampleData.ts'))
+  const defaults = initialPrioritySettings()
+  try {
+    defaults.questionnaireIds.forEach(id => prioritySettingsStore.dispatch({ type: 'questionnaire', id, checked: id === 'entry' }))
+    prioritySettingsStore.dispatch({ type: 'all-records', checked: false })
+    const catalog = configuredCatalog(prioritySettingsStore.getSnapshot())
+    const student = studentProfiles[5]
+    const expected = priorityProgress(student, catalog.activities, catalog.questionnaires)
+    assert.equal(expected.percent, 50)
+    assert.equal(projectStudents(catalog.activities, catalog.questionnaires).find(s => s.id === student.id).avance, expected.percent)
+    assert.match(render('/counselor/students?q=Fabio'), /aria-valuenow="50"/)
+    const profile = render('/counselor/students/ejemplo-06')
+    assert.ok(profile.includes('aria-label="Avance en lo prioritario"'))
+    assert.match(profile, /aria-valuenow="50"/)
+    assert.doesNotMatch(profile, /Ver resultado<\/a>.*Test de intereses/)
+    const questionnaires = render('/counselor/students/ejemplo-06?section=questionnaires')
+    assert.match(questionnaires, /Prioritarios.*1/)
+    assert.doesNotMatch(questionnaires, /Test de intereses/)
+    const records = render('/counselor/students/ejemplo-06?section=records')
+    assert.match(records, /Aún no marcas actividades de registro como prioritarias/)
+  } finally {
+    defaults.questionnaireIds.forEach(id => prioritySettingsStore.dispatch({ type: 'questionnaire', id, checked: true }))
+    prioritySettingsStore.dispatch({ type: 'all-records', checked: true })
+  }
+})
+
+test('Prioritarios starts read-only and shows one list through the tools and records toggle', () => {
+  const markup = render('/counselor/priorities')
+  assert.match(markup, /role="tablist"/)
+  assert.match(markup, /Herramientas/)
+  assert.match(markup, /Actividades de registro/)
+  assert.doesNotMatch(markup, /id="records-heading"/)
+  assert.match(markup, />Editar</)
+  assert.match(markup, /role="checkbox"[^>]*disabled=""/)
+  assert.match(markup, /Esta configuración aplica a todos tus salones/)
+  assert.match(markup, /aria-label="Prioritario: Test de intereses"/)
+  assert.match(markup, /aria-label="Visible para el apoderado: Test de intereses"/)
+  assert.doesNotMatch(markup, /aria-label="Visible para el apoderado: (Cuestionario de entrada|Autopercepción)"/)
+  assert.match(markup, /No se comparte/)
+  assert.doesNotMatch(markup, /Guardar cambios|id="records-heading"/)
+  assert.match(markup, /filtro Prioritarios del perfil del estudiante para facilitar la revisión/)
+})
+
+test('family results require assigned route completion and honor sharing independently of priorities', () => {
+  const { prioritySettingsStore } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const { parentActivities } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
+  const completed = { parentCompletedActivityIds: parentActivities.map(a => a.id) }
+  const route = '/parent/children/ejemplo-07/questionnaires/interests'
+  const saved = prioritySettingsStore.getSnapshot()
+  assert.match(render('/parent/overview'), /Podrás ver los resultados de Gabriela/)
+  assert.match(render(route), /Completa tus actividades/)
+  assert.doesNotMatch(render(route), /Código de interés|Ocupaciones afines/)
+  assert.match(render(route,completed), /Código de interés|Ocupaciones afines/)
+  try {
+    prioritySettingsStore.dispatch({type:'questionnaire',id:'interests',checked:false})
+    assert.match(render(route,completed), /Código de interés/)
+    prioritySettingsStore.dispatch({type:'sharing',id:'interests',checked:false})
+    assert.match(render(route,completed), /Resultado no disponible/)
+    assert.doesNotMatch(render('/parent/overview',completed), />Test de intereses</)
+    for (const id of ['social','intelligences']) prioritySettingsStore.dispatch({type:'sharing',id,checked:false})
+    assert.match(render('/parent/overview',completed), /Por ahora no hay resultados compartidos con las familias/)
+  } finally { prioritySettingsStore.dispatch({type:'replace',settings:saved}) }
+})
+
+test('family home unites own route and shared child summary with no private student fields', () => {
+  const { parentActivities, parentChildren } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
+  const html = render('/parent/overview',{parentCompletedActivityIds:parentActivities.map(a=>a.id)})
+  assert.equal(parentChildren.length,1)
+  assert.equal(parentChildren[0].id,'ejemplo-07')
+  assert.match(html,/Hola, José|Hola, Jos/)
+  assert.match(html,/Conozco mi rol|Completaste tu ruta/)
+  assert.match(html,/Repasar mis actividades|Seguir con las conversaciones/)
+  assert.match(html,/Gabriela García Muñoz|Avance de su recorrido|Resultados de sus cuestionarios/)
+  assert.doesNotMatch(html,/Último avance|Hitos del proceso|Intereses destacados|Próximo hito|Conversación sugerida|Último acceso|Avance prioritario|Seguridad y diario|role="tab"/)
+})
+
+test('family detail reuses complete results but never reveals favorites or plans', () => {
+  const { parentActivities } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
+  const complete = {parentCompletedActivityIds:parentActivities.map(a=>a.id)}
+  const interests = render('/parent/children/ejemplo-07/questionnaires/interests',complete)
+  for (const title of ['Qué mide este cuestionario','Cómo leer este resultado','Resultado por dimensión','Qué significa cada dimensión','Ocupaciones afines','Carreras que llevan a estas ocupaciones','Cómo tomar estas recomendaciones']) assert.ok(interests.includes(title),title)
+  assert.doesNotMatch(interests,/Favorita|En sus planes|Relacionada con sus planes|No ha marcado|Volver al perfil/)
+  assert.match(interests,/parent\/overview\?child=ejemplo-07/)
+  for (const id of ['entry','perception','unknown']) assert.match(render(`/parent/children/ejemplo-07/questionnaires/${id}`,complete),/Resultado no disponible/)
+  assert.match(render('/parent/children/ejemplo-06/questionnaires/interests',complete),/Resultado no disponible/)
+  for (const id of ['social','intelligences']) assert.match(render(`/parent/children/ejemplo-07/questionnaires/${id}`,complete),/Dimensi[oó]n destacada|Dimensiones destacadas/)
+})
+
+
+test('publications expose direct interview routes, reports and read-only reactions', () => {
+  const report = { id: 'report-1', postId: 'demo-industrial-design', reason: 'Información sensible', body: 'Revisar el contenido del video.', status: 'pending', createdAt: '2026-10-03T12:00:00Z' }
+  const patch = { reports: [report], reactions: [{ videoId: 'demo-industrial-design', kind: 'Muy completa', createdAt: report.createdAt }] }
+  const list = render('/counselor/publications?salon=4b', patch)
+  assert.match(list, /Reportado/)
+  assert.match(list, /publications\/interviews\/i1\?salon=4b/)
+  assert.doesNotMatch(list, /Quitar destaque|Nueva publicación|Consentimiento confirmado/)
+  const detail = render('/counselor/publications/interviews/i1?salon=4b', patch)
+  for (const text of ['Reacciones de estudiantes', 'Comentarios', 'Brisa', 'Reportes recibidos', 'Información sensible', 'Revisar el contenido', 'Más acciones de la entrevista', 'Quitar destaque']) assert.ok(detail.includes(text), text)
+  assert.match(detail, /Entrevista destacada/)
+  assert.doesNotMatch(detail, /Consentimiento confirmado|Publicar comentario|Reacciona como|>Ocultar entrevista</)
+  const hidden = render('/counselor/publications/interviews/i1', { ...patch, interviewModeration: { 'demo-industrial-design': { hidden: true, featured: false } } })
+  assert.match(hidden, /Entrevista ocultada/)
+  assert.doesNotMatch(hidden, /Quitar destaque/)
+  assert.match(render('/counselor/publications/interviews/unknown'), /Entrevista no encontrada/)
+  assert.match(render('/counselor/publications/interviews/demo-industrial-design'), /Reacciones de estudiantes/)
+  assert.match(render('/counselor/publications/interviews/i3'), /Aún no hay reacciones/)
+  assert.match(render('/counselor/publications?salon=unknown'), /Todos los salones/)
+})
+
+test('counselor moderation hides interviews in the student community', () => {
+  const markup = render('/student/resources?tab=community', { interviewModeration: { 'demo-industrial-design': { hidden: true, featured: false } } })
+  assert.doesNotMatch(markup, /Objetos que hacen más fácil la vida diaria/)
+  assert.match(markup, /Así se investiga la calidad del agua/)
+})
+
+
+test('classroom dashboard aggregates current profiles without student names or private content', () => {
+  const { studentProfiles } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+  const html = render('/counselor/home?salon=5.%C2%B0%20A')
+  const headings = ['Alertas','Cuestionarios','Actividades de registro','Carreras de interés','Instituciones de interés','Seguridad y diario']
+  let previous = -1
+  for (const title of headings) { const index = html.indexOf(`>${title}</h2>`); assert.ok(index > previous,title); previous = index }
+  assert.match(html,/Ver estudiantes del salón/)
+  assert.match(html,/salon=5.%C2%B0\+A/)
+  assert.match(html,/alertas=with/)
+  assert.match(html,/>12 estudiantes</)
+  assert.equal((html.match(/<h2/g) ?? []).length, 6)
+  assert.doesNotMatch(html,/Mostrar cuestionarios|Mostrar actividades de registro|Sobre 12 estudiantes/)
+  assert.doesNotMatch(html,/role="tab"|Autopercepción de la cohorte|En observación|Activos \(7 días\)/)
+  for (const student of studentProfiles) assert.ok(!html.includes(`${student.nombres} ${student.apellidos}`))
+  assert.match(html,/de 10/)
+  assert.match(html,/Guiadas/)
+  assert.match(html,/Pregunta del día/)
+  assert.match(html,/El contenido del diario es privado/)
+  assert.match(render('/counselor/students/ejemplo-06?section=security'),/Entradas registradas/)
+})
+
+
+test('classroom makes an empty priority configuration explicit without claiming completion', () => {
+  const { prioritySettingsStore } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const saved = prioritySettingsStore.getSnapshot()
+  try {
+    prioritySettingsStore.dispatch({ type: 'replace', settings: { ...saved, questionnaireIds: [], recordIds: [] } })
+    const html = render('/counselor/home?salon=5.%C2%B0%20A')
+    assert.match(html, /Sin cuestionarios prioritarios configurados/)
+    assert.match(html, /Sin actividades de registro prioritarias configuradas/)
+    assert.match(html, /Configurar prioritarios/)
+    assert.doesNotMatch(html, />Test de intereses<|>Mi FODA<|>12 de 12</)
+  } finally {
+    prioritySettingsStore.dispatch({ type: 'replace', settings: saved })
+  }
+})
+
+
+test('family presentation adapts flat profiles without generating a code or exposing choices', () => {
+  const { QuestionnaireBars } = load(path.resolve('src/features/counselor-portal/profile/Questionnaires.tsx'))
+  const { questionnaires, studentProfiles } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+  const student = studentProfiles.find(s=>s.id === 'ejemplo-06')
+  const application = student.questionnaires.find(q=>q.questionnaireId === 'interests')
+  const definition = questionnaires.find(q=>q.id === 'interests')
+  const html = renderToStaticMarkup(React.createElement(QuestionnaireBars,{definition,result:application.result,audience:'parent',childName:student.nombres}))
+  assert.match(html,/Sus respuestas fueron muy parejas entre áreas|conversar con Fabio/)
+  assert.doesNotMatch(html,/Código de interés|Favorita|En sus planes/)
+})
+
+test('family child selection replaces the entire summary and pending results stay private', () => {
+  const { parentActivities,parentChildren } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
+  parentChildren.push({id:'ejemplo-05',name:'Elena Espinoza León',initials:'EE',grade:'5.° de secundaria · A',school:'Colegio Nuevo Horizonte',progress:0})
+  try {
+    const html=render('/parent/overview?child=ejemplo-05',{parentCompletedActivityIds:parentActivities.map(a=>a.id)})
+    assert.match(html,/role="tab"/)
+    assert.match(html,/>Elena Espinoza León<|Aún no lo completa/)
+    assert.doesNotMatch(html,/>Gabriela García Muñoz<|Ver resultado completo|Código de interés/)
+  } finally { parentChildren.pop() }
 })
 
 test('phase 8 path sequence respects both completion records without changing catalog or real thresholds', () => {

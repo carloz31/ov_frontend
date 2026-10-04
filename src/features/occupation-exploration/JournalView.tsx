@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
-  BookOpenText,
   Check,
   Compass,
   Feather,
@@ -23,8 +22,11 @@ import { Separator } from '@/components/ui/Separator'
 import { cn } from '@/lib/Utils'
 import { getFamilyConversationTopic } from '@/features/family-conversations/FamilyConversationData'
 import { appPaths } from '@/routes/paths'
-import { getDailyJournalPrompt } from './data/JournalData'
 import { updateAdventure, useAdventure } from './lib/AdventureStore'
+import { getLumiTags, type LumiSuggestion } from './lib/LumiSuggestions'
+import { getLumiFriendship, lumiDayKey, lumiFriendshipRules } from './lib/LumiFriendship'
+import { LumiJournalPanel, LumiQuestion } from './components/LumiJournalPanel'
+import { useLumiNow } from './lib/useLumiNow'
 import type { JournalEntry } from './types/AdventureTypes'
 import type { ReadinessCheckIn } from './types/AdventureTypes'
 
@@ -57,9 +59,15 @@ function JournalView() {
   const [editingId, setEditingId] = useState<string>()
   const [body, setBody] = useState('')
   const [tags, setTags] = useState<string[]>(
-    eventTitle ? ['evento'] : conversationTopic ? ['familia'] : activityPrompt ? ['actividad'] : [],
+    eventTitle
+      ? ['evento']
+      : conversationTopic
+        ? ['familia']
+        : activityPrompt
+          ? getLumiTags(activityId ?? '')
+          : [],
   )
-  const [lockedTags, setLockedTags] = useState<string[]>([])
+  const [lockedTags, setLockedTags] = useState<string[]>(activityPrompt ? getLumiTags(activityId ?? '') : [])
   const [tagDraft, setTagDraft] = useState('')
   const [promptShown, setPromptShown] = useState(initialPrompt)
   const [linkedActivityId, setLinkedActivityId] = useState(
@@ -70,9 +78,10 @@ function JournalView() {
       ? `Evento: ${eventTitle}`
       : conversationTopic
         ? `Conversación: ${conversationTopic.title}`
-        : (activityTitle ?? 'Entrada libre'),
+        : (activityTitle ?? 'Conversación libre con Lumi'),
   )
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const [saveNotice, setSaveNotice] = useState('')
   const entries = useMemo(
     () => [...state.journal].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [state.journal],
@@ -80,15 +89,15 @@ function JournalView() {
   const filteredEntries = entries.filter((entry) => {
     const normalized = query.trim().toLocaleLowerCase('es-PE')
     if (!normalized) return true
-    return `${entry.topicTags.join(' ')} ${entry.title} ${entry.promptShown ?? ''}`
+    return `${entry.topicTags.join(' ')} ${entry.title} ${entry.promptShown ?? ''} ${entry.body}`
       .toLocaleLowerCase('es-PE')
       .includes(normalized)
   })
   const selected = state.journal.find((entry) => entry.id === selectedId)
-  const firstDate = entries.at(-1)?.createdAt
   const usedTags = [...new Set(entries.flatMap((entry) => entry.topicTags))].sort()
 
   function startBlankEntry() {
+    setSaveNotice('')
     setEditingId(undefined)
     setBody('')
     setTags([])
@@ -96,13 +105,13 @@ function JournalView() {
     setTagDraft('')
     setPromptShown(undefined)
     setLinkedActivityId(undefined)
-    setEntryTitle('Entrada libre')
+    setEntryTitle('Conversación libre con Lumi')
     setScreen('write')
   }
 
   function startOnboardingEntry() {
     updateAdventure((current) => ({ ...current, journalOnboardingSeen: true }))
-    if (!conversationTopic) {
+    if (!initialPrompt) {
       setPromptShown('¿Cómo llegas al inicio de este proceso?')
       setLinkedActivityId('journal-onboarding')
       setEntryTitle('Al inicio del camino')
@@ -121,6 +130,7 @@ function JournalView() {
 
   function saveEntry() {
     if (!body.trim()) return
+    const remaining = getLumiFriendship(state.lumiRegistrations).remainingToday
     updateAdventure((current) => {
       const existing = current.journal.find((entry) => entry.id === editingId)
       const entry: JournalEntry = {
@@ -143,6 +153,13 @@ function JournalView() {
     setSelectedId(editingId)
     setEditingId(undefined)
     setScreen(editingId ? 'detail' : 'home')
+    setSaveNotice(
+      editingId
+        ? 'Conversación actualizada. Editar no suma puntos de amistad.'
+        : remaining > 0
+          ? '¡Conversación guardada! +1 punto de amistad con Lumi.'
+          : `Conversación guardada. Ya sumaste los ${lumiFriendshipRules.dailyPointLimit} puntos de hoy; mañana podrás sumar de nuevo.`,
+    )
   }
 
   function editEntry(entry: JournalEntry) {
@@ -174,13 +191,24 @@ function JournalView() {
       style={{ fontFamily: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif' }}
     >
       <main className="mx-auto max-w-5xl">
+        {saveNotice && (
+          <p
+            role="status"
+            className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-[#c7a65a]/40 bg-[#fff9e9] p-4 text-sm text-[#4b4066]"
+          >
+            {saveNotice}
+            <button type="button" aria-label="Cerrar aviso" onClick={() => setSaveNotice('')}>
+              <X className="size-4" />
+            </button>
+          </p>
+        )}
         {screen === 'home' && (
           <JournalHome
             entries={filteredEntries}
-            firstDate={firstDate}
             grouping={grouping}
             onChangeGrouping={setGrouping}
-            onDailyEntry={(prompt, defaultTags, activityId) => {
+            onSuggested={({ prompt, tags: defaultTags, activityId, title }) => {
+              setSaveNotice('')
               setEditingId(undefined)
               setBody('')
               setTags(defaultTags)
@@ -188,7 +216,7 @@ function JournalView() {
               setTagDraft('')
               setPromptShown(prompt)
               setLinkedActivityId(activityId)
-              setEntryTitle('Tema del día')
+              setEntryTitle(title)
               setScreen('write')
             }}
             onNew={startBlankEntry}
@@ -241,7 +269,9 @@ function JournalView() {
         <DialogContent className="max-w-md bg-[#eef1ed]">
           <DialogHeader>
             <DialogTitle>Eliminar esta entrada</DialogTitle>
-            <DialogDescription>La entrada dejará de estar disponible en tu diario.</DialogDescription>
+            <DialogDescription>
+              La conversación dejará de estar disponible. Esto no reinicia el límite diario de amistad.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex justify-end gap-2">
             <Button onClick={() => setDeleteOpen(false)} variant="ghost">
@@ -259,10 +289,9 @@ function JournalView() {
 
 function JournalHome({
   entries,
-  firstDate,
   grouping,
   onChangeGrouping,
-  onDailyEntry,
+  onSuggested,
   onNew,
   onOpen,
   onOpenSignals,
@@ -270,10 +299,9 @@ function JournalHome({
   setQuery,
 }: {
   entries: JournalEntry[]
-  firstDate?: string
   grouping: JournalGrouping
   onChangeGrouping: (grouping: JournalGrouping) => void
-  onDailyEntry: (prompt: string, tags: string[], activityId: string) => void
+  onSuggested: (suggestion: LumiSuggestion) => void
   onNew: () => void
   onOpen: (entry: JournalEntry) => void
   onOpenSignals: () => void
@@ -292,20 +320,20 @@ function JournalHome({
           <p className="flex items-center gap-2 text-sm font-semibold text-[#4b4066]">
             <LockKeyhole className="size-4" /> Solo tú puedes leer este espacio
           </p>
-          <h1 className="mt-3 text-4xl font-bold tracking-tight">Mi diario</h1>
+          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Conversaciones con Lumi</h1>
           <p className="mt-2 text-sm text-[#5c5a54]">
-            {firstDate
-              ? `Escribes aquí desde ${new Date(firstDate).toLocaleDateString('es-PE', { month: 'long', year: 'numeric' })}.`
-              : 'Este espacio está listo cuando quieras usarlo.'}
+            Cuéntale a tu compañera de viaje lo que vas descubriendo de ti.
           </p>
         </div>
         <Button className="bg-[#4b4066] text-white hover:bg-[#3f3656]" onClick={onNew}>
-          <Plus /> Nueva entrada
+          <Plus /> Contarle algo a Lumi
         </Button>
       </header>
-      <DailyJournalCard onOpenEntry={onOpen} onOpenSignals={onOpenSignals} onStartEntry={onDailyEntry} />
+      <LumiJournalPanel onNew={onNew} onSuggested={onSuggested} />
+      <DailySignalCard onOpenSignals={onOpenSignals} />
+      <h2 className="mt-8 text-xl font-bold text-[#4b4066]">Lo que le has contado a Lumi</h2>
       <div className="my-7 flex flex-col gap-4 border-b border-[#dad6c9] pb-5 md:flex-row md:items-center md:justify-between">
-        <nav className="flex gap-1 rounded-xl bg-white/60 p-1" aria-label="Organizar el diario">
+        <nav className="flex gap-1 rounded-xl bg-white/60 p-1" aria-label="Organizar conversaciones">
           <JournalTab
             active={grouping === 'timeline'}
             label="Línea de tiempo"
@@ -364,33 +392,21 @@ function JournalHome({
   )
 }
 
-function DailyJournalCard({
-  onOpenEntry,
-  onOpenSignals,
-  onStartEntry,
-}: {
-  onOpenEntry: (entry: JournalEntry) => void
-  onOpenSignals: () => void
-  onStartEntry: (prompt: string, tags: string[], activityId: string) => void
-}) {
+function DailySignalCard({ onOpenSignals }: { onOpenSignals: () => void }) {
   const state = useAdventure()
   const [signalOpen, setSignalOpen] = useState(false)
   const [signalValue, setSignalValue] = useState<ReadinessCheckIn['value']>(5)
-  const today = localDateKey(new Date())
-  const dailyPrompt = getDailyJournalPrompt()
-  const dailyActivityId = `daily-prompt-${today}`
-  const dailyEntry = state.journal.find((entry) => entry.linkedActivityId === dailyActivityId)
+  const today = lumiDayKey(useLumiNow())
   const todayCheckIn = state.readinessCheckIns.find(
     (checkIn) =>
-      localDateKey(new Date(checkIn.createdAt)) === today && checkIn.linkedActivityId === 'daily-check-in',
+      lumiDayKey(new Date(checkIn.createdAt)) === today && checkIn.linkedActivityId === 'daily-check-in',
   )
 
   function answer(value: ReadinessCheckIn['value']) {
     updateAdventure((current) => {
       const existing = current.readinessCheckIns.find(
         (checkIn) =>
-          localDateKey(new Date(checkIn.createdAt)) === today &&
-          checkIn.linkedActivityId === 'daily-check-in',
+          lumiDayKey(new Date(checkIn.createdAt)) === today && checkIn.linkedActivityId === 'daily-check-in',
       )
       const checkIn: ReadinessCheckIn = {
         id: existing?.id ?? crypto.randomUUID(),
@@ -408,34 +424,8 @@ function DailyJournalCard({
 
   return (
     <section className="mt-7 overflow-hidden rounded-3xl border border-[#dad6c9] bg-white/65 shadow-[0_10px_30px_rgb(43_42_40/5%)]">
-      <div className="grid lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)]">
-        <div className="p-5 sm:p-6 lg:border-r lg:border-[#dad6c9]">
-          <p className="flex items-center gap-2 text-sm font-bold text-[#4b4066]">
-            <BookOpenText className="size-4" /> Tema del día
-          </p>
-          <h2 className="mt-3 max-w-2xl text-xl font-bold leading-8">{dailyPrompt.prompt}</h2>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {dailyPrompt.tags.map((tag) => (
-              <Badge className="bg-[#4b4066]/9 text-[#4b4066]" key={tag} variant="secondary">
-                #{tag} · sugerida
-              </Badge>
-            ))}
-          </div>
-          <p className="mt-4 text-xs leading-5 text-[#5c5a54]">
-            Estas etiquetas acompañan al tema y se guardarán con la entrada. Puedes agregar otras propias.
-          </p>
-          <Button
-            className="mt-5 bg-[#4b4066] text-white hover:bg-[#3f3656]"
-            onClick={() =>
-              dailyEntry
-                ? onOpenEntry(dailyEntry)
-                : onStartEntry(dailyPrompt.prompt, dailyPrompt.tags, dailyActivityId)
-            }
-          >
-            {dailyEntry ? 'Revisar mi entrada de hoy' : 'Registrar una entrada'} <ArrowRight />
-          </Button>
-        </div>
-        <div className="flex flex-col justify-between border-t border-[#dad6c9] bg-[#f2f7f4] p-5 sm:p-6 lg:border-t-0">
+      <div>
+        <div className="grid gap-4 bg-[#f2f7f4] p-5 sm:p-6 sm:grid-cols-[1fr_auto] sm:items-center">
           <div>
             <p className="flex items-center gap-2 text-sm font-bold text-[#3e6259]">
               <Compass className="size-4" /> Tu señal de hoy
@@ -450,7 +440,7 @@ function DailyJournalCard({
               </div>
             ) : (
               <Button
-                className="mt-5 w-full border-[#3e6259]/30 text-[#3e6259]"
+                className="mt-4 border-[#3e6259]/30 text-[#3e6259]"
                 onClick={() => {
                   setSignalValue(5)
                   setSignalOpen(true)
@@ -461,7 +451,7 @@ function DailyJournalCard({
               </Button>
             )}
           </div>
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {todayCheckIn && (
               <Button
                 onClick={() => {
@@ -478,8 +468,9 @@ function DailyJournalCard({
               Ver historial <ArrowRight />
             </Button>
           </div>
-          <p className="mt-4 text-[11px] leading-5 text-[#5c5a54]">
-            Tu orientadora ve esta señal y su tendencia, nunca el texto de tu diario.
+          <p className="text-[11px] leading-5 text-[#5c5a54] sm:col-span-2">
+            Esta señal no suma amistad. Tu orientadora ve solo la señal y su tendencia, nunca tus
+            conversaciones.
           </p>
         </div>
       </div>
@@ -519,10 +510,6 @@ function DailyJournalCard({
   )
 }
 
-function localDateKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
-
 function JournalCard({ entry, onOpen }: { entry: JournalEntry; onOpen: () => void }) {
   return (
     <article className="rounded-3xl border border-[#dad6c9] bg-white/75 p-5 shadow-[0_8px_24px_rgb(43_42_40/4%)] sm:p-6">
@@ -532,9 +519,12 @@ function JournalCard({ entry, onOpen }: { entry: JournalEntry; onOpen: () => voi
           month: 'long',
           year: 'numeric',
         })}
-        {entry.kind === 'open' ? ' · entrada libre' : ''}
+        {entry.kind === 'open' ? ' · conversación libre' : ' · conversación sugerida'}
       </time>
-      {entry.promptShown && <p className="mt-3 text-sm font-semibold leading-6">“{entry.promptShown}”</p>}
+      <h3 className="mt-3 font-semibold">{entry.title}</h3>
+      {entry.promptShown && (
+        <p className="mt-2 text-sm leading-6 text-[#5c5a54]">Lumi: “{entry.promptShown}”</p>
+      )}
       <p className="mt-3 line-clamp-2 max-w-3xl font-serif text-base leading-7 text-[#393734]">
         {entry.body}
       </p>
@@ -589,16 +579,23 @@ function JournalEditor({
         <ArrowLeft /> Volver
       </Button>
       <div className="mx-auto mt-5 max-w-3xl">
-        <h1 className="text-3xl font-bold">{editing ? 'Editar entrada' : 'Escribe lo que quieras'}</h1>
+        <h1 className="text-3xl font-bold">{editing ? 'Editar lo que le contaste' : 'Cuéntale a Lumi'}</h1>
         <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#4b4066]">
           <LockKeyhole className="size-4" /> Nadie más lee esto
         </p>
-        {prompt && <p className="mt-8 text-lg font-semibold leading-8">{prompt}</p>}
+        <div className="mt-7">
+          <LumiQuestion
+            prompt={
+              prompt ?? '¿Qué te gustaría contarme hoy? Puede ser algo pequeño; te acompaño en el camino.'
+            }
+          />
+        </div>
         <textarea
           aria-label="Texto privado de la entrada"
           autoFocus
           className="mt-6 min-h-[360px] w-full resize-y rounded-3xl border border-[#4b4066]/45 bg-white/75 p-6 font-serif text-lg leading-9 text-[#2b2a28] outline-none focus:ring-4 focus:ring-[#4b4066]/12"
           onChange={(event) => onBodyChange(event.target.value)}
+          placeholder="Lumi, hoy quiero contarte…"
           value={body}
         />
         <div className="mt-6">
@@ -663,7 +660,7 @@ function JournalEditor({
             disabled={!body.trim()}
             onClick={onSave}
           >
-            Guardar entrada
+            Guardar conversación
           </Button>
         </div>
       </div>
@@ -693,10 +690,13 @@ function JournalDetail({
         </time>
       </div>
       <div className="mx-auto mt-7 max-w-3xl">
+        <p className="mb-4 text-sm font-semibold text-[#4b4066]">Le contaste a Lumi · {entry.title}</p>
         {entry.promptShown && (
           <div className="mb-7">
             <p className="text-xs font-semibold text-[#5c5a54]">Después de: “{entry.title}”</p>
-            <h1 className="mt-3 text-xl font-bold leading-8">{entry.promptShown}</h1>
+            <div className="mt-3">
+              <LumiQuestion prompt={entry.promptShown} />
+            </div>
           </div>
         )}
         <div className="rounded-3xl border border-[#dad6c9] bg-white/75 p-6 sm:p-10">
@@ -737,8 +737,11 @@ function JournalOnboarding({
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent className="max-w-3xl bg-[#eef1ed] p-6 sm:p-10" showCloseButton={false}>
         <DialogHeader className="pr-0 text-center">
-          <DialogTitle className="text-3xl">Este espacio es solo tuyo</DialogTitle>
-          <DialogDescription>Aquí las reglas son distintas al resto de tu recorrido.</DialogDescription>
+          <DialogTitle className="text-3xl">Un espacio para ti y Lumi</DialogTitle>
+          <DialogDescription>
+            Tu diario se convierte en conversaciones con tu compañera de viaje. No hay respuestas automáticas:
+            tú decides qué contar.
+          </DialogDescription>
         </DialogHeader>
         <Separator className="my-6 bg-[#dad6c9]" />
         <div className="grid gap-4 md:grid-cols-3">

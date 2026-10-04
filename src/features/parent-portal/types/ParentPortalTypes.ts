@@ -5,11 +5,6 @@ type ParentChild = {
   grade: string
   school: string
   progress: number
-  lastActivity: string
-  hollandProfile: string
-  learningStyle: string
-  interests: string[]
-  milestones: { label: string; completed: boolean }[]
 }
 
 type ParentActivityStep = {

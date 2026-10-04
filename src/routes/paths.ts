@@ -39,12 +39,16 @@ const appPaths = {
     classrooms: '/counselor/classrooms',
     students: '/counselor/students',
     student: (studentId: string) => `/counselor/students/${studentId}`,
+    studentQuestionnaire: (studentId: string, questionnaireId: string) =>
+      `/counselor/students/${studentId}/questionnaires/${questionnaireId}`,
+    studentPriorities: '/counselor/students/priorities',
     studentRecord: (studentId: string, recordId: string) =>
       `/counselor/students/${studentId}/records/${recordId}`,
     familyRecord: (studentId: string, activityId: string) =>
       `/counselor/students/${studentId}/family-records/${activityId}`,
     reviews: '/counselor/reviews',
     publications: '/counselor/publications',
+    interview: (interviewId: string) => `/counselor/publications/interviews/${encodeURIComponent(interviewId)}`,
     priorities: '/counselor/priorities',
     families: '/counselor/families',
     teachers: '/counselor/teachers',

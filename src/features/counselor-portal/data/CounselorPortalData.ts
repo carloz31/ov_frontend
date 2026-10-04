@@ -602,6 +602,7 @@ function createCounselorPortalState(now = new Date()): CounselorPortalState {
     interviews: [
       {
         id: 'i1',
+        videoId: 'demo-industrial-design',
         authors: ['Valentina Torres', 'Diego Ramos'],
         classroomId: '4b',
         subject: 'Diseñadora industrial',
@@ -613,6 +614,7 @@ function createCounselorPortalState(now = new Date()): CounselorPortalState {
       },
       {
         id: 'i2',
+        videoId: 'demo-electrical-tech',
         authors: ['Joaquín Paredes'],
         classroomId: '5a',
         subject: 'Técnico electricista',

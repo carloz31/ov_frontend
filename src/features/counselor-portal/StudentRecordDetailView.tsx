@@ -74,12 +74,12 @@ function StudentRecordDetailView() {
         </div>
       </div>
       {observed && (
-        <Card className="border-amber-200 bg-amber-50 p-5">
+        <Card className="border-border bg-warning-soft p-5">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="warning">Observado</Badge>
             <strong className="text-sm">Observación a nivel de registro</strong>
           </div>
-          <p className="mt-2 text-sm leading-6 text-amber-900">
+          <p className="mt-2 text-sm leading-6 text-warning-text">
             {record.counselorComment || record.reviewReason || 'Este registro requiere revisión.'}
           </p>
         </Card>

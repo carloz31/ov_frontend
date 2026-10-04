@@ -1,6 +1,6 @@
-import { CalendarDays, Eye, FilePlus2, MoreHorizontal, Pencil, Play, Star } from 'lucide-react'
+import { Eye, EyeOff, MoreHorizontal, Star } from 'lucide-react'
 import { useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
 import { PageHeader } from '@/components/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -12,531 +12,301 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu'
-import { Input } from '@/components/ui/Input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { InterviewDetail, ResourceDetail } from '@/features/occupation-exploration/AdventureResourcesView'
-import type { AdventureNotice } from '@/features/occupation-exploration/types/AdventureTypes'
+import { useAdventure, updateAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { InterviewDetail } from './components/ResourcePreviews'
+import { interviewDetails, reactionOptions } from './data/InterviewDetails'
 import { useCounselorPortal } from './CounselorPortalContext'
-import type { Audience, Interview, Resource, ResourceType } from './types/CounselorPortalTypes'
-
-type Tab = 'publications' | 'interviews'
-const tabs: [Tab, string][] = [
-  ['publications', 'Publicaciones'],
-  ['interviews', 'Entrevistas'],
-]
-const audienceLabels: Record<Audience, string> = {
-  ESTUDIANTES: 'Estudiantes',
-  PADRES: 'Padres y apoderados',
-  AMBOS: 'Ambos',
-}
+import { getPublishedInterviews, moderateInterview } from './InterviewSelectors'
+import type { Interview } from './types/CounselorPortalTypes'
 
 function PublicationsView() {
   const { state } = useCounselorPortal()
+  const adventure = useAdventure()
   const [params, setParams] = useSearchParams()
-  const tab = (tabs.some(([id]) => id === params.get('tab')) ? params.get('tab') : 'publications') as Tab
-  const tagId = params.get('tag') ?? 'all'
-  const [formOpen, setFormOpen] = useState(false)
-  const [editing, setEditing] = useState<Resource>()
-  const [selectedResource, setSelectedResource] = useState<Resource>()
-  const [selectedInterview, setSelectedInterview] = useState<Interview>()
-  const resources = state.resources
-    .filter((item) => tagId === 'all' || item.tagIds.includes(tagId))
-    .sort((a, b) => b.publicationDate.localeCompare(a.publicationDate))
-
-  if (selectedResource)
-    return <PublicationPreview resource={selectedResource} onBack={() => setSelectedResource(undefined)} />
-  if (selectedInterview)
-    return (
-      <InterviewDetail
-        backLabel="Entrevistas"
-        onBack={() => setSelectedInterview(undefined)}
-        onReact={() => undefined}
-        onReport={() => undefined}
-        readOnly
-        video={{
-          id: selectedInterview.id,
-          title: selectedInterview.subject,
-          alias: selectedInterview.authors.join(', '),
-          url: selectedInterview.url,
-          reflection: selectedInterview.reflection,
-          createdAt: selectedInterview.date,
-        }}
-      />
-    )
-
-  const openNew = () => {
-    setEditing(undefined)
-    setFormOpen(true)
+  const { interviewId } = useParams()
+  const navigate = useNavigate()
+  const [confirmHide, setConfirmHide] = useState(false)
+  const salon = state.classrooms.some((item) => item.id === params.get('salon'))
+    ? params.get('salon')!
+    : 'all'
+  const query = salon === 'all' ? '' : `?salon=${encodeURIComponent(salon)}`
+  const listUrl = `/counselor/publications${query}`
+  const interviews = getPublishedInterviews(state.interviews, adventure)
+  const visible = interviews.filter((item) => salon === 'all' || item.classroomId === salon)
+  const classroom = (item: Interview) => {
+    const room = state.classrooms.find((room) => room.id === item.classroomId)
+    return room ? `${room.grade.split(' ')[0]} ${room.section}` : 'Sin asignar'
   }
-  const openEdit = (resource: Resource) => {
-    setEditing(resource)
-    setFormOpen(true)
-  }
-  return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
-      <PageHeader
-        actions={
-          tab === 'publications' ? (
-            <Button onClick={openNew}>
-              <FilePlus2 /> Nueva publicación
-            </Button>
-          ) : undefined
-        }
-        description="Publica enlaces, eventos y avisos para la comunidad; revisa y destaca entrevistas de estudiantes."
-        eyebrow="Contenido"
-        title="Publicaciones"
-      />
-      <div className="flex flex-wrap items-center gap-2 border-b">
-        {tabs.map(([id, label]) => (
-          <button
-            className={`border-b-2 px-4 py-3 text-sm font-semibold ${tab === id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
-            key={id}
-            onClick={() => setParams({ tab: id })}
-            type="button"
-          >
-            {label}
-          </button>
-        ))}
-        {tab === 'publications' && (
-          <select
-            aria-label="Filtrar por tag"
-            className="mb-2 ml-auto h-9 rounded-md border bg-card px-3 text-sm"
-            onChange={(event) => {
-              const next = new URLSearchParams(params)
-              if (event.target.value === 'all') next.delete('tag')
-              else next.set('tag', event.target.value)
-              setParams(next)
-            }}
-            value={tagId}
-          >
-            <option value="all">Todos los tags</option>
-            {state.tags.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.code} · {tag.name}
-              </option>
-            ))}
-          </select>
-        )}
-      </div>
-      {tab === 'publications' ? (
-        <PublicationTable onEdit={openEdit} onView={setSelectedResource} resources={resources} />
+  const profession = (item: Interview) => interviewDetails[item.videoId ?? item.id]?.career ?? item.subject
+  const videoId = (item: Interview) => item.videoId ?? item.id
+  const reports = (item: Interview) => adventure.reports.filter((report) => report.postId === videoId(item))
+  const comments = (item: Interview) =>
+    interviewDetails[videoId(item)]?.comments.filter((comment) => comment.text).length ?? 0
+  const date = (item: Interview) => new Date(item.date).toLocaleDateString('es-PE')
+  const status = (item: Interview) => (
+    <div className="flex flex-wrap justify-center gap-2">
+      {reports(item).length > 0 && <Badge variant="aviso">Reportado</Badge>}
+      {item.hidden ? (
+        <Badge variant="secondary">Ocultada</Badge>
+      ) : item.featured ? (
+        <Badge variant="secondary">Destacada</Badge>
       ) : (
-        <InterviewTable onView={setSelectedInterview} />
+        <Badge variant="outline">Sin destacar</Badge>
       )}
-      <PublicationForm
-        initial={editing}
-        key={`${editing?.id ?? 'new'}-${formOpen}`}
-        onClose={() => setFormOpen(false)}
-        open={formOpen}
-      />
     </div>
   )
-}
-
-function PublicationTable({
-  resources,
-  onEdit,
-  onView,
-}: {
-  resources: Resource[]
-  onEdit: (resource: Resource) => void
-  onView: (resource: Resource) => void
-}) {
-  const { state } = useCounselorPortal()
-  return (
-    <Card className="overflow-hidden">
-      <Table className="min-w-[980px]">
-        <TableHeader className="bg-muted/40">
-          <TableRow>
-            <TableHead>Título</TableHead>
-            <TableHead>Tipo</TableHead>
-            <TableHead>Tags</TableHead>
-            <TableHead>Audiencia</TableHead>
-            <TableHead>Fecha de publicación</TableHead>
-            <TableHead>Vistos</TableHead>
-            <TableHead>Favoritos</TableHead>
-            <TableHead className="w-24 text-center">Acciones</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {resources.map((item) => {
-            const tagNames = item.tagIds
-              .map((id) => state.tags.find((tag) => tag.id === id)?.name)
-              .filter(Boolean)
-            return (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <strong>{item.title}</strong>
-                  <p className="max-w-sm truncate text-xs text-muted-foreground">{item.description}</p>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    className={item.type === 'EVENTO' ? 'bg-[#e7eff8] text-[#426b86]' : undefined}
-                    variant={item.type === 'EVENTO' ? 'secondary' : 'default'}
-                  >
-                    {item.type === 'EVENTO' ? 'Evento' : 'Publicación'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {tagNames.slice(0, 2).map((name) => (
-                      <Badge key={name} variant="outline">
-                        {name}
-                      </Badge>
-                    ))}
-                    {tagNames.length > 2 && <Badge variant="secondary">+{tagNames.length - 2} más</Badge>}
-                  </div>
-                </TableCell>
-                <TableCell>{audienceLabels[item.audience]}</TableCell>
-                <TableCell>{new Date(item.publicationDate).toLocaleDateString('es-PE')}</TableCell>
-                <TableCell>{item.viewCount}</TableCell>
-                <TableCell>{item.favoriteCount}</TableCell>
-                <TableCell className="text-center">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-label={`Acciones para ${item.title}`} size="icon" variant="ghost">
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onView(item)}>
-                        <Eye /> Ver publicación
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => onEdit(item)}>
-                        <Pencil /> Editar
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            )
-          })}
-          {!resources.length && (
-            <TableRow>
-              <TableCell className="p-8 text-center text-muted-foreground" colSpan={8}>
-                No hay publicaciones con este filtro.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </Card>
+  const openButton = (item: Interview) => (
+    <Button asChild variant="outline" className="min-h-11 whitespace-normal">
+      <Link to={`/counselor/publications/interviews/${encodeURIComponent(item.id)}${query}`}>
+        <Eye className="size-4 shrink-0" /> Ver entrevista
+      </Link>
+    </Button>
   )
-}
 
-function InterviewTable({ onView }: { onView: (interview: Interview) => void }) {
-  const { state, dispatch } = useCounselorPortal()
-  const [classroom, setClassroom] = useState('all')
-  const interviews = state.interviews.filter((item) => classroom === 'all' || item.classroomId === classroom)
-  return (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <select
-          aria-label="Filtrar entrevistas por grado y sección"
-          className="h-9 rounded-md border bg-card px-3 text-sm"
-          onChange={(event) => setClassroom(event.target.value)}
-          value={classroom}
-        >
-          <option value="all">Todos los grados y secciones</option>
-          {state.classrooms.map((room) => (
-            <option key={room.id} value={room.id}>
-              {room.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <Card className="overflow-hidden">
-        <Table className="min-w-[820px]">
-          <TableHeader className="bg-muted/40">
-            <TableRow>
-              <TableHead>Autores</TableHead>
-              <TableHead>Grado y sección</TableHead>
-              <TableHead>Profesión u ocupación</TableHead>
-              <TableHead>Fecha de publicación</TableHead>
-              <TableHead>Comentarios</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead className="w-24 text-center">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {interviews.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium">{item.authors.slice(0, 3).join(', ')}</TableCell>
-                <TableCell>{state.classrooms.find((room) => room.id === item.classroomId)?.name}</TableCell>
-                <TableCell>{item.subject}</TableCell>
-                <TableCell>{new Date(item.date).toLocaleDateString('es-PE')}</TableCell>
-                <TableCell>{item.commentCount}</TableCell>
-                <TableCell>
-                  {item.featured ? (
-                    <Badge>Destacada</Badge>
-                  ) : (
-                    <span className="text-muted-foreground">Sin destacar</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-center">
+  if (interviewId) {
+    const item = interviews.find((item) => item.id === interviewId || videoId(item) === interviewId)
+    if (!item)
+      return (
+        <div className="space-y-4 p-4 sm:p-8">
+          <h1 className="text-2xl font-bold">Entrevista no encontrada</h1>
+          <p>Esta entrevista no está disponible.</p>
+          <Button asChild variant="outline">
+            <Link to={listUrl}>Volver a Publicaciones</Link>
+          </Button>
+        </div>
+      )
+    const id = videoId(item)
+    const reactionCounts = reactionOptions.map((option) => ({
+      kind: option.label,
+      count:
+        (interviewDetails[id]?.comments.filter((comment) => comment.reaction === option.label).length ?? 0) +
+        adventure.reactions.filter((reaction) => reaction.videoId === id && reaction.kind === option.label)
+          .length,
+    }))
+    return (
+      <div className="min-w-0">
+        <InterviewDetail
+          readOnly
+          backLabel="Publicaciones"
+          onBack={() => navigate(listUrl)}
+          onReact={() => undefined}
+          onReport={() => undefined}
+          communityReactions={reactionCounts}
+          video={{
+            id,
+            title: item.subject,
+            alias: item.authors.filter(Boolean).join(', '),
+            url: item.url,
+            reflection: item.reflection,
+            createdAt: item.date,
+          }}
+          actions={
+            <div className="w-full space-y-3">
+              {item.featured && (
+                <div
+                  className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/10 p-4"
+                  role="status"
+                >
+                  <Star className="mt-0.5 size-6 shrink-0 fill-primary text-primary" aria-hidden="true" />
+                  <div>
+                    <p className="font-semibold text-foreground">Entrevista destacada</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Se muestra como destacada en la comunidad de estudiantes.
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-3">
+                {reports(item).length > 0 && <Badge variant="aviso">Reportado</Badge>}
+                {item.hidden ? (
+                  <Badge variant="secondary">Entrevista ocultada</Badge>
+                ) : (
+                  <Button
+                    variant={item.featured ? 'outline' : 'default'}
+                    className="min-h-11"
+                    onClick={() =>
+                      updateAdventure((current) => moderateInterview(current, id, 'feature', !item.featured))
+                    }
+                  >
+                    <Star className="size-4" />
+                    {item.featured ? 'Quitar destaque' : 'Destacar entrevista'}
+                  </Button>
+                )}
+                {!item.hidden && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button
-                        aria-label={`Acciones para entrevista de ${item.authors.join(', ')}`}
-                        size="icon"
                         variant="ghost"
+                        className="ml-auto min-h-11 min-w-11"
+                        aria-label="Más acciones de la entrevista"
                       >
-                        <MoreHorizontal />
+                        <MoreHorizontal className="size-5" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onSelect={() => onView(item)}>
-                        <Play /> Ver entrevista
-                      </DropdownMenuItem>
+                    <DropdownMenuContent align="end" className="max-w-[calc(100vw-2rem)]">
                       <DropdownMenuItem
-                        onSelect={() => dispatch({ type: 'TOGGLE_INTERVIEW_FEATURED', interviewId: item.id })}
+                        className="min-h-11 items-start gap-3 whitespace-normal"
+                        onSelect={() => setConfirmHide(true)}
                       >
-                        <Star /> {item.featured ? 'Quitar destaque' : 'Destacar'}
+                        <EyeOff className="mt-0.5 size-4 shrink-0" />
+                        <span>
+                          <span className="block">Ocultar entrevista</span>
+                          <span className="mt-1 block max-w-60 text-xs leading-5 text-muted-foreground">
+                            Retirarla de la comunidad si contiene contenido indebido.
+                          </span>
+                        </span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-            {!interviews.length && (
-              <TableRow>
-                <TableCell className="p-8 text-center text-muted-foreground" colSpan={7}>
-                  No hay entrevistas en este grado y sección.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                )}
+              </div>
+            </div>
+          }
+        />
+        {reports(item).length > 0 && (
+          <div className="mx-auto max-w-6xl px-4 pb-8 sm:px-8">
+            <Card className="space-y-4 p-6">
+              <h2 className="font-bold">Reportes recibidos · {reports(item).length}</h2>
+              {reports(item).map((report) => (
+                <div key={report.id} className="rounded-xl border p-4">
+                  <h3 className="font-semibold">{report.reason}</h3>
+                  <p className="mt-2 whitespace-pre-wrap break-words text-sm">
+                    {report.body || 'Sin comentarios adicionales.'}
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {new Date(report.createdAt).toLocaleDateString('es-PE')}
+                  </p>
+                </div>
+              ))}
+            </Card>
+          </div>
+        )}
+        <Dialog open={confirmHide} onOpenChange={setConfirmHide}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>¿Ocultar esta entrevista?</DialogTitle>
+              <DialogDescription>
+                Dejará de aparecer para los estudiantes y se retirará su destaque. Seguirá disponible para la
+                orientadora. La gestión para desbloquearla se realiza fuera de la plataforma.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-wrap justify-end gap-3">
+              <Button variant="outline" className="min-h-11" onClick={() => setConfirmHide(false)}>
+                Cancelar
+              </Button>
+              <Button
+                className="min-h-11"
+                onClick={() => {
+                  updateAdventure((current) => moderateInterview(current, id, 'hide'))
+                  setConfirmHide(false)
+                }}
+              >
+                Confirmar y ocultar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    )
+  }
+
+  const headers = [
+    'Autores',
+    'Salón',
+    'Profesión u ocupación',
+    'Fecha de publicación',
+    'Comentarios',
+    'Estado',
+    'Acciones',
+  ]
+  return (
+    <div className="min-w-0 space-y-6 p-4 sm:p-6 lg:p-8">
+      <PageHeader
+        title="Publicaciones"
+        eyebrow="Contenido"
+        description="Revisa las entrevistas publicadas por tus estudiantes, sus reacciones y reportes."
+      />
+      <Select value={salon} onValueChange={(value) => setParams(value === 'all' ? {} : { salon: value })}>
+        <SelectTrigger aria-label="Filtrar entrevistas por salón" className="min-h-11 w-full bg-card sm:w-64">
+          <SelectValue>
+            {salon === 'all' ? 'Todos los salones' : state.classrooms.find((room) => room.id === salon)?.name}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos los salones</SelectItem>
+          {state.classrooms.map((room) => (
+            <SelectItem key={room.id} value={room.id}>
+              {room.name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Card className="overflow-hidden rounded-xl">
+        {!visible.length ? (
+          <p className="p-6 text-muted-foreground">No hay entrevistas en este salón.</p>
+        ) : (
+          <>
+            <div className="hidden xl:block">
+              <Table className="table-fixed text-base [&_th:first-child]:pl-2.5 [&_td:first-child]:pl-2.5 [&_th:last-child]:pr-2.5 [&_td:last-child]:pr-2.5">
+                <TableHeader className="bg-muted">
+                  <TableRow className="hover:bg-transparent">
+                    {headers.map((header, index) => (
+                      <TableHead
+                        key={header}
+                        scope="col"
+                        className={`px-2.5 py-2.5 text-base font-semibold whitespace-normal text-muted-foreground ${index >= 3 ? 'text-center' : ''} ${index === 0 ? 'w-[20%]' : index === 1 ? 'w-[8%]' : index === 2 ? 'w-[20%]' : index === 6 ? 'w-[16%]' : 'w-[12%]'}`}
+                      >
+                        {header}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {visible.map((item) => (
+                    <TableRow key={item.id} className="hover:bg-transparent">
+                      <TableCell className="px-2.5 py-3 whitespace-normal break-words">
+                        {item.authors.filter(Boolean).join(', ')}
+                      </TableCell>
+                      <TableCell className="px-2.5 py-3 whitespace-normal">{classroom(item)}</TableCell>
+                      <TableCell className="px-2.5 py-3 whitespace-normal break-words">
+                        {profession(item)}
+                      </TableCell>
+                      <TableCell className="px-2.5 py-3 text-center">{date(item)}</TableCell>
+                      <TableCell className="px-2.5 py-3 text-center">{comments(item)}</TableCell>
+                      <TableCell className="px-2.5 py-3">{status(item)}</TableCell>
+                      <TableCell className="px-2.5 py-3 text-center">{openButton(item)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="space-y-3 p-3 xl:hidden">
+              {visible.map((item) => (
+                <Card key={item.id} className="min-w-0 space-y-4 p-4">
+                  <h2 className="font-semibold break-words">{item.subject}</h2>
+                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
+                    <dt className="text-muted-foreground">Autores</dt>
+                    <dd className="min-w-0 break-words">{item.authors.filter(Boolean).join(', ')}</dd>
+                    <dt className="text-muted-foreground">Profesión</dt>
+                    <dd className="min-w-0 break-words">{profession(item)}</dd>
+                    <dt className="text-muted-foreground">Salón</dt>
+                    <dd>{classroom(item)}</dd>
+                    <dt className="text-muted-foreground">Publicación</dt>
+                    <dd>{date(item)}</dd>
+                    <dt className="text-muted-foreground">Comentarios</dt>
+                    <dd>{comments(item)}</dd>
+                  </dl>
+                  {status(item)}
+                  {openButton(item)}
+                </Card>
+              ))}
+            </div>
+          </>
+        )}
       </Card>
     </div>
   )
 }
-
-function PublicationPreview({ resource, onBack }: { resource: Resource; onBack: () => void }) {
-  const item: AdventureNotice = {
-    id: resource.id,
-    title: resource.title,
-    body: resource.description,
-    date: (resource.event?.dateTime ?? resource.publicationDate).slice(0, 10),
-    attendees: [],
-    kind: resource.type === 'EVENTO' ? 'event' : 'publication',
-  }
-  return (
-    <ResourceDetail
-      item={item}
-      metaOverride={{
-        topic: resource.type === 'EVENTO' ? 'Evento' : 'Publicación',
-        url: resource.url ?? '',
-        organizer: resource.event?.organizer,
-        modality: resource.event ? formatModality(resource.event.modality) : undefined,
-      }}
-      onBack={onBack}
-      onEventOutcome={() => undefined}
-      onExternal={() => resource.url && window.open(resource.url, '_blank', 'noopener,noreferrer')}
-      onFavorite={() => undefined}
-      past={Boolean(resource.event && new Date(resource.event.dateTime) < new Date())}
-      previewMode
-      saved={false}
-      interested={false}
-    />
-  )
-}
-
-function PublicationForm({
-  initial,
-  onClose,
-  open,
-}: {
-  initial?: Resource
-  onClose: () => void
-  open: boolean
-}) {
-  const { state, dispatch } = useCounselorPortal()
-  const [title, setTitle] = useState(initial?.title ?? '')
-  const [description, setDescription] = useState(initial?.description ?? '')
-  const [type, setType] = useState<ResourceType>(initial?.type ?? 'PUBLICACION')
-  const [url, setUrl] = useState(initial?.url ?? '')
-  const [tagIds, setTagIds] = useState<string[]>(initial?.tagIds ?? [])
-  const [audience, setAudience] = useState<Audience>(initial?.audience ?? 'ESTUDIANTES')
-  const [dateTime, setDateTime] = useState(initial?.event?.dateTime.slice(0, 16) ?? '')
-  const [organizer, setOrganizer] = useState(initial?.event?.organizer ?? '')
-  const [modality, setModality] = useState<'PRESENCIAL' | 'VIRTUAL' | 'HIBRIDA'>(
-    initial?.event?.modality ?? 'PRESENCIAL',
-  )
-  const [costChoice, setCostChoice] = useState<'UNSPECIFIED' | 'FREE' | 'PAID'>(
-    initial?.event?.hasCost === undefined ? 'UNSPECIFIED' : initial.event.hasCost ? 'PAID' : 'FREE',
-  )
-  const [attempted, setAttempted] = useState(false)
-  const isEvent = type === 'EVENTO'
-  const valid = Boolean(
-    title.trim() &&
-    description.trim() &&
-    tagIds.length &&
-    (!isEvent || (url.trim() && dateTime && organizer.trim())),
-  )
-  const submit = () => {
-    setAttempted(true)
-    if (!valid) return
-    const resource: Resource = {
-      id: initial?.id ?? crypto.randomUUID(),
-      type,
-      title: title.trim(),
-      description: description.trim(),
-      url: url.trim() || undefined,
-      tagIds,
-      audience,
-      publicationDate: initial?.publicationDate ?? state.referenceDate,
-      viewCount: initial?.viewCount ?? 0,
-      favoriteCount: initial?.favoriteCount ?? 0,
-      event: isEvent
-        ? {
-            dateTime: new Date(dateTime).toISOString(),
-            organizer: organizer.trim(),
-            modality,
-            hasCost: costChoice === 'UNSPECIFIED' ? undefined : costChoice === 'PAID',
-          }
-        : undefined,
-    }
-    dispatch({ type: initial ? 'UPDATE_RESOURCE' : 'ADD_RESOURCE', resource })
-    onClose()
-  }
-  return (
-    <Dialog onOpenChange={(next) => !next && onClose()} open={open}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{initial ? 'Editar publicación' : 'Nueva publicación'}</DialogTitle>
-          <DialogDescription>
-            La fecha de publicación se conserva y no es editable. Los cambios se muestran inmediatamente.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Tipo *">
-            <select
-              className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-              onChange={(event) => setType(event.target.value as ResourceType)}
-              value={type}
-            >
-              <option value="PUBLICACION">Publicación</option>
-              <option value="EVENTO">Evento</option>
-            </select>
-          </Field>
-          <Field label="Audiencia *">
-            <select
-              className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-              onChange={(event) => setAudience(event.target.value as Audience)}
-              value={audience}
-            >
-              {Object.entries(audienceLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Título *">
-            <Input onChange={(event) => setTitle(event.target.value)} value={title} />
-          </Field>
-          <Field label={isEvent ? 'Enlace del evento *' : 'Enlace de la publicación'}>
-            <Input onChange={(event) => setUrl(event.target.value)} type="url" value={url} />
-          </Field>
-          <Field className="sm:col-span-2" label="Descripción *">
-            <textarea
-              className="min-h-24 w-full rounded-xl border p-3 text-sm"
-              onChange={(event) => setDescription(event.target.value)}
-              value={description}
-            />
-          </Field>
-          <Field className="sm:col-span-2" label="Tags *">
-            <div className="flex flex-wrap gap-2">
-              {state.tags.map((tag) => (
-                <label
-                  className="flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-xs"
-                  key={tag.id}
-                >
-                  <input
-                    checked={tagIds.includes(tag.id)}
-                    onChange={() =>
-                      setTagIds((current) =>
-                        current.includes(tag.id)
-                          ? current.filter((id) => id !== tag.id)
-                          : [...current, tag.id],
-                      )
-                    }
-                    type="checkbox"
-                  />
-                  {tag.code} · {tag.name}
-                </label>
-              ))}
-            </div>
-          </Field>
-          {isEvent && (
-            <>
-              <Field label="Fecha y hora del evento *">
-                <Input
-                  onChange={(event) => setDateTime(event.target.value)}
-                  type="datetime-local"
-                  value={dateTime}
-                />
-              </Field>
-              <Field label="Organizador *">
-                <Input onChange={(event) => setOrganizer(event.target.value)} value={organizer} />
-              </Field>
-              <Field label="Modalidad *">
-                <select
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                  onChange={(event) => setModality(event.target.value as typeof modality)}
-                  value={modality}
-                >
-                  <option value="PRESENCIAL">Presencial</option>
-                  <option value="VIRTUAL">Virtual</option>
-                  <option value="HIBRIDA">Híbrida</option>
-                </select>
-              </Field>
-              <Field label="Costo (opcional)">
-                <select
-                  className="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                  onChange={(event) => setCostChoice(event.target.value as typeof costChoice)}
-                  value={costChoice}
-                >
-                  <option value="UNSPECIFIED">No especificar</option>
-                  <option value="FREE">Sin costo</option>
-                  <option value="PAID">Con costo</option>
-                </select>
-              </Field>
-            </>
-          )}
-        </div>
-        {attempted && !valid && (
-          <p className="text-sm text-[var(--destructive)]">
-            Completa los campos obligatorios antes de guardar.
-          </p>
-        )}
-        <Button onClick={submit}>
-          {isEvent ? <CalendarDays /> : <FilePlus2 />} {initial ? 'Guardar cambios' : 'Publicar ahora'}
-        </Button>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function formatModality(value: NonNullable<Resource['event']>['modality']) {
-  return value === 'HIBRIDA' ? 'Híbrida' : value === 'VIRTUAL' ? 'Virtual' : 'Presencial'
-}
-function Field({
-  children,
-  className = '',
-  label,
-}: {
-  children: React.ReactNode
-  className?: string
-  label: string
-}) {
-  return (
-    <label className={`space-y-2 text-sm ${className}`}>
-      <span className="font-medium">{label}</span>
-      {children}
-    </label>
-  )
-}
-
 export { PublicationsView }

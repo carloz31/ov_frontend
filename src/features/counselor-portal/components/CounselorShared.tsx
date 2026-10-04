@@ -1,5 +1,16 @@
-import { Eye, TrendingDown, TrendingUp } from 'lucide-react'
-import { CartesianGrid, Legend, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Eye, TrendingDown, TrendingUp, TriangleAlert, CircleCheck } from 'lucide-react'
+import {
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ReferenceArea,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { Badge } from '@/components/ui/Badge'
 import { cn } from '@/lib/Utils'
 import { alertLabels } from '../CounselorPortalSelectors'
@@ -15,12 +26,16 @@ export function TrafficBadge({ status }: { status: TrafficLight }) {
   return (
     <Badge
       className={cn(
-        status === 'priority' && 'bg-red-50 text-[var(--destructive)]',
-        status === 'attention' && 'bg-[var(--warning-soft)] text-[#9c611b]',
+        status === 'priority' && 'bg-warning-soft text-warning-text',
+        status === 'attention' && 'bg-warning-soft text-warning-text',
       )}
-      variant={status === 'on-track' ? 'success' : 'secondary'}
+      variant={status === 'on-track' ? 'neutral' : 'aviso'}
     >
-      <span aria-hidden>{status === 'priority' ? '🔴' : status === 'attention' ? '🟡' : '🟢'}</span>
+      {status === 'on-track' ? (
+        <CircleCheck className="size-3.5" aria-hidden />
+      ) : (
+        <TriangleAlert className="size-3.5" aria-hidden />
+      )}
       {trafficLabels[status]}
     </Badge>
   )
@@ -30,8 +45,9 @@ export function AlertChips({ alerts, compact = false }: { alerts: AlertCode[]; c
   return (
     <div className="flex flex-wrap gap-1">
       {alerts.map((alert) => (
-        <Badge key={alert} title={alertLabels[alert]} variant="outline">
-          {alert}{!compact && ` · ${alertLabels[alert]}`}
+        <Badge key={alert} title={alertLabels[alert]} variant="aviso">
+          {alert}
+          {!compact && ` · ${alertLabels[alert]}`}
         </Badge>
       ))}
     </div>
@@ -47,7 +63,7 @@ export function Delta({ value }: { value?: number }) {
   if (Math.abs(value) < 0.05) return <span className="text-muted-foreground">= 0.0</span>
   const UpIcon = value > 0 ? TrendingUp : TrendingDown
   return (
-    <span className={cn('inline-flex items-center gap-1 font-semibold', value > 0 ? 'text-[var(--success)]' : 'text-[var(--destructive)]')}>
+    <span className={cn('inline-flex items-center gap-1 font-semibold', 'text-muted-foreground')}>
       <UpIcon className="size-4" /> {Math.abs(value).toFixed(1)}
     </span>
   )
@@ -72,18 +88,45 @@ export function CounselorLineChart({
   markers?: { value: string; label: string }[]
 }) {
   if (!data.length) return <p className="text-sm text-muted-foreground">Todavía no hay datos.</p>
-  return <div aria-label={label} className="h-64 w-full" role="img">
-    <ResponsiveContainer height="100%" width="100%">
-      <LineChart accessibilityLayer data={data} margin={{ left: 0, right: 16, top: 18, bottom: 0 }}>
-        <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-        {lowAreaMax !== undefined && <ReferenceArea fill="var(--warning-soft)" fillOpacity={0.8} y1={domain[0]} y2={lowAreaMax} />}
-        {markers.map((marker) => <ReferenceLine key={`${marker.value}-${marker.label}`} label={{ value: marker.label, fill: 'var(--muted-foreground)', fontSize: 11 }} stroke="var(--muted-foreground)" strokeDasharray="4 4" x={marker.value} />)}
-        <XAxis axisLine={false} dataKey="label" fontSize={11} tickLine={false} />
-        <YAxis axisLine={false} domain={domain} fontSize={11} tickLine={false} width={28} />
-        <Tooltip contentStyle={{ borderRadius: 12, borderColor: 'var(--border)', background: 'var(--card)' }} />
-        {series.length > 1 && <Legend />}
-        {series.map((item) => <Line activeDot={{ r: 5 }} dataKey={item.key} dot={{ r: 3 }} key={item.key} name={item.label} stroke={item.color} strokeWidth={2.5} type="monotone" />)}
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
+  return (
+    <div aria-label={label} className="h-64 w-full" role="img">
+      <ResponsiveContainer height="100%" width="100%">
+        <LineChart accessibilityLayer data={data} margin={{ left: 0, right: 16, top: 18, bottom: 0 }}>
+          <CartesianGrid stroke="var(--data-grid)" strokeDasharray="3 3" vertical={false} />
+          {lowAreaMax !== undefined && (
+            <ReferenceArea fill="var(--muted)" fillOpacity={0.8} y1={domain[0]} y2={lowAreaMax} />
+          )}
+          {markers.map((marker) => (
+            <ReferenceLine
+              key={`${marker.value}-${marker.label}`}
+              label={{ value: marker.label, fill: 'var(--muted-foreground)', fontSize: 11 }}
+              stroke="var(--muted-foreground)"
+              strokeDasharray="4 4"
+              x={marker.value}
+            />
+          ))}
+          <XAxis axisLine={false} dataKey="label" fontSize={11} tickLine={false} />
+          <YAxis axisLine={false} domain={domain} fontSize={11} tickLine={false} width={28} />
+          <Tooltip
+            contentStyle={{ borderRadius: 12, borderColor: 'var(--border)', background: 'var(--card)' }}
+          />
+          {series.length > 1 && (
+            <Legend formatter={(value) => <span className="text-foreground">{value}</span>} />
+          )}
+          {series.map((item) => (
+            <Line
+              activeDot={{ r: 5 }}
+              dataKey={item.key}
+              dot={{ r: 3 }}
+              key={item.key}
+              name={item.label}
+              stroke={item.color}
+              strokeWidth={2.5}
+              type="monotone"
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  )
 }

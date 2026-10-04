@@ -46,7 +46,7 @@ function AppNavMain({ activeItemId, groups }: AppNavMainProps) {
                     tooltip={item.label}
                   >
                     <item.icon />
-                    <span>{item.label}</span>
+                    <span className="group-data-[collapsible=icon]:sr-only">{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )
@@ -58,8 +58,8 @@ function AppNavMain({ activeItemId, groups }: AppNavMainProps) {
                   <CollapsibleTrigger asChild>
                     <SidebarMenuButton className="h-11 rounded-xl" isActive={isActive} tooltip={item.label}>
                       <item.icon />
-                      <span>{item.label}</span>
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      <span className="group-data-[collapsible=icon]:sr-only">{item.label}</span>
+                      <ChevronRight className="ml-auto group-data-[collapsible=icon]:hidden transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                     </SidebarMenuButton>
                   </CollapsibleTrigger>
                   <CollapsibleContent>

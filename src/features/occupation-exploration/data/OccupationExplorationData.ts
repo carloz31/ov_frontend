@@ -193,7 +193,8 @@ const professionalTestimonials: ProfessionalTestimonial[] = [
     story:
       'Mi trabajo consiste en evaluar rápidamente qué ocurre, brindar los primeros cuidados y decidir qué necesita la persona antes de llegar a un hospital. Cada situación es diferente y por eso practicamos constantemente. También aprendí que explicar con calma lo que estamos haciendo puede ayudar tanto como una intervención técnica.',
     highlights: ['Atención prehospitalaria', 'Evaluación rápida', 'Trabajo en equipo'],
-    unlockSource: 'Completa un próximo caso de respuesta en salud.',
+    unlockSource: 'Completa la misión «Incendio forestal» en Central de Casos.',
+    unlockCaseId: 'forest-fire',
     youtubeUrl: 'https://www.youtube.com/watch?v=ysz5S6PUM-U',
     youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/ysz5S6PUM-U',
   },
@@ -207,7 +208,8 @@ const professionalTestimonials: ProfessionalTestimonial[] = [
     story:
       'Trabajo con invitados, conferencistas y equipos de producción de distintos países. Antes de cada evento investigo el tema y preparo vocabulario especializado. Durante una conversación debo escuchar, comprender la intención y comunicarla con precisión, incluso cuando todo ocurre muy rápido.',
     highlights: ['Comunicación intercultural', 'Preparación temática', 'Precisión lingüística'],
-    unlockSource: 'Completa un próximo caso de colaboración internacional.',
+    unlockSource: 'Completa la misión «Festival en la ciudad» en Central de Casos.',
+    unlockCaseId: 'city-festival',
     youtubeUrl: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ',
     youtubeEmbedUrl: 'https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ',
   },

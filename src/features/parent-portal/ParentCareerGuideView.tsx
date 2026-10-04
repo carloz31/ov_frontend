@@ -38,7 +38,7 @@ function ParentCareerGuideView() {
           )
         })}
       </div>
-      <Card className="border-dashed bg-[var(--warning-soft)]/50 p-5 text-sm">
+      <Card className="border-dashed bg-muted p-5 text-sm">
         <strong>Una recomendación:</strong> empieza por los intereses y experiencias que generan curiosidad.
         Los datos de empleabilidad ayudan a evaluar una opción, pero no reemplazan el autoconocimiento.
       </Card>

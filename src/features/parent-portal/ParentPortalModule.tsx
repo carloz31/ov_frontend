@@ -3,7 +3,8 @@ import { BookOpenCheck, Compass, LayoutDashboard, UsersRound } from 'lucide-reac
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { AppShell, type AppNavigationGroup } from '@/components/layout/AppShell'
 import { appPaths } from '@/routes/paths'
-import { parentChildren, parentProfile } from './data/ParentPortalData'
+import { parentActivities, parentChildren, parentProfile } from './data/ParentPortalData'
+import { parentRoute } from './selectors'
 import type { ParentPortalContext } from './ParentPortalContext'
 import { updateAdventure, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 
@@ -11,6 +12,12 @@ function ParentPortalModule() {
   const navigate = useNavigate()
   const location = useLocation()
   const { parentCompletedActivityIds: completedActivityIds } = useAdventure()
+  const assignedIds = new Set(
+    parentRoute(parentActivities, parentChildren, completedActivityIds).assigned.map(
+      (activity) => activity.id,
+    ),
+  )
+  const assignedCompletedIds = [...new Set(completedActivityIds)].filter((id) => assignedIds.has(id))
   const routeState = getParentRouteState(location.pathname)
   const navigationGroups = useMemo<AppNavigationGroup[]>(
     () => [
@@ -26,7 +33,7 @@ function ParentPortalModule() {
           {
             id: 'activities',
             icon: BookOpenCheck,
-            label: 'Actividades',
+            label: 'Mis actividades',
             onSelect: () => navigate(appPaths.parent.activities),
           },
           {
@@ -34,12 +41,6 @@ function ParentPortalModule() {
             icon: UsersRound,
             label: 'Conversaciones',
             onSelect: () => navigate(appPaths.parent.conversations),
-          },
-          {
-            id: 'children',
-            icon: UsersRound,
-            label: 'Mis hijos',
-            onSelect: () => navigate(appPaths.parent.child(parentChildren[0].id)),
           },
           {
             id: 'careers',
@@ -54,6 +55,7 @@ function ParentPortalModule() {
   )
 
   const completeActivity = (activityId: string) => {
+    if (!assignedIds.has(activityId)) return
     updateAdventure((current) => ({
       ...current,
       parentCompletedActivityIds: [...new Set([...current.parentCompletedActivityIds, activityId])],
@@ -62,6 +64,7 @@ function ParentPortalModule() {
 
   return (
     <AppShell
+      theme="staff"
       activeItemId={routeState.activeItemId}
       navigationGroups={navigationGroups}
       onLogout={() => navigate(appPaths.home)}
@@ -70,7 +73,11 @@ function ParentPortalModule() {
       userName={parentProfile.name}
       userRole={parentProfile.relationship}
     >
-      <Outlet context={{ completeActivity, completedActivityIds } satisfies ParentPortalContext} />
+      <Outlet
+        context={
+          { completeActivity, completedActivityIds: assignedCompletedIds } satisfies ParentPortalContext
+        }
+      />
     </AppShell>
   )
 }
@@ -81,7 +88,7 @@ function getParentRouteState(pathname: string) {
   if (pathname.includes('/activities')) {
     return { activeItemId: 'activities', title: 'Actividades para familias' }
   }
-  if (pathname.includes('/children')) return { activeItemId: 'children', title: 'Mis hijos' }
+  if (pathname.includes('/children')) return { activeItemId: 'overview', title: 'Inicio' }
   if (pathname.includes('/careers')) return { activeItemId: 'careers', title: 'Explorar opciones' }
   return { activeItemId: 'overview', title: 'Inicio' }
 }

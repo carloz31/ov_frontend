@@ -4,8 +4,8 @@ import { CounselorPortalModule } from '@/features/counselor-portal/CounselorPort
 import { CounselorSettingsView } from '@/features/counselor-portal/CounselorSettingsView'
 import { PrioritiesView } from '@/features/counselor-portal/PrioritiesView'
 import { PublicationsView } from '@/features/counselor-portal/PublicationsView'
-import { ReviewInboxView } from '@/features/counselor-portal/ReviewInboxView'
 import { StudentDetailView } from '@/features/counselor-portal/StudentDetailView'
+import { QuestionnaireDetailView } from '@/features/counselor-portal/profile/Questionnaires'
 import { StudentRecordDetailView } from '@/features/counselor-portal/StudentRecordDetailView'
 import { FamilyRecordDetailView } from '@/features/counselor-portal/FamilyRecordDetailView'
 import { StudentsView } from '@/features/counselor-portal/StudentsView'
@@ -25,6 +25,7 @@ import { StudentFamilyConversationsView } from '@/features/student-experience/mo
 import { ParentActivitiesView } from '@/features/parent-portal/ParentActivitiesView'
 import { ParentActivityView } from '@/features/parent-portal/ParentActivityView'
 import { ParentCareerGuideView } from '@/features/parent-portal/ParentCareerGuideView'
+import { ParentQuestionnaireDetailView } from '@/features/parent-portal/ParentQuestionnaireDetailView'
 import { ParentChildrenView } from '@/features/parent-portal/ParentChildrenView'
 import { ParentOverviewView } from '@/features/parent-portal/ParentOverviewView'
 import { ParentPortalModule } from '@/features/parent-portal/ParentPortalModule'
@@ -98,6 +99,10 @@ function AppRoutes() {
           path="children"
         />
         <Route element={<ParentChildrenView />} path="children/:childId" />
+        <Route
+          element={<ParentQuestionnaireDetailView />}
+          path="children/:childId/questionnaires/:questionnaireId"
+        />
         <Route element={<ParentCareerGuideView />} path="careers" />
         <Route element={<Navigate replace to={appPaths.parent.overview} />} path="*" />
       </Route>
@@ -106,11 +111,16 @@ function AppRoutes() {
         <Route element={<Navigate replace to={appPaths.counselor.home} />} index />
         <Route element={<CounselorDashboardView />} path="home" />
         <Route element={<StudentsView />} path="students" />
+        <Route element={<PrioritiesView />} path="students/priorities" />
+        <Route
+          element={<QuestionnaireDetailView />}
+          path="students/:studentId/questionnaires/:questionnaireId"
+        />
         <Route element={<StudentDetailView />} path="students/:studentId" />
         <Route element={<StudentRecordDetailView />} path="students/:studentId/records/:recordId" />
         <Route element={<FamilyRecordDetailView />} path="students/:studentId/family-records/:activityId" />
-        <Route element={<ReviewInboxView />} path="reviews" />
         <Route element={<PublicationsView />} path="publications" />
+        <Route element={<PublicationsView />} path="publications/interviews/:interviewId" />
         <Route element={<PrioritiesView />} path="priorities" />
         <Route element={<CounselorSettingsView />} path="settings" />
         <Route element={<Navigate replace to={appPaths.counselor.home} />} path="dashboard" />

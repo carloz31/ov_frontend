@@ -23,7 +23,7 @@ export const fieldMissions = [
     kind: 'reflection',
     region: 'Mirador del mañana',
     description:
-      '¿Cómo imaginas tu futuro y el de tu entorno? Escribe lo que te ilusiona o te inquieta en tu diario.',
+      '¿Cómo imaginas tu futuro y el de tu entorno? Cuéntale a Lumi lo que te ilusiona o te inquieta.',
     x: 590,
     y: 290,
   },
@@ -241,6 +241,12 @@ export const resourceDemoNotices = [
 
 export const resourceDemoVideos = [
   {
+    id: 'i3', title: 'Creadora audiovisual', alias: 'Daniela, Sofía y Marcos',
+    url: 'https://example.com/audiovisual',
+    reflection: 'Aprendimos cómo se combinan narrativa, tecnología y coordinación en una producción.',
+    createdAt: '2026-09-17T18:00:00.000Z',
+  },
+  {
     id: 'demo-environmental-engineering',
     title: 'Así se investiga la calidad del agua',
     alias: 'Brisa',
@@ -280,3 +286,24 @@ export const resourceDemoVideos = [
 
 export const resourceReading =
   'Explorar tu futuro es un proceso. Puedes empezar por reconocer experiencias que disfrutas, conversar con personas de distintas profesiones y anotar las preguntas que aparecen. No necesitas tener una respuesta definitiva hoy. Tu siguiente paso puede ser pequeño y cambiar con lo que aprendas.'
+
+export const legendInterviews = [
+  {
+    id: 'legend-community-health',
+    title: 'Cuidar también es prevenir y escuchar',
+    alias: 'Luna y Tilo · Salón 2025',
+    url: '',
+    reflection:
+      'Una entrevista sobre el trabajo de una enfermera comunitaria: educación, prevención y acompañamiento a las familias.',
+    createdAt: '2025-11-18T16:00:00.000Z',
+  },
+  {
+    id: 'legend-animation',
+    title: 'De una idea a un personaje en movimiento',
+    alias: 'Mar · Salón 2024',
+    url: '',
+    reflection:
+      'Una conversación sobre creatividad, práctica constante y la importancia de construir proyectos de animación en equipo.',
+    createdAt: '2024-10-09T17:00:00.000Z',
+  },
+]

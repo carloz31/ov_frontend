@@ -9,8 +9,11 @@ const badgeVariants = cva(
       variant: {
         default: 'bg-[var(--primary-soft)] text-primary',
         secondary: 'bg-secondary text-secondary-foreground',
-        success: 'bg-[var(--success-soft)] text-[var(--success)]',
-        warning: 'bg-[var(--warning-soft)] text-[#9c611b]',
+        success: 'bg-[var(--success-soft)] text-success-text',
+        warning: 'bg-[var(--warning-soft)] text-warning-text',
+        aviso: 'bg-[var(--warning-soft)] text-[var(--alert-text)]',
+        attention: 'bg-danger-soft text-danger-text',
+        neutral: 'bg-neutral-soft text-neutral-text',
         outline: 'border border-border bg-card text-muted-foreground',
       },
     },
@@ -18,10 +21,10 @@ const badgeVariants = cva(
   },
 )
 
-type BadgeProps = HTMLAttributes<HTMLDivElement> & VariantProps<typeof badgeVariants>
+type BadgeProps = HTMLAttributes<HTMLSpanElement> & VariantProps<typeof badgeVariants>
 
 function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div data-slot="badge" className={cn(badgeVariants({ variant }), className)} {...props} />
+  return <span data-slot="badge" className={cn(badgeVariants({ variant }), className)} {...props} />
 }
 
 export { Badge }

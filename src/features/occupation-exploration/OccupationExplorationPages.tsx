@@ -7,10 +7,8 @@ import { ExplorationProfileView } from './ExplorationProfileView'
 import { FieldMissionsView } from './FieldMissionsView'
 import { ForestFireCaseView } from './ForestFireCaseView'
 import { useOccupationExplorationContext } from './OccupationExplorationContext'
-import { TestimonialsView } from './TestimonialsView'
-import { canAccessCity, completeCase, prototypeAllUnlocked, useAdventure } from './lib/AdventureStore'
-import { professionalTestimonials } from './data/OccupationExplorationData'
-import { cityCases } from './data/AdventureData'
+import { AdventureResourcesView } from './AdventureResourcesView'
+import { canAccessCity, completeCase, useAdventure } from './lib/AdventureStore'
 
 function ExplorationHomePage() {
   return <CityMapView />
@@ -71,21 +69,7 @@ function ExplorationProfilePage({ view }: { view: 'general' | 'decision' }) {
 }
 
 function TestimonialsPage() {
-  const state = useAdventure()
-  const satisfaction = state.solvedCaseIds.length / cityCases.length
-  return (
-    <TestimonialsView
-      unlockedTestimonialIds={
-        prototypeAllUnlocked
-          ? professionalTestimonials.map((item) => item.id)
-          : canAccessCity(state)
-            ? professionalTestimonials
-                .filter((_, index) => satisfaction >= (index + 1) / professionalTestimonials.length)
-                .map((item) => item.id)
-            : []
-      }
-    />
-  )
+  return <AdventureResourcesView />
 }
 
 function ExplorationCaseIntroPage() {

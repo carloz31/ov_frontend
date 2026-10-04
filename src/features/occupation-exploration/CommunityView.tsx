@@ -104,7 +104,7 @@ function CommunityView() {
               <h2 className="font-bold">Un espacio para acompañarse</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 {members.length
-                  ? 'Aquí aparecerán las publicaciones creadas para tu Crew. Las entradas del diario siempre permanecen privadas.'
+                  ? 'Aquí aparecerán las publicaciones creadas para tu Crew. Tus conversaciones con Lumi siempre permanecen privadas.'
                   : 'Invita a uno o dos compañeros. También puedes continuar tu aventura por tu cuenta.'}
               </p>
             </div>

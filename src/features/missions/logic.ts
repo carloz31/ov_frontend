@@ -95,6 +95,21 @@ export function isActivityComplete(activity: Actividad, state: JourneyState) {
         )
   }
   const required = activity.nodos.filter((node) => node.tipo === 'consigna' && node.obligatoria)
+  if (required.length === 0) {
+    return (
+      state.progress[activity.id]?.nodoActualId === '$fin' &&
+      activity.nodos
+        .filter((node) => node.tipo === 'pregunta' && node.bloqueante)
+        .every((node) =>
+          state.attempts.some(
+            (attempt) =>
+              attempt.actividadId === activity.id &&
+              attempt.nodoId === node.id &&
+              (attempt.correcta || attempt.revelada),
+          ),
+        )
+    )
+  }
   const template = activity.plantilla?.tipo === 'matriz' ? activity.plantilla : undefined
   const alternative = template?.alternativa
   const file = alternative && latestSubmission(state, activity.id, alternative.nodoId)

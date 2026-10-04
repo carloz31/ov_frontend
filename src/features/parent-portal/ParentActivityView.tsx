@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Progress } from '@/components/ui/Progress'
 import { appPaths } from '@/routes/paths'
-import { parentActivities } from './data/ParentPortalData'
+import { parentActivities, parentChildren } from './data/ParentPortalData'
 import { useParentPortalContext } from './ParentPortalContext'
 import { GuideDialogue } from '@/components/GuideDialogue'
 import { updateAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
@@ -16,7 +16,10 @@ function ParentActivityView() {
   const { completeActivity } = useParentPortalContext()
   const [currentStep, setCurrentStep] = useState(0)
   const [writtenResponses, setWrittenResponses] = useState<Record<number, string>>({})
-  const activity = parentActivities.find((item) => item.id === activityId)
+  const activity = parentActivities.find(
+    (item) =>
+      item.id === activityId && (!item.childId || parentChildren.some((child) => child.id === item.childId)),
+  )
 
   if (!activity) return <NavigateToActivities />
 
@@ -67,7 +70,7 @@ function ParentActivityView() {
                 <div className="mt-4 space-y-2">
                   {step.options.map((option) => (
                     <label
-                      className="flex cursor-pointer items-center gap-3 rounded-xl bg-white p-3 text-sm"
+                      className="flex cursor-pointer items-center gap-3 rounded-xl bg-card p-3 text-sm"
                       key={option}
                     >
                       <input name="parent-option" type="radio" /> {option}
@@ -76,7 +79,7 @@ function ParentActivityView() {
                 </div>
               ) : (
                 <textarea
-                  className="mt-4 min-h-24 w-full resize-none rounded-xl border bg-white p-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                  className="mt-4 min-h-24 w-full resize-none rounded-xl border bg-card p-3 text-sm outline-none focus:ring-2 focus:ring-primary/30"
                   placeholder="Escribe aquí si deseas guardar una idea..."
                   value={writtenResponses[currentStep] ?? ''}
                   onChange={(event) =>

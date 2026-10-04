@@ -1,45 +1,25 @@
 import type { ParentActivity, ParentChild } from '../types/ParentPortalTypes'
 
-const parentProfile = {
-  name: 'María González',
-  firstName: 'María',
-  relationship: 'Madre / apoderada',
-}
+import { studentProfiles } from '@/features/counselor-portal/profile/data'
+import { fullName, generalProgress } from '@/features/counselor-portal/profile/selectors'
+import { activities } from '@/features/counselor-portal/profile/data'
 
+const familyStudent = studentProfiles.find((student) => student.id === 'ejemplo-07')!
+const conversationChildId = familyStudent.id
+const guardian = familyStudent.guardian!
+const parentProfile = {
+  name: guardian.name,
+  firstName: guardian.name.split(' ')[0],
+  relationship: guardian.relationship,
+}
 const parentChildren: ParentChild[] = [
   {
-    id: 'lucia',
-    name: 'Lucía González',
-    initials: 'LG',
-    grade: '4.º de secundaria · B',
+    id: familyStudent.id,
+    name: fullName(familyStudent),
+    initials: `${familyStudent.nombres[0]}${familyStudent.apellidos[0]}`,
+    grade: `5.° de secundaria · ${familyStudent.salon.split(' ').at(-1)}`,
     school: 'Colegio Nuevo Horizonte',
-    progress: 68,
-    lastActivity: 'Caso: Incendio forestal',
-    hollandProfile: 'Social · Investigador',
-    learningStyle: 'Visual y práctico',
-    interests: ['Salud', 'Medio ambiente', 'Trabajo comunitario'],
-    milestones: [
-      { label: 'Autoconocimiento', completed: true },
-      { label: 'Exploración ocupacional', completed: true },
-      { label: 'Toma de decisiones', completed: false },
-    ],
-  },
-  {
-    id: 'mateo',
-    name: 'Mateo González',
-    initials: 'MG',
-    grade: '2.º de secundaria · A',
-    school: 'Colegio Nuevo Horizonte',
-    progress: 34,
-    lastActivity: 'Descubriendo mis fortalezas',
-    hollandProfile: 'Artístico · Emprendedor',
-    learningStyle: 'Auditivo y colaborativo',
-    interests: ['Diseño', 'Comunicación', 'Tecnología'],
-    milestones: [
-      { label: 'Autoconocimiento', completed: true },
-      { label: 'Exploración ocupacional', completed: false },
-      { label: 'Toma de decisiones', completed: false },
-    ],
+    progress: generalProgress(familyStudent, activities).percent,
   },
 ]
 
@@ -74,16 +54,16 @@ const parentActivities: ParentActivity[] = [
   },
   {
     id: 'lucia-support',
-    title: 'Cómo acompaño a Lucía',
+    title: 'Cómo acompaño a Gabriela',
     description: 'Comparte tu mirada sobre sus intereses y registra un compromiso de acompañamiento.',
     duration: 8,
     category: 'child',
-    childId: 'lucia',
+    childId: familyStudent.id,
     steps: [
       {
-        title: 'Tu mirada sobre Lucía',
+        title: 'Tu mirada sobre Gabriela',
         body: 'Antes de conocer todas sus preferencias, queremos comprender qué fortalezas observas en ella y en qué situaciones la ves disfrutar y perseverar.',
-        prompt: '¿Qué cualidad de Lucía te gustaría que ella reconociera más?',
+        prompt: '¿Qué cualidad de Gabriela te gustaría que ella reconociera más?',
       },
       {
         title: 'Preocupaciones que podemos conversar',
@@ -98,20 +78,20 @@ const parentActivities: ParentActivity[] = [
   },
   {
     id: 'mateo-support',
-    title: 'Cómo acompaño a Mateo',
+    title: 'Mi compromiso de acompañamiento',
     description: 'Observa sus talentos emergentes y fortalece un espacio familiar de exploración.',
     duration: 8,
     category: 'child',
-    childId: 'mateo',
+    childId: familyStudent.id,
     steps: [
       {
         title: 'Explorar sin apurar',
-        body: 'Mateo todavía tiene tiempo para probar intereses distintos. En esta etapa, las experiencias variadas aportan más que intentar fijar una única elección.',
-        prompt: '¿En qué actividad notas que Mateo pierde la noción del tiempo?',
+        body: 'Gabriela todavía tiene tiempo para probar intereses distintos. En esta etapa, las experiencias variadas aportan más que intentar fijar una única elección.',
+        prompt: '¿En qué actividad notas que Gabriela pierde la noción del tiempo?',
       },
       {
         title: 'Abrir posibilidades',
-        body: 'Conectar sus intereses en diseño, comunicación y tecnología con experiencias reales puede ayudarle a descubrir ocupaciones que aún no conoce.',
+        body: 'Conectar las actividades que disfruta con experiencias reales puede ayudarle a descubrir ocupaciones que aún no conoce.',
       },
       {
         title: 'Una experiencia compartida',
@@ -144,4 +124,4 @@ const careerGuide = [
   },
 ]
 
-export { careerGuide, parentActivities, parentChildren, parentProfile }
+export { careerGuide, parentActivities, parentChildren, parentProfile, conversationChildId }

@@ -28,6 +28,7 @@ type ProfessionalTestimonial = {
   story: string
   highlights: string[]
   unlockSource: string
+  unlockCaseId: string
   youtubeUrl: string
   youtubeEmbedUrl: string
 }

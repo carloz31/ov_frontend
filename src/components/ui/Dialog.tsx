@@ -1,3 +1,4 @@
+import { useThemeClass } from '@/components/ThemeScope'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { X } from 'lucide-react'
 import type { ComponentProps } from 'react'
@@ -14,10 +15,16 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
 function DialogContent({ className, children, showCloseButton = true, ...props }: DialogContentProps) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-[#242038]/45 backdrop-blur-[2px] data-[state=closed]:animate-out data-[state=open]:animate-in" />
+      <DialogPrimitive.Overlay
+        className={cn(
+          useThemeClass(),
+          'fixed inset-0 z-50 bg-overlay/45 backdrop-blur-[2px] data-[state=closed]:animate-out data-[state=open]:animate-in',
+        )}
+      />
       <DialogPrimitive.Content
         className={cn(
-          'fixed left-1/2 top-1/2 z-50 max-h-[88vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border bg-card p-6 shadow-[var(--shadow-float)] focus:outline-none md:p-8',
+          useThemeClass(),
+          'fixed left-1/2 top-1/2 z-50 max-h-[88vh] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-3xl border bg-card text-card-foreground p-6 shadow-[var(--shadow-float)] focus:outline-none md:p-8',
           className,
         )}
         {...props}

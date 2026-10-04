@@ -54,6 +54,7 @@ export type AdventureState = {
   parentCompletedActivityIds: string[]
   bookmarks: string[]
   journal: JournalEntry[]
+  lumiRegistrations: { entryId: string; createdAt: string }[]
   readinessCheckIns: ReadinessCheckIn[]
   readinessScale: 10
   journalOnboardingSeen: boolean
@@ -79,6 +80,7 @@ export type AdventureState = {
   solvedCaseIds: string[]
   research: ResearchDraft
   videos: { id: string; title: string; alias: string; url: string; reflection: string; createdAt: string }[]
+  interviewModeration: Record<string, { hidden: boolean; featured: boolean }>
   reactions: { videoId: string; kind: string; createdAt: string }[]
   notices: AdventureNotice[]
   conversations: FamilyConversation[]

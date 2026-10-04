@@ -262,7 +262,7 @@ const planActivity: FieldMissionActivity = {
       kind: 'dialogue',
       eyebrow: 'Entregable guardado',
       title: 'Un camino se construye caminando',
-      text: 'Ya tienes una acción concreta. Cuando la pruebes, podrás volver a tu diario y registrar lo que cambió, lo que confirmó una idea o la nueva pregunta que apareció.',
+      text: 'Ya tienes una acción concreta. Cuando la pruebes, podrás volver a conversar con Lumi y contarle lo que cambió, lo que confirmó una idea o la nueva pregunta que apareció.',
     },
   ],
 }

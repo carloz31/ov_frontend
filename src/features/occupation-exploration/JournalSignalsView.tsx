@@ -35,11 +35,11 @@ function JournalSignalsView() {
           onClick={() => navigate(appPaths.student.journal)}
           variant="ghost"
         >
-          <ArrowLeft /> Volver a Mi diario
+          <ArrowLeft /> Volver a Conversaciones con Lumi
         </Button>
         <nav aria-label="Ruta actual" className="mt-5 flex items-center gap-2 text-sm text-[#5c5a54]">
           <button className="hover:text-[#4b4066]" onClick={() => navigate(appPaths.student.journal)}>
-            Mi diario
+            Conversaciones con Lumi
           </button>
           <span aria-hidden="true">→</span>
           <strong className="text-[#2b2a28]">Señales</strong>
@@ -127,7 +127,7 @@ function JournalSignalsView() {
             </div>
           ) : (
             <div className="py-14 text-center text-sm text-[#5c5a54]">
-              Registra tu primera señal desde Mi diario para comenzar el historial.
+              Registra tu primera señal desde Conversaciones con Lumi para comenzar el historial.
             </div>
           )}
         </section>
@@ -168,7 +168,9 @@ function JournalSignalsView() {
               {!entries.length && (
                 <div className="rounded-3xl border border-dashed border-[#dad6c9] bg-white/45 p-8 text-center lg:col-span-2">
                   <BookOpenText className="mx-auto size-7 text-[#4b4066]" />
-                  <p className="mt-3 text-sm text-[#5c5a54]">No registraste una entrada de diario ese día.</p>
+                  <p className="mt-3 text-sm text-[#5c5a54]">
+                    No registraste una conversación con Lumi ese día.
+                  </p>
                 </div>
               )}
             </div>

@@ -116,3 +116,25 @@ test('watchlist, publications and interview moderation share one session reducer
   const interview = state.interviews.find((item) => item.id === 'i2')
   assert.equal(interview.featured, true)
 })
+
+
+test('interview moderation preserves reports, prevents featuring hidden content and includes uploaded videos', () => {
+  const { getPublishedInterviews, moderateInterview } = load(path.resolve('src/features/counselor-portal/InterviewSelectors.ts'))
+  const state = fresh()
+  const adventure = { videos: [], reactions: [], reports: [], interviewModeration: {} }
+  const initial = getPublishedInterviews(state.interviews, adventure)
+  assert.equal(initial.filter(item => item.videoId === 'demo-industrial-design').length, 1)
+  assert.equal(initial.find(item => item.id === 'i1').featured, true)
+  const highlighted = moderateInterview(adventure, 'demo-electrical-tech', 'feature', true)
+  assert.equal(getPublishedInterviews(state.interviews, highlighted).find(item => item.id === 'i2').featured, true)
+  const hidden = moderateInterview(highlighted, 'demo-electrical-tech', 'hide')
+  assert.equal(hidden.interviewModeration['demo-electrical-tech'].hidden, true)
+  assert.equal(hidden.interviewModeration['demo-electrical-tech'].featured, false)
+  assert.equal(moderateInterview(hidden, 'demo-electrical-tech', 'feature', true), hidden)
+  assert.equal(highlighted.interviewModeration['demo-electrical-tech'].hidden, false)
+  const reported = { ...adventure, reports: [{ id: 'r1', postId: 'demo-industrial-design', status: 'hidden' }] }
+  assert.equal(getPublishedInterviews(state.interviews, reported).find(item => item.id === 'i1').hidden, true)
+  assert.equal(moderateInterview(reported, 'demo-industrial-design', 'feature', true), reported)
+  const uploaded = { ...adventure, videos: [{ id: 'upload-1', alias: 'Alex', title: 'Nueva entrevista', createdAt: '2026-10-03', url: '', reflection: '' }] }
+  assert.equal(getPublishedInterviews(state.interviews, uploaded).find(item => item.id === 'upload-1').subject, 'Nueva entrevista')
+})

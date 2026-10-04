@@ -14,6 +14,9 @@ import {
 import { getActivityPrompt } from '../data/JournalData'
 import { updateAdventure, useAdventure } from '../lib/AdventureStore'
 import type { JournalEntry, ReadinessCheckIn } from '../types/AdventureTypes'
+import { getLumiTags } from '../lib/LumiSuggestions'
+import { lumiFriendshipRules } from '../lib/LumiFriendship'
+import { LumiQuestion } from './LumiJournalPanel'
 
 function PostActivityJournalSheet({
   activityId,
@@ -30,6 +33,7 @@ function PostActivityJournalSheet({
   const [body, setBody] = useState('')
   const [readiness, setReadiness] = useState<ReadinessCheckIn['value']>()
   const prompt = getActivityPrompt(activityId, state.readinessCheckIns)
+  const tags = getLumiTags(activityId)
 
   function close() {
     setBody('')
@@ -50,7 +54,8 @@ function PostActivityJournalSheet({
             createdAt,
             linkedActivityId: activityId,
             promptShown: prompt,
-            topicTags: [],
+            topicTags: tags,
+            lockedTopicTags: tags,
             missionId: activityId,
           }
         : undefined
@@ -80,22 +85,32 @@ function PostActivityJournalSheet({
       >
         <SheetHeader className="pr-7">
           <SheetDescription>Acabas de terminar “{activityTitle}”</SheetDescription>
-          <SheetTitle className="text-2xl text-[#2b2a28]">Una pausa antes de seguir</SheetTitle>
+          <SheetTitle className="text-2xl text-[#2b2a28]">Cuéntale a Lumi</SheetTitle>
         </SheetHeader>
         <div className="mt-6 space-y-6">
           <Badge className="border-[#4b4066]/20 bg-[#4b4066]/10 text-[#4b4066]" variant="outline">
             <LockKeyhole className="size-3.5" /> Esto es solo tuyo
           </Badge>
           <div>
-            <p className="max-w-md text-lg font-semibold leading-8 text-[#2b2a28]">{prompt}</p>
+            <LumiQuestion prompt={prompt} />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {tags.map((tag) => (
+                <Badge key={tag} variant="secondary">
+                  #{tag} · sugerida
+                </Badge>
+              ))}
+            </div>
             <textarea
               aria-label="Reflexión privada"
               className="mt-4 min-h-48 w-full resize-y rounded-2xl border border-[#4b4066]/45 bg-white/80 p-4 font-serif text-base leading-8 text-[#2b2a28] outline-none focus:ring-3 focus:ring-[#4b4066]/15"
               onChange={(event) => setBody(event.target.value)}
-              placeholder="Escribe lo que quieras..."
+              placeholder="Lumi, hoy quiero contarte…"
               value={body}
             />
-            <p className="mt-2 text-xs leading-5 text-[#5c5a54]">Una palabra también es suficiente.</p>
+            <p className="mt-2 text-xs leading-5 text-[#5c5a54]">
+              Una palabra también es suficiente. Cada conversación nueva suma 1 punto de amistad, hasta{' '}
+              {lumiFriendshipRules.dailyPointLimit} al día.
+            </p>
           </div>
           <Separator className="bg-[#dad6c9]" />
           <fieldset className="rounded-2xl border border-[#3e6259]/20 bg-[#3e6259]/7 p-4">

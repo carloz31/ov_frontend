@@ -29,7 +29,7 @@ function JournalResurfacing() {
             <BookOpenText className="size-5" />
           </span>
           <span className="min-w-0 flex-1">
-            <strong className="block text-[#2b2a28]">De tu diario</strong>
+            <strong className="block text-[#2b2a28]">De tus conversaciones con Lumi</strong>
             <span className="mt-1 block text-sm text-[#5c5a54]">
               Antes de ordenar tus opciones, puedes volver a algo que escribiste en el camino.
             </span>
@@ -50,7 +50,7 @@ function JournalResurfacing() {
           </article>
         ))}
         <Button onClick={() => navigate(appPaths.student.journal)} variant="ghost">
-          Ver todas mis entradas
+          Ver mis conversaciones con Lumi
         </Button>
       </CollapsibleContent>
     </Collapsible>

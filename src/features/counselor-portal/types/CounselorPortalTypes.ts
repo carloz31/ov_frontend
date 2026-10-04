@@ -171,6 +171,8 @@ export type Interview = {
   subject: string
   date: string
   commentCount: number
+  videoId?: string
+  hidden?: boolean
   url: string
   reflection: string
   featured: boolean

@@ -77,7 +77,9 @@ function ResearchMissionsView() {
               <Check className="size-10 text-emerald-600" />
               <h2 className="text-2xl font-bold">Tu entrevista ya está en el Salón</h2>
               <p>Otros viajeros podrán descubrirla y dejar una reacción guiada.</p>
-              <Button onClick={() => navigate(appPaths.student.resources)}>Ver entrevistas del Salón</Button>
+              <Button onClick={() => navigate(`${appPaths.student.resources}?tab=community`)}>
+                Ver entrevistas del Salón
+              </Button>
               <Button
                 variant="outline"
                 onClick={() =>

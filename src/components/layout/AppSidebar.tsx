@@ -35,7 +35,7 @@ function AppSidebar({ activeItemId, groups, onLogout, onOpenProfile, userName, u
               <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
                 <Compass className="size-5" />
               </div>
-              <div className="grid flex-1 text-left leading-tight">
+              <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Orientación
                 </span>

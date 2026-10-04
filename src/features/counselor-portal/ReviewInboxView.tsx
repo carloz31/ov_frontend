@@ -158,9 +158,9 @@ function ReviewInboxView() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-4 rounded-xl border border-[var(--warning)]/30 bg-[var(--warning-soft)] p-4">
+                <div className="mt-4 rounded-xl border border-border bg-[var(--warning-soft)] p-4">
                   <strong className="text-sm">Observado</strong>
-                  <p className="mt-1 text-sm text-[#765421]">{selected.record.reviewReason}</p>
+                  <p className="mt-1 text-sm text-warning-text">{selected.record.reviewReason}</p>
                 </div>
               </div>
               <div className="flex flex-wrap gap-3 border-t pt-5">

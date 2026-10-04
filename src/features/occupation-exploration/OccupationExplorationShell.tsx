@@ -1,13 +1,5 @@
 import { useMemo } from 'react'
-import {
-  FolderHeart,
-  LibraryBig,
-  MapPinned,
-  MessageSquareQuote,
-  BookOpen,
-  Backpack,
-  HeartHandshake,
-} from 'lucide-react'
+import { FolderHeart, LibraryBig, MapPinned, BookOpen, Backpack, HeartHandshake } from 'lucide-react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { AppShell, type AppNavigationGroup } from '@/components/layout/AppShell'
 import { GuideDialogue } from '@/components/GuideDialogue'
@@ -23,7 +15,6 @@ type ModuleView =
   | 'missions'
   | 'profile-general'
   | 'profile-decisions'
-  | 'testimonials'
   | 'research'
   | 'journal'
   | 'journal-signals'
@@ -58,7 +49,7 @@ function OccupationExplorationShell() {
           {
             id: 'journal',
             icon: BookOpen,
-            label: 'Mi diario',
+            label: 'Conversaciones con Lumi',
             onSelect: () => navigate(appPaths.student.journal),
           },
           {
@@ -70,7 +61,7 @@ function OccupationExplorationShell() {
           {
             id: 'resources',
             icon: Backpack,
-            label: 'Recursos y novedades',
+            label: 'Recursos',
             onSelect: () => navigate(appPaths.student.resources),
           },
           {
@@ -94,12 +85,6 @@ function OccupationExplorationShell() {
                 onSelect: () => navigate(catalogPathBySection.institutions),
               },
             ],
-          },
-          {
-            id: 'testimonials',
-            icon: MessageSquareQuote,
-            label: 'Héroes de la ciudad',
-            onSelect: () => navigate(appPaths.student.testimonials),
           },
           {
             id: 'profile',
@@ -162,7 +147,7 @@ function getViewFromPath(pathname: string): ModuleView {
   if (pathname.endsWith('/catalog/careers')) return 'catalog-careers'
   if (pathname.endsWith('/catalog/institutions')) return 'catalog-institutions'
   if (pathname.endsWith('/catalog/professions')) return 'catalog-professions'
-  if (pathname.endsWith('/testimonials')) return 'testimonials'
+  if (pathname.endsWith('/testimonials')) return 'resources'
   if (pathname.endsWith('/profile/decisions')) return 'profile-decisions'
   if (pathname.endsWith('/profile')) return 'profile-general'
   return 'central'
@@ -178,16 +163,15 @@ function getCatalogSection(view: ModuleView): CatalogSection | undefined {
 function getViewLabel(view: ModuleView) {
   const labels: Partial<Record<ModuleView, string>> = {
     research: 'Misión de investigación',
-    journal: 'Mi diario',
-    'journal-signals': 'Mi diario → Señales',
+    journal: 'Conversaciones con Lumi',
+    'journal-signals': 'Conversaciones con Lumi → Señales',
     community: 'Salón y Crew',
-    resources: 'Recursos y novedades',
+    resources: 'Recursos · Mi mochila',
     conversations: 'En familia',
   }
   if (labels[view]) return labels[view]
   if (getCatalogSection(view)) return 'Catálogo'
   if (view === 'central' || view === 'missions') return 'Aventura'
-  if (view === 'testimonials') return 'Héroes de la ciudad'
   if (view === 'profile-general' || view === 'profile-decisions') return 'Mi perfil'
   return 'Exploración'
 }
@@ -195,15 +179,13 @@ function getViewLabel(view: ModuleView) {
 function getGuideText(view: ModuleView) {
   const guides: Partial<Record<ModuleView, string>> = {
     journal:
-      'Tu diario es completamente privado. Puedes escribir cuando quieras; tu orientadora solo verá la señal separada de seguridad vocacional cuando hagas un check-in.',
+      'Cuéntale a Lumi lo que descubres de ti. Cada conversación nueva suma un punto de amistad, hasta tres al día. Las entradas sugeridas aparecen al completar actividades. Tu orientadora solo verá la señal separada de seguridad vocacional.',
     'journal-signals':
       'Este historial reúne únicamente tus señales. Elige un punto para volver a las entradas privadas que escribiste ese mismo día.',
     community:
       'Algunos descubrimientos crecen al compartirlos. Invita a quienes quieras caminar contigo: tu Crew puede tener hasta tres viajeros, contigo incluido.',
     resources:
-      'En este espacio puedes leer publicaciones de tu orientadora, revisar eventos y descubrir las entrevistas que comparte tu salón. Guarda lo que quieras volver a mirar.',
-    testimonials:
-      'Los héroes de esta ciudad también empezaron con preguntas. Ayuda a sus habitantes para descubrir sus historias y conocer de cerca sus profesiones.',
+      'Tu mochila crece con cada paso: completa actividades para reunir fichas y misiones de Central de Casos para descubrir testimonios y entrevistas. Marca una estrella para guardar tus favoritos.',
     'catalog-professions':
       'Explora las profesiones sin buscar una respuesta definitiva. Guarda las que despierten tu curiosidad y vuelve a compararlas cuando descubras nuevas pistas.',
     'catalog-careers':

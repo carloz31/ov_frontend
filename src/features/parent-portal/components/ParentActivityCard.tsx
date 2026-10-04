@@ -14,7 +14,7 @@ function ParentActivityCard({ activity, completed, onStart }: ParentActivityCard
   return (
     <Card className="flex flex-col gap-4 p-5 shadow-[var(--shadow-card)] sm:flex-row sm:items-center">
       <div
-        className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${completed ? 'bg-[var(--success-soft)] text-[var(--success)]' : 'bg-[var(--primary-soft)] text-primary'}`}
+        className={`flex size-11 shrink-0 items-center justify-center rounded-xl ${completed ? 'bg-[var(--success-soft)] text-success-text' : 'bg-[var(--primary-soft)] text-primary'}`}
       >
         {completed ? <CheckCircle2 /> : <Circle />}
       </div>

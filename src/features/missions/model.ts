@@ -38,6 +38,9 @@ export interface Recurso {
   url?: string
   contenido?: string // markdown (fichas resumen)
   fuente?: string
+  resumen?: string
+  descripcion?: string
+  formatoArchivo?: 'pdf' | 'archivo'
   guardableEnRecursos: boolean // aparece en la sección Recursos / favoritos
 }
 
