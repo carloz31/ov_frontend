@@ -34,8 +34,8 @@ import { RoleSelectionScreen } from '@/features/role-selection/RoleSelectionScre
 import type { PlatformRole } from '@/features/role-selection/types/RoleSelectionTypes'
 import { appPaths } from './paths'
 import { ResearchMissionsView } from '@/features/occupation-exploration/ResearchMissionsView'
-import { JournalView } from '@/features/occupation-exploration/JournalView'
-import { JournalSignalsView } from '@/features/occupation-exploration/JournalSignalsView'
+import { StudentJournalView } from '@/features/student-experience/modules/StudentJournalView'
+import { StudentSignalsView } from '@/features/student-experience/modules/StudentSignalsView'
 import { CommunityView } from '@/features/occupation-exploration/CommunityView'
 import { AdventureResourcesView } from '@/features/occupation-exploration/AdventureResourcesView'
 import { FamilyConversationsView } from '@/features/family-conversations/FamilyConversationsView'
@@ -70,8 +70,8 @@ function AppRoutes() {
           <Route element={<CaminoScreen />} path="missions" />
           <Route element={<StudentActivitiesView />} path="activities" />
           <Route element={<ResearchMissionsView />} path="research" />
-          <Route element={<JournalView />} path="journal" />
-          <Route element={<JournalSignalsView />} path="journal/signal" />
+          <Route element={<StudentJournalView />} path="journal" />
+          <Route element={<StudentSignalsView />} path="journal/signal" />
           <Route element={<CommunityView />} path="community" />
           <Route element={<AdventureResourcesView />} path="resources" />
           <Route element={<Navigate replace to={appPaths.student.passport} />} path="achievements" />

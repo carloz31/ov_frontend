@@ -156,3 +156,11 @@ Archivos: map/AdventurePanel.tsx, student-experience.css, pruebas del estudiante
 Renombrar el indicador de Ciudad a “Afinidad con la ciudad”, tanto en su etiqueta visible como accesible, sin alterar el cálculo por casos resueltos. Reducir el anillo del panel de 96 a 80 px y el porcentaje de 22 a 18 px, conservando proporciones, colores y valores en ambas zonas.
 
 Archivos: map/mapPoints.ts, guide-texts.ts (explicación de Lumi), student-experience.css, expectativas existentes de las pruebas del estudiante y este plan. Ejecutar build, lint y test, seleccionar únicamente cambios propios y crear el commit de la fase. Reportar verificaciones pendientes y detenerse al terminar.
+
+## 13. Diario y señal separados — `Fase 13: Diario y señal separados`
+
+Mi diario mostrará conversaciones privadas, sugerencias y amistad con Lumi, sin la tarjeta del check-in. Mantener únicamente “Conversación libre” para iniciar una entrada libre; retirar el botón duplicado “Contarle algo a Lumi” y el acceso equivalente del estado vacío. Conservar escritura, edición, borrado, etiquetas, invitaciones y enlaces de actividades/familia.
+
+“Ver evolución” del panel conserva /student/journal/signal y abre una vista independiente de señales, con registro/edición del día mediante el diálogo existente y el gráfico actual. La selección de un punto muestra fecha y valor; las entradas privadas quedan en Mi diario. Esta separación sustituye la presentación anterior que mezclaba ambos contenidos, sin cambiar registros, stores ni claves.
+
+Crear StudentJournalView.tsx y StudentSignalsView.tsx dentro de modules, copiando y adaptando las vistas actuales. Actualizar exclusivamente sus imports y rutas del bloque /student en AppRoutes.tsx, títulos/guía locales, StudentModuleLayout, expectativas del estudiante y este plan. Ejecutar build, lint y test; comprobar navegación, una sola acción libre, conservación de entradas, señal sin contenido privado y registro/edición sin duplicados. Seleccionar solo cambios propios, commit y reporte; detenerse al terminar.

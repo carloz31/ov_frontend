@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react'
-import { ArrowLeft, ChevronRight, CircleHelp } from 'lucide-react'
+import { ArrowLeft, CircleHelp } from 'lucide-react'
 import { Link } from 'react-router'
 import { appPaths } from '@/routes/paths'
 import { guideSteps } from '../guide-texts'
@@ -23,15 +23,7 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
           <span>Volver al mapa</span>
         </Link>
         <span aria-hidden="true" className="sx-module-separator" />
-        <h1 className="sx-module-title">
-          {getStudentViewLabel(view)}
-          {view === 'journal-signals' && (
-            <>
-              <ChevronRight aria-hidden="true" size={16} />
-              <span>Señales</span>
-            </>
-          )}
-        </h1>
+        <h1 className="sx-module-title">{getStudentViewLabel(view)}</h1>
         {view === 'profile-decisions' && (
           <nav className="sx-module-tabs" aria-label="Secciones de mi perfil">
             <Link to={appPaths.student.profile}>Información general</Link>

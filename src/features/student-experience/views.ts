@@ -50,8 +50,8 @@ export function getStudentViewLabel(view: StudentView): string {
   const labels: Partial<Record<StudentView, string>> = {
     activities: 'Mis actividades',
     research: 'Misión de investigación',
-    journal: 'Conversaciones con Lumi',
-    'journal-signals': 'Conversaciones con Lumi',
+    journal: 'Mi diario',
+    'journal-signals': 'Evolución de mi señal',
     community: 'Salón y Crew',
     resources: 'Recursos · Mi mochila',
     conversations: 'En familia',

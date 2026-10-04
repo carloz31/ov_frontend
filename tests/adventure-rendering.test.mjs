@@ -917,11 +917,11 @@ test('journal home supports topics and keeps readiness separate from entries', (
   assert.match(html, /Por tema/)
   assert.match(html, /Buscar por tema/)
   assert.match(html, /Solo tú puedes leer este espacio/)
-  assert.match(html, /Tu señal de hoy/)
-  assert.match(html, /Qué tan seguro te sientes hoy de tu próximo paso/i)
+  assert.match(html, /Mi diario/)
+  assert.doesNotMatch(html, /Tu señal de hoy|Qué tan seguro te sientes hoy de tu próximo paso/i)
   assert.match(html, /Tema del día/)
-  assert.match(html, /Pulsa aquí para registrarla/)
-  assert.match(html, /Ver historial/)
+  assert.equal((html.match(/>Conversación libre /g) ?? []).length, 1)
+  assert.doesNotMatch(html, /Contarle algo a Lumi|Pulsa aquí para registrarla|Ver historial/)
   const source = readFileSync(
     path.resolve('src/features/occupation-exploration/components/PostActivityJournalSheet.tsx'),
     'utf8',
@@ -930,17 +930,18 @@ test('journal home supports topics and keeps readiness separate from entries', (
   assert.match(source, /journal: entry/)
   assert.match(source, /Omitir por ahora/)
 })
-test('signal history uses a ten-point line chart and links points to private entries', () => {
+test('signal history keeps its ten-point chart and daily check-in separate from private entries', () => {
   const html = render('/student/journal/signal', { journalOnboardingSeen: true })
-  assert.match(html, /Mi diario/)
-  assert.match(html, /Señales/)
+  assert.match(html, /Evolución de mi señal/)
+  assert.match(html, /Tu señal de hoy/)
+  assert.match(html, /Registrar mi señal/)
   assert.match(html, /Historial de señales/)
   assert.match(html, /Escala del 1 al 10/)
   assert.match(html, /polyline/)
-  assert.match(html, /Entradas del/)
-  assert.match(html, /Solo tú puedes leerlas/)
+  assert.match(html, /Señal seleccionada/)
+  assert.doesNotMatch(html, /Entradas del|Solo tú puedes leerlas|Volver a Conversaciones con Lumi/)
   assert.ok((html.match(/de 10/g) ?? []).length >= 10)
-  assert.match(html, /Todavía tengo dudas, pero decidí preparar tres preguntas para la feria/)
+  assert.doesNotMatch(html, /Todavía tengo dudas, pero decidí preparar tres preguntas para la feria/)
 })
 test('moderation hides reported content from the classroom feed', () => {
   const html = render('/student/community', {
@@ -2265,4 +2266,67 @@ test('phase 9 panel has five direct links, a compact next-step action and the re
   assert.match(panel.text(rank), /NIVEL03Cartógrafo de posibilidades/)
   assert.equal(panel.button(tree, 'Siguiente paso'), undefined)
   panel.dispose()
+})
+
+test('separate student diary preserves free-entry saving and editing without changing signals', () => {
+  store.updateAdventure(() => ({ ...store.createInitialAdventure(), journalOnboardingSeen: true }))
+  const before = store.useAdventure()
+  const signalBefore = JSON.stringify(before.readinessCheckIns)
+  const diary = immersivePlayerHarness('../modules/StudentJournalView', {
+    'react-router': { useSearchParams: () => [new URLSearchParams()] },
+  })
+  const part = (tree, name) => diary.find(tree, element => element.type?.name === name)
+  let tree = diary.draw({})
+  part(tree, 'JournalHome').props.onNew()
+  tree = diary.draw({})
+  part(tree, 'JournalEditor').props.onBodyChange('Una entrada privada de prueba.')
+  tree = diary.draw({})
+  part(tree, 'JournalEditor').props.onSave()
+  let saved = store.useAdventure().journal.find(entry => entry.body === 'Una entrada privada de prueba.')
+  assert.equal(store.useAdventure().journal.length, before.journal.length + 1)
+  assert.equal(saved.kind, 'open')
+  tree = diary.draw({})
+  part(tree, 'JournalHome').props.onOpen(saved)
+  tree = diary.draw({})
+  part(tree, 'JournalDetail').props.onEdit()
+  tree = diary.draw({})
+  part(tree, 'JournalEditor').props.onBodyChange('Una entrada privada editada.')
+  tree = diary.draw({})
+  part(tree, 'JournalEditor').props.onSave()
+  const edited = store.useAdventure().journal.find(entry => entry.id === saved.id)
+  assert.equal(edited.body, 'Una entrada privada editada.')
+  assert.equal(edited.createdAt, saved.createdAt)
+  assert.equal(store.useAdventure().journal.length, before.journal.length + 1)
+  assert.equal(JSON.stringify(store.useAdventure().readinessCheckIns), signalBefore)
+  diary.dispose()
+})
+
+test('separate signal history reuses check-in editing and keyboard point selection without private entries', () => {
+  const checkIn = load(path.resolve('src/features/student-experience/overlays/checkIn.ts'))
+  store.updateAdventure(() => store.createInitialAdventure())
+  checkIn.saveTodayCheckIn(7)
+  const before = store.useAdventure()
+  const today = checkIn.getTodayCheckIn(before)
+  let opened = 0
+  const history = immersivePlayerHarness('../modules/StudentSignalsView', {
+    '../overlays/checkIn': { ...checkIn, useCheckInDay() {} },
+    '../overlays/overlay-context': { useStudentOverlays: () => ({ openCheckIn: () => opened++ }) },
+  })
+  let tree = history.draw({})
+  const edit = history.find(tree, element => history.text(element) === 'Cambiar mi señal' && element.props.onClick)
+  edit.props.onClick()
+  assert.equal(opened, 1)
+  checkIn.saveTodayCheckIn(9)
+  tree = history.draw({})
+  assert.match(history.text(tree), /Señal seleccionada · 9\/10/)
+  assert.equal(store.useAdventure().readinessCheckIns.length, before.readinessCheckIns.length)
+  assert.equal(checkIn.getTodayCheckIn(store.useAdventure()).id, today.id)
+  assert.equal(JSON.stringify(store.useAdventure().journal), JSON.stringify(before.journal))
+  for (const entry of before.journal) assert.ok(!history.text(tree).includes(entry.body))
+  const point = history.find(tree, element => element.props.role === 'button' && !element.props['aria-label'].endsWith('9 de 10'))
+  point.props.onKeyDown({ key: 'Enter' })
+  tree = history.draw({})
+  const selectedValue = point.props['aria-label'].match(/: (\d+) de 10$/)[1]
+  assert.match(history.text(tree), new RegExp(`Señal seleccionada · ${selectedValue}/10`))
+  history.dispose()
 })

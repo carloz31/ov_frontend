@@ -17,7 +17,7 @@ export const guideSteps: Record<StudentView, string[]> = {
     'Cuéntale a Lumi lo que descubres de ti. Cada conversación nueva suma un punto de amistad, hasta tres al día. Las entradas sugeridas aparecen al completar actividades. Tu orientadora solo verá la señal separada de seguridad vocacional.',
   ],
   'journal-signals': [
-    'Este historial reúne únicamente tus señales. Elige un punto para volver a las entradas privadas que escribiste ese mismo día.',
+    'Este historial reúne únicamente tus señales. Puedes registrar o cambiar la señal de hoy y elegir un punto para consultar su fecha y valor. Tus entradas privadas permanecen en «Mi diario».',
   ],
   community: [
     'Algunos descubrimientos crecen al compartirlos. Invita a quienes quieras caminar contigo: tu Crew puede tener hasta tres viajeros, contigo incluido.',
