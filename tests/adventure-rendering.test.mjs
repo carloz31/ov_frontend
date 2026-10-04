@@ -164,10 +164,10 @@ test('counselor v2 screens expose the revised controls and terminology', () => {
   assert.match(data, /Fecha de primer acceso/)
   assert.match(data, /Datos de apoderados/)
 })
-test('review mode renders every mission, city and research destination unlocked initially', () => {
+test('presentation locks pending path missions while prototype city and research stay accessible', () => {
   const html = render('/student/missions')
   assert.match(html, /El inicio del viaje/)
-  assert.doesNotMatch(html, /Las huellas que traigo, bloqueado/)
+  assert.match(html, /Las huellas que traigo, bloqueado/)
   assert.doesNotMatch(html, /La llave de la ciudad, bloqueado/)
   assert.match(render('/student/exploration'), /Estación de investigación/)
   assert.match(render('/student/research'), /Selecciona una carrera/)
@@ -308,10 +308,9 @@ test('adventure keeps the original mission route and switches between path and c
   assert.match(missions, /Nivel de recorrido/)
   assert.match(missions, /El inicio del viaje/)
   assert.match(missions, /Informativa · 4 min/)
-  assert.match(missions, /Test · 6 min/)
   assert.match(missions, /Cambiar zona de la aventura/)
   for (const label of ['Alejar mapa', 'Acercar mapa', 'Centrar mapa']) assert.match(missions, new RegExp(`aria-label="${label}"`))
-  assert.doesNotMatch(missions, /Arrastra el lienzo para explorar/)
+  assert.doesNotMatch(missions, /Arrastra .*para explorar/)
   const city = render('/student/exploration')
   assert.match(city, /Satisfacción de las personas/)
   assert.match(city, /Una vuelta por el molino/)
@@ -336,7 +335,7 @@ test('new map canvases draw segments only on the path, with completion and front
   const { getCaminoPoints } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
   const journey = journeyLogic.initialJourney()
   journey.progress['mission-welcome'] = { estado: 'completada' }
-  journey.progress['mission-story'] = { estado: 'completada' }
+  journey.progress['enc-mitos'] = { estado: 'completada' }
   const points = getCaminoPoints(store.createInitialAdventure(), journey)
   const props = { points, panelOpen: false, onSelect() {}, onScaleChange() {}, backgroundImage: '/images/adventure/journey-map.jpeg', label: 'Mapa de prueba' }
   const route = renderToStaticMarkup(React.createElement(MapCanvas, { ...props, variant: 'route' }))
@@ -371,12 +370,12 @@ test('student point calculations preserve progress, recommendations and every dr
   assert.equal(replay.revision, true)
   assert.equal(replay.journal.completed, true)
   assert.equal(getZoneProgress('missions', adventure, journey).value, 12.5)
-  assert.equal(getRecommendedPoint(completed).id, 'story')
+  assert.equal(getRecommendedPoint(completed).id, 'beliefs')
   const locked = getPointDetails({ ...completed[1], status: 'locked' }, adventure, journey)
   assert.equal(locked.actionLabel, 'Actividad bloqueada')
   assert.equal(locked.disabled, true)
   assert.match(locked.requirement, /El inicio del viaje/)
-  const review = getPointDetails({ ...completed[1], status: 'completed' }, adventure, journey)
+  const review = getPointDetails({ ...completed[2], status: 'completed' }, adventure, journey)
   assert.equal(review.actionLabel, 'Ver o modificar mis respuestas')
   assert.equal(getPointDetails(points.at(-1), adventure, journey).href, '/student/exploration')
   const city = getCiudadPoints(adventure, journey)
@@ -402,14 +401,17 @@ test('map zoom preserves its cursor anchor, respects bounds and focuses beside t
   assert.ok(Math.abs((cursor.y - current.y) / current.scale - (cursor.y - zoomed.y) / zoomed.scale) < .00001)
   assert.equal(zoomTransform(current, 99, cursor, bounds).scale, maxScale)
   assert.equal(zoomTransform(current, .01, cursor, bounds).scale, minScale)
-  const clamped = clampTransform({ x: 9999, y: -9999, scale: .8 }, bounds, true)
-  assert.equal(clamped.x, 304)
+  const clamped = clampTransform({ x: 9999, y: -9999, scale: .8 }, bounds)
+  assert.equal(clamped.x, 0)
   assert.equal(clamped.y, bounds.height - 1519 * .8)
   const point = { x: 590, y: 290 }
   const position = mapPosition(point)
   const focused = focusTransform(current, point, bounds, true)
   assert.ok(Math.abs(focused.x + position.x * focused.scale - visibleCenter(bounds, true).x) < .00001)
   assert.ok(Math.abs(focused.y + position.y * focused.scale - bounds.height / 2) < .00001)
+  const firstPoint = focusTransform({ x: 0, y: 0, scale: .55 }, { x: 130, y: 140 }, bounds, true)
+  assert.ok(firstPoint.x + mapPosition({ x: 130, y: 140 }).x * firstPoint.scale > 304)
+  assert.equal(firstPoint.scale, .55)
   const source = readFileSync(path.resolve('src/features/student-experience/map/MapCanvas.tsx'), 'utf8')
   assert.match(source, /addEventListener\('wheel', wheel, \{ passive: false \}\)/)
   assert.match(source, /removeEventListener\('wheel', wheel\)/)
@@ -975,6 +977,8 @@ function immersivePlayerHarness(name, overrides = {}) {
       if (!slots[i] || dependencies.some((value, j) => !Object.is(value, slots[i].dependencies[j]))) slots[i] = { value: factory(), dependencies }
       return slots[i].value
     },
+    useCallback(callback, dependencies) { return react.useMemo(() => callback, dependencies) },
+    useImperativeHandle(ref, factory, dependencies) { const value = react.useMemo(factory, dependencies); if (ref) ref.current = value },
     useEffect(callback, dependencies) {
       const i = effect++
       if (!effects[i] || dependencies.some((value, j) => !Object.is(value, effects[i].dependencies[j]))) pending.push(() => {
@@ -997,7 +1001,7 @@ function immersivePlayerHarness(name, overrides = {}) {
   const all = tree => Array.isArray(tree) ? tree.flatMap(all) : React.isValidElement(tree) ? [tree, ...all(tree.props.children)] : []
   const text = tree => Array.isArray(tree) ? tree.map(text).join('') : React.isValidElement(tree) ? text(tree.props.children) : typeof tree === 'string' || typeof tree === 'number' ? String(tree) : ''
   return {
-    draw(props) { slot = effect = 0; const tree = component(props); pending.splice(0).forEach(run => run()); return tree },
+    draw(props, mount) { slot = effect = 0; const tree = typeof component === 'function' ? component(props) : component.render(props, props.ref); mount?.(tree); pending.splice(0).forEach(run => run()); return tree },
     find: (tree, predicate) => all(tree).find(predicate),
     button: (tree, label) => all(tree).find(element => element.type === 'button' && text(element).includes(label)),
     text,
@@ -1636,27 +1640,37 @@ test('shell seeds after v2 synchronization so migrated completions do not create
   store.updateAdventure(() => store.createInitialAdventure()); journeyStore.updateJourney(() => journeyLogic.initialJourney()); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
 })
 
-test('novelties menu orders unread first and marks every visible novelty seen when closed or selected', () => {
+test('novelties show only pending entries and close without reading; selection reads just one', () => {
   store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: ['welcome'] }))
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'] }))
   resetNoveltyUi({ seenUnlockIds: ['badge:I1'] })
   const menu = immersivePlayerHarness('../overlays/NoveltiesMenu')
-  let tree = menu.draw({ glass: true })
-  const ordered = noveltyLogic.orderUnlocks(noveltyLogic.getUnlocks(store.useAdventure(), journeyStore.useJourney()), noveltyUi.useStudentUi())
-  assert.equal(ordered[0].id, 'ficha:ficha-mitos'); assert.equal(ordered[1].id, 'badge:I1')
-  assert.ok(menu.find(tree, element => element.type === 'button' && element.props['aria-label'] === 'Novedades' && element.props.className.includes('sx-glass')))
+  let tree = menu.draw({})
   assert.equal(menu.text(menu.find(tree, element => element.props.className === 'sx-novelties-count')), '1')
-  tree.props.onOpenChange(true); tree = menu.draw({ glass: true }); tree.props.onOpenChange(false)
-  assert.ok(noveltyUi.useStudentUi().seenUnlockIds.includes('ficha:ficha-mitos'))
-  tree = menu.draw({ glass: true }); assert.equal(menu.find(tree, element => element.props.className === 'sx-novelties-count'), undefined)
+  assert.match(menu.text(tree), /Nueva ficha disponible/)
+  assert.match(menu.text(tree), /Se ha desbloqueado «Ficha: Mitos y realidades del futuro profesional»/)
+  assert.doesNotMatch(menu.text(tree), /Nueva insignia disponible/)
+  tree.props.onOpenChange(true); tree = menu.draw({}); tree.props.onOpenChange(false)
+  assert.deepEqual(Array.from(noveltyUi.useStudentUi().seenUnlockIds), ['badge:I1'])
+  const closeItem = menu.find(tree, element => typeof element.props.onSelect === 'function' && element.props.children?.props?.['aria-label'] === 'Cerrar novedades')
+  closeItem.props.onSelect()
+  assert.deepEqual(Array.from(noveltyUi.useStudentUi().seenUnlockIds), ['badge:I1'])
   resetNoveltyUi(); tree = menu.draw({})
-  menu.find(tree, element => typeof element.props.onSelect === 'function').props.onSelect()
-  assert.equal(noveltyUi.useStudentUi().seenUnlockIds.length, 2)
-  assert.equal(noveltyLogic.markUnlocksSeen(noveltyUi.useStudentUi(), ordered), noveltyUi.useStudentUi())
+  const item = menu.find(tree, element => element.props.children?.props?.className === 'sx-novelty' && element.props.children.props.to === '/student/resources')
+  item.props.onSelect()
+  assert.deepEqual(Array.from(noveltyUi.useStudentUi().seenUnlockIds), ['ficha:ficha-mitos'])
+  tree = menu.draw({})
+  assert.equal(menu.text(menu.find(tree, element => element.props.className === 'sx-novelties-count')), '1')
+  assert.doesNotMatch(menu.text(tree), /Nueva ficha disponible/)
+  const badge = menu.find(tree, element => element.props.children?.props?.className === 'sx-novelty')
+  assert.equal(badge.props.children.props.to, '/student/profile?section=passport')
+  badge.props.onSelect(); tree = menu.draw({})
+  assert.match(menu.text(tree), /No tienes novedades pendientes/)
+  assert.equal(menu.find(tree, element => element.props.className === 'sx-novelties-count'), undefined)
   menu.dispose()
   store.updateAdventure(() => store.createInitialAdventure()); journeyStore.updateJourney(() => journeyLogic.initialJourney()); resetNoveltyUi({ initialized: false })
   const empty = immersivePlayerHarness('../overlays/NoveltiesMenu')
-  tree = empty.draw({}); assert.match(empty.text(tree), /Aún no hay novedades\. Cada misión que completes puede traer una\./)
+  tree = empty.draw({}); assert.match(empty.text(tree), /No tienes novedades pendientes/)
   empty.dispose(); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
 })
 
@@ -1831,8 +1845,8 @@ test('every supplied mission node renders, including matrices, slides, questions
           },
         },
       }))
-      const route = activity.id === 'act-tip-01' ? '/student/exploration' : '/student/missions'
-      const html = render(`${route}?actividad=${activity.id}`)
+      const { StudentActivityPlayer } = load(path.resolve('src/features/student-experience/player/StudentActivityPlayer.tsx'))
+      const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(StudentActivityPlayer, { activity, onClose() {}, onNext() {} })))
       assert.ok(html.includes(activity.titulo), `${activity.id}/${node.id}`)
       assert.match(html, /aria-label="Salir de la actividad"/)
       assert.match(html, /fixed inset-0 z-40/)
@@ -1889,4 +1903,237 @@ test('saved resources and counselor submissions appear in their respective desti
   assert.match(render('/counselor/reviews'), /Registros observados/)
   assert.doesNotMatch(render('/parent/activities'), /Consejo de ejemplo compartido con orientación/)
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
+test('phase 8 path sequence respects both completion records without changing catalog or real thresholds', () => {
+  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const originalIds = fieldMissions.map(mission => mission.id)
+  const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
+  let points = logic.getCaminoPoints(adventure, journey)
+  assert.deepEqual(Array.from(points.slice(0, 3), point => point.id), ['welcome', 'beliefs', 'story'])
+  points.slice(0, 3).forEach((point, index) => {
+    assert.equal(point.x, fieldMissions[index].x); assert.equal(point.y, fieldMissions[index].y)
+  })
+  assert.equal(points[0].status, 'available')
+  assert.ok(points.slice(1, -1).every(point => point.status === 'locked'))
+  assert.equal(logic.getNextCaminoActivity(points).id, 'mission-welcome')
+  adventure.completedMissionIds = ['welcome', 'future']
+  points = logic.getCaminoPoints(adventure, journey)
+  assert.equal(points[0].status, 'completed')
+  assert.equal(points[1].status, 'available')
+  assert.equal(points.find(point => point.id === 'future').status, 'completed')
+  assert.equal(logic.getNextCaminoActivity(points).id, 'enc-mitos')
+  journey.progress['enc-mitos'] = { estado: 'completada' }
+  points = logic.getCaminoPoints(adventure, journey)
+  assert.equal(points[2].status, 'available')
+  assert.equal(logic.getNextCaminoActivity(points).id, 'mission-story')
+  journey.progress['mission-story'] = { estado: 'completada' }
+  points = logic.getCaminoPoints(adventure, journey)
+  assert.equal(logic.getNextCaminoActivity(points), null)
+  assert.equal(logic.getRecommendedPoint(points.map(point => point.id === 'city' ? { ...point, status: 'locked' } : point)), undefined)
+  assert.ok(points.slice(3, -1).filter(point => point.id !== 'future').every(point => point.status === 'locked'))
+  assert.equal(logic.getPointDetails(points.find(point => point.id === 'future'), adventure, journey).revision, true)
+  assert.deepEqual(Array.from(fieldMissions, mission => mission.id), Array.from(originalIds))
+  assert.equal(store.prototypeAllUnlocked, true)
+  assert.equal(store.isCityUnlocked({ ...adventure, completedMissionIds: ['welcome', 'beliefs', 'story'] }), false)
+  assert.equal(logic.getZoneProgress('missions', { ...adventure, completedMissionIds: ['welcome'] }, journey).value, 37.5)
+})
+
+test('phase 8 direct links open blocked details instead of starting unavailable players', () => {
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  for (const id of ['enc-mitos', 'mission-story', 'mission-future', 'act-06']) {
+    const html = render('/student/missions?actividad=' + id)
+    assert.match(html, /sx-map-viewport/)
+    assert.doesNotMatch(html, /aria-label="Salir de la actividad"/)
+  }
+  assert.match(render('/student/missions?actividad=mission-welcome'), /aria-label="Salir de la actividad"/)
+  assert.match(render('/student/missions?actividad=enc-mitos', { completedMissionIds: ['welcome'] }), /aria-label="Salir de la actividad"/)
+  assert.match(render('/student/missions?actividad=mission-future&revision=1', { completedMissionIds: ['future'] }), /aria-label="Salir de la actividad"/)
+  let params = new URLSearchParams('actividad=enc-mitos&revision=1')
+  const guard = immersivePlayerHarness('../map/CaminoScreen', {
+    'react-router': { useSearchParams: () => [params, next => { params = next }] },
+  })
+  store.updateAdventure(() => store.createInitialAdventure())
+  const tree = guard.draw({})
+  assert.equal(tree.props.zone, 'missions')
+  assert.equal(params.get('punto'), 'beliefs')
+  assert.equal(params.has('actividad'), false); assert.equal(params.has('revision'), false)
+  params = new URLSearchParams('actividad=unknown')
+  guard.draw({})
+  assert.equal(params.toString(), '')
+  guard.dispose()
+})
+
+test('phase 8 finish overrides follow the selected path and omit closed legacy suggestions', () => {
+  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const { FinishScreen } = load(path.resolve('src/features/student-experience/player/FinishScreen.tsx'))
+  const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
+  for (const [completed, expected] of [[['welcome'], 'enc-mitos'], [['welcome', 'beliefs'], 'mission-story'], [['welcome', 'beliefs', 'story'], undefined]]) {
+    adventure.completedMissionIds = completed
+    const next = logic.getNextCaminoActivity(logic.getCaminoPoints(adventure, journey))
+    assert.equal(next?.id, expected)
+    const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(FinishScreen, {
+      activity: journeyContent.activityById('enc-mitos'), nextActivity: next ?? undefined,
+      allowLegacySuggestion: false, onClose() {}, onNext() {},
+    })))
+    assert.doesNotMatch(html, /Revisar mis propias creencias/)
+    if (!expected) assert.doesNotMatch(html, /Seguir hacia/)
+  }
+  const player = immersivePlayerHarness('StudentActivityPlayer')
+  const activity = journeyContent.activityById('mission-welcome')
+  journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { [activity.id]: { estado: 'completada', nodoActualId: '$fin' } } }))
+  let tree = player.draw({ activity, nextActivityOverride: null, onClose() {}, onNext() {} })
+  let finish = player.find(tree, element => element.type?.name === 'FinishScreen')
+  assert.equal(finish.props.nextActivity, undefined); assert.equal(finish.props.allowLegacySuggestion, false)
+  tree = player.draw({ activity, onClose() {}, onNext() {} })
+  finish = player.find(tree, element => element.type?.name === 'FinishScreen')
+  assert.equal(finish.props.allowLegacySuggestion, true)
+  assert.equal(finish.props.nextActivity?.id, activity.siguienteSugerida)
+  player.dispose(); journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
+test('phase 8 toggling the overlaid panel preserves a zoomed and panned map transform', () => {
+  const previous = { ResizeObserver: context.ResizeObserver, setTimeout: context.setTimeout, clearTimeout: context.clearTimeout }
+  context.ResizeObserver = class { observe() {} disconnect() {} }
+  context.setTimeout = setTimeout; context.clearTimeout = clearTimeout
+  const canvas = immersivePlayerHarness('../map/MapCanvas')
+  const ref = { current: null }
+  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const props = { ref, points: logic.getCaminoPoints(store.createInitialAdventure(), journeyLogic.initialJourney()), panelOpen: true, variant: 'route', onSelect() {}, onScaleChange() {}, backgroundImage: '', label: 'Mapa' }
+  const mount = tree => { tree.props.ref.current = { getBoundingClientRect: () => ({ width: 1280, height: 752 }), addEventListener() {}, removeEventListener() {} } }
+  const transform = tree => canvas.find(tree, element => element.props.className === 'sx-map-canvas').props.style.transform
+  try {
+    canvas.draw(props, mount)
+    ref.current.setScale(.9)
+    let tree = canvas.draw(props, mount)
+    tree.props.onPointerDown({ button: 0, target: { closest: () => null }, pointerId: 1, clientX: 500, clientY: 400, currentTarget: { setPointerCapture() {} } })
+    tree.props.onPointerMove({ pointerId: 1, clientX: 450, clientY: 350 })
+    tree = canvas.draw(props, mount)
+    const before = transform(tree)
+    tree = canvas.draw({ ...props, panelOpen: false }, mount)
+    assert.equal(transform(tree), before)
+    tree = canvas.draw(props, mount)
+    assert.equal(transform(tree), before)
+    ref.current.focusPoint('story')
+    tree = canvas.draw(props, mount)
+    assert.notEqual(transform(tree), before)
+    assert.match(transform(tree), /scale\(0.9\)/)
+  } finally { canvas.dispose(); Object.assign(context, previous) }
+})
+
+test('phase 8 point links focus a known drawer and closing removes only its parameter', () => {
+  const previousWindow = context.window
+  context.window = { ...previousWindow, matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }) }
+  let params = new URLSearchParams('punto=beliefs&keep=1'), focused
+  const layout = immersivePlayerHarness('../map/MapScreenLayout', {
+    'react-router': { useNavigate: () => () => {}, useSearchParams: () => [params, next => { params = typeof next === 'function' ? next(params) : next }] },
+    '../overlays/overlay-context': { useStudentOverlays: () => ({ openGuide() {}, openCheckIn() {} }) },
+  })
+  const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
+  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const props = { zone: 'missions', adventure, journey, points: logic.getCaminoPoints(adventure, journey) }
+  const mount = tree => {
+    layout.find(tree, element => element.props.label === 'Aventura · Camino de misiones').props.ref.current = { focusPoint: id => { focused = id } }
+  }
+  try {
+    let tree = layout.draw(props, mount)
+    let drawer = layout.find(tree, element => element.type?.name === 'ActivityDrawer')
+    assert.equal(drawer.props.point.id, 'beliefs'); assert.equal(drawer.props.details.disabled, true)
+    assert.equal(focused, 'beliefs')
+    drawer.props.onClose(); assert.equal(params.toString(), 'keep=1')
+    params = new URLSearchParams('punto=unknown'); focused = undefined
+    tree = layout.draw(props, mount); drawer = layout.find(tree, element => element.type?.name === 'ActivityDrawer')
+    assert.equal(drawer.props.point, undefined); assert.equal(focused, undefined)
+  } finally { layout.dispose(); context.window = previousWindow }
+})
+
+test('phase 8 map labels contain names only and use activity icons or a question mark', () => {
+  const { MapNode } = load(path.resolve('src/features/student-experience/map/MapNode.tsx'))
+  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
+  const points = [...logic.getCaminoPoints(adventure, journey), ...logic.getCiudadPoints(adventure, journey)]
+  for (const [id, icon] of [['welcome', 'book-open'], ['beliefs', 'book-open'], ['story', 'feather'], ['compass', 'clipboard-list'], ['forest-fire', 'building-2'], ['city', 'key-round']]) {
+    const point = points.find(point => point.id === id)
+    const html = renderToStaticMarkup(React.createElement(MapNode, { point: { ...point, status: 'available' }, onSelect() {}, onFocus() {} }))
+    assert.match(html, new RegExp('lucide-' + icon)); assert.ok(!html.includes(point.subtitle))
+    const locked = renderToStaticMarkup(React.createElement(MapNode, { point: { ...point, status: 'locked' }, onSelect() {}, onFocus() {} }))
+    assert.match(locked, /lucide-circle-question-mark/); assert.doesNotMatch(locked, /lucide-lock-keyhole/)
+  }
+  assert.equal(logic.getPointDetails(points.find(point => point.id === 'forest-fire'), adventure, journey).type, 'Central de casos')
+  const header = render('/student/missions').match(/<header class="sx-map-header">([\s\S]*?)<\/header>/)[1]
+  assert.match(header, /Novedades[\s\S]*Menú de Alex/); assert.doesNotMatch(header, /Niv\.|Explora|sx-user-details/)
+  assert.doesNotMatch(render('/student/missions'), /Arrastra el mapa para explorar/)
+})
+
+test('phase 8 available panel caps four pending implemented actions and links to the full list', () => {
+  const { AdventurePanel } = load(path.resolve('src/features/student-experience/map/AdventurePanel.tsx'))
+  const points = Array.from({ length: 7 }, (_, index) => ({ id: 'p' + index, title: 'Disponible ' + index, subtitle: 'En progreso', status: 'available', actionEnabled: true }))
+  points.push({ ...points[0], id: 'city' }, { ...points[0], id: 'done', status: 'completed' }, { ...points[0], id: 'blocked', status: 'locked' }, { ...points[0], id: 'not-implemented', actionEnabled: false })
+  const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(AdventurePanel, {
+    points, adventure: store.createInitialAdventure(), progress: { label: 'Progreso', value: 0 }, onSelect() {}, onCheckIn() {},
+  })))
+  assert.equal((html.match(/sx-available-dot/g) ?? []).length, 4)
+  assert.match(html, /href="\/student\/activities"[^>]*>Ver más/)
+  assert.doesNotMatch(html, /sx-panel-pagination|Disponible 4|Disponible 5|Disponible 6/)
+})
+
+test('phase 8 activities combine zones, classify publications and return to the matching map', () => {
+  store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: ['welcome'], solvedCaseIds: ['river-mystery'] }))
+  journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { 'enc-mitos': { estado: 'en_curso' } } }))
+  const view = immersivePlayerHarness('../modules/StudentActivitiesView')
+  let tree = view.draw({})
+  let entries = view.find(tree, element => element.props.className === 'sx-activities-list').props.children
+  assert.deepEqual(Array.from(entries, element => element.key), ['beliefs', 'forest-fire', 'research', 'mara-test'])
+  assert.match(view.text(tree), /Camino · InformativaEn progreso/)
+  assert.match(view.text(tree), /Ciudad · Central de casosDisponible/)
+  const href = entries[0].props.children.at(-1).props.to
+  assert.equal(href, '/student/missions?punto=beliefs')
+  view.button(tree, 'Realizadas').props.onClick(); tree = view.draw({})
+  entries = view.find(tree, element => element.props.className === 'sx-activities-list').props.children
+  assert.deepEqual(Array.from(entries, element => element.key), ['welcome', 'river-mystery'])
+  assert.equal(entries[1].props.children.at(-1).props.to, '/student/exploration?punto=river-mystery')
+  store.updateAdventure(current => ({ ...current, videos: [{ id: 'publication' }] }))
+  tree = view.draw({})
+  entries = view.find(tree, element => element.props.className === 'sx-activities-list').props.children
+  assert.ok(entries.some(element => element.key === 'research'))
+  view.dispose(); journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  const html = render('/student/activities')
+  assert.match(html, /Mis actividades/); assert.match(html, /Actividades disponibles/)
+  const { getStudentView } = load(path.resolve('src/features/student-experience/views.ts'))
+  assert.equal(getStudentView('/student/activities'), 'activities')
+  const { guideSteps } = load(path.resolve('src/features/student-experience/guide-texts.ts'))
+  assert.match(guideSteps.activities[0], /Ver en el mapa/)
+})
+
+test('phase 8 palette is local to the student route marker and covers inherited portal themes', () => {
+  const css = readFileSync(path.resolve('src/features/student-experience/student-experience.css'), 'utf8')
+  assert.match(css, /body:has\(\[data-student-experience\]\)/)
+  assert.match(css, /body:has\(\[data-student-experience\]\) \.theme-student/)
+  assert.match(css, /--primary: #2457b8;/)
+  assert.match(css, /--sx-module-bg: var\(--background\)/)
+  assert.match(css, /prefers-reduced-motion: reduce[\s\S]*?sx-node-circle::before[\s\S]*?animation: none/)
+  assert.match(render('/student/activities'), /data-student-experience="true"/)
+  assert.match(render('/student/cases/forest-fire'), /data-student-experience="true"/)
+})
+
+
+test('phase 8 every novelty kind retains its existing destination and unread two-line copy', () => {
+  store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: fieldMissions.map(mission => mission.id), solvedCaseIds: ['forest-fire'] }))
+  journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'] }))
+  resetNoveltyUi()
+  const menu = immersivePlayerHarness('../overlays/NoveltiesMenu'), tree = menu.draw({})
+  for (const [title, href] of [
+    ['Nueva ficha disponible', '/student/resources'],
+    ['Nueva insignia disponible', '/student/profile?section=passport'],
+    ['Nuevo héroe disponible', '/student/testimonials'],
+    ['Nueva ciudad disponible', '/student/exploration'],
+    ['Nueva conversación familiar disponible', '/student/conversations'],
+  ]) {
+    const row = menu.find(tree, element => element.props.className === 'sx-novelty' && menu.text(element).includes(title))
+    assert.ok(row, title); assert.equal(row.props.to, href)
+    assert.match(menu.text(row), /Se ha desbloqueado «.+»/)
+    assert.ok(menu.find(row, element => element.props.className === 'sx-novelty-dot'))
+  }
+  menu.dispose(); store.updateAdventure(() => store.createInitialAdventure())
+  journeyStore.updateJourney(() => journeyLogic.initialJourney()); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
 })

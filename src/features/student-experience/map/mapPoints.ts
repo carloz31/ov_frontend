@@ -1,22 +1,12 @@
 import type { JourneyState } from '@/features/missions/logic'
 import { activityById } from '@/features/missions/content'
-import {
-  BookOpen,
-  Building2,
-  ClipboardList,
-  Feather,
-  FileUp,
-  Flame,
-  KeyRound,
-  Search,
-  type LucideIcon,
-} from 'lucide-react'
+import { BookOpen, Building2, ClipboardList, Feather, KeyRound, Search, type LucideIcon } from 'lucide-react'
 import {
   cityCases,
   fieldMissions,
   type FieldMission,
 } from '@/features/occupation-exploration/data/AdventureData'
-import { canAccessCity, prototypeAllUnlocked } from '@/features/occupation-exploration/lib/AdventureStore'
+import { canAccessCity } from '@/features/occupation-exploration/lib/AdventureStore'
 import { lumiDayKey } from '@/features/occupation-exploration/lib/LumiFriendship'
 import { getActivityPrompt } from '@/features/occupation-exploration/data/JournalData'
 import { getExplorationImagePath } from '@/features/occupation-exploration/lib/ExplorationAssets'
@@ -68,9 +58,10 @@ export function getMissionsToSync(
 
 function missionComplete(mission: FieldMission, adventure: AdventureState, journey: JourneyState) {
   const specId = specActivityByMission[mission.id]
-  return specId
-    ? journey.progress[specId]?.estado === 'completada'
-    : adventure.completedMissionIds.includes(mission.id)
+  return (
+    adventure.completedMissionIds.includes(mission.id) ||
+    (specId !== undefined && journey.progress[specId]?.estado === 'completada')
+  )
 }
 
 export function getActivityType(mission: FieldMission) {
@@ -85,19 +76,29 @@ export function getMissionMeta(mission: FieldMission) {
   return '6 min'
 }
 export function getMissionIcon(mission: FieldMission): LucideIcon {
-  if (mission.kind === 'information') return BookOpen
-  if (mission.kind === 'reflection') return Feather
-  if (mission.kind === 'deliverable') return FileUp
-  return ClipboardList
+  const type = getActivityType(mission)
+  return type === 'Informativa' ? BookOpen : type === 'Test' ? ClipboardList : Feather
+}
+
+export const caminoSequence = ['welcome', 'beliefs', 'story'] as const
+
+const orderedMissions = [
+  ...caminoSequence.map((id) => fieldMissions.find((mission) => mission.id === id)!),
+  ...fieldMissions.filter((mission) => !caminoSequence.some((id) => id === mission.id)),
+]
+
+export function getNextCaminoActivity(points: StudentMapPoint[]) {
+  const next = points.find((point) => point.id !== 'city' && point.status === 'available')
+  return activityById(next?.specActivityId ?? '') ?? null
 }
 
 export function getCaminoPoints(adventure: AdventureState, journey: JourneyState): StudentMapPoint[] {
   return [
-    ...fieldMissions.map((mission, index): StudentMapPoint => ({
+    ...orderedMissions.map((mission, index): StudentMapPoint => ({
       id: mission.id,
       title: mission.title,
-      x: mission.x,
-      y: mission.y,
+      x: fieldMissions[index].x,
+      y: fieldMissions[index].y,
       subtitle: `${getActivityType(mission)} · ${getMissionMeta(mission)}`,
       icon: getMissionIcon(mission),
       zone: 'camino',
@@ -105,7 +106,8 @@ export function getCaminoPoints(adventure: AdventureState, journey: JourneyState
       bloque: activityById(specActivityByMission[mission.id] ?? '')?.bloque,
       status: missionComplete(mission, adventure, journey)
         ? 'completed'
-        : prototypeAllUnlocked || index === 0 || missionComplete(fieldMissions[index - 1], adventure, journey)
+        : index < caminoSequence.length &&
+            (index === 0 || missionComplete(orderedMissions[index - 1], adventure, journey))
           ? 'available'
           : 'locked',
       actionEnabled: true,
@@ -136,8 +138,12 @@ export function getCiudadPoints(adventure: AdventureState, journey: JourneyState
       subtitle: adventure.solvedCaseIds.includes(item.id)
         ? 'La comunidad te agradece'
         : 'Un llamado de auxilio',
-      icon: item.id === 'forest-fire' ? Flame : Building2,
-      status: adventure.solvedCaseIds.includes(item.id) ? 'completed' : 'available',
+      icon: Building2,
+      status: adventure.solvedCaseIds.includes(item.id)
+        ? 'completed'
+        : item.id === 'forest-fire'
+          ? 'available'
+          : 'locked',
       actionEnabled: item.id === 'forest-fire',
     })),
     {
@@ -147,7 +153,7 @@ export function getCiudadPoints(adventure: AdventureState, journey: JourneyState
       x: 980,
       y: 140,
       icon: Search,
-      status: 'available',
+      status: adventure.videos.length > 0 ? 'completed' : 'available',
       zone: 'ciudad',
       actionEnabled: true,
     },
@@ -188,7 +194,7 @@ export function getRecommendedPoint(points: StudentMapPoint[]) {
   if (points[0]?.zone === 'camino')
     return (
       points.find((point) => point.id !== 'city' && point.status === 'available') ??
-      points.find((point) => point.id === 'city')
+      points.find((point) => point.id === 'city' && point.status === 'available')
     )
   return points.find((point) => point.status === 'available' && point.actionEnabled)
 }
@@ -246,7 +252,8 @@ export function getPointDetails(
       getActivityPrompt(point.specActivityId ?? point.id, adventure.readinessCheckIns),
   })
   if (mission) {
-    const previous = fieldMissions[fieldMissions.findIndex((item) => item.id === mission.id) - 1]
+    const index = orderedMissions.findIndex((item) => item.id === mission.id)
+    const previous = index > 0 && index < caminoSequence.length ? orderedMissions[index - 1] : undefined
     return {
       title: point.title,
       region: mission.region,
@@ -255,7 +262,11 @@ export function getPointDetails(
       type: getActivityType(mission),
       description: mission.description,
       requirement:
-        point.status === 'locked' ? `Requisito: completa la actividad “${previous?.title}”.` : undefined,
+        point.status === 'locked'
+          ? previous
+            ? `Requisito: completa la actividad “${previous.title}”.`
+            : 'Esta actividad aún no está disponible.'
+          : undefined,
       actionLabel:
         point.status === 'locked'
           ? 'Actividad bloqueada'
@@ -319,7 +330,7 @@ export function getPointDetails(
     region: 'Llamado de la ciudad',
     badge,
     meta: 'Caso vocacional',
-    type: 'Caso vocacional',
+    type: 'Central de casos',
     description: cityCase?.description ?? '',
     imageUrl: getExplorationImagePath(
       point.id === 'forest-fire' ? 'forest-fire-case-background.png' : 'exploration-case-background.png',

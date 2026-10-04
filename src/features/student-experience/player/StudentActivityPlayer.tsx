@@ -28,8 +28,10 @@ export function StudentActivityPlayer({
   edit = false,
   onClose,
   onNext,
+  nextActivityOverride,
 }: {
   activity: Actividad
+  nextActivityOverride?: Actividad | null
   direct?: boolean
   edit?: boolean
   onClose: () => void
@@ -184,7 +186,10 @@ export function StudentActivityPlayer({
         : item?.formato.tipo === 'opcion_unica'
           ? item.formato.opciones.map((option) => ({ value: option.valor, text: option.texto }))
           : []
-  const nextActivity = activities.find((next) => next.id === activity.siguienteSugerida)
+  const nextActivity =
+    nextActivityOverride === undefined
+      ? activities.find((next) => next.id === activity.siguienteSugerida)
+      : (nextActivityOverride ?? undefined)
   const progress = node ? ((index + 1) / nodes.length) * 100 : 100
   function openResources(ids: string[]) {
     setResourceIds(ids)
@@ -225,7 +230,13 @@ export function StudentActivityPlayer({
             />
           </div>
         ) : !node ? (
-          <FinishScreen activity={activity} nextActivity={nextActivity} onClose={onClose} onNext={onNext} />
+          <FinishScreen
+            allowLegacySuggestion={nextActivityOverride === undefined}
+            activity={activity}
+            nextActivity={nextActivity}
+            onClose={onClose}
+            onNext={onNext}
+          />
         ) : matrix ? (
           <MatrixNode
             activity={activity}

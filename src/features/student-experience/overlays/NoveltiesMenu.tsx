@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Award, Bell, BookOpen, Building2, HeartHandshake, UserRound } from 'lucide-react'
+import { Award, Bell, BookOpen, Building2, HeartHandshake, UserRound, X } from 'lucide-react'
 import { Link } from 'react-router'
 import {
   DropdownMenu,
@@ -15,9 +15,18 @@ import { getUnlocks, markUnlocksSeen, orderUnlocks } from './unlocks'
 export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
   const ui = useStudentUi()
   const items = getUnlocks(useAdventure(), useJourney())
-  const ordered = orderUnlocks(items, ui)
+  const ordered = ui.initialized
+    ? orderUnlocks(items, ui).filter((item) => !ui.seenUnlockIds.includes(item.id))
+    : []
   const [open, setOpen] = useState(false)
-  const unread = ui.initialized ? items.filter((item) => !ui.seenUnlockIds.includes(item.id)).length : 0
+  const unread = ordered.length
+  const titles = {
+    badge: 'Nueva insignia disponible',
+    ficha: 'Nueva ficha disponible',
+    heroe: 'Nuevo héroe disponible',
+    ciudad: 'Nueva ciudad disponible',
+    familia: 'Nueva conversación familiar disponible',
+  }
   const icons = {
     badge: Award,
     ficha: BookOpen,
@@ -25,15 +34,8 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
     ciudad: Building2,
     familia: HeartHandshake,
   }
-  const markRead = () => updateStudentUi((current) => markUnlocksSeen(current, items))
   return (
-    <DropdownMenu
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next)
-        if (!next && open) markRead()
-      }}
-    >
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <button
           type="button"
@@ -60,26 +62,37 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
         className="sx-root sx-novelties-menu case-scrollbar"
         aria-label="Novedades de tu aventura"
       >
-        <h2 className="sx-novelties-title">Novedades</h2>
+        <div className="sx-novelties-header">
+          <h2 className="sx-novelties-title">Novedades</h2>
+          <DropdownMenuItem asChild onSelect={() => setOpen(false)}>
+            <button type="button" className="sx-icon-button" aria-label="Cerrar novedades">
+              <X size={18} aria-hidden="true" />
+            </button>
+          </DropdownMenuItem>
+        </div>
         {ordered.length ? (
           ordered.map((item) => {
             const Icon = icons[item.kind]
-            const unseen = ui.initialized && !ui.seenUnlockIds.includes(item.id)
             return (
-              <DropdownMenuItem key={item.id} asChild onSelect={markRead}>
+              <DropdownMenuItem
+                key={item.id}
+                asChild
+                onSelect={() => updateStudentUi((current) => markUnlocksSeen(current, [item]))}
+              >
                 <Link className="sx-novelty" to={item.href}>
                   <Icon size={18} aria-hidden="true" />
-                  <span>{item.title}</span>
-                  {unseen && <span className="sx-novelty-dot" aria-hidden="true" />}
-                  {unseen && <span className="sr-only">Sin ver</span>}
+                  <span>
+                    <strong>{titles[item.kind]}</strong>
+                    <small>Se ha desbloqueado «{item.title}»</small>
+                  </span>
+                  <span className="sx-novelty-dot" aria-hidden="true" />
+                  <span className="sr-only">Sin ver</span>
                 </Link>
               </DropdownMenuItem>
             )
           })
         ) : (
-          <p className="sx-novelties-empty">
-            Aún no hay novedades. Cada misión que completes puede traer una.
-          </p>
+          <p className="sx-novelties-empty">No tienes novedades pendientes</p>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

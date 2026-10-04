@@ -1,11 +1,8 @@
-import { useState } from 'react'
 import { Link } from 'react-router'
 import {
   Backpack,
   BookOpen,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
   Compass,
   FolderHeart,
   HeartHandshake,
@@ -22,6 +19,7 @@ import {
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import { appPaths } from '@/routes/paths'
 import { getReturnGreeting, type StudentMapPoint } from './mapPoints'
+import { getListedActivities, studentActivitiesPath } from './navigation'
 import { getTodayCheckIn, useCheckInDay } from '../overlays/checkIn'
 
 export function AdventurePanel({
@@ -39,12 +37,8 @@ export function AdventurePanel({
   onSelect: (id: string) => void
   onCheckIn: () => void
 }) {
-  const [page, setPage] = useState(0)
   const level = getTravelerLevel(adventure)
-  const available = points.filter((point) => point.status === 'available')
-  const maxPage = Math.max(0, Math.ceil(available.length / 5) - 1)
-  const currentPage = Math.min(page, maxPage)
-  const visible = available.slice(currentPage * 5, currentPage * 5 + 5)
+  const visible = getListedActivities(points, false).slice(0, 4)
   const greeting = getReturnGreeting(adventure, recommended)
   useCheckInDay()
   const signal = getTodayCheckIn(adventure)
@@ -200,33 +194,13 @@ export function AdventurePanel({
                 </button>
               ))}
             </div>
-            <div className="sx-panel-pagination">
-              <button
-                type="button"
-                className="sx-icon-button"
-                aria-label="Actividades anteriores"
-                disabled={currentPage === 0}
-                onClick={() => setPage(currentPage - 1)}
-              >
-                <ChevronLeft size={18} />
-              </button>
-              <span>
-                {currentPage * 5 + 1}–{Math.min(currentPage * 5 + 5, available.length)} de {available.length}
-              </span>
-              <button
-                type="button"
-                className="sx-icon-button"
-                aria-label="Más actividades"
-                disabled={currentPage === maxPage}
-                onClick={() => setPage(currentPage + 1)}
-              >
-                <ChevronRight size={18} />
-              </button>
-            </div>
           </>
         ) : (
           <p className="sx-panel-subtitle">No hay actividades por realizar en esta zona por ahora.</p>
         )}
+        <Link className="sx-panel-link" to={studentActivitiesPath}>
+          Ver más
+        </Link>
       </section>
     </div>
   )

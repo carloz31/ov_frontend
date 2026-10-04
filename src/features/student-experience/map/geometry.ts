@@ -15,14 +15,13 @@ export function visibleCenter(bounds: Bounds, panelOpen: boolean) {
   const left = panelOpen ? Math.min(304, bounds.width) : 0
   return { x: left + (bounds.width - left) / 2, y: bounds.height / 2 }
 }
-export function clampTransform(next: MapTransform, bounds: Bounds, panelOpen = false): MapTransform {
+export function clampTransform(next: MapTransform, bounds: Bounds, focusBesidePanel = false): MapTransform {
   const scale = Math.min(maxScale, Math.max(minScale, next.scale))
-  const left = panelOpen ? Math.min(304, bounds.width) : 0
   const imageWidth = canvasSize.width * scale
   const imageHeight = canvasSize.height * scale
-  const visibleWidth = bounds.width - left
-  const minX = imageWidth > visibleWidth ? bounds.width - imageWidth : left + (visibleWidth - imageWidth) / 2
-  const maxX = imageWidth > visibleWidth ? left : minX
+  const minX = imageWidth > bounds.width ? bounds.width - imageWidth : (bounds.width - imageWidth) / 2
+  // Explicit focus may move the left edge beneath the overlaid panel.
+  const maxX = imageWidth > bounds.width ? (focusBesidePanel ? Math.min(304, bounds.width) : 0) : minX
   const minY = imageHeight > bounds.height ? bounds.height - imageHeight : (bounds.height - imageHeight) / 2
   const maxY = imageHeight > bounds.height ? 0 : minY
   return { scale, x: Math.min(maxX, Math.max(minX, next.x)), y: Math.min(maxY, Math.max(minY, next.y)) }
@@ -32,7 +31,6 @@ export function zoomTransform(
   scale: number,
   anchor: { x: number; y: number },
   bounds: Bounds,
-  panelOpen = false,
 ) {
   const nextScale = Math.min(maxScale, Math.max(minScale, scale))
   const ratio = nextScale / current.scale
@@ -43,7 +41,6 @@ export function zoomTransform(
       y: anchor.y - (anchor.y - current.y) * ratio,
     },
     bounds,
-    panelOpen,
   )
 }
 export function focusTransform(

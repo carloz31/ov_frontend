@@ -27,6 +27,7 @@ export type MapCanvasHandle = {
   zoom: (factor: number) => void
   setScale: (scale: number) => void
   focusPoint: (id: string) => void
+  focusNode: (id?: string) => void
 }
 type Props = {
   points: StudentMapPoint[]
@@ -65,26 +66,23 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   const [transform, setTransform] = useState(transformRef.current)
   const [dragging, setDragging] = useState(false)
   const [moving, setMoving] = useState(false)
-  const apply = useCallback(
-    (next: MapTransform, animate = false) => {
-      const bounds = viewport.current?.getBoundingClientRect()
-      if (!bounds) return
-      clearTimeout(animationTimer.current)
-      const clamped = clampTransform(next, bounds, panelOpen)
-      transformRef.current = clamped
-      setTransform(clamped)
-      setMoving(animate)
-      if (animate) animationTimer.current = setTimeout(() => setMoving(false), 400)
-    },
-    [panelOpen],
-  )
+  const apply = useCallback((next: MapTransform, animate = false, focusBesidePanel = false) => {
+    const bounds = viewport.current?.getBoundingClientRect()
+    if (!bounds) return
+    clearTimeout(animationTimer.current)
+    const clamped = clampTransform(next, bounds, focusBesidePanel)
+    transformRef.current = clamped
+    setTransform(clamped)
+    setMoving(animate)
+    if (animate) animationTimer.current = setTimeout(() => setMoving(false), 400)
+  }, [])
 
   const centerMap = useCallback(() => {
     const bounds = viewport.current?.getBoundingClientRect()
     if (!bounds) return
-    const center = visibleCenter(bounds, panelOpen)
+    const center = visibleCenter(bounds, false)
     const fitScale = Math.min(
-      ((panelOpen ? bounds.width - 304 : bounds.width) - 64) / canvasSize.width,
+      (bounds.width - 64) / canvasSize.width,
       (bounds.height - 64) / canvasSize.height,
     )
     const scale = Math.min(0.9, Math.max(minScale, fitScale * 1.55))
@@ -93,22 +91,14 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
       x: center.x - (canvasSize.width * scale) / 2,
       y: center.y - (canvasSize.height * scale) / 2,
     })
-  }, [apply, panelOpen])
+  }, [apply])
   const setScale = useCallback(
     (scale: number, anchor?: { x: number; y: number }) => {
       const bounds = viewport.current?.getBoundingClientRect()
       if (bounds)
-        apply(
-          zoomTransform(
-            transformRef.current,
-            scale,
-            anchor ?? visibleCenter(bounds, panelOpen),
-            bounds,
-            panelOpen,
-          ),
-        )
+        apply(zoomTransform(transformRef.current, scale, anchor ?? visibleCenter(bounds, false), bounds))
     },
-    [apply, panelOpen],
+    [apply],
   )
 
   useImperativeHandle(
@@ -117,10 +107,17 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
       centerMap,
       setScale,
       zoom: (factor) => setScale(transformRef.current.scale * factor),
+      focusNode: (id) => {
+        const nodes = viewport.current?.querySelectorAll<HTMLButtonElement>('[data-point-id]')
+        Array.from(nodes ?? [])
+          .find((node) => node.dataset.pointId === id)
+          ?.focus()
+      },
       focusPoint: (id) => {
         const point = points.find((item) => item.id === id)
         const bounds = viewport.current?.getBoundingClientRect()
-        if (point && bounds) apply(focusTransform(transformRef.current, point, bounds, panelOpen), true)
+        if (point && bounds)
+          apply(focusTransform(transformRef.current, point, bounds, panelOpen), true, panelOpen)
       },
     }),
     [centerMap, setScale, points, apply, panelOpen],
@@ -131,7 +128,14 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   }, [transform.scale, onScaleChange])
   useEffect(() => {
     centerMap()
-    const observer = new ResizeObserver(centerMap)
+    let previousBounds = viewport.current?.getBoundingClientRect()
+    const observer = new ResizeObserver(() => {
+      const bounds = viewport.current?.getBoundingClientRect()
+      if (bounds && (bounds.width !== previousBounds?.width || bounds.height !== previousBounds?.height)) {
+        previousBounds = bounds
+        centerMap()
+      }
+    })
     if (viewport.current) observer.observe(viewport.current)
     return () => {
       observer.disconnect()
@@ -223,16 +227,13 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
                   const point = points.find((item) => item.id === id)
                   const bounds = viewport.current?.getBoundingClientRect()
                   if (point && bounds)
-                    apply(focusTransform(transformRef.current, point, bounds, panelOpen), true)
+                    apply(focusTransform(transformRef.current, point, bounds, panelOpen), true, panelOpen)
                 }}
               />
             ))}
           </>
         )}
       </div>
-      <p className="sx-glass sx-map-hint" data-panel-open={panelOpen || undefined}>
-        Arrastra el mapa para explorar
-      </p>
     </section>
   )
 })

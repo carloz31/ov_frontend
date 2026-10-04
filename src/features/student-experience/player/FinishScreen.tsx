@@ -9,11 +9,13 @@ import { CharacterAvatar } from './CharacterAvatar'
 export function FinishScreen({
   activity,
   nextActivity,
+  allowLegacySuggestion = true,
   onClose,
   onNext,
 }: {
   activity: Actividad
   nextActivity?: Actividad
+  allowLegacySuggestion?: boolean
   onClose: () => void
   onNext: (id: string) => void
 }) {
@@ -88,7 +90,7 @@ export function FinishScreen({
                 <ArrowRight size={18} />
               </button>
             )}
-            {activity.siguienteSugerida === 'act-07' && (
+            {allowLegacySuggestion && activity.siguienteSugerida === 'act-07' && (
               <button type="button" className="sx-primary-button" onClick={() => onNext('act-07')}>
                 Revisar mis propias creencias
                 <ArrowRight size={18} />

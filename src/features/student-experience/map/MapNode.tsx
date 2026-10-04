@@ -1,4 +1,4 @@
-import { Check, LockKeyhole } from 'lucide-react'
+import { Check, CircleHelp } from 'lucide-react'
 import { mapPosition } from './geometry'
 import type { StudentMapPoint } from './mapPoints'
 
@@ -31,13 +31,14 @@ export function MapNode({
   onFocus: (id: string) => void
 }) {
   const position = mapPosition(point)
-  const Icon = point.icon
+  const Icon = point.status === 'locked' ? CircleHelp : point.icon
   return (
     <button
       type="button"
       className={`sx-map-node sx-node-${point.zone} sx-node-${point.status}`}
       data-recommended={recommended || undefined}
       data-selected={selected || undefined}
+      data-point-id={point.id}
       style={{ left: position.x, top: position.y }}
       onClick={() => onSelect(point.id)}
       onFocus={() => onFocus(point.id)}
@@ -45,9 +46,9 @@ export function MapNode({
     >
       <span className="sx-node-circle">
         <Icon size={40} aria-hidden="true" />
-        {point.status !== 'available' && (
+        {point.status === 'completed' && (
           <span className="sx-node-badge">
-            {point.status === 'completed' ? <Check size={20} /> : <LockKeyhole size={18} />}
+            <Check size={20} />
           </span>
         )}
       </span>
@@ -57,7 +58,6 @@ export function MapNode({
             <span key={line}>{line}</span>
           ))}
         </strong>
-        <span>{point.subtitle}</span>
       </span>
     </button>
   )

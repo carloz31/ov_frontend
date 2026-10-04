@@ -96,3 +96,19 @@ La interfaz del estudiante ahora se rige por `docs/student-experience/especifica
 ## Cierre obligatorio por fase
 
 Ejecutar `npm run build`, `npm run lint`, `npm test`; corregir fallos autorizados, revisar cambios propios y crear commit. Reportar trabajo, archivos, resultados, aserciones modificadas y motivos, desviaciones y verificaciones pendientes. Detenerse y esperar confirmación antes de la siguiente fase.
+
+## 8. Ajustes de la experiencia — `Fase 8: Ajustes de la experiencia`
+
+Plan adicional aprobado: incorporar la paleta azul existente en tokens locales del estudiante, incluidos los portales, conservando el contexto de tema. Cabecera del mapa con campana y avatar AL; en módulos conservar regreso, título y ayuda. Panel superpuesto sin alterar escala ni posición; retirar la indicación de arrastre.
+
+Secuencia de presentación: bienvenida → mitos → registro. Las demás pendientes quedan cerradas y las completadas conservan revisión desde progreso v2 o el registro existente. Aplicar disponibilidad a mapa, recomendaciones, drawers, listado y enlaces directos. Adaptar la continuación mediante override opcional del reproductor. No cambiar catálogo, requisitos, stores, umbrales ni prototypeAllUnlocked.
+
+Puntos con fondo azul/verde/gris e iconos blancos; aro celeste para la siguiente misión y `?` para cerradas. Solo nombres bajo los puntos. Iconos por tipo y badge destacado en la ficha. Panel con cuatro pendientes disponibles de la zona y “Ver más”. Nueva pantalla `/student/activities` con Disponibles/Realizadas, zona, tipo, estado y regreso con `?punto=` a la ficha enfocada. Investigación realizada cuando exista una publicación.
+
+Novedades solo pendientes, con contador, punto y dos líneas: tipo disponible y nombre desbloqueado. X, Escape y cierre exterior conservan lectura; seleccionar marca exclusivamente la entrada elegida y mantiene sus destinos existentes. Siembra y avisos de insignias intactos.
+
+Archivos: StudentThemeScope.tsx; map/navigation.ts; modules/StudentActivitiesView.tsx; CSS, vistas, guías, mapas, panel, drawer, menús y reproductor dentro de student-experience; únicamente imports y rutas del estudiante en AppRoutes.tsx y pruebas del estudiante en adventure-rendering.test.mjs.
+
+Verificar secuencia, bloqueos, revisión, protección de enlaces, continuación, transformaciones de mapa, iconos, badges, listado y lectura individual. Mantener cobertura de nodos mediante renderizado directo. Revisar 1280 × 800, 1440 × 900 y 360 px, foco, Escape, contraste y movimiento reducido. Ejecutar build, lint y test; seleccionar solo cambios propios, crear el commit y reportar limitaciones.
+
+Criterio de mínima modificación: los puntos de Ciudad con acción aún no implementada se omiten de pendientes; los completados conservan su ficha. El listado utiliza botones con aria-pressed, sin una nueva clave de almacenamiento. Solo el enfoque explícito descuenta el panel; centrado, límites y zoom usan el lienzo completo.

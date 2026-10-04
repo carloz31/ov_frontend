@@ -41,7 +41,6 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
           </nav>
         )}
         <div className="sx-module-actions">
-          <NoveltiesMenu />
           <button
             type="button"
             className="sx-icon-button"
@@ -50,6 +49,7 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
           >
             <CircleHelp aria-hidden="true" size={20} />
           </button>
+          <NoveltiesMenu />
           <StudentUserMenu />
         </div>
       </header>

@@ -1,4 +1,5 @@
 export type StudentView =
+  | 'activities'
   | 'central'
   | 'missions'
   | 'profile-general'
@@ -14,6 +15,7 @@ export type StudentView =
   | 'catalog-institutions'
 
 export const studentViews: StudentView[] = [
+  'activities',
   'central',
   'missions',
   'profile-general',
@@ -32,7 +34,7 @@ export const studentViews: StudentView[] = [
 export function getStudentView(pathname: string): StudentView {
   const section = pathname.split('/')[2]
   if (pathname.endsWith('/journal/signal')) return 'journal-signals'
-  if (['research', 'journal', 'community', 'resources', 'conversations'].includes(section))
+  if (['activities', 'research', 'journal', 'community', 'resources', 'conversations'].includes(section))
     return section as StudentView
   if (pathname.endsWith('/missions')) return 'missions'
   if (pathname.endsWith('/catalog/careers')) return 'catalog-careers'
@@ -46,6 +48,7 @@ export function getStudentView(pathname: string): StudentView {
 
 export function getStudentViewLabel(view: StudentView): string {
   const labels: Partial<Record<StudentView, string>> = {
+    activities: 'Mis actividades',
     research: 'Misión de investigación',
     journal: 'Conversaciones con Lumi',
     'journal-signals': 'Conversaciones con Lumi',

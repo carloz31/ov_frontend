@@ -18,6 +18,8 @@ import {
   TestimonialsPage,
 } from '@/features/occupation-exploration/OccupationExplorationPages'
 import { StudentShell } from '@/features/student-experience/StudentShell'
+import { StudentThemeScope } from '@/features/student-experience/StudentThemeScope'
+import { StudentActivitiesView } from '@/features/student-experience/modules/StudentActivitiesView'
 import { CaminoScreen } from '@/features/student-experience/map/CaminoScreen'
 import { CiudadScreen } from '@/features/student-experience/map/CiudadScreen'
 import { StudentFamilyConversationsView } from '@/features/student-experience/modules/StudentFamilyConversationsView'
@@ -54,11 +56,19 @@ function AppRoutes() {
   return (
     <Routes>
       <Route element={<RoleSelectionRoute />} path="/" />
-      <Route element={<OccupationExplorationModule />} path="/student">
+      <Route
+        element={
+          <StudentThemeScope>
+            <OccupationExplorationModule />
+          </StudentThemeScope>
+        }
+        path="/student"
+      >
         <Route element={<StudentShell />}>
           <Route element={<Navigate replace to={appPaths.student.missions} />} index />
           <Route element={<CiudadScreen />} path="exploration" />
           <Route element={<CaminoScreen />} path="missions" />
+          <Route element={<StudentActivitiesView />} path="activities" />
           <Route element={<ResearchMissionsView />} path="research" />
           <Route element={<JournalView />} path="journal" />
           <Route element={<JournalSignalsView />} path="journal/signal" />

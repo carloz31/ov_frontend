@@ -10,6 +10,9 @@ export const familyDetailGuide =
   'Las respuestas tienen el mismo valor. La guía sirve para escucharse y encontrar preguntas que quieran seguir explorando juntos.'
 
 export const guideSteps: Record<StudentView, string[]> = {
+  activities: [
+    'Aquí encuentras tus actividades disponibles y realizadas, en Camino y Ciudad. Elige «Ver en el mapa» para abrir su ficha y continuar o revisar lo que descubriste.',
+  ],
   journal: [
     'Cuéntale a Lumi lo que descubres de ti. Cada conversación nueva suma un punto de amistad, hasta tres al día. Las entradas sugeridas aparecen al completar actividades. Tu orientadora solo verá la señal separada de seguridad vocacional.',
   ],
@@ -45,7 +48,7 @@ export const guideSteps: Record<StudentView, string[]> = {
   ],
   missions: [
     '¡Hola! Soy Lumi. Yo también llegué a este mundo sin saber muy bien hacia dónde ir. Dicen que este camino despeja las dudas de quienes lo recorren.',
-    'Cada punto del mapa es una misión. La que brilla es la que te recomiendo ahora. Las que tienen candado se abrirán a medida que avances.',
+    'Cada punto del mapa es una misión. La que brilla es la que te recomiendo ahora. Las que muestran un signo de pregunta aún no están disponibles.',
     'A la izquierda está tu panel: tu siguiente paso, cómo te sientes hoy y los accesos a tu diario, tu familia y todo lo que vas reuniendo. Puedes plegarlo cuando quieras.',
     'Al final del camino está la ciudad, donde podrás elegir tus actividades y ayudar a sus habitantes. Arriba puedes cambiar entre el camino y la ciudad.',
     'Si en algún momento no sabes qué hacer, toca el botón de ayuda y vendré.',

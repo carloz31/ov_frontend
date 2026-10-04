@@ -1,13 +1,11 @@
 import { CircleHelp, Volume2, VolumeX } from 'lucide-react'
 import { updateStudentUi, useStudentUi } from '../ui-state'
-import { NoveltiesMenu } from '../overlays/NoveltiesMenu'
 
 export function MapControls({ onHelp }: { onHelp: () => void }) {
   const ui = useStudentUi()
   const SoundIcon = ui.soundOn ? Volume2 : VolumeX
   return (
     <div className="sx-map-controls">
-      <NoveltiesMenu glass />
       <button type="button" className="sx-glass sx-icon-button" aria-label="Abrir guía" onClick={onHelp}>
         <CircleHelp size={20} />
       </button>

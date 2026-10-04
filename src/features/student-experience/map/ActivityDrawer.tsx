@@ -1,5 +1,5 @@
 import { useRef } from 'react'
-import { Clock, LockKeyhole, Play, Sparkles, X } from 'lucide-react'
+import { Clock, LockKeyhole, Play, X } from 'lucide-react'
 import { Drawer as DrawerPrimitive } from 'vaul'
 import { useThemeClass } from '@/components/ThemeScope'
 import {
@@ -105,10 +105,7 @@ export function ActivityDrawer({
                     {details.description}
                   </DrawerDescription>
                 </DrawerHeader>
-                <p className="sx-drawer-type">
-                  <Sparkles size={16} />
-                  {details.type}
-                </p>
+                <span className="sx-drawer-type">{details.type}</span>
                 {details.requirement && (
                   <p className="sx-drawer-requirement">
                     <LockKeyhole size={18} />
