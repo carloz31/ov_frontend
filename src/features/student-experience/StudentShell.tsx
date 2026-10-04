@@ -10,6 +10,7 @@ import {
 import { getMissionsToSync } from './map/mapPoints'
 import { StudentModuleLayout } from './modules/StudentModuleLayout'
 import { OverlayQueue } from './overlays/OverlayQueue'
+import { seedStudentUnlocks } from './overlays/unlocks'
 import { updateStudentUi } from './ui-state'
 import { getStudentView } from './views'
 import '@/features/occupation-exploration/adventure.css'
@@ -18,8 +19,10 @@ import './student-experience.css'
 export function StudentShell() {
   const location = useLocation()
   const context = useOccupationExplorationContext()
-  const { completedMissionIds } = useAdventure()
-  const { progress } = useJourney()
+  const adventure = useAdventure()
+  const journey = useJourney()
+  const { completedMissionIds } = adventure
+  const { progress } = journey
   const storageError = useAdventureStorageError()
   const view = getStudentView(location.pathname)
   const isMap = view === 'missions' || view === 'central'
@@ -28,6 +31,12 @@ export function StudentShell() {
   useEffect(() => {
     getMissionsToSync({ completedMissionIds }, { progress }).forEach((id) => completeMission(id))
   }, [progress, completedMissionIds])
+
+  useEffect(() => {
+    // Existing v2 completions belong to the initial seed, after their legacy synchronization.
+    if (getMissionsToSync(adventure, journey).length) return
+    updateStudentUi((current) => seedStudentUnlocks(current, adventure, journey))
+  }, [adventure, journey])
 
   useEffect(() => {
     if (

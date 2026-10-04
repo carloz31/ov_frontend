@@ -114,6 +114,124 @@
   outline: 3px solid var(--ring);
   outline-offset: 3px;
 }
+.sx-root .sx-novelties-bell {
+  position: relative;
+}
+.sx-root .sx-novelties-count {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--destructive) 90%, var(--foreground));
+  color: var(--destructive-foreground);
+  font-size: 11px;
+  font-weight: 700;
+}
+.sx-root.sx-novelties-menu {
+  width: min(320px, calc(100vw - 24px));
+  max-height: min(420px, var(--radix-dropdown-menu-content-available-height));
+  overflow: auto;
+  background: var(--card);
+  padding: 8px;
+  border-radius: 16px;
+}
+.sx-root .sx-novelties-title {
+  margin: 4px 8px 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.sx-root .sx-novelty {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px;
+  border-radius: 10px;
+}
+.sx-root .sx-novelty > svg {
+  flex-shrink: 0;
+  color: var(--primary);
+}
+.sx-root .sx-novelty > span:first-of-type {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.sx-root .sx-novelty-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sx-lumi);
+  flex-shrink: 0;
+}
+.sx-root .sx-novelty:focus-visible {
+  outline: 3px solid var(--ring);
+  outline-offset: -3px;
+}
+.sx-root .sx-novelties-empty {
+  margin: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.sx-root.sx-badge-toast {
+  position: fixed;
+  z-index: 40;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  width: min(400px, calc(100vw - 32px));
+  padding: 20px;
+}
+.sx-root.sx-badge-toast > .sx-character {
+  flex-shrink: 0;
+}
+.sx-root .sx-badge-copy {
+  min-width: 0;
+  padding-right: 16px;
+}
+.sx-root .sx-badge-copy .sx-badge-label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sx-lumi) 40%, var(--foreground));
+}
+.sx-root.sx-badge-toast .sx-character-name {
+  color: color-mix(in srgb, var(--sx-lumi) 40%, var(--foreground));
+}
+.sx-root .sx-badge-copy h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.sx-root .sx-badge-copy p {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.sx-root .sx-badge-copy a {
+  font-size: 14px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--primary) 80%, var(--foreground));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.sx-root .sx-badge-close {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 28px;
+  height: 28px;
+}
 .sx-root .sx-module-tabs {
   display: flex;
   gap: 4px;

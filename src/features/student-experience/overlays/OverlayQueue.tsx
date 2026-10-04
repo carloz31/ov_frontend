@@ -8,6 +8,8 @@ import type { StudentView } from '../views'
 import { CheckInDialog } from './CheckInDialog'
 import { getTodayCheckIn, localDateKey, saveTodayCheckIn, useCheckInDay } from './checkIn'
 import { LumiOverlay } from './LumiOverlay'
+import { BadgeToast } from './BadgeToast'
+import { getNextBadge, markBadgeAnnounced } from './unlocks'
 import {
   getNextOverlay,
   StudentOverlayContext,
@@ -50,6 +52,7 @@ export function OverlayQueue({
     [],
   )
   const active = activityOpen ? null : (manual ?? automatic)
+  const badge = getNextBadge(adventure, ui, activityOpen, !!active || !!next)
   const guide =
     active?.kind === 'guide'
       ? active.steps
@@ -109,6 +112,13 @@ export function OverlayQueue({
           setAutomatic(null)
         }}
       />
+      {badge && (
+        <BadgeToast
+          key={badge.code}
+          badge={badge}
+          onDismiss={() => updateStudentUi((current) => markBadgeAnnounced(current, badge.code))}
+        />
+      )}
     </StudentOverlayContext.Provider>
   )
 }

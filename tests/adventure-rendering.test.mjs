@@ -957,7 +957,7 @@ const journeyStore = load(path.resolve('src/features/missions/store.ts'))
 const journeyLogic = load(path.resolve('src/features/missions/logic.ts'))
 const journeyContent = load(path.resolve('src/features/missions/content.ts'))
 
-function immersivePlayerHarness(name) {
+function immersivePlayerHarness(name, overrides = {}) {
   const file = path.resolve('src/features/student-experience/player', `${name}.tsx`)
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
   const slots = [], effects = [], pending = []
@@ -984,6 +984,8 @@ function immersivePlayerHarness(name) {
     },
   }
   const require = specifier => {
+    if (Object.hasOwn(overrides, specifier)) return overrides[specifier]
+    if (specifier.endsWith('.css')) return {}
     if (specifier === 'react') return react
     if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
     const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
@@ -1568,6 +1570,169 @@ test('failed delivery writes preserve version one and failed follow-up markers d
     journeyStore.updateJourney(() => journeyLogic.initialJourney())
     followUpStore.updateFollowUps(() => followUpStore.initialFollowUpState())
   }
+})
+
+const noveltyLogic = load(path.resolve('src/features/student-experience/overlays/unlocks.ts'))
+const noveltyUi = load(path.resolve('src/features/student-experience/ui-state.ts'))
+const noveltyData = load(path.resolve('src/features/occupation-exploration/data/AdventureData.ts'))
+function resetNoveltyUi(patch = {}) {
+  const { studentViews } = load(path.resolve('src/features/student-experience/views.ts'))
+  const { localDateKey } = load(path.resolve('src/features/student-experience/overlays/checkIn.ts'))
+  noveltyUi.updateStudentUi(() => ({ ...noveltyUi.initialStudentUiState(), initialized: true, cityArrivalSeen: true, introsSeen: Object.fromEntries(studentViews.map(view => [view, true])), checkInPromptDismissedOn: localDateKey(new Date()), ...patch }))
+}
+
+test('novelties use real achievement, resource, hero and zone unlocks with their existing destinations', () => {
+  const { appPaths } = load(path.resolve('src/routes/paths.ts'))
+  const empty = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
+  assert.equal(noveltyLogic.getUnlocks(empty, journey).length, 0)
+  const adventure = { ...empty, completedMissionIds: noveltyData.fieldMissions.map(mission => mission.id), solvedCaseIds: ['forest-fire'] }
+  journey.resources = ['ficha-mitos', 'ficha-mitos', 'unknown-resource']
+  const items = noveltyLogic.getUnlocks(adventure, journey), byId = new Map(items.map(item => [item.id, item]))
+  for (const [id, kind, href] of [
+    ['badge:I1', 'badge', appPaths.student.passport], ['badge:I2', 'badge', appPaths.student.passport], ['badge:I3', 'badge', appPaths.student.passport], ['badge:I7', 'badge', appPaths.student.passport],
+    ['ficha:ficha-mitos', 'ficha', appPaths.student.resources], ['heroe:health-response-paramedic', 'heroe', appPaths.student.testimonials], ['ciudad', 'ciudad', appPaths.student.exploration], ['familia', 'familia', appPaths.student.conversations],
+  ]) { assert.equal(byId.get(id)?.kind, kind); assert.equal(byId.get(id)?.href, href) }
+  assert.equal(byId.get('ficha:ficha-mitos').title, journeyContent.catalog.recursos.find(resource => resource.id === 'ficha-mitos').titulo)
+  assert.equal(byId.get('heroe:health-response-paramedic').title, 'Calma y cuidado en una emergencia')
+  assert.equal(byId.has('heroe:global-event-translator'), false)
+  assert.equal(byId.has('ficha:unknown-resource'), false)
+  assert.equal(items.length, byId.size)
+  assert.equal(noveltyLogic.getUnlocks(empty, journey).some(item => item.kind === 'ciudad' || item.kind === 'familia' || item.kind === 'heroe'), false)
+})
+
+test('first initialization seeds all prior unlocks and earned badges once while preserving presentation preferences', () => {
+  const adventure = { ...store.createInitialAdventure(), completedMissionIds: ['welcome'], solvedCaseIds: ['forest-fire'] }, journey = journeyLogic.initialJourney()
+  journey.resources = ['ficha-mitos']
+  const initial = { ...noveltyUi.initialStudentUiState(), panelCollapsed: true, soundOn: false, seenUnlockIds: ['previous'], announcedBadgeCodes: ['I8'] }
+  assert.equal(noveltyLogic.getNextBadge(adventure, initial, false, false), undefined)
+  const seeded = noveltyLogic.seedStudentUnlocks(initial, adventure, journey)
+  assert.equal(seeded.initialized, true); assert.equal(seeded.panelCollapsed, true); assert.equal(seeded.soundOn, false)
+  for (const item of noveltyLogic.getUnlocks(adventure, journey)) assert.ok(seeded.seenUnlockIds.includes(item.id))
+  for (const badge of noveltyLogic.getEarnedBadges(adventure)) assert.ok(seeded.announcedBadgeCodes.includes(badge.code))
+  assert.ok(seeded.seenUnlockIds.includes('previous')); assert.ok(seeded.announcedBadgeCodes.includes('I8'))
+  assert.equal(noveltyLogic.getNextBadge(adventure, seeded, false, false), undefined)
+  assert.equal(noveltyLogic.seedStudentUnlocks(seeded, adventure, journey), seeded)
+  const next = { ...adventure, completedMissionIds: ['welcome', 'story', 'future', 'beliefs'] }
+  assert.equal(noveltyLogic.getNextBadge(next, seeded, false, false).code, 'I2')
+  assert.equal(seeded.announcedBadgeCodes.includes('I2'), false)
+})
+
+test('shell seeds after v2 synchronization so migrated completions do not create retroactive alerts', () => {
+  journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { 'mission-welcome': { estado: 'completada' } } }))
+  store.updateAdventure(() => store.createInitialAdventure())
+  noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
+  const shell = immersivePlayerHarness('../StudentShell', {
+    'react-router': { ...nativeRequire('react-router'), useLocation: () => ({ pathname: '/student/missions', search: '' }) },
+    '@/features/occupation-exploration/OccupationExplorationContext': { useOccupationExplorationContext: () => ({}) },
+  })
+  shell.draw({})
+  assert.ok(store.useAdventure().completedMissionIds.includes('welcome'))
+  assert.equal(noveltyUi.useStudentUi().initialized, false)
+  shell.draw({})
+  assert.equal(noveltyUi.useStudentUi().initialized, true)
+  assert.ok(noveltyUi.useStudentUi().announcedBadgeCodes.includes('I1'))
+  assert.equal(noveltyLogic.getNextBadge(store.useAdventure(), noveltyUi.useStudentUi(), false, false), undefined)
+  shell.dispose()
+  store.updateAdventure(() => store.createInitialAdventure()); journeyStore.updateJourney(() => journeyLogic.initialJourney()); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
+})
+
+test('novelties menu orders unread first and marks every visible novelty seen when closed or selected', () => {
+  store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: ['welcome'] }))
+  journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'] }))
+  resetNoveltyUi({ seenUnlockIds: ['badge:I1'] })
+  const menu = immersivePlayerHarness('../overlays/NoveltiesMenu')
+  let tree = menu.draw({ glass: true })
+  const ordered = noveltyLogic.orderUnlocks(noveltyLogic.getUnlocks(store.useAdventure(), journeyStore.useJourney()), noveltyUi.useStudentUi())
+  assert.equal(ordered[0].id, 'ficha:ficha-mitos'); assert.equal(ordered[1].id, 'badge:I1')
+  assert.ok(menu.find(tree, element => element.type === 'button' && element.props['aria-label'] === 'Novedades' && element.props.className.includes('sx-glass')))
+  assert.equal(menu.text(menu.find(tree, element => element.props.className === 'sx-novelties-count')), '1')
+  tree.props.onOpenChange(true); tree = menu.draw({ glass: true }); tree.props.onOpenChange(false)
+  assert.ok(noveltyUi.useStudentUi().seenUnlockIds.includes('ficha:ficha-mitos'))
+  tree = menu.draw({ glass: true }); assert.equal(menu.find(tree, element => element.props.className === 'sx-novelties-count'), undefined)
+  resetNoveltyUi(); tree = menu.draw({})
+  menu.find(tree, element => typeof element.props.onSelect === 'function').props.onSelect()
+  assert.equal(noveltyUi.useStudentUi().seenUnlockIds.length, 2)
+  assert.equal(noveltyLogic.markUnlocksSeen(noveltyUi.useStudentUi(), ordered), noveltyUi.useStudentUi())
+  menu.dispose()
+  store.updateAdventure(() => store.createInitialAdventure()); journeyStore.updateJourney(() => journeyLogic.initialJourney()); resetNoveltyUi({ initialized: false })
+  const empty = immersivePlayerHarness('../overlays/NoveltiesMenu')
+  tree = empty.draw({}); assert.match(empty.text(tree), /Aún no hay novedades\. Cada misión que completes puede traer una\./)
+  empty.dispose(); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
+})
+
+test('bell appears in both maps and module headers but is absent inside the player', () => {
+  for (const route of ['/student/missions', '/student/exploration', '/student/journal', '/student/resources', '/student/conversations']) assert.match(render(route), /aria-label="Novedades"/)
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  assert.doesNotMatch(render('/student/missions?actividad=mission-welcome'), /aria-label="Novedades"|Nueva insignia/)
+})
+
+test('badge queue waits behind arrival, introduction, check-in and manual help, and pauses during activities', () => {
+  const adventure = { ...store.createInitialAdventure(), completedMissionIds: ['welcome', 'story', 'future', 'beliefs'] }
+  const { getNextOverlay } = load(path.resolve('src/features/student-experience/overlays/overlay-context.ts'))
+  resetNoveltyUi()
+  let ui = noveltyUi.useStudentUi()
+  assert.equal(noveltyLogic.getNextBadge(adventure, ui, true, false), undefined)
+  assert.equal(noveltyLogic.getNextBadge(adventure, ui, false, true), undefined)
+  assert.equal(noveltyLogic.getNextBadge(adventure, ui, false, false).code, 'I1')
+  ui = noveltyLogic.markBadgeAnnounced(ui, 'I1')
+  assert.equal(noveltyLogic.getNextBadge(adventure, ui, false, false).code, 'I2')
+  ui = noveltyLogic.markBadgeAnnounced(ui, 'I2')
+  assert.equal(noveltyLogic.getNextBadge(adventure, ui, false, false), undefined)
+  assert.equal(noveltyLogic.markBadgeAnnounced(ui, 'I2'), ui)
+  for (const [patch, kind] of [[{ introsSeen: {} }, 'intro'], [{ checkInPromptDismissedOn: undefined }, 'check-in']]) {
+    const current = { ...ui, ...patch }
+    const overlay = getNextOverlay({ adventure, ui: current, view: 'missions', activityOpen: false })
+    assert.equal(overlay.kind, kind)
+    assert.equal(noveltyLogic.getNextBadge(adventure, current, false, !!overlay), undefined)
+  }
+  const arrivalAdventure = { ...adventure, completedMissionIds: noveltyData.fieldMissions.map(mission => mission.id) }
+  const current = { ...ui, cityArrivalSeen: false }
+  assert.equal(getNextOverlay({ adventure: arrivalAdventure, ui: current, view: 'missions', activityOpen: false }).kind, 'arrival')
+  assert.equal(noveltyLogic.getNextBadge(arrivalAdventure, current, false, true), undefined)
+  noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
+})
+
+test('badge toast expires after seven seconds without reset on rerenders and cancels its timer when paused', async () => {
+  const badge = noveltyLogic.getEarnedBadges({ ...store.createInitialAdventure(), completedMissionIds: ['welcome'] })[0]
+  const clock = followUpClock(), toast = immersivePlayerHarness('../overlays/BadgeToast')
+  let dismissed = 0
+  try {
+    const tree = toast.draw({ badge, onDismiss: () => dismissed++ })
+    assert.equal(tree.props.role, 'status'); assert.equal(tree.props['aria-live'], 'polite')
+    assert.ok(toast.text(tree).includes('Nueva insignia')); assert.ok(toast.text(tree).includes(badge.title)); assert.ok(toast.text(tree).includes(badge.message))
+    assert.equal(toast.find(tree, element => element.props.to).props.to, '/student/profile?section=passport')
+    assert.ok(toast.find(tree, element => element.props['aria-label'] === 'Cerrar aviso'))
+    await clock.tick(6999); assert.equal(dismissed, 0)
+    toast.draw({ badge, onDismiss: () => dismissed++ }); await clock.tick(1); assert.equal(dismissed, 1)
+    assert.equal(clock.pending, 0); toast.dispose()
+    const interrupted = immersivePlayerHarness('../overlays/BadgeToast')
+    interrupted.draw({ badge, onDismiss: () => dismissed++ }); await clock.tick(3000); interrupted.dispose(); await clock.tick(4000)
+    assert.equal(dismissed, 1); assert.equal(clock.pending, 0)
+  } finally { toast.dispose(); clock.restore() }
+})
+
+test('overlay queue resumes earned badges after the player and presents them consecutively without duplication', async () => {
+  store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: ['welcome', 'story', 'future', 'beliefs'] }))
+  resetNoveltyUi()
+  const checkIn = load(path.resolve('src/features/student-experience/overlays/checkIn.ts'))
+  const queue = immersivePlayerHarness('../overlays/OverlayQueue', {
+    'react-router': { ...nativeRequire('react-router'), useNavigate: () => () => {} },
+    './checkIn': { ...checkIn, useCheckInDay: () => checkIn.localDateKey(new Date()) },
+  })
+  const clock = followUpClock()
+  const findBadge = tree => queue.find(tree, element => element.type.name === 'BadgeToast')
+  const props = { view: 'missions', activityOpen: true, children: null }
+  try {
+    let tree = queue.draw(props); assert.equal(findBadge(tree), undefined)
+    tree = queue.draw({ ...props, activityOpen: false }); assert.equal(findBadge(tree).props.badge.code, 'I1')
+    const first = immersivePlayerHarness('../overlays/BadgeToast')
+    first.draw(findBadge(tree).props); await clock.tick(7000); first.dispose()
+    tree = queue.draw({ ...props, activityOpen: false }); assert.equal(findBadge(tree).props.badge.code, 'I2')
+    findBadge(tree).props.onDismiss()
+    tree = queue.draw({ ...props, activityOpen: false }); assert.equal(findBadge(tree), undefined)
+    assert.deepEqual(Array.from(noveltyUi.useStudentUi().announcedBadgeCodes), ['I1', 'I2'])
+    resetNoveltyUi({ introsSeen: {} }); tree = queue.draw({ ...props, activityOpen: false }); assert.equal(findBadge(tree), undefined)
+  } finally { queue.dispose(); clock.restore(); store.updateAdventure(() => store.createInitialAdventure()); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState()) }
 })
 
 test('every supplied mission node renders, including matrices, slides, questions and instrument items', () => {

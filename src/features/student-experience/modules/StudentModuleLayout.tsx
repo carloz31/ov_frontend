@@ -7,6 +7,7 @@ import { useStudentOverlays } from '../overlays/overlay-context'
 import { useStudentUi } from '../ui-state'
 import { getStudentViewLabel, type StudentView } from '../views'
 import { StudentUserMenu } from './StudentUserMenu'
+import { NoveltiesMenu } from '../overlays/NoveltiesMenu'
 
 export function StudentModuleLayout({ view, children }: { view: StudentView; children: ReactNode }) {
   const ui = useStudentUi()
@@ -40,6 +41,7 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
           </nav>
         )}
         <div className="sx-module-actions">
+          <NoveltiesMenu />
           <button
             type="button"
             className="sx-icon-button"
