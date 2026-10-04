@@ -1,16 +1,16 @@
-import { useState, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import { ArrowLeft, ChevronRight, CircleHelp } from 'lucide-react'
 import { Link } from 'react-router'
 import { appPaths } from '@/routes/paths'
 import { guideSteps } from '../guide-texts'
-import { LumiOverlay } from '../overlays/LumiOverlay'
+import { useStudentOverlays } from '../overlays/overlay-context'
 import { useStudentUi } from '../ui-state'
 import { getStudentViewLabel, type StudentView } from '../views'
 import { StudentUserMenu } from './StudentUserMenu'
 
 export function StudentModuleLayout({ view, children }: { view: StudentView; children: ReactNode }) {
   const ui = useStudentUi()
-  const [guideOpen, setGuideOpen] = useState(false)
+  const { openGuide } = useStudentOverlays()
   return (
     <div className="sx-module">
       <header className="sx-module-header">
@@ -44,7 +44,7 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
             type="button"
             className="sx-icon-button"
             aria-label="Abrir guía"
-            onClick={() => setGuideOpen(true)}
+            onClick={() => openGuide(guideSteps[view])}
           >
             <CircleHelp aria-hidden="true" size={20} />
           </button>
@@ -52,7 +52,6 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
         </div>
       </header>
       <div className="sx-module-content">{children}</div>
-      <LumiOverlay open={guideOpen} steps={guideSteps[view]} onClose={() => setGuideOpen(false)} />
     </div>
   )
 }

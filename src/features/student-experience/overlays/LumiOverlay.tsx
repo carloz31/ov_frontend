@@ -1,7 +1,9 @@
 import { useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
-import { ArrowLeft, ArrowRight, X } from 'lucide-react'
+import { ArrowLeft, ChevronRight, X } from 'lucide-react'
+import { useThemeClass } from '@/components/ThemeScope'
 import { CharacterAvatar } from '../player/CharacterAvatar'
+import { useTypewriter } from './useTypewriter'
 
 export type LumiOverlayProps = {
   open: boolean
@@ -11,7 +13,6 @@ export type LumiOverlayProps = {
   finalLabel?: string
 }
 
-// Manual help for phase 1; progressive writing and the automatic queue arrive in phase 3.
 export function LumiOverlay({ open, ...props }: LumiOverlayProps) {
   return (
     <Dialog.Root
@@ -32,15 +33,21 @@ function LumiDialogue({
   finalLabel = 'Entendido',
 }: Omit<LumiOverlayProps, 'open'>) {
   const [step, setStep] = useState(0)
+  const themeClass = useThemeClass()
+  const text = steps[step] ?? ''
+  const { visible, done, complete } = useTypewriter(text)
   const primaryButton = useRef<HTMLButtonElement>(null)
   const returnFocus = useRef<HTMLElement | null>(null)
   const last = step === steps.length - 1
   return (
     <Dialog.Portal>
-      <Dialog.Overlay className="sx-root sx-lumi-backdrop" />
+      <Dialog.Overlay className={`sx-root ${themeClass} sx-lumi-backdrop`} />
       <Dialog.Content
-        className="sx-root sx-glass sx-lumi-dialog"
+        className={`sx-root ${themeClass} sx-glass sx-lumi-dialog`}
         aria-label="Orientación de Lumi"
+        onClick={() => {
+          if (!done) complete()
+        }}
         onOpenAutoFocus={(event) => {
           event.preventDefault()
           returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -48,7 +55,7 @@ function LumiDialogue({
         }}
         onCloseAutoFocus={(event) => {
           event.preventDefault()
-          returnFocus.current?.focus()
+          if (returnFocus.current?.isConnected) returnFocus.current.focus()
         }}
       >
         <Dialog.Title className="sr-only">Orientación de Lumi</Dialog.Title>
@@ -56,36 +63,57 @@ function LumiDialogue({
           type="button"
           className="sx-icon-button sx-lumi-close"
           aria-label="Cerrar guía"
-          onClick={onClose}
+          onClick={(event) => {
+            event.stopPropagation()
+            onClose()
+          }}
         >
           <X aria-hidden="true" size={18} />
         </button>
-        <CharacterAvatar id="companero" size="lg" />
-        {steps.length > 1 && (
-          <p className="sx-lumi-step">
-            Paso {step + 1} de {steps.length}
-          </p>
-        )}
-        <Dialog.Description className="sx-lumi-text">{steps[step]}</Dialog.Description>
+        <div className="sx-lumi-avatar">
+          <CharacterAvatar id="companero" size="lg" />
+        </div>
+        <div className="sx-lumi-indicators" aria-hidden="true">
+          {steps.map((_, index) => (
+            <span key={index} data-active={index <= step} />
+          ))}
+        </div>
+        <p className="sr-only">
+          Paso {step + 1} de {steps.length}
+        </p>
+        <Dialog.Description asChild>
+          <div className="sx-lumi-text">
+            <span aria-hidden="true">{visible}</span>
+            <span className="sr-only">{text}</span>
+          </div>
+        </Dialog.Description>
         <div className="sx-lumi-footer">
-          {step > 0 && (
-            <button type="button" className="sx-secondary-button" onClick={() => setStep(step - 1)}>
-              <ArrowLeft size={16} /> Anterior
-            </button>
-          )}
+          <button
+            type="button"
+            className="sx-secondary-button"
+            disabled={step === 0}
+            onClick={(event) => {
+              event.stopPropagation()
+              setStep(step - 1)
+            }}
+          >
+            <ArrowLeft size={16} /> Anterior
+          </button>
           <button
             ref={primaryButton}
             type="button"
             className="sx-primary-button"
-            onClick={() => {
-              if (last) {
+            onClick={(event) => {
+              event.stopPropagation()
+              if (!done) complete()
+              else if (last) {
                 onFinish?.()
                 onClose()
               } else setStep(step + 1)
             }}
           >
-            {last ? finalLabel : 'Siguiente'}
-            {!last && <ArrowRight size={16} />}
+            {!done ? 'Mostrar todo' : last ? finalLabel : 'Siguiente'}
+            {done && !last && <ChevronRight size={16} />}
           </button>
         </div>
       </Dialog.Content>

@@ -19,10 +19,10 @@ import {
   canAccessFamilyConversations,
   getTravelerLevel,
 } from '@/features/occupation-exploration/lib/AdventureStore'
-import { lumiDayKey } from '@/features/occupation-exploration/lib/LumiFriendship'
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import { appPaths } from '@/routes/paths'
 import { getReturnGreeting, type StudentMapPoint } from './mapPoints'
+import { getTodayCheckIn, useCheckInDay } from '../overlays/checkIn'
 
 export function AdventurePanel({
   adventure,
@@ -30,12 +30,14 @@ export function AdventurePanel({
   recommended,
   progress,
   onSelect,
+  onCheckIn,
 }: {
   adventure: AdventureState
   points: StudentMapPoint[]
   recommended?: StudentMapPoint
   progress: { label: string; value: number }
   onSelect: (id: string) => void
+  onCheckIn: () => void
 }) {
   const [page, setPage] = useState(0)
   const level = getTravelerLevel(adventure)
@@ -44,13 +46,8 @@ export function AdventurePanel({
   const currentPage = Math.min(page, maxPage)
   const visible = available.slice(currentPage * 5, currentPage * 5 + 5)
   const greeting = getReturnGreeting(adventure, recommended)
-  const today = lumiDayKey(new Date())
-  const signal = adventure.readinessCheckIns.find(
-    (checkIn) =>
-      checkIn.linkedActivityId === 'daily-check-in' &&
-      Number.isFinite(Date.parse(checkIn.createdAt)) &&
-      lumiDayKey(new Date(checkIn.createdAt)) === today,
-  )
+  useCheckInDay()
+  const signal = getTodayCheckIn(adventure)
   const percentage = Math.min(100, Math.max(0, progress.value))
   const circumference = 2 * Math.PI * 40
   return (
@@ -129,6 +126,9 @@ export function AdventurePanel({
         ) : (
           <p className="sx-panel-subtitle">¿Qué tan seguro te sientes hoy de tu próximo paso?</p>
         )}
+        <button type="button" className={signal ? 'sx-panel-link' : 'sx-primary-button'} onClick={onCheckIn}>
+          {signal ? 'Cambiar' : 'Registrar mi señal'}
+        </button>
         <Link className="sx-panel-link" to={appPaths.student.signals}>
           Ver evolución
         </Link>

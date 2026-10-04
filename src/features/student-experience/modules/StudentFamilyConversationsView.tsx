@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { familyDetailGuide } from '../guide-texts'
-import { LumiOverlay } from '../overlays/LumiOverlay'
+import { useStudentOverlays } from '../overlays/overlay-context'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
@@ -303,7 +303,7 @@ function ConversationTopicDetail({
   onOpenJournal: () => void
   topic: FamilyConversationTopic
 }) {
-  const [guideOpen, setGuideOpen] = useState(false)
+  const { openGuide } = useStudentOverlays()
   const [answer, setAnswer] = useState('')
   const [reflection, setReflection] = useState(conversation?.studentReflection ?? '')
   const ownAnswer = conversation?.student
@@ -348,7 +348,7 @@ function ConversationTopicDetail({
               type="button"
               className="sx-icon-button"
               aria-label="Abrir guía del tema"
-              onClick={() => setGuideOpen(true)}
+              onClick={() => openGuide([familyDetailGuide])}
             >
               <CircleHelp size={20} aria-hidden="true" />
             </button>
@@ -474,7 +474,6 @@ function ConversationTopicDetail({
           )}
         </div>
       </main>
-      <LumiOverlay open={guideOpen} steps={[familyDetailGuide]} onClose={() => setGuideOpen(false)} />
     </div>
   )
 }

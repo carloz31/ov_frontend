@@ -9,6 +9,7 @@ import {
 } from '@/features/occupation-exploration/lib/AdventureStore'
 import { getMissionsToSync } from './map/mapPoints'
 import { StudentModuleLayout } from './modules/StudentModuleLayout'
+import { OverlayQueue } from './overlays/OverlayQueue'
 import { updateStudentUi } from './ui-state'
 import { getStudentView } from './views'
 import '@/features/occupation-exploration/adventure.css'
@@ -22,6 +23,7 @@ export function StudentShell() {
   const storageError = useAdventureStorageError()
   const view = getStudentView(location.pathname)
   const isMap = view === 'missions' || view === 'central'
+  const activityOpen = new URLSearchParams(location.search).has('actividad')
 
   useEffect(() => {
     getMissionsToSync({ completedMissionIds }, { progress }).forEach((id) => completeMission(id))
@@ -45,13 +47,15 @@ export function StudentShell() {
           permitir el almacenamiento.
         </p>
       )}
-      {isMap ? (
-        outlet
-      ) : (
-        <StudentModuleLayout key={view} view={view}>
-          {outlet}
-        </StudentModuleLayout>
-      )}
+      <OverlayQueue view={view} activityOpen={activityOpen}>
+        {isMap ? (
+          outlet
+        ) : (
+          <StudentModuleLayout key={view} view={view}>
+            {outlet}
+          </StudentModuleLayout>
+        )}
+      </OverlayQueue>
     </div>
   )
 }

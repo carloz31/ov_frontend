@@ -1,5 +1,11 @@
 import type { StudentView } from './views'
 
+export const cityArrivalSteps = [
+  '¡Lo lograste! Las puertas de la ciudad se abrieron para ti.',
+  'Aquí no hay un orden fijo. Puedes atender los llamados de sus habitantes, investigar una carrera de cerca o visitar el molino.',
+  'Y desde ahora también puedes conversar con tu familia en «En familia».',
+]
+
 export const familyDetailGuide =
   'Las respuestas tienen el mismo valor. La guía sirve para escucharse y encontrar preguntas que quieran seguir explorando juntos.'
 

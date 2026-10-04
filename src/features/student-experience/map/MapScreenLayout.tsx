@@ -7,7 +7,7 @@ import { canAccessCity } from '@/features/occupation-exploration/lib/AdventureSt
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import { appPaths } from '@/routes/paths'
 import { StudentUserMenu } from '../modules/StudentUserMenu'
-import { LumiOverlay } from '../overlays/LumiOverlay'
+import { useStudentOverlays } from '../overlays/overlay-context'
 import { guideSteps } from '../guide-texts'
 import { updateStudentUi, useStudentUi } from '../ui-state'
 import { ActivityDrawer } from './ActivityDrawer'
@@ -45,7 +45,7 @@ export function MapScreenLayout({
   const mobilePanelButton = useRef<HTMLButtonElement>(null)
   const [selectedId, setSelectedId] = useState<string>()
   const [scale, setScale] = useState(0.8)
-  const [guideOpen, setGuideOpen] = useState(false)
+  const { openGuide, openCheckIn } = useStudentOverlays()
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
   const [mobile, setMobile] = useState(false)
   useEffect(() => {
@@ -91,6 +91,10 @@ export function MapScreenLayout({
       points={points}
       recommended={recommended}
       progress={progress}
+      onCheckIn={() => {
+        setMobilePanelOpen(false)
+        openCheckIn(mobile ? () => mobilePanelButton.current?.focus() : undefined)
+      }}
       onSelect={(id) => {
         if (locked) navigate(appPaths.student.missions)
         else selectPoint(id)
@@ -158,7 +162,7 @@ export function MapScreenLayout({
             zone === 'missions' ? selectPoint('city') : navigate(appPaths.student.missions)
           }
         />
-        <MapControls onHelp={() => setGuideOpen(true)} />
+        <MapControls onHelp={() => openGuide(guideSteps[zone])} />
         <ZoomControls
           scale={scale}
           onZoom={(factor) => canvas.current?.zoom(factor)}
@@ -190,7 +194,6 @@ export function MapScreenLayout({
         onJournal={journal}
         onFallbackFocus={() => mobilePanelButton.current?.focus()}
       />
-      <LumiOverlay open={guideOpen} steps={guideSteps[zone]} onClose={() => setGuideOpen(false)} />
       <ZoneTransition zone={zone} />
     </div>
   )
