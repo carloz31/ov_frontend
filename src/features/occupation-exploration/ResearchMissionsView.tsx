@@ -1,7 +1,6 @@
 import { Check, Search, ArrowLeft } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { Button } from '@/components/ui/Button'
-import { GuideDialogue } from '@/components/GuideDialogue'
 import { appPaths } from '@/routes/paths'
 import { classroomAliases } from './data/AdventureData'
 import { careerCatalog } from './data/ExplorationCatalogData'
@@ -218,7 +217,6 @@ function ResearchMissionsView() {
           )}
         </div>
       </div>
-      <GuideDialogue text="Investigar es hacer preguntas y escuchar. Elige una carrera que despierte tu curiosidad, prepara tus preguntas y registra lo que descubras. Tu cierre puede esperar hasta que tengas la entrevista." />
     </div>
   )
 }

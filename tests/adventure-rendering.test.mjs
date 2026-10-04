@@ -184,7 +184,7 @@ test('guide stays collapsed until its help button is activated', () => {
   assert.match(html, /bottom-5 right-5[^"]*size-12/)
   assert.doesNotMatch(html, /role="dialog"/)
 })
-test('every student route keeps the guide as a compact bottom-right bubble', () => {
+test('student routes have no sidebar and modules have a return button and header help', () => {
   const routes = [
     '/student/missions',
     '/student/exploration',
@@ -205,10 +205,106 @@ test('every student route keeps the guide as a compact bottom-right bubble', () 
   for (const route of routes) {
     const html = render(route)
     assert.match(html, /aria-label="Abrir guía"/, route)
-    assert.match(html, /pointer-events-none fixed inset-0/, route)
+    assert.doesNotMatch(html, /data-sidebar="sidebar"/, route)
+    if (route !== '/student/missions' && route !== '/student/exploration') {
+      assert.match(html, /Volver al mapa/, route)
+      assert.match(html, /sx-module-header/, route)
+      assert.doesNotMatch(html, /pointer-events-none fixed inset-0/, route)
+    }
     assert.doesNotMatch(html, /aria-label="Abrir guía" class="[^"]*w-full/, route)
   }
 })
+test('student shell returns to the last visited zone and preserves module navigation', () => {
+  const ui = load(path.resolve('src/features/student-experience/ui-state.ts'))
+  try {
+    ui.updateStudentUi(current => ({ ...current, lastMap: 'central' }))
+    const html = render('/student/catalog/careers')
+    assert.match(html, /href="\/student\/exploration"[^>]*><[^>]*[\s\S]*?Volver al mapa/)
+    assert.match(html, /Ingeniería Ambiental/)
+    assert.match(html, /aria-label="Menú de Alex"/)
+    assert.doesNotMatch(html, /role="dialog"/)
+    ui.updateStudentUi(current => ({ ...current, lastMap: 'missions' }))
+    assert.match(render('/student/research'), /href="\/student\/missions"/)
+    assert.match(render('/student/profile/decisions'), /aria-label="Secciones de mi perfil"/)
+    assert.doesNotMatch(render('/student/profile'), /class="sx-module-tabs"/)
+  } finally {
+    ui.updateStudentUi(() => ui.initialStudentUiState())
+  }
+})
+
+test('completed v2 missions synchronize in field order without duplicates or mutations', () => {
+  const { getMissionsToSync, specActivityByMission } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const adventure = store.createInitialAdventure()
+  adventure.completedMissionIds = ['welcome', 'story']
+  const journey = journeyLogic.initialJourney()
+  for (const mission of [...fieldMissions].reverse()) {
+    const activityId = specActivityByMission[mission.id]
+    journey.progress[activityId] = { actividadId: activityId, estado: 'completada' }
+  }
+  journey.progress['unrelated-activity'] = { actividadId: 'unrelated-activity', estado: 'completada' }
+  journey.progress['mission-future'].estado = 'en_curso'
+  const before = JSON.stringify({ adventure, journey })
+  const missing = getMissionsToSync(adventure, journey)
+  assert.deepEqual(Array.from(missing), Array.from(fieldMissions).filter(mission => !['welcome', 'story', 'future'].includes(mission.id)).map(mission => mission.id))
+  assert.equal(JSON.stringify({ adventure, journey }), before)
+  adventure.completedMissionIds.push(...missing)
+  assert.equal(getMissionsToSync(adventure, journey).length, 0)
+  journey.progress['mission-future'].estado = 'completada'
+  assert.deepEqual(Array.from(getMissionsToSync(adventure, journey)), ['future'])
+})
+
+test('student presentation preferences validate storage, survive failures and refresh across tabs', () => {
+  const file = path.resolve('src/features/student-experience/ui-state.ts')
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+  const { studentViews } = load(path.resolve('src/features/student-experience/views.ts'))
+  let raw = '{broken'
+  let failRead = false
+  let failWrite = false
+  let lastKey
+  let storageListener
+  let notifications = 0
+  const isolated = vm.createContext({
+    window: { addEventListener: (name, listener) => { assert.equal(name, 'storage'); storageListener = listener } },
+    localStorage: {
+      getItem: key => { assert.equal(key, 'ov.student-ui.v1'); if (failRead) throw new Error('blocked'); return raw },
+      setItem: (key, value) => { lastKey = key; if (failWrite) throw new Error('full'); raw = value },
+    },
+  })
+  const exports = {}
+  const require = name => {
+    if (name === 'react') return { useSyncExternalStore: (subscribe, snapshot) => { subscribe(() => notifications++); return snapshot() } }
+    if (name === './views') return { studentViews }
+    throw new Error(`Unexpected import: ${name}`)
+  }
+  vm.runInContext(`(function(require,exports){${js}\n})`, isolated)(require, exports)
+  assert.equal(exports.useStudentUi().lastMap, 'missions')
+  exports.updateStudentUi(current => ({ ...current, lastMap: 'central', panelCollapsed: true, soundOn: false }))
+  assert.equal(lastKey, 'ov.student-ui.v1')
+  assert.equal(JSON.parse(raw).lastMap, 'central')
+  assert.equal(notifications, 1)
+  raw = JSON.stringify({ version: 1, lastMap: 'central', panelCollapsed: true, soundOn: false, introsSeen: { research: true, unknown: true, journal: 'true' }, seenUnlockIds: ['city', 'city', 123], announcedBadgeCodes: ['I1'], checkInPromptDismissedOn: '2026-10-03' })
+  storageListener({ key: 'other-key' })
+  assert.equal(notifications, 1)
+  storageListener({ key: 'ov.student-ui.v1' })
+  const hydrated = exports.useStudentUi()
+  assert.equal(hydrated.lastMap, 'central')
+  assert.equal(hydrated.panelCollapsed, true)
+  assert.equal(hydrated.soundOn, false)
+  assert.equal(JSON.stringify(hydrated.introsSeen), '{"research":true}')
+  assert.equal(JSON.stringify(hydrated.seenUnlockIds), '["city"]')
+  assert.equal(hydrated.checkInPromptDismissedOn, '2026-10-03')
+  failWrite = true
+  exports.updateStudentUi(current => ({ ...current, lastMap: 'missions' }))
+  assert.equal(exports.useStudentUi().lastMap, 'missions')
+  assert.equal(JSON.parse(raw).lastMap, 'central')
+  raw = '{"version":2,"lastMap":"central"}'
+  storageListener({ key: null })
+  assert.equal(exports.useStudentUi().lastMap, 'missions')
+  failRead = true
+  storageListener({ key: 'ov.student-ui.v1' })
+  assert.equal(exports.useStudentUi().soundOn, true)
+})
+
 test('adventure keeps the original mission route and switches between path and city', () => {
   const missions = render('/student/missions')
   assert.match(missions, /Nivel de recorrido/)

@@ -19,7 +19,8 @@ import {
   ForestFireCasePage,
   TestimonialsPage,
 } from '@/features/occupation-exploration/OccupationExplorationPages'
-import { OccupationExplorationShell } from '@/features/occupation-exploration/OccupationExplorationShell'
+import { StudentShell } from '@/features/student-experience/StudentShell'
+import { StudentFamilyConversationsView } from '@/features/student-experience/modules/StudentFamilyConversationsView'
 import { ParentActivitiesView } from '@/features/parent-portal/ParentActivitiesView'
 import { ParentActivityView } from '@/features/parent-portal/ParentActivityView'
 import { ParentCareerGuideView } from '@/features/parent-portal/ParentCareerGuideView'
@@ -54,7 +55,7 @@ function AppRoutes() {
     <Routes>
       <Route element={<RoleSelectionRoute />} path="/" />
       <Route element={<OccupationExplorationModule />} path="/student">
-        <Route element={<OccupationExplorationShell />}>
+        <Route element={<StudentShell />}>
           <Route element={<Navigate replace to={appPaths.student.missions} />} index />
           <Route element={<ExplorationHomePage />} path="exploration" />
           <Route element={<FieldMissionsPage />} path="missions" />
@@ -64,7 +65,7 @@ function AppRoutes() {
           <Route element={<CommunityView />} path="community" />
           <Route element={<AdventureResourcesView />} path="resources" />
           <Route element={<Navigate replace to={appPaths.student.passport} />} path="achievements" />
-          <Route element={<FamilyConversationsView />} path="conversations" />
+          <Route element={<StudentFamilyConversationsView />} path="conversations" />
           <Route element={<ExplorationCatalogPage section="professions" />} path="catalog/professions" />
           <Route element={<ExplorationCatalogPage section="careers" />} path="catalog/careers" />
           <Route element={<ExplorationCatalogPage section="institutions" />} path="catalog/institutions" />
