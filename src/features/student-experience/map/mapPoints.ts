@@ -182,7 +182,7 @@ export function getZoneProgress(zone: StudentZone, adventure: AdventureState, jo
           100,
       }
     : {
-        label: 'Satisfacción de las personas',
+        label: 'Afinidad con la ciudad',
         value: Math.round(
           (cityCases.filter((item) => adventure.solvedCaseIds.includes(item.id)).length / cityCases.length) *
             100,

@@ -1167,8 +1167,8 @@ body:has([data-student-experience] .sx-shell) {
   position: relative;
   display: grid;
   place-items: center;
-  width: 96px;
-  height: 96px;
+  width: 80px;
+  height: 80px;
 }
 .sx-root .sx-progress-ring svg {
   position: absolute;
@@ -1176,7 +1176,7 @@ body:has([data-student-experience] .sx-shell) {
   transform: rotate(-90deg);
 }
 .sx-root .sx-progress-ring strong {
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 700;
 }
 .sx-root .sx-panel-progress h2 {

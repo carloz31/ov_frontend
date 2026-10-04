@@ -56,6 +56,6 @@ export const guideSteps: Record<StudentView, string[]> = {
   central: [
     'Bienvenido a la ciudad. Aquí tú decides el orden: cada llamado de sus habitantes es una oportunidad para descubrir cómo se complementan distintas profesiones.',
     'También puedes visitar la estación de investigación para conocer una carrera de cerca, o pasar por el molino a conversar con Mara.',
-    'Cada vez que ayudas, la satisfacción de las personas crece. La ves en tu panel.',
+    'Cada vez que ayudas, tu afinidad con la ciudad crece. La ves en tu panel.',
   ],
 }

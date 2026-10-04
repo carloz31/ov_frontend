@@ -150,3 +150,9 @@ Reducir la insignia de nivel a 40 × 40 px, como el avatar del saludo. Mantener 
 Comprimir Tu señal de hoy: valor /10 junto al título, en una ficha pequeña, y acciones alineadas en una sola fila. Cambiar (o Registrar mi señal cuando no exista registro) será un botón azul con icono de escritura y bordes de ficha de aventura. Ver evolución será un enlace separado con icono de tendencia, subrayado y su destino actual. Conservar el texto de la pregunta, la edición, el guardado, la privacidad y todos los datos existentes.
 
 Archivos: map/AdventurePanel.tsx, student-experience.css, pruebas del estudiante en adventure-rendering.test.mjs y este plan. Actualizar las expectativas de presentación del rango y la señal en las pruebas existentes. Revisar estado con/sin señal, tamaños de saludo y nivel, teclado, foco y presentación a 1280 × 800, 1440 × 900 y 360 px. Ejecutar build, lint y test, seleccionar solo cambios propios, crear commit y detenerse al terminar.
+
+## 12. Afinidad y progreso compacto — `Fase 12: Afinidad y progreso compacto`
+
+Renombrar el indicador de Ciudad a “Afinidad con la ciudad”, tanto en su etiqueta visible como accesible, sin alterar el cálculo por casos resueltos. Reducir el anillo del panel de 96 a 80 px y el porcentaje de 22 a 18 px, conservando proporciones, colores y valores en ambas zonas.
+
+Archivos: map/mapPoints.ts, guide-texts.ts (explicación de Lumi), student-experience.css, expectativas existentes de las pruebas del estudiante y este plan. Ejecutar build, lint y test, seleccionar únicamente cambios propios y crear el commit de la fase. Reportar verificaciones pendientes y detenerse al terminar.

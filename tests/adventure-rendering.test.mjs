@@ -312,7 +312,8 @@ test('adventure keeps the original mission route and switches between path and c
   for (const label of ['Alejar mapa', 'Acercar mapa', 'Centrar mapa']) assert.match(missions, new RegExp(`aria-label="${label}"`))
   assert.doesNotMatch(missions, /Arrastra .*para explorar/)
   const city = render('/student/exploration')
-  assert.match(city, /Satisfacción de las personas/)
+  assert.match(city, /Afinidad con la ciudad/)
+  assert.match(city, /role="progressbar" aria-label="Afinidad con la ciudad"/)
   assert.match(city, /Una vuelta por el molino/)
   assert.match(city, /Test · Interacción 1 de 14/)
   assert.match(city, /Cambiar zona de la aventura/)
@@ -327,7 +328,7 @@ test('immersive maps expose the panel, recommendations and one block sign', () =
   assert.match(missions, /aria-label="Abrir panel"/)
   assert.match(missions, /aria-label="Silenciar" aria-pressed="true"/)
   assert.match(missions, /data-recommended="true"/)
-  assert.match(render('/student/exploration'), /Satisfacción de las personas/)
+  assert.match(render('/student/exploration'), /Afinidad con la ciudad/)
 })
 
 test('new map canvases draw segments only on the path, with completion and frontier styles', () => {
