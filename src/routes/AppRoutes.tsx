@@ -13,13 +13,13 @@ import { OccupationExplorationModule } from '@/features/occupation-exploration/O
 import {
   ExplorationCaseIntroPage,
   ExplorationCatalogPage,
-  ExplorationHomePage,
   ExplorationProfilePage,
-  FieldMissionsPage,
   ForestFireCasePage,
   TestimonialsPage,
 } from '@/features/occupation-exploration/OccupationExplorationPages'
 import { StudentShell } from '@/features/student-experience/StudentShell'
+import { CaminoScreen } from '@/features/student-experience/map/CaminoScreen'
+import { CiudadScreen } from '@/features/student-experience/map/CiudadScreen'
 import { StudentFamilyConversationsView } from '@/features/student-experience/modules/StudentFamilyConversationsView'
 import { ParentActivitiesView } from '@/features/parent-portal/ParentActivitiesView'
 import { ParentActivityView } from '@/features/parent-portal/ParentActivityView'
@@ -57,8 +57,8 @@ function AppRoutes() {
       <Route element={<OccupationExplorationModule />} path="/student">
         <Route element={<StudentShell />}>
           <Route element={<Navigate replace to={appPaths.student.missions} />} index />
-          <Route element={<ExplorationHomePage />} path="exploration" />
-          <Route element={<FieldMissionsPage />} path="missions" />
+          <Route element={<CiudadScreen />} path="exploration" />
+          <Route element={<CaminoScreen />} path="missions" />
           <Route element={<ResearchMissionsView />} path="research" />
           <Route element={<JournalView />} path="journal" />
           <Route element={<JournalSignalsView />} path="journal/signal" />

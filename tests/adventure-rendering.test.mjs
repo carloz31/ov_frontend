@@ -180,8 +180,6 @@ test('the city and research station render after the actual mission requirement'
 test('guide stays collapsed until its help button is activated', () => {
   const html = render('/student/missions')
   assert.match(html, /aria-label="Abrir guía"/)
-  assert.match(html, /pointer-events-none fixed inset-0/)
-  assert.match(html, /bottom-5 right-5[^"]*size-12/)
   assert.doesNotMatch(html, /role="dialog"/)
 })
 test('student routes have no sidebar and modules have a return button and header help', () => {
@@ -312,7 +310,7 @@ test('adventure keeps the original mission route and switches between path and c
   assert.match(missions, /Informativa · 4 min/)
   assert.match(missions, /Test · 6 min/)
   assert.match(missions, /Cambiar zona de la aventura/)
-  assert.doesNotMatch(missions, /aria-label="(?:Alejar|Acercar|Centrar) mapa"/)
+  for (const label of ['Alejar mapa', 'Acercar mapa', 'Centrar mapa']) assert.match(missions, new RegExp(`aria-label="${label}"`))
   assert.doesNotMatch(missions, /Arrastra el lienzo para explorar/)
   const city = render('/student/exploration')
   assert.match(city, /Satisfacción de las personas/)
@@ -322,6 +320,156 @@ test('adventure keeps the original mission route and switches between path and c
   const source = readFileSync(path.resolve('src/components/AdventureMap.tsx'), 'utf8')
   assert.doesNotMatch(source, /onWheel|preventDefault/)
 })
+test('immersive maps expose the panel, recommendations and one block sign', () => {
+  const missions = render('/student/missions')
+  for (const label of ['Siguiente paso', 'Tu señal de hoy', 'Accesos rápidos', 'Tramo 1']) assert.match(missions, new RegExp(label))
+  assert.equal((missions.match(/Tramo 1/g) ?? []).length, 1)
+  assert.match(missions, /aria-label="Plegar panel"/)
+  assert.match(missions, /aria-label="Abrir panel"/)
+  assert.match(missions, /aria-label="Silenciar" aria-pressed="true"/)
+  assert.match(missions, /data-recommended="true"/)
+  assert.match(render('/student/exploration'), /Satisfacción de las personas/)
+})
+
+test('new map canvases draw segments only on the path, with completion and frontier styles', () => {
+  const { MapCanvas } = load(path.resolve('src/features/student-experience/map/MapCanvas.tsx'))
+  const { getCaminoPoints } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const journey = journeyLogic.initialJourney()
+  journey.progress['mission-welcome'] = { estado: 'completada' }
+  journey.progress['mission-story'] = { estado: 'completada' }
+  const points = getCaminoPoints(store.createInitialAdventure(), journey)
+  const props = { points, panelOpen: false, onSelect() {}, onScaleChange() {}, backgroundImage: '/images/adventure/journey-map.jpeg', label: 'Mapa de prueba' }
+  const route = renderToStaticMarkup(React.createElement(MapCanvas, { ...props, variant: 'route' }))
+  const city = renderToStaticMarkup(React.createElement(MapCanvas, { ...props, variant: 'open' }))
+  assert.equal((route.match(/data-map-segment=/g) ?? []).length, points.length - 1)
+  assert.match(route, /data-map-segment="completed"[^>]*stroke="var\(--success\)"/)
+  assert.match(route, /data-map-segment="frontier"[^>]*stroke="var\(--sx-lumi\)"[^>]*stroke-dasharray="18 22"/)
+  assert.match(route, /stroke-dasharray="18 22"/)
+  assert.doesNotMatch(city, /data-map-segment=|sx-map-path|sx-block-sign/)
+  assert.match(route, /sx-node-completed[^>]*[\s\S]*?lucide-book-open/)
+})
+
+test('student point calculations preserve progress, recommendations and every drawer action', () => {
+  const { getCaminoPoints, getCiudadPoints, getZoneProgress, getRecommendedPoint, getPointDetails } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const adventure = store.createInitialAdventure()
+  const journey = journeyLogic.initialJourney()
+  adventure.completedMissionIds = []
+  adventure.solvedCaseIds = ['forest-fire', 'river-mystery']
+  const points = getCaminoPoints(adventure, journey)
+  assert.equal(getZoneProgress('missions', adventure, journey).value, 0)
+  assert.equal(getZoneProgress('central', adventure, journey).value, 33)
+  assert.equal(getRecommendedPoint(points).id, 'welcome')
+  const welcome = points.find(point => point.id === 'welcome')
+  assert.equal(getPointDetails(welcome, adventure, journey).actionLabel, 'Iniciar actividad')
+  journey.progress['mission-welcome'] = { estado: 'en_curso' }
+  assert.equal(getPointDetails(welcome, adventure, journey).actionLabel, 'Continuar actividad')
+  assert.equal(getPointDetails(welcome, adventure, journey).badge, 'En progreso')
+  journey.progress['mission-welcome'].estado = 'completada'
+  const completed = getCaminoPoints(adventure, journey)
+  const replay = getPointDetails(completed[0], adventure, journey)
+  assert.equal(replay.actionLabel, 'Volver a realizar esta misión')
+  assert.equal(replay.revision, true)
+  assert.equal(replay.journal.completed, true)
+  assert.equal(getZoneProgress('missions', adventure, journey).value, 12.5)
+  assert.equal(getRecommendedPoint(completed).id, 'story')
+  const locked = getPointDetails({ ...completed[1], status: 'locked' }, adventure, journey)
+  assert.equal(locked.actionLabel, 'Actividad bloqueada')
+  assert.equal(locked.disabled, true)
+  assert.match(locked.requirement, /El inicio del viaje/)
+  const review = getPointDetails({ ...completed[1], status: 'completed' }, adventure, journey)
+  assert.equal(review.actionLabel, 'Ver o modificar mis respuestas')
+  assert.equal(getPointDetails(points.at(-1), adventure, journey).href, '/student/exploration')
+  const city = getCiudadPoints(adventure, journey)
+  assert.equal(getRecommendedPoint(city).id, 'research')
+  assert.equal(getPointDetails(city.find(point => point.id === 'research'), adventure, journey).href, '/student/research')
+  const fire = getPointDetails(city.find(point => point.id === 'forest-fire'), adventure, journey)
+  assert.equal(fire.href, '/student/cases/forest-fire')
+  assert.equal(fire.disabled, false)
+  assert.equal(getPointDetails(city.find(point => point.id === 'river-mystery'), adventure, journey).disabled, true)
+  const mill = city.find(point => point.id === 'mara-test')
+  assert.equal(getPointDetails(mill, adventure, journey).actionLabel, 'Iniciar test')
+  assert.equal(getPointDetails({ ...mill, status: 'completed' }, adventure, journey).actionLabel, 'Ver resumen')
+  assert.equal(getRecommendedPoint(completed.map(point => ({ ...point, status: point.id === 'city' ? 'available' : 'completed' }))).id, 'city')
+})
+
+test('map zoom preserves its cursor anchor, respects bounds and focuses beside the open panel', () => {
+  const { minScale, maxScale, clampTransform, zoomTransform, focusTransform, visibleCenter, mapPosition } = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  const bounds = { width: 1280, height: 752 }
+  const current = { x: -400, y: -200, scale: .8 }
+  const cursor = { x: 700, y: 320 }
+  const zoomed = zoomTransform(current, .88, cursor, bounds)
+  assert.ok(Math.abs((cursor.x - current.x) / current.scale - (cursor.x - zoomed.x) / zoomed.scale) < .00001)
+  assert.ok(Math.abs((cursor.y - current.y) / current.scale - (cursor.y - zoomed.y) / zoomed.scale) < .00001)
+  assert.equal(zoomTransform(current, 99, cursor, bounds).scale, maxScale)
+  assert.equal(zoomTransform(current, .01, cursor, bounds).scale, minScale)
+  const clamped = clampTransform({ x: 9999, y: -9999, scale: .8 }, bounds, true)
+  assert.equal(clamped.x, 304)
+  assert.equal(clamped.y, bounds.height - 1519 * .8)
+  const point = { x: 590, y: 290 }
+  const position = mapPosition(point)
+  const focused = focusTransform(current, point, bounds, true)
+  assert.ok(Math.abs(focused.x + position.x * focused.scale - visibleCenter(bounds, true).x) < .00001)
+  assert.ok(Math.abs(focused.y + position.y * focused.scale - bounds.height / 2) < .00001)
+  const source = readFileSync(path.resolve('src/features/student-experience/map/MapCanvas.tsx'), 'utf8')
+  assert.match(source, /addEventListener\('wheel', wheel, \{ passive: false \}\)/)
+  assert.match(source, /removeEventListener\('wheel', wheel\)/)
+})
+
+test('real access conditions lock successive missions and expose the city gate without changing review mode', () => {
+  const file = path.resolve('src/features/student-experience/map/mapPoints.ts')
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+  const exports = {}
+  const require = name => {
+    if (name === '@/features/occupation-exploration/lib/AdventureStore') return { ...store, prototypeAllUnlocked: false, canAccessCity: store.isCityUnlocked }
+    if (!name.startsWith('@/')) return nativeRequire(name)
+    return load(path.resolve('src', `${name.slice(2)}.ts`))
+  }
+  vm.runInContext(`(function(require,exports){${js}\n})`, context)(require, exports)
+  const adventure = store.createInitialAdventure()
+  adventure.completedMissionIds = []
+  const journey = journeyLogic.initialJourney()
+  const locked = exports.getCaminoPoints(adventure, journey)
+  assert.equal(locked[0].status, 'available')
+  assert.ok(locked.slice(1).every(point => point.status === 'locked'))
+  assert.match(exports.getPointDetails(locked[1], adventure, journey).requirement, /El inicio del viaje/)
+  journey.progress['mission-welcome'] = { estado: 'completada' }
+  const advanced = exports.getCaminoPoints(adventure, journey)
+  assert.equal(advanced[0].status, 'completed')
+  assert.equal(advanced[1].status, 'available')
+  assert.equal(advanced[2].status, 'locked')
+  assert.match(exports.getReturnGreeting({ ...adventure, visits: ['2026-09-29'] }, advanced[1], new Date('2026-10-03T17:00:00Z')), /La ciudad sigue esperándote al final del camino\./)
+  const { CityLocked } = load(path.resolve('src/features/student-experience/map/CityLocked.tsx'))
+  const gate = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(CityLocked, { adventure })))
+  assert.match(gate, /Capítulo 2 · La ciudad/)
+  assert.match(gate, /Una llave, mil posibilidades/)
+  assert.match(gate, /Continuar mi recorrido/)
+  const { ZoneSwitch } = load(path.resolve('src/features/student-experience/map/ZoneSwitch.tsx'))
+  const switcher = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(ZoneSwitch, { zone: 'missions', cityOpen: false, onCityLocked() {} })))
+  assert.match(switcher, /aria-disabled="true"/)
+  assert.equal(store.prototypeAllUnlocked, true)
+})
+
+test('new activity drawer composes shared primitives without embedded case questions', () => {
+  const source = readFileSync(path.resolve('src/features/student-experience/map/ActivityDrawer.tsx'), 'utf8')
+  assert.match(source, /from '@\/components\/ui\/drawer'/)
+  assert.match(source, /<DrawerClose asChild>/)
+  assert.match(source, /aria-label="Cerrar ficha"/)
+  assert.match(source, /overflow-x-hidden/)
+  assert.doesNotMatch(source, /type="checkbox"|Confirmar equipo/)
+})
+
+test('return greeting uses the previous Lima visit and never reproaches absences', () => {
+  const { getReturnGreeting, getCaminoPoints } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const adventure = store.createInitialAdventure()
+  const point = getCaminoPoints(adventure, journeyLogic.initialJourney())[0]
+  const now = new Date('2026-10-03T17:00:00Z')
+  adventure.visits = ['2026-09-28', '2026-09-30', '2026-10-03']
+  assert.match(getReturnGreeting(adventure, point, now), /¡Qué bueno verte de nuevo! Te espera El inicio del viaje\./)
+  adventure.visits.push('2026-10-02')
+  assert.equal(getReturnGreeting(adventure, point, now), undefined)
+  assert.equal(getReturnGreeting(adventure, undefined, now), undefined)
+})
+
 test('the passport lives inside the profile with five narrative levels and grouped badges', () => {
   const html = render('/student/profile?section=passport')
   assert.match(html, /Pasaporte vocacional/)

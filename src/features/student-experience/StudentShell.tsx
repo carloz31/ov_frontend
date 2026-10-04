@@ -28,10 +28,13 @@ export function StudentShell() {
   }, [progress, completedMissionIds])
 
   useEffect(() => {
-    if (view === 'missions' || view === 'central') {
+    if (
+      (view === 'missions' || view === 'central') &&
+      new URLSearchParams(location.search).has('actividad')
+    ) {
       updateStudentUi((current) => (current.lastMap === view ? current : { ...current, lastMap: view }))
     }
-  }, [view])
+  }, [view, location.search])
 
   const outlet = <Outlet context={context} />
   return (
