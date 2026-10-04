@@ -957,6 +957,285 @@ const journeyStore = load(path.resolve('src/features/missions/store.ts'))
 const journeyLogic = load(path.resolve('src/features/missions/logic.ts'))
 const journeyContent = load(path.resolve('src/features/missions/content.ts'))
 
+function immersivePlayerHarness(name) {
+  const file = path.resolve('src/features/student-experience/player', `${name}.tsx`)
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
+  const slots = [], effects = [], pending = []
+  let slot = 0, effect = 0
+  const react = {
+    ...React,
+    useState(initial) {
+      const i = slot++
+      if (!(i in slots)) slots[i] = typeof initial === 'function' ? initial() : initial
+      return [slots[i], value => { slots[i] = typeof value === 'function' ? value(slots[i]) : value }]
+    },
+    useRef(initial) { const i = slot++; slots[i] ??= { current: initial }; return slots[i] },
+    useMemo(factory, dependencies) {
+      const i = slot++
+      if (!slots[i] || dependencies.some((value, j) => !Object.is(value, slots[i].dependencies[j]))) slots[i] = { value: factory(), dependencies }
+      return slots[i].value
+    },
+    useEffect(callback, dependencies) {
+      const i = effect++
+      if (!effects[i] || dependencies.some((value, j) => !Object.is(value, effects[i].dependencies[j]))) pending.push(() => {
+        effects[i]?.cleanup?.()
+        effects[i] = { dependencies, cleanup: callback() }
+      })
+    },
+  }
+  const require = specifier => {
+    if (specifier === 'react') return react
+    if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
+    const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
+    return load([`${base}.tsx`, `${base}.ts`].find(existsSync))
+  }
+  const exports = {}
+  vm.runInContext(`(function(require,exports){${js}\n})`, context)(require, exports)
+  const component = exports[name.split('/').at(-1)]
+  const all = tree => Array.isArray(tree) ? tree.flatMap(all) : React.isValidElement(tree) ? [tree, ...all(tree.props.children)] : []
+  const text = tree => Array.isArray(tree) ? tree.map(text).join('') : React.isValidElement(tree) ? text(tree.props.children) : typeof tree === 'string' || typeof tree === 'number' ? String(tree) : ''
+  return {
+    draw(props) { slot = effect = 0; const tree = component(props); pending.splice(0).forEach(run => run()); return tree },
+    find: (tree, predicate) => all(tree).find(predicate),
+    button: (tree, label) => all(tree).find(element => element.type === 'button' && text(element).includes(label)),
+    text,
+    dispose: () => effects.forEach(entry => entry?.cleanup?.()),
+  }
+}
+
+test('immersive submission preserves validation, drafts, versions and the keep action', () => {
+  const activity = journeyContent.activities.find(activity => activity.tipo === 'registro' && activity.plantilla?.tipo !== 'matriz')
+  const node = activity.nodos.find(node => node.tipo === 'consigna' && node.entregable.tipo === 'texto')
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  let saved = 0, kept = 0, prevented = false
+  const props = { activity, node, onSaved: () => saved++, onKeep: () => kept++ }
+  const form = immersivePlayerHarness('nodes/SubmissionNode')
+  let tree = form.draw(props)
+  tree.props.onSubmit({ preventDefault() { prevented = true } })
+  assert.equal(prevented, true)
+  tree = form.draw(props)
+  assert.match(form.text(tree), /Escribe al menos/)
+  assert.equal(saved, 0)
+  const answer = 'Una posibilidad que quiero explorar con calma. '.repeat(Math.ceil((node.entregable.minCaracteres ?? 1) / 45) + 1).trim()
+  form.find(tree, element => element.type === 'textarea').props.onChange({ target: { value: answer } })
+  assert.equal(journeyStore.useJourney().drafts[`${activity.id}/${node.id}`], answer)
+  tree = form.draw(props)
+  tree.props.onSubmit({ preventDefault() {} })
+  const first = journeyLogic.latestSubmission(journeyStore.useJourney(), activity.id, node.id)
+  assert.equal(first.contenido.texto, answer)
+  assert.equal(first.version, 1)
+  assert.equal(journeyStore.useJourney().drafts[`${activity.id}/${node.id}`], undefined)
+  assert.equal(saved, 1)
+  tree = form.draw(props)
+  form.find(tree, element => element.type === 'textarea').props.onChange({ target: { value: `${answer} Una idea nueva.` } })
+  tree = form.draw(props)
+  tree.props.onSubmit({ preventDefault() {} })
+  assert.equal(journeyLogic.latestSubmission(journeyStore.useJourney(), activity.id, node.id).version, 2)
+  assert.equal(journeyStore.useJourney().submissions[0].contenido.texto, answer)
+  tree = form.draw(props)
+  form.button(tree, 'Mantener esta respuesta').props.onClick()
+  assert.equal(kept, 1)
+  assert.equal(journeyStore.useJourney().submissions.length, 2)
+  form.dispose()
+})
+
+test('immersive option submissions keep multiple selection and omit optional files from an effect', () => {
+  const activity = journeyContent.activities.find(activity => activity.tipo === 'registro')
+  const original = activity.nodos.find(node => node.tipo === 'consigna')
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  let saved = 0
+  const node = { ...original, id: 'options-test', entregable: { tipo: 'opcion', multiple: true, opciones: ['Una opción', 'Otra opción'] } }
+  const props = { activity, node, onSaved: () => saved++ }
+  const form = immersivePlayerHarness('nodes/SubmissionNode')
+  let tree = form.draw(props)
+  form.find(tree, element => element.type === 'input').props.onChange()
+  tree = form.draw(props)
+  const second = form.find(tree, element => element.type === 'input' && !element.props.checked)
+  second.props.onChange()
+  tree = form.draw(props)
+  tree.props.onSubmit({ preventDefault() {} })
+  assert.equal(saved, 1)
+  assert.equal(journeyLogic.latestSubmission(journeyStore.useJourney(), activity.id, node.id).contenido.seleccion.length, 2)
+  form.dispose()
+  const file = immersivePlayerHarness('nodes/SubmissionNode')
+  const before = saved
+  const unavailable = file.draw({ ...props, node: { ...original, obligatoria: false, entregable: { tipo: 'archivo', formatos: ['pdf'], maxArchivos: 1, maxMB: 2 } } })
+  assert.equal(file.text(unavailable), 'Esta entrega no está disponible en la plataforma.')
+  assert.equal(saved, before + 1)
+  assert.equal(file.find(unavailable, element => element.type === 'input'), undefined)
+  file.dispose()
+  const mandatory = immersivePlayerHarness('nodes/SubmissionNode')
+  mandatory.draw({ ...props, node: { ...original, obligatoria: true, entregable: { tipo: 'archivo', formatos: ['pdf'], maxArchivos: 1, maxMB: 2 } } })
+  assert.equal(saved, before + 1)
+  mandatory.dispose()
+})
+
+test('immersive questions preserve attempts, hints, revelation, retry and fresh revision behavior', () => {
+  const activity = journeyContent.activities.find(activity => activity.id === 'enc-mitos')
+  const node = activity.nodos.find(node => node.tipo === 'pregunta' && node.formato !== 'opcion_multiple' && node.bloqueante)
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  let continued = 0, resources
+  const props = { activity, node, onContinue: () => continued++, onResources: ids => { resources = ids } }
+  const question = immersivePlayerHarness('nodes/QuestionNode')
+  const wrong = node.opciones.find(option => !option.correcta)
+  let tree = question.draw(props)
+  for (let i = 0; i <= node.pistas.length; i++) {
+    question.button(tree, wrong.texto).props.onClick()
+    tree = question.draw(props)
+    const attempt = journeyStore.useJourney().attempts.at(-1)
+    assert.equal(attempt.numeroIntento, i + 1)
+    assert.equal(attempt.correcta, false)
+    if (i < node.pistas.length) {
+      const hint = question.find(tree, element => element.props.speakerId === node.pistas[i].hablanteId && element.props.text === node.pistas[i].texto)
+      assert.ok(hint)
+      question.button(tree, 'Ver ficha').props.onClick()
+      assert.ok(resources.length > 0)
+      question.button(tree, 'Volver a intentarlo').props.onClick()
+      tree = question.draw(props)
+    } else {
+      assert.equal(attempt.revelada, true)
+      assert.ok(question.text(tree).includes(node.explicacion))
+      question.button(tree, 'Continuar el camino').props.onClick()
+    }
+  }
+  assert.equal(continued, 1)
+  const fresh = immersivePlayerHarness('nodes/QuestionNode')
+  assert.ok(fresh.button(fresh.draw({ ...props, fresh: true }), wrong.texto))
+  fresh.dispose()
+  question.dispose()
+})
+
+test('immersive matrix requires all seven submissions even when a legacy alternative is saved', () => {
+  const activity = journeyContent.activities.find(activity => activity.id === 'act-06')
+  const { MatrixNode } = load(path.resolve('src/features/student-experience/player/nodes/MatrixNode.tsx'))
+  const required = activity.nodos.filter(node => node.tipo === 'consigna' && node.obligatoria)
+  const legacy = { id: 'old-file', actividadId: activity.id, nodoId: 'g-archivo', version: 1, contenido: { tipo: 'archivo', archivos: [{ id: 'file', nombre: 'old.pdf' }] } }
+  const draw = submissions => {
+    journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), submissions }))
+    return renderToStaticMarkup(React.createElement(MatrixNode, { activity, onContinue() {} }))
+  }
+  assert.equal(required.length, 7)
+  const empty = draw([legacy])
+  assert.match(empty, /0 de 7 entregas necesarias guardadas/)
+  assert.doesNotMatch(empty, /old\.pdf|Archivo guardado|type="file"/)
+  const saved = required.map((node, i) => ({ id: `entry-${i}`, actividadId: activity.id, nodoId: node.id, version: 1, contenido: { tipo: 'texto', texto: 'Una posibilidad guardada para este horizonte.' } }))
+  assert.match(draw([legacy, ...saved.slice(0, 6)]), /6 de 7 entregas necesarias guardadas/)
+  assert.match(draw([legacy, ...saved.slice(0, 6)]), /disabled="">Guardar mi mapa y seguir/)
+  const completed = draw([legacy, ...saved])
+  assert.match(completed, /7 de 7 entregas necesarias guardadas/)
+  assert.doesNotMatch(completed, /disabled="">Guardar mi mapa y seguir/)
+  assert.match(completed, /Tu futuro se dibuja con lápiz/)
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
+test('immersive direct instrument resumes pending items and completes once without narrative reactions', () => {
+  const activity = journeyContent.activities.find(activity => activity.id === 'act-tip-01')
+  const node = activity.nodos.find(node => node.tipo === 'item')
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  const player = immersivePlayerHarness('StudentActivityPlayer')
+  const props = { activity, direct: true, onClose() {}, onNext() {} }
+  let tree = player.draw(props)
+  const item = player.find(tree, element => element.props.node?.tipo === 'item')
+  assert.equal(item.props.direct, true)
+  item.props.onAnswer('si')
+  tree = player.draw(props)
+  const saved = journeyStore.useJourney()
+  assert.equal(saved.items.length, 1)
+  assert.equal(saved.items[0].itemId, node.itemId)
+  assert.equal(saved.progress[activity.id].estado, 'en_curso')
+  assert.equal(saved.rewards.length, 0)
+  assert.equal(player.find(tree, element => element.props.speakerId === 'mara'), undefined)
+  const resumed = immersivePlayerHarness('StudentActivityPlayer')
+  const items = activity.nodos.filter(node => node.tipo === 'item')
+  tree = resumed.draw(props)
+  assert.equal(resumed.find(tree, element => element.props.node?.tipo === 'item').props.node.id, items[1].id)
+  for (let i = 1; i < items.length; i++) {
+    resumed.find(tree, element => element.props.node?.tipo === 'item').props.onAnswer('si')
+    tree = resumed.draw(props)
+  }
+  assert.ok(resumed.find(tree, element => element.type.name === 'FinishScreen'))
+  assert.equal(journeyStore.useJourney().items.length, items.length)
+  assert.equal(journeyStore.useJourney().progress[activity.id].estado, 'completada')
+  assert.equal(journeyStore.useJourney().progress[activity.id].nodoActualId, '$fin')
+  assert.equal(journeyStore.useJourney().rewards.length, 1)
+  resumed.dispose()
+  player.dispose()
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
+test('immersive resources show their content, normalize YouTube and preserve saved backpack state', () => {
+  const file = path.resolve('src/features/student-experience/player/ResourceSheet.tsx')
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
+  const resources = [
+    { id: 'sheet-test', titulo: 'Una ficha', tipo: 'ficha', contenido: '## Ideas\n\nUna **pista** para explorar.', fuente: 'Fuente de la ficha', guardableEnRecursos: true },
+    { id: 'video-test', titulo: 'Un video', tipo: 'video', url: 'https://youtu.be/ysz5S6PUM-U?t=30', guardableEnRecursos: true },
+    { id: 'link-test', titulo: 'Un enlace', tipo: 'enlace', url: 'https://example.com/resource', guardableEnRecursos: true },
+    { id: 'pending-test', titulo: 'Material pendiente', tipo: 'ficha', guardableEnRecursos: true },
+  ]
+  const pass = ({ children }) => children
+  const require = specifier => {
+    if (specifier === '@/components/ui/Sheet') return { Sheet: pass, SheetContent: pass, SheetDescription: pass, SheetTitle: pass }
+    if (specifier === '@/features/missions/content') return { catalog: { recursos: resources } }
+    if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
+    const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
+    return load([`${base}.tsx`, `${base}.ts`].find(existsSync))
+  }
+  const exports = {}
+  vm.runInContext(`(function(require,exports){${js}\n})`, context)(require, exports)
+  const draw = id => renderToStaticMarkup(React.createElement(exports.ResourceSheet, { open: true, ids: [id], onClose() {} }))
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  assert.match(draw('sheet-test'), /Una <strong>pista<\/strong>/)
+  assert.match(draw('sheet-test'), /Fuente de la ficha/)
+  assert.match(draw('sheet-test'), /Guardar en Recursos/)
+  assert.match(draw('sheet-test'), /aria-expanded="true"/)
+  assert.match(draw('video-test'), /src="https:\/\/www.youtube-nocookie.com\/embed\/ysz5S6PUM-U"/)
+  assert.match(draw('link-test'), /href="https:\/\/example.com\/resource"/)
+  assert.match(draw('pending-test'), /Este material estará disponible cuando lo prepare orientación\./)
+  assert.doesNotMatch(draw('pending-test'), /Guardar en Recursos/)
+  journeyStore.updateJourney(current => ({ ...current, resources: ['sheet-test'] }))
+  assert.match(draw('sheet-test'), /En tu mochila/)
+  assert.doesNotMatch(draw('sheet-test'), /Guardar en Recursos/)
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
+test('immersive finish shows saved sheets, narrative rewards and the prompted journal action', () => {
+  const activity = journeyContent.activities.find(activity => activity.id === 'enc-mitos')
+  const { FinishScreen } = load(path.resolve('src/features/student-experience/player/FinishScreen.tsx'))
+  journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'], progress: { [activity.id]: { estado: 'completada' } } }))
+  const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(FinishScreen, { activity, onClose() {}, onNext() {} })))
+  for (const text of ['Este hallazgo viaja contigo.', activity.recompensa.mensajeFin, 'Lo que llevas contigo', 'En tu mochila', 'Escribir en mi diario', 'Revisar mis propias creencias', 'Volver al mapa']) assert.ok(html.includes(text))
+  assert.doesNotMatch(html, /\bpuntos\b|\bpts\b|Nueva insignia/)
+  const { ResultNode } = load(path.resolve('src/features/student-experience/player/nodes/ResultNode.tsx'))
+  const result = renderToStaticMarkup(React.createElement(ResultNode, { activity: journeyContent.finalActivity, instrumentId: 'tip' }))
+  assert.match(result, /Elena te espera al completar los 14 encuentros/)
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
+test('immersive choices preserve recorded responses and show reactions before the next node', () => {
+  const original = journeyContent.activities.find(activity => activity.id === 'act-tip-01')
+  const choice = original.nodos.find(node => node.tipo === 'eleccion')
+  const reaction = { id: 'reaction-test', tipo: 'dialogo', hablanteId: 'companero', texto: 'Escucho tu respuesta.' }
+  const node = { ...choice, registrar: true, opciones: [{ ...choice.opciones[0], reaccion: [reaction] }] }
+  const activity = { ...original, nodos: original.nodos.map(current => current.id === node.id ? node : current) }
+  journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { [activity.id]: { estado: 'en_curso', nodoActualId: node.id } } }))
+  const player = immersivePlayerHarness('StudentActivityPlayer')
+  const props = { activity, onClose() {}, onNext() {} }
+  let tree = player.draw(props)
+  const panel = player.find(tree, element => element.props.node?.tipo === 'eleccion')
+  assert.equal(panel.props.previous.tipo, 'dialogo')
+  panel.props.onChoose(node.opciones[0])
+  tree = player.draw(props)
+  assert.equal(journeyStore.useJourney().choices[0].opcionId, node.opciones[0].id)
+  const dialogue = player.find(tree, element => element.props.text === reaction.texto)
+  assert.ok(dialogue)
+  dialogue.props.onContinue()
+  tree = player.draw(props)
+  assert.equal(player.find(tree, element => element.props.text === reaction.texto), undefined)
+  assert.equal(journeyStore.useJourney().choices.length, 1)
+  player.dispose()
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
 test('every supplied mission node renders, including matrices, slides, questions and instrument items', () => {
   for (const activity of journeyContent.activities) {
     for (const node of activity.nodos) {
@@ -977,6 +1256,8 @@ test('every supplied mission node renders, including matrices, slides, questions
       assert.ok(html.includes(activity.titulo), `${activity.id}/${node.id}`)
       assert.match(html, /aria-label="Salir de la actividad"/)
       assert.match(html, /fixed inset-0 z-40/)
+      assert.match(html, /sx-root sx-player location-/)
+      assert.doesNotMatch(html, /\bpts\b|\bpuntos\b|type="file"|Volver atrás/)
       if (node.tipo === 'item') assert.match(html, /No hay respuestas correctas o incorrectas/)
       if (node.tipo === 'diapositiva') assert.match(html, /Entendido/)
       if (node.tipo === 'consigna' && activity.plantilla?.tipo === 'matriz') {

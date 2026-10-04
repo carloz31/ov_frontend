@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router'
 import { activityById } from '@/features/missions/content'
-import { JourneyPlayer } from '@/features/missions/JourneyPlayer'
+import { StudentActivityPlayer } from '../player/StudentActivityPlayer'
 import { useJourney } from '@/features/missions/store'
 import { canAccessCity, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 import { getCiudadPoints } from './mapPoints'
@@ -14,8 +14,8 @@ export function CiudadScreen() {
   const activity = activityById('act-tip-01')
   if (canAccessCity(adventure) && activity && params.get('actividad') === activity.id)
     return (
-      <div className="sx-legacy-player">
-        <JourneyPlayer
+      <div className="sx-player-host">
+        <StudentActivityPlayer
           activity={activity}
           direct={params.get('modo') === 'directa'}
           onClose={() => setParams({})}

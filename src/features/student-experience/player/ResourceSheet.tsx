@@ -1,0 +1,103 @@
+import { useRef } from 'react'
+import { BookOpen, Check, ExternalLink, FileText, Headphones, Link2, Play } from 'lucide-react'
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
+import { catalog } from '@/features/missions/content'
+import { updateJourney, useJourney } from '@/features/missions/store'
+import { youtubeEmbedUrl } from '@/features/occupation-exploration/lib/TravelerResources'
+import { ResourceText } from './ContentBlocks'
+
+export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: string[]; onClose: () => void }) {
+  const state = useJourney()
+  const returnFocus = useRef<HTMLElement | null>(null)
+  const resources = [...new Set(ids)].flatMap(
+    (id) => catalog.recursos.find((resource) => resource.id === id) ?? [],
+  )
+  const icons = { ficha: BookOpen, video: Play, lectura: FileText, enlace: Link2, audio: Headphones }
+  return (
+    <Sheet
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose()
+      }}
+    >
+      <SheetContent
+        side="right"
+        className="sx-root sx-resource-sheet case-scrollbar"
+        aria-label="Fichas de la actividad"
+        onOpenAutoFocus={() => {
+          returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+        }}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault()
+          if (returnFocus.current?.isConnected) returnFocus.current.focus()
+        }}
+      >
+        <SheetTitle>Fichas para tu camino</SheetTitle>
+        <SheetDescription>Profundiza a tu ritmo y guarda lo que quieras llevar contigo.</SheetDescription>
+        {resources.map((resource) => {
+          const Icon = icons[resource.tipo]
+          const embed = resource.tipo === 'video' ? youtubeEmbedUrl(resource.url) : null
+          return (
+            <Collapsible className="sx-resource" key={resource.id} defaultOpen={resources.length === 1}>
+              <CollapsibleTrigger asChild>
+                <button type="button" className="sx-resource-summary">
+                  <Icon size={18} />
+                  {resource.titulo.startsWith('[') ? 'Video: testimonios que rompen mitos' : resource.titulo}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="sx-resource-content">
+                  {resource.contenido && <ResourceText text={resource.contenido} />}
+                  {embed ? (
+                    <iframe
+                      className="sx-resource-video"
+                      src={embed}
+                      title={resource.titulo}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      loading="lazy"
+                    />
+                  ) : (
+                    resource.url &&
+                    /^https?:\/\//.test(resource.url) && (
+                      <a className="sx-secondary-button" href={resource.url} target="_blank" rel="noreferrer">
+                        Abrir recurso <ExternalLink size={16} />
+                      </a>
+                    )
+                  )}
+                  {resource.fuente && <p className="sx-resource-source">{resource.fuente}</p>}
+                  {!resource.url && !resource.contenido && (
+                    <p>Este material estará disponible cuando lo prepare orientación.</p>
+                  )}
+                  {resource.guardableEnRecursos && (resource.url || resource.contenido) && (
+                    <button
+                      type="button"
+                      className="sx-secondary-button"
+                      disabled={state.resources.includes(resource.id)}
+                      onClick={() =>
+                        updateJourney((current) => ({
+                          ...current,
+                          resources: [...new Set([...current.resources, resource.id])],
+                        }))
+                      }
+                    >
+                      {state.resources.includes(resource.id) ? (
+                        <>
+                          <Check size={18} />
+                          En tu mochila
+                        </>
+                      ) : (
+                        'Guardar en Recursos'
+                      )}
+                    </button>
+                  )}
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          )
+        })}
+      </SheetContent>
+    </Sheet>
+  )
+}

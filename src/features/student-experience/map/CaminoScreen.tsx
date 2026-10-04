@@ -1,6 +1,6 @@
 import { useSearchParams } from 'react-router'
 import { activityById } from '@/features/missions/content'
-import { JourneyPlayer } from '@/features/missions/JourneyPlayer'
+import { StudentActivityPlayer } from '../player/StudentActivityPlayer'
 import { useJourney } from '@/features/missions/store'
 import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 import { getCaminoPoints } from './mapPoints'
@@ -14,8 +14,8 @@ export function CaminoScreen() {
   const activity = activityById(params.get('actividad') ?? '')
   if (activity)
     return (
-      <div className="sx-legacy-player">
-        <JourneyPlayer
+      <div className="sx-player-host">
+        <StudentActivityPlayer
           key={activity.id}
           activity={activity}
           edit={params.get('revision') === '1'}
