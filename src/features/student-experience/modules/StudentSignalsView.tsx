@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Compass, Signal } from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
+import { ArrowLeft, Compass, LockKeyhole, Signal } from 'lucide-react'
+import { Link } from 'react-router'
 import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { DiscoveryStage } from '../discovery/DiscoveryStage'
+import { Parchment } from '../discovery/Parchment'
 import { getTodayCheckIn, useCheckInDay } from '../overlays/checkIn'
 import { useStudentOverlays } from '../overlays/overlay-context'
+import './history.css'
 
 function StudentSignalsView() {
   const state = useAdventure()
@@ -23,128 +25,178 @@ function StudentSignalsView() {
   }))
 
   return (
-    <div
-      className="min-h-full bg-[#eef1ed] px-4 py-6 text-[#2b2a28] sm:px-8 sm:py-10"
-      style={{ fontFamily: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif' }}
-    >
-      <main className="mx-auto max-w-6xl">
-        <header className="mt-4">
-          <p className="flex items-center gap-2 text-sm font-bold text-[#3e6259]">
-            <Signal className="size-4" /> Tu recorrido
-          </p>
-          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Historial de señales</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#5c5a54]">
-            Observa cómo ha cambiado tu seguridad vocacional. Pulsa cualquier punto para consultar tu señal de
-            ese día.
-          </p>
+    <DiscoveryStage ambient="journal">
+      <main className="sx-history sx-history-signals">
+        <header className="sx-d-header">
+          <div>
+            <p className="sx-history-eyebrow">
+              <Signal size={18} aria-hidden="true" /> Tu recorrido
+            </p>
+            <h1>Historial de señales</h1>
+            <p>
+              Observa cómo ha cambiado tu seguridad vocacional. Pulsa cualquier punto para consultar tu señal
+              de ese día.
+            </p>
+          </div>
+          <Link className="sx-d-action sx-d-action-ghost" to="/student/journal">
+            <ArrowLeft size={18} aria-hidden="true" /> Volver a mi diario
+          </Link>
         </header>
 
-        <section className="sx-signal-card mt-7 rounded-3xl border border-border bg-white/75 p-5">
-          <div className="sx-signal-heading">
-            <h2 className="flex items-center gap-2 font-bold">
-              <Compass size={18} aria-hidden="true" /> Tu señal de hoy
-            </h2>
-            {today && (
-              <p className="sx-panel-signal" aria-label={`${today.value} de 10`}>
-                <strong>{today.value}</strong>
-                <span>/10</span>
-              </p>
+        <div className="sx-history-signal-layout">
+          <aside className="sx-d-stack">
+            <Parchment label="Una pausa para escucharte">
+              <span className="sx-history-activity-seal" aria-hidden="true">
+                <Compass size={30} />
+              </span>
+              <h2>Tu señal de hoy</h2>
+              <p>¿Qué tan seguro te sientes hoy de tu próximo paso?</p>
+              {today ? (
+                <p className="sx-history-score" aria-label={`${today.value} de 10`}>
+                  <strong>{today.value}</strong>
+                  <span>/10</span>
+                </p>
+              ) : (
+                <p className="sx-d-muted">Aún no has registrado tu señal de hoy.</p>
+              )}
+              <div className="sx-history-segments" aria-hidden="true">
+                {Array.from({ length: 10 }, (_, index) => (
+                  <span key={index} data-filled={index < (today?.value ?? 0)} />
+                ))}
+              </div>
+              <button className="sx-d-action sx-d-full" type="button" onClick={() => openCheckIn()}>
+                {today ? 'Cambiar mi señal' : 'Registrar mi señal'}
+              </button>
+            </Parchment>
+            <Parchment className="sx-d-dark sx-history-privacy">
+              <LockKeyhole size={22} aria-hidden="true" />
+              <p>Tu orientadora ve esta señal y su tendencia, nunca el texto de tu diario.</p>
+            </Parchment>
+          </aside>
+
+          <Parchment
+            className="sx-history-chart-card"
+            label="Las huellas de tu recorrido"
+            title="Seguridad vocacional en el tiempo"
+          >
+            <div className="sx-history-chart-meta">
+              <span className="sx-history-badge">Escala del 1 al 10</span>
+              <span>
+                {points.length} {points.length === 1 ? 'señal registrada' : 'señales registradas'}
+                {state.readinessCheckIns.length > 12 ? ' · Últimas 12' : ''}
+              </span>
+            </div>
+            {points.length ? (
+              <>
+                <div
+                  className="sx-history-chart-scroll"
+                  tabIndex={0}
+                  role="region"
+                  aria-label="Historial desplazable de señales"
+                >
+                  <svg
+                    aria-label="Gráfico histórico de señales del 1 al 10"
+                    role="group"
+                    viewBox="0 0 800 290"
+                  >
+                    {[1, 3, 5, 7, 10].map((value) => {
+                      const y = 240 - ((value - 1) / 9) * 210
+                      return (
+                        <g key={value} aria-hidden="true">
+                          <line className="sx-history-chart-grid" x1="60" x2="740" y1={y} y2={y} />
+                          <text
+                            className="sx-history-chart-label"
+                            fontSize="12"
+                            textAnchor="end"
+                            x="28"
+                            y={y + 4}
+                          >
+                            {value}
+                          </text>
+                        </g>
+                      )
+                    })}
+                    {points.length > 1 && (
+                      <polyline
+                        className="sx-history-chart-trail"
+                        fill="none"
+                        points={points.map((point) => `${point.x},${point.y}`).join(' ')}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="4"
+                      />
+                    )}
+                    {points.map((point) => {
+                      const active = selected?.id === point.id
+                      return (
+                        <g key={point.id}>
+                          <g
+                            aria-label={`${new Date(point.createdAt).toLocaleDateString('es-PE')}: ${point.value} de 10`}
+                            aria-pressed={active}
+                            className="sx-history-chart-point"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => setSelectedId(point.id)}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault?.()
+                                setSelectedId(point.id)
+                              }
+                            }}
+                          >
+                            <circle className="sx-history-chart-target" cx={point.x} cy={point.y} r="28" />
+                            <circle
+                              className="sx-history-chart-dot"
+                              cx={point.x}
+                              cy={point.y}
+                              r={active ? 10 : 7}
+                              data-active={active}
+                            />
+                          </g>
+                          <text
+                            className="sx-history-chart-label"
+                            aria-hidden="true"
+                            fontSize="11"
+                            textAnchor="middle"
+                            x={point.x}
+                            y="278"
+                          >
+                            {new Date(point.createdAt).toLocaleDateString('es-PE', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </text>
+                        </g>
+                      )
+                    })}
+                  </svg>
+                </div>
+                <p className="sx-history-chart-hint">
+                  Cada punto es una señal que registraste. Selecciónalo para ver su fecha y valor.
+                </p>
+              </>
+            ) : (
+              <div className="sx-history-empty">
+                <span className="sx-history-activity-seal" aria-hidden="true">
+                  <Signal size={28} />
+                </span>
+                <h3>El inicio de tu rastro</h3>
+                <p>Registra tu primera señal para comenzar el historial.</p>
+              </div>
             )}
-          </div>
-          <p className="mt-3 text-sm">¿Qué tan seguro te sientes hoy de tu próximo paso?</p>
-          <Button className="mt-4" onClick={() => openCheckIn()}>
-            {today ? 'Cambiar mi señal' : 'Registrar mi señal'}
-          </Button>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Tu orientadora ve esta señal y su tendencia, nunca el texto de tu diario.
-          </p>
-        </section>
-
-        <section className="mt-7 rounded-3xl border border-[#3e6259]/20 bg-white/75 p-4 shadow-[0_10px_30px_rgb(43_42_40/5%)] sm:p-7">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-bold">Seguridad vocacional en el tiempo</h2>
-            <Badge className="bg-[#3e6259]/10 text-[#3e6259]" variant="secondary">
-              Escala del 1 al 10
-            </Badge>
-          </div>
-          {points.length ? (
-            <div className="mt-6 overflow-x-auto">
-              <svg
-                aria-label="Gráfico histórico de señales del 1 al 10"
-                className="min-w-[680px]"
-                role="img"
-                viewBox="0 0 800 290"
-              >
-                {[1, 3, 5, 7, 10].map((value) => {
-                  const y = 240 - ((value - 1) / 9) * 210
-                  return (
-                    <g key={value}>
-                      <line x1="60" x2="740" y1={y} y2={y} stroke="#d7dfda" strokeWidth="1" />
-                      <text fill="#65716c" fontSize="12" textAnchor="end" x="45" y={y + 4}>
-                        {value}
-                      </text>
-                    </g>
-                  )
-                })}
-                {points.length > 1 && (
-                  <polyline
-                    fill="none"
-                    points={points.map((point) => `${point.x},${point.y}`).join(' ')}
-                    stroke="#3e6259"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="4"
-                  />
-                )}
-                {points.map((point) => {
-                  const active = selected?.id === point.id
-                  return (
-                    <g key={point.id}>
-                      <g
-                        aria-label={`${new Date(point.createdAt).toLocaleDateString('es-PE')}: ${point.value} de 10`}
-                        className="cursor-pointer outline-none"
-                        onClick={() => setSelectedId(point.id)}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') setSelectedId(point.id)
-                        }}
-                        role="button"
-                        tabIndex={0}
-                      >
-                        <circle
-                          cx={point.x}
-                          cy={point.y}
-                          fill={active ? '#4b4066' : '#3e6259'}
-                          r={active ? 9 : 7}
-                          stroke="white"
-                          strokeWidth="3"
-                        />
-                      </g>
-                      <text fill="#65716c" fontSize="11" textAnchor="middle" x={point.x} y="268">
-                        {new Date(point.createdAt).toLocaleDateString('es-PE', {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                      </text>
-                    </g>
-                  )
-                })}
-              </svg>
-            </div>
-          ) : (
-            <div className="py-14 text-center text-sm text-[#5c5a54]">
-              Registra tu primera señal para comenzar el historial.
-            </div>
-          )}
-        </section>
-
-        {selected && (
-          <p role="status" className="mt-5 text-sm text-muted-foreground">
-            Señal seleccionada · {selected.value}/10 ·{' '}
-            {new Date(selected.createdAt).toLocaleDateString('es-PE', { dateStyle: 'long' })}
-          </p>
-        )}
+            {selected && (
+              <div className="sx-history-selected">
+                <Compass size={22} aria-hidden="true" />
+                <p role="status">
+                  Señal seleccionada · {selected.value}/10 ·{' '}
+                  {new Date(selected.createdAt).toLocaleDateString('es-PE', { dateStyle: 'long' })}
+                </p>
+              </div>
+            )}
+          </Parchment>
+        </div>
       </main>
-    </div>
+    </DiscoveryStage>
   )
 }
 

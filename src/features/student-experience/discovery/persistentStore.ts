@@ -7,11 +7,16 @@ export const isStrings = (value: unknown): value is string[] =>
 export const isIso = (value: unknown): value is string =>
   typeof value === 'string' && Number.isFinite(Date.parse(value))
 
-export function persistentStore<T>(key: string, initial: () => T, valid: (value: unknown) => value is T) {
+export function persistentStore<T>(
+  key: string,
+  initial: () => T,
+  valid: (value: unknown) => value is T,
+  normalize: (value: unknown) => unknown = (value) => value,
+) {
   let error = false
   const read = () => {
     try {
-      const value: unknown = JSON.parse(localStorage.getItem(key) ?? 'null')
+      const value: unknown = normalize(JSON.parse(localStorage.getItem(key) ?? 'null'))
       return valid(value) ? value : initial()
     } catch {
       return initial()

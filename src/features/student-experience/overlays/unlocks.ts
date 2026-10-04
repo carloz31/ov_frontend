@@ -1,3 +1,5 @@
+import { getLumiBond } from '../journal/lumiBond'
+import { lumiMemories } from '../journal/lumiMemories'
 import { catalog } from '@/features/missions/content'
 import type { JourneyState } from '@/features/missions/logic'
 import { getAchievementGroups } from '@/features/occupation-exploration/lib/AdventureAchievements'
@@ -13,7 +15,7 @@ import type { StudentUiState } from '../ui-state'
 
 export type UnlockItem = {
   id: string
-  kind: 'badge' | 'ficha' | 'heroe' | 'ciudad' | 'familia' | 'plan'
+  kind: 'badge' | 'ficha' | 'heroe' | 'ciudad' | 'familia' | 'plan' | 'memory'
   title: string
   description?: string
   href: string
@@ -31,6 +33,15 @@ export function getUnlocks(
   discovery?: StudentDiscoveryState,
 ): UnlockItem[] {
   return [
+    ...lumiMemories
+      .slice(0, getLumiBond(adventure.lumiRegistrations).memoriesOpened)
+      .map((memory, index): UnlockItem => ({
+        id: `lumi-memory:${index + 1}`,
+        kind: 'memory',
+        title: 'Lumi recordó algo nuevo',
+        description: `Recuerdo ${index + 1}: ${memory.title}`,
+        href: `${appPaths.student.journal}?memory=${index + 1}`,
+      })),
     ...(discovery?.revealedPages ?? []).map((id): UnlockItem => ({
       id: `plans:${id}`,
       kind: 'plan',
@@ -101,7 +112,12 @@ export function seedStudentUnlocks(
     ...ui,
     initialized: true,
     seenUnlockIds: [
-      ...new Set([...ui.seenUnlockIds, ...getUnlocks(adventure, journey).map((item) => item.id)]),
+      ...new Set([
+        ...ui.seenUnlockIds,
+        ...getUnlocks(adventure, journey)
+          .filter((item) => item.kind !== 'memory')
+          .map((item) => item.id),
+      ]),
     ],
     announcedBadgeCodes: [
       ...new Set([...ui.announcedBadgeCodes, ...getEarnedBadges(adventure).map((badge) => badge.code)]),

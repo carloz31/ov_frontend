@@ -962,35 +962,35 @@ test('mounted overlay queue opens from effects, remembers introductions and resu
   assert.equal(draw('resources', true).lumi.open, false)
   assert.equal(ui.introsSeen.resources, undefined)
   draw('resources', false)
-  assert.equal(draw('resources').lumi.open, true)
+  assert.equal(draw('resources').lumi.open, false)
   draw('resources').lumi.onClose()
   draw('resources')
   assert.equal(draw('resources').lumi.open, false)
   adventure = { ...adventure, completedMissionIds: fieldMissions.map(mission => mission.id) }
-  draw('resources', true)
-  assert.equal(draw('resources', true).lumi.open, false)
-  draw('resources')
-  assert.equal(draw('resources').lumi.finalLabel, 'Entrar a la ciudad')
-  draw('resources').lumi.onClose()
-  draw('resources')
-  assert.equal(draw('resources').lumi.open, false)
+  draw('missions', true)
+  assert.equal(draw('missions', true).lumi.open, false)
+  draw('missions')
+  assert.equal(draw('missions').lumi.finalLabel, 'Entrar a la ciudad')
+  draw('missions').lumi.onClose()
+  draw('missions')
+  assert.equal(draw('missions').lumi.open, false)
   assert.equal(ui.cityArrivalSeen, false)
   states.length = effects.length = pending.length = 0 // Remount after closing arrival for this visit.
-  assert.equal(draw('resources').lumi.open, false)
-  assert.equal(draw('resources').lumi.finalLabel, 'Entrar a la ciudad')
-  draw('resources').lumi.onFinish()
-  draw('resources').lumi.onClose()
+  assert.equal(draw('missions').lumi.open, false)
+  assert.equal(draw('missions').lumi.finalLabel, 'Entrar a la ciudad')
+  draw('missions').lumi.onFinish()
+  draw('missions').lumi.onClose()
   assert.equal(ui.cityArrivalSeen, true)
   assert.equal(destinations[0], '/student/exploration')
-  draw('resources')
-  assert.equal(draw('resources').lumi.open, false)
-  draw('resources').context.openCheckIn()
-  assert.equal(draw('resources').signal.open, true)
-  draw('resources').signal.onSave(8)
-  draw('resources')
-  assert.equal(draw('resources').signal.open, false)
-  draw('resources').context.openCheckIn()
-  assert.equal(draw('resources').signal.value, 8)
+  draw('missions')
+  assert.equal(draw('missions').lumi.open, false)
+  draw('missions').context.openCheckIn()
+  assert.equal(draw('missions').signal.open, true)
+  draw('missions').signal.onSave(8)
+  draw('missions')
+  assert.equal(draw('missions').signal.open, false)
+  draw('missions').context.openCheckIn()
+  assert.equal(draw('missions').signal.value, 8)
 })
 
 test('Lumi exposes the complete accessible text while its visible text starts progressively', () => {
@@ -1321,7 +1321,7 @@ test('journal home supports topics and keeps readiness separate from entries', (
   assert.match(html, /Solo tú puedes leer este espacio/)
   assert.match(html, /Mi diario/)
   assert.doesNotMatch(html, /Tu señal de hoy|Qué tan seguro te sientes hoy de tu próximo paso/i)
-  assert.match(html, /Entradas sugeridas/)
+  assert.match(html, /Cartas de Lumi por responder/)
   assert.match(html, /Amistad con Lumi/)
   assert.match(html, /Conversación libre/)
   assert.equal((html.match(/>Conversación libre /g) ?? []).length, 1)
@@ -2101,7 +2101,7 @@ test('novelties show only pending entries and close without reading; selection r
   store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: ['welcome'] }))
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'] }))
   resetNoveltyUi({ seenUnlockIds: ['badge:I1'] })
-  const menu = immersivePlayerHarness('../overlays/NoveltiesMenu')
+  const menu = immersivePlayerHarness('../overlays/NoveltiesMenu', { '@/features/occupation-exploration/lib/AdventureStore': { useAdventure: () => ({ ...store.useAdventure(), lumiRegistrations: [] }) } })
   let tree = menu.draw({})
   assert.equal(menu.text(menu.find(tree, element => element.props.className === 'sx-novelties-count')), '1')
   assert.match(menu.text(tree), /Nueva ficha disponible/)
@@ -2355,8 +2355,8 @@ test('saved resources and counselor submissions appear in their respective desti
   }))
   const resources = render('/student/resources')
   assert.match(resources, /Ficha: Mitos y realidades del futuro profesional/)
-  assert.match(resources, /Ver ficha completa/)
-  assert.match(resources, /Agregar a favoritos/)
+  assert.match(resources, /Abrir ficha/)
+  assert.match(resources, /Guardar en favoritos/)
   assert.doesNotMatch(resources, /No visto|Visto/)
   assert.match(render('/counselor/reviews'), /Registros observados/)
   assert.doesNotMatch(render('/parent/activities'), /Consejo de ejemplo compartido con orientación/)
@@ -2845,7 +2845,7 @@ test('phase 9 initial view is centered at 50 percent and panel toggles preserve 
       const transform = tree => canvas.find(tree, element => element.props.className === 'sx-map-canvas').props.style.transform
       canvas.draw(props, mount)
       let tree = canvas.draw(props, mount)
-      assert.equal(transform(tree), `translate3d(${(bounds.width - canvasSize.width * .5) / 2}px, ${(bounds.height - canvasSize.height * .5) / 2}px, 0) scale(0.5)`)
+      assert.equal(transform(tree), `translate3d(${(bounds.width + 304 - canvasSize.width * .5) / 2}px, ${(bounds.height - canvasSize.height * .5) / 2}px, 0) scale(0.5)`)
       assert.equal(minimum, getMinimumScale(bounds))
       for (const scale of [.5, minimum, 1.4]) {
         ref.current.setScale(scale); tree = canvas.draw(props, mount)
@@ -2885,8 +2885,8 @@ test('phase 9 panel has five direct links, a compact next-step action and the re
   let selected
   let tree = panel.draw({ adventure, points, recommended: points[0], progress: { label: 'Recorrido', value: 0 }, onSelect: id => { selected = id }, onCheckIn() {} })
   const links = panel.find(tree, element => element.props['aria-label'] === 'Accesos rápidos').props.children
-  assert.deepEqual(Array.from(links, element => panel.text(element)), ['Mi perfil', 'Mi diario', 'En familia', 'Recursos', 'Información'])
-  assert.deepEqual(Array.from(links, element => element.props.to), ['/student/profile', '/student/journal', '/student/conversations', '/student/resources', '/student/catalog/professions'])
+  assert.deepEqual(Array.from(links, element => panel.text(element)), ['Mi perfil', 'Mi diario', 'En familia', 'Recursos', 'Investigaciones', 'Información'])
+  assert.deepEqual(Array.from(links, element => element.props.to), ['/student/profile', '/student/journal', '/student/conversations', '/student/resources', '/student/investigations', '/student/catalog/professions'])
   assert.ok(links.every(element => element.type !== 'button'))
   const next = panel.button(tree, 'Siguiente paso')
   assert.ok(next); assert.match(panel.text(next), /El inicio del viaje/)
@@ -2908,6 +2908,8 @@ test('separate student diary preserves free-entry saving and editing without cha
   const before = store.useAdventure()
   const signalBefore = JSON.stringify(before.readinessCheckIns)
   const diary = immersivePlayerHarness('../modules/StudentJournalView', {
+    '@/features/occupation-exploration/lib/useLumiNow': { useLumiNow: () => new Date() },
+    '../discovery/useReturnFocus': { useReturnFocus: () => ({}) },
     'react-router': { useSearchParams: () => [new URLSearchParams()] },
   })
   const part = (tree, name) => diary.find(tree, element => element.type?.name === name)
@@ -3144,7 +3146,7 @@ test('discovery profile exposes the three chapters and keeps its passport route'
   const html = render('/student/profile')
   for (const text of ['Lo que he logrado', 'Lo que Helena descubre de mí', 'Hacia dónde voy', 'Recorrido', 'Logros recientes']) assert.ok(html.includes(text), text)
   assert.doesNotMatch(html, /Ver mi progreso|Mi punto de partida|Ver mis favoritos/)
-  assert.match(render('/student/profile?section=passport'), /Mi pasaporte/)
+  assert.match(render('/student/profile?section=passport'), /Pasaporte vocacional/)
   assert.doesNotMatch(html, /role="dialog"/)
 })
 
@@ -3411,4 +3413,222 @@ test('Helena prefers complete valid real results over examples and invalid older
   calculated = { ...valid, puntajes: [{ dimensionId: 'S', puntaje: NaN }] }
   page = exported.getHelenaPages({ ...journey, results: [] }, discovery)[0]
   assert.equal(page.result.source, 'demo')
+})
+
+
+test('collapsed student map reserves its strip and keeps the recommended point visible', () => {
+ const g=load(path.resolve('src/features/student-experience/map/geometry.ts'))
+ const bounds={width:1280,height:800},point={x:500,y:300},current={x:0,y:0,scale:.5}
+ for(const inset of [304,72,0]){
+  const center=g.visibleCenter(bounds,false,inset)
+  assert.equal(center.x,(1280+inset)/2)
+  const focused=g.focusTransform(current,point,bounds,false,g.canvasSize,inset)
+  const position=g.mapPosition(point)
+  assert.ok(Math.abs(focused.x+position.x*focused.scale-center.x)<.00001)
+ }
+ const html=render('/student/missions')
+ assert.match(html, /class="sx-panel-traveler" href="\/student\/profile"/)
+ for(const text of ['Nivel de recorrido','Tu título de viajero','Crece con cada misión del camino.','Tu señal de hoy','Actividades disponibles'])assert.ok(html.includes(text))
+})
+
+
+test('new backpack separates provisions, protects locked identities and navigates its resource tabs', () => {
+ const html=render('/student/resources')
+ for(const text of ['Tu mochila de viaje','Lo que aprendiste en el camino','Voces de la ciudad','Mis favoritos','Una voz por descubrir'])assert.ok(html.includes(text))
+ assert.doesNotMatch(html,/resource-status|recursos desbloqueados|role="dialog"/)
+ const resources=load(path.resolve('src/features/occupation-exploration/lib/TravelerResources.ts')).getTravelResources()
+ for(const voice of resources.filter(r=>r.kind==='testimonial'))assert.ok(!html.includes(voice.author))
+ let params=new URLSearchParams('kind=sheet&keep=1'),navigated
+ const page=immersivePlayerHarness('../modules/StudentBackpackView',{'react-router':{useNavigate:()=>href=>{navigated=href},useSearchParams:()=>[params,update=>{params=update(params)}]}})
+ try{
+  let tree=page.draw({})
+  const tab=(tree,id)=>page.find(tree,e=>e.props.id===`sx-backpack-tab-${id}`)
+  tab(tree,'sheet').props.onKeyDown({key:'End',preventDefault(){}})
+  assert.equal(params.get('kind'),'testimonial');assert.equal(params.get('keep'),'1')
+  tree=page.draw({});tab(tree,'testimonial').props.onKeyDown({key:'ArrowRight',preventDefault(){}})
+  assert.equal(params.get('kind'),'all')
+  tree=page.draw({});tab(tree,'all').props.onKeyDown({key:'ArrowLeft',preventDefault(){}})
+  assert.equal(params.get('kind'),'testimonial')
+  params=new URLSearchParams('kind=unknown&keep=1');tree=page.draw({});assert.equal(tab(tree,'all').props['aria-selected'],true)
+  assert.equal(navigated,undefined)
+ }finally{page.dispose()}
+})
+
+
+test('Lumi bond counts Lima days without loss and opens memories at exact boundaries', () => {
+ const {getLumiBond}=load(path.resolve('src/features/student-experience/journal/lumiBond.ts'))
+ const first={entryId:'first',createdAt:'2026-09-01T05:00:00Z'}
+ const later={entryId:'later',createdAt:'2026-09-11T05:00:00Z'}
+ assert.equal(getLumiBond([first,later],new Date('2026-10-01')).conversations,2)
+ const day=[0,1,2,3,4].map(n=>({entryId:`same-${n}`,createdAt:'2026-10-04T05:01:00Z'}))
+ const now=new Date('2026-10-04T06:00:00Z'),bond=getLumiBond(day,now)
+ assert.equal(bond.conversations,3);assert.equal(bond.todayCounted,3);assert.equal(bond.remainingToday,0)
+ assert.equal(getLumiBond([...day,{entryId:'yesterday',createdAt:'2026-10-04T04:59:00Z'}],now).conversations,4)
+ assert.equal(getLumiBond([first,first,{entryId:'bad',createdAt:'bad'},{entryId:'future',createdAt:'2099-01-01'}],now).conversations,1)
+ for(const [count,opened,next,progress] of [[0,0,1,0],[1,1,5,0],[3,1,5,50],[4,1,5,75],[5,2,10,0],[9,2,10,80],[10,3,15,0],[14,3,15,80],[15,4,undefined,100]]){
+  const regs=Array.from({length:count},(_,i)=>({entryId:`r-${i}`,createdAt:`2026-09-${String(i+1).padStart(2,'0')}T12:00:00Z`}))
+  const result=getLumiBond(regs,now);assert.equal(result.memoriesOpened,opened);assert.equal(result.nextMemoryAt,next);assert.equal(result.progress,progress)
+ }
+})
+
+test('journal uses conversations, inline onboarding and private titled saving without automatic windows', () => {
+ const html=render('/student/journal',{journalOnboardingSeen:true})
+ for(const text of ['Amistad con Lumi','Recuerdos de Lumi','Lumi, hoy quiero contarte','Lo que le has contado a Lumi','La amistad nunca se pierde'])assert.ok(html.includes(text))
+ assert.doesNotMatch(html,/puntos de amistad|baja 1 punto|role="dialog"/)
+ const intro=render('/student/journal',{journalOnboardingSeen:false});assert.match(intro,/Un espacio para ti y Lumi/);assert.doesNotMatch(intro,/role="dialog"/)
+ const page=immersivePlayerHarness('../modules/StudentJournalView',{'react-router':{useSearchParams:()=>[new URLSearchParams()]},'@/features/occupation-exploration/lib/useLumiNow':{useLumiNow:()=>new Date()},'../discovery/useReturnFocus':{useReturnFocus:()=>({})}})
+ const before=store.useAdventure()
+ try{
+  store.updateAdventure(()=>({...store.createInitialAdventure(),journalOnboardingSeen:true}))
+  let tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalHome').props.onNew();tree=page.draw({})
+  let editor=page.find(tree,e=>e.type?.name==='JournalEditor');editor.props.onBodyChange('Una reflexión privada.');editor.props.onTitleChange('Mi título personal')
+  tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalEditor').props.onSave()
+  const saved=store.useAdventure().journal.find(e=>e.title==='Mi título personal');assert.ok(saved);assert.equal(saved.body,'Una reflexión privada.')
+  const regs=JSON.stringify(store.useAdventure().lumiRegistrations),checks=JSON.stringify(store.useAdventure().readinessCheckIns)
+  tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalHome').props.onOpen(saved);tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalDetail').props.onEdit();tree=page.draw({})
+  editor=page.find(tree,e=>e.type?.name==='JournalEditor');assert.equal(editor.props.title,'Mi título personal');editor.props.onTitleChange('Mi título editado')
+  tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalEditor').props.onSave();assert.equal(store.useAdventure().journal.find(e=>e.id===saved.id).title,'Mi título editado')
+  assert.equal(JSON.stringify(store.useAdventure().lumiRegistrations),regs);assert.equal(JSON.stringify(store.useAdventure().readinessCheckIns),checks)
+  tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalDetail').props.onDelete();tree=page.draw({});page.button(tree,'Eliminar').props.onClick()
+  assert.equal(JSON.stringify(store.useAdventure().lumiRegistrations),regs);assert.ok(!store.useAdventure().journal.some(e=>e.id===saved.id))
+ }finally{page.dispose();store.updateAdventure(()=>before)}
+})
+
+test('passport selection respects explicit emptiness, earned badges, order and stable observed dates', () => {
+ const d=load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+ const p=load(path.resolve('src/features/student-experience/profile/passport.ts'))
+ const adventure={...store.createInitialAdventure(),completedMissionIds:fieldMissions.map(m=>m.id),solvedCaseIds:['forest-fire']}
+ let state=d.initialDiscoveryState()
+ assert.deepEqual(Array.from(p.getProfileBadges(adventure,state),b=>b.code),['I1','I2','I3'])
+ assert.equal(p.toggleProfileBadge(state,adventure,'I7'),state)
+ assert.equal(p.toggleProfileBadge(state,adventure,'I8'),state)
+ for(const code of ['I1','I2','I3'])state=p.toggleProfileBadge(state,adventure,code)
+ assert.equal(state.profileBadgesConfigured,true);assert.equal(p.getProfileBadges(adventure,state).length,0)
+ for(const code of ['I7','I2','I1'])state=p.toggleProfileBadge(state,adventure,code)
+ assert.deepEqual(Array.from(p.getProfileBadges(adventure,state),b=>b.code),['I7','I2','I1'])
+ assert.equal(p.toggleProfileBadge(state,adventure,'I3'),state)
+ state=p.recordBadgeFirstSeenAt(state,adventure,'2026-10-04T12:00:00Z')
+ const dates=JSON.stringify(state.badgeFirstSeenAt)
+ assert.equal(p.recordBadgeFirstSeenAt(state,adventure,'2026-10-05T12:00:00Z'),state)
+ assert.equal(JSON.stringify(state.badgeFirstSeenAt),dates);assert.equal(state.badgeFirstSeenAt.I8,undefined)
+ const old={...state,revealedPages:['intereses'],research:{occupationId:'paramedic',before:'Mi reflexión privada',ownQuestions:['Una pregunta']},reactions:{v:{liked:'2026-10-04T12:00:00Z'}},viewedCareerIds:['psychology']}
+ delete old.profileBadges;delete old.profileBadgesConfigured;delete old.badgeFirstSeenAt
+ const migrated=d.normalizeDiscoveryState(old)
+ assert.equal(d.validDiscoveryState(migrated),true);assert.equal(migrated.research,old.research);assert.equal(migrated.reactions,old.reactions)
+ assert.deepEqual(Array.from(migrated.revealedPages),['intereses']);assert.equal(migrated.profileBadgesConfigured,false)
+ const repaired=d.normalizeDiscoveryState({...old,profileBadges:['I1','I1','bad','I2','I3','I7'],profileBadgesConfigured:true,badgeFirstSeenAt:{I1:'invalid',I2:'2026-10-04T12:00:00Z',bad:'2026-10-04'}})
+ assert.equal(d.validDiscoveryState(repaired),true);assert.deepEqual(Array.from(repaired.profileBadges),['I1','I2','I3']);assert.equal(Object.keys(repaired.badgeFirstSeenAt).join(),'I2')
+})
+
+test('passport hides pending meanings, respects the profile limit and starts without a dialog', () => {
+ const html=render('/student/profile?section=passport')
+ assert.doesNotMatch(html,/role="dialog"/);assert.match(html,/Camino de los títulos/)
+ const d=load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+ const adventure={...store.createInitialAdventure(),completedMissionIds:fieldMissions.map(m=>m.id),solvedCaseIds:['forest-fire']}
+ const groups=load(path.resolve('src/features/occupation-exploration/lib/AdventureAchievements.ts')).getAchievementGroups(adventure)
+ const page=immersivePlayerHarness('../profile/PassportBadgeDialog',{'@/features/occupation-exploration/lib/AdventureStore':{useAdventure:()=>adventure},'../discovery/discoveryStore':{useDiscovery:()=>d.initialDiscoveryState()},'../discovery/useReturnFocus':{useReturnFocus:()=>({})}})
+ try{
+  const pending=groups.flatMap(g=>g.items).find(b=>!b.done)
+  let tree=page.draw({badge:pending,group:'Prueba',groupIndex:1,onClose(){}})
+  assert.ok(!page.text(tree).includes(pending.metaphor));assert.ok(!page.text(tree).includes(pending.vocationalMeaning))
+  assert.match(page.text(tree),/Se revela cuando obtengas/);assert.equal(page.button(tree,'Mostrar en mi perfil'),undefined)
+  const earned=groups.flatMap(g=>g.items).find(b=>b.code==='I7')
+  tree=page.draw({badge:earned,group:'Prueba',groupIndex:2,onClose(){}})
+  assert.ok(page.text(tree).includes(earned.vocationalMeaning));assert.equal(page.button(tree,'Mostrar en mi perfil').props.disabled,true)
+  tree=page.draw({badge:{...pending,hidden:true},group:'Prueba',groupIndex:1,onClose(){}})
+  assert.ok(!page.text(tree).includes(pending.description));assert.ok(!page.text(tree).includes(pending.title))
+ }finally{page.dispose()}
+})
+
+test('discovery badge migration survives reload, tab synchronization and failed saving without losing existing work', () => {
+ const d=load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+ const file=path.resolve('src/features/student-experience/discovery/persistentStore.ts')
+ const js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText
+ const old={...d.initialDiscoveryState(),revealedPages:['habilidades'],planOrder:['legacy-plan'],research:{occupationId:'paramedic',before:'Mi idea',ownQuestions:['Pregunta'],publication:{interviewee:'Persona',summary:'Resumen',change:'Cambio privado',videoUrl:'https://example.test/video',coauthors:['Ana']}},publishedResearch:[{videoId:'v',occupationId:'paramedic',coauthors:['Ana'],change:'Mi reflexión'}],reactions:{v:{liked:'2026-10-04T12:00:00Z'}},viewedCareerIds:['psychology']}
+ delete old.profileBadges;delete old.profileBadgesConfigured;delete old.badgeFirstSeenAt
+ let raw=JSON.stringify(old),fail=false,listeners=[]
+ const sandbox=vm.createContext({localStorage:{getItem:()=>raw,setItem:(_key,value)=>{if(fail)throw Error('full');raw=value}},window:{addEventListener:(_name,listener)=>listeners.push(listener)}})
+ const exp={};vm.runInContext(`(function(require,exports){${js}\n})`,sandbox)(()=>({useSyncExternalStore:(_,snapshot)=>snapshot()}),exp)
+ const create=()=>exp.persistentStore('ov.student-discovery.v1',d.initialDiscoveryState,d.validDiscoveryState,d.normalizeDiscoveryState)
+ const first=create();assert.equal(first.getSnapshot().research.before,'Mi idea');assert.equal(first.getSnapshot().profileBadgesConfigured,false)
+ first.update(s=>({...s,profileBadgesConfigured:true,profileBadges:[],badgeFirstSeenAt:{I1:'2026-10-04T12:00:00Z'}}))
+ const reload=create();assert.equal(reload.getSnapshot().profileBadgesConfigured,true);assert.equal(reload.getSnapshot().profileBadges.length,0)
+ for(const field of Object.keys(old))assert.equal(JSON.stringify(reload.getSnapshot()[field]),JSON.stringify(old[field]),field)
+ raw=JSON.stringify({...reload.getSnapshot(),profileBadges:['I1']});listeners.forEach(l=>l({key:'ov.student-discovery.v1'}));assert.equal(first.getSnapshot().profileBadges.join(),'I1')
+ fail=true;reload.update(s=>({...s,profileBadges:[]}));assert.equal(reload.useError(),true);assert.equal(reload.getSnapshot().profileBadges.length,0)
+})
+
+test('reading a Lumi memory removes its new marker and novelty, preserves parameters and survives UI reload', () => {
+ const ui=load(path.resolve('src/features/student-experience/ui-state.ts'))
+ let params=new URLSearchParams('memory=1&keep=1'),state=ui.initialStudentUiState()
+ const {getLumiBond}=load(path.resolve('src/features/student-experience/journal/lumiBond.ts'))
+ const bond=getLumiBond([{entryId:'conversation',createdAt:'2026-09-01T12:00:00Z'}],new Date('2026-10-04T12:00:00Z'))
+ const page=immersivePlayerHarness('../journal/LumiBondPanel',{'react-router':{useSearchParams:()=>[params,update=>{params=update(params)}]},'../ui-state':{useStudentUi:()=>state,updateStudentUi:update=>{state=update(state)}}})
+ try{
+  page.draw({bond});let tree=page.draw({bond})
+  assert.equal(state.seenLumiMemories.join(),'1');assert.ok(state.seenUnlockIds.includes('lumi-memory:1'))
+  assert.doesNotMatch(page.text(tree),/Nuevo/);assert.match(page.text(tree),/Llegué aquí perdida/)
+  page.button(tree,'Guardar en mi memoria').props.onClick();tree=page.draw({bond});assert.ok(!page.text(tree).includes('Llegué aquí perdida'))
+  assert.equal(params.has('memory'),false);assert.equal(params.get('keep'),'1')
+  params=new URLSearchParams('memory=4');page.draw({bond});tree=page.draw({bond});assert.ok(!page.text(tree).includes('[Texto del recuerdo 4'))
+ }finally{page.dispose()}
+ const source=readFileSync(path.resolve('src/features/student-experience/ui-state.ts'),'utf8')
+ const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText
+ let raw=JSON.stringify({...state,seenLumiMemories:[1,1,0,5,'2',2.5]}),listener
+ const sandbox=vm.createContext({localStorage:{getItem:()=>raw,setItem:(_,value)=>{raw=value}},window:{addEventListener:(_,callback)=>{listener=callback}}})
+ const exp={};vm.runInContext(`(function(require,exports){${js}\n})`,sandbox)(name=>name==='react'?{useSyncExternalStore:(_,snapshot)=>snapshot()}:load(path.resolve('src/features/student-experience/views.ts')),exp)
+ assert.equal(exp.useStudentUi().seenLumiMemories.join(),'1');assert.ok(exp.useStudentUi().seenUnlockIds.includes('lumi-memory:1'))
+ raw=JSON.stringify({...state,seenLumiMemories:[1,2]});listener({key:'ov.student-ui.v1'});assert.equal(exp.useStudentUi().seenLumiMemories.join(),'1,2')
+ const unlocks=load(path.resolve('src/features/student-experience/overlays/unlocks.ts')).getUnlocks({...store.createInitialAdventure(),lumiRegistrations:[{entryId:'conversation',createdAt:'2026-09-01T12:00:00Z'}]},journeyLogic.initialJourney())
+ const memory=unlocks.find(u=>u.kind==='memory');assert.equal(memory.id,'lumi-memory:1');assert.equal(memory.href,'/student/journal?memory=1')
+})
+
+test('journal preserves incoming activity, family and event context while requiring title and text', () => {
+ const before=store.useAdventure()
+ const cases=[
+  ['activity=act-tip-01&title=Mi%20actividad&prompt=Una%20pregunta','Mi actividad','act-tip-01',/Una pregunta/],
+  ['conversation=work-trends','Conversación: Tendencias laborales de antes y ahora','family-work-trends',/conversación con tu familia/],
+  ['event=Feria&outcome=attended','Evento: Feria','event-Feria',/Hoy fue Feria/],
+  ['event=Feria&outcome=missed','Evento: Feria','event-Feria',/No asististe a Feria/],
+ ]
+ try{
+  for(const [query,title,linked,prompt] of cases){
+   store.updateAdventure(()=>({...store.createInitialAdventure(),journalOnboardingSeen:false}))
+   const page=immersivePlayerHarness('../modules/StudentJournalView',{'react-router':{useSearchParams:()=>[new URLSearchParams(query)]},'@/features/occupation-exploration/lib/useLumiNow':{useLumiNow:()=>new Date()},'../discovery/useReturnFocus':{useReturnFocus:()=>({})}})
+   try{
+    let tree=page.draw({}),editor=page.find(tree,e=>e.type?.name==='JournalEditor')
+    assert.equal(editor.props.title,title);assert.match(editor.props.prompt,prompt)
+    const count=store.useAdventure().journal.length,signals=JSON.stringify(store.useAdventure().readinessCheckIns)
+    editor.props.onSave();assert.equal(store.useAdventure().journal.length,count)
+    editor.props.onBodyChange('Una reflexión de este flujo.');editor.props.onTitleChange('   ')
+    tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalEditor').props.onSave();assert.equal(store.useAdventure().journal.length,count)
+    const chosenTitle=`Título personal: ${query}`
+    page.find(tree,e=>e.type?.name==='JournalEditor').props.onTitleChange(chosenTitle)
+    tree=page.draw({});editor=page.find(tree,e=>e.type?.name==='JournalEditor');const tags=JSON.stringify(editor.props.tags),locked=JSON.stringify(editor.props.lockedTags)
+    editor.props.onSave();const saved=store.useAdventure().journal.find(e=>e.title===chosenTitle)
+    assert.equal(saved.linkedActivityId,linked);assert.match(saved.promptShown,prompt);assert.equal(JSON.stringify(saved.topicTags),tags);assert.equal(JSON.stringify(saved.lockedTopicTags),locked)
+    assert.equal(JSON.stringify(store.useAdventure().readinessCheckIns),signals)
+   }finally{page.dispose()}
+  }
+ }finally{store.updateAdventure(()=>before)}
+})
+
+test('memory navigation opens the journal home from its editor and does not consume unread memories early', () => {
+ let params=new URLSearchParams()
+ const fixture={...store.createInitialAdventure(),journalOnboardingSeen:true,lumiRegistrations:[{entryId:'conversation',createdAt:'2026-09-01T12:00:00Z'}]}
+ const page=immersivePlayerHarness('../modules/StudentJournalView',{'react-router':{useSearchParams:()=>[params]},'@/features/occupation-exploration/lib/AdventureStore':{useAdventure:()=>fixture},'@/features/occupation-exploration/lib/useLumiNow':{useLumiNow:()=>new Date('2026-10-04T12:00:00Z')},'../discovery/useReturnFocus':{useReturnFocus:()=>({})}})
+ try{
+  let tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalHome').props.onNew();tree=page.draw({});assert.ok(page.find(tree,e=>e.type?.name==='JournalEditor'))
+  params=new URLSearchParams('memory=4');page.draw({});tree=page.draw({});assert.ok(page.find(tree,e=>e.type?.name==='JournalEditor'))
+  params=new URLSearchParams('memory=1');page.draw({});tree=page.draw({});assert.ok(page.find(tree,e=>e.type?.name==='JournalHome'))
+ }finally{page.dispose()}
+ const ui=load(path.resolve('src/features/student-experience/ui-state.ts')),saved=ui.useStudentUi()
+ const menu=immersivePlayerHarness('../overlays/NoveltiesMenu',{'@/features/occupation-exploration/lib/AdventureStore':{useAdventure:()=>fixture}})
+ try{
+  ui.updateStudentUi(()=>({...ui.initialStudentUiState(),initialized:true}))
+  const tree=menu.draw({}),link=menu.find(tree,e=>e.props.to==='/student/journal?memory=1')
+  assert.ok(link)
+  const item=menu.find(tree,e=>e.props.children===link);item.props.onSelect()
+  assert.ok(!ui.useStudentUi().seenUnlockIds.includes('lumi-memory:1'));assert.equal(ui.useStudentUi().seenLumiMemories.length,0)
+ }finally{menu.dispose();ui.updateStudentUi(()=>saved)}
 })

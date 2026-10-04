@@ -1,13 +1,16 @@
-import { Heart } from 'lucide-react'
+import { Heart, Star } from 'lucide-react'
 export function FavoriteButton({
   selected,
   onToggle,
   compact = false,
+  icon = 'heart',
 }: {
   selected: boolean
   onToggle: () => void
   compact?: boolean
+  icon?: 'heart' | 'star'
 }) {
+  const Icon = icon === 'star' ? Star : Heart
   return (
     <button
       type="button"
@@ -19,7 +22,7 @@ export function FavoriteButton({
         onToggle()
       }}
     >
-      <Heart fill={selected ? 'currentColor' : 'none'} aria-hidden="true" />
+      <Icon fill={selected ? 'currentColor' : 'none'} aria-hidden="true" />
       {!compact && (selected ? 'En favoritos' : 'Guardar en favoritos')}
     </button>
   )

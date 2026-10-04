@@ -8,7 +8,7 @@ export function DiscoveryStage({
   ambient,
   children,
 }: {
-  ambient: 'profile' | 'plans' | 'research' | 'atlas'
+  ambient: 'profile' | 'plans' | 'research' | 'atlas' | 'backpack' | 'journal'
   children: ReactNode
 }) {
   const discoveryError = useDiscoveryError()

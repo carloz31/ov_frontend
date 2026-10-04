@@ -1,8 +1,8 @@
 import { type ReactNode } from 'react'
 import { ArrowLeft, CircleHelp } from 'lucide-react'
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { appPaths } from '@/routes/paths'
-import { guideSteps } from '../guide-texts'
+import { guideSteps, passportGuideSteps } from '../guide-texts'
 import { useStudentOverlays } from '../overlays/overlay-context'
 import { useStudentUi } from '../ui-state'
 import { getStudentViewLabel, type StudentView } from '../views'
@@ -11,6 +11,9 @@ import { NoveltiesMenu } from '../overlays/NoveltiesMenu'
 
 export function StudentModuleLayout({ view, children }: { view: StudentView; children: ReactNode }) {
   const ui = useStudentUi()
+  const location = useLocation()
+  const passport =
+    view === 'profile-general' && new URLSearchParams(location.search).get('section') === 'passport'
   const { openGuide } = useStudentOverlays()
   return (
     <div className="sx-module">
@@ -29,7 +32,7 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
             type="button"
             className="sx-icon-button"
             aria-label="Abrir guía"
-            onClick={() => openGuide(guideSteps[view])}
+            onClick={() => openGuide(passport ? passportGuideSteps : guideSteps[view])}
           >
             <CircleHelp aria-hidden="true" size={20} />
           </button>

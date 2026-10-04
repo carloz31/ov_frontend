@@ -1,35 +1,43 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
   Compass,
-  Feather,
   LockKeyhole,
   PenLine,
   Search,
-  Tag,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react'
 import { useSearchParams } from 'react-router'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
-import { Input } from '@/components/ui/Input'
-import { Separator } from '@/components/ui/Separator'
-import { cn } from '@/lib/Utils'
 import { getFamilyConversationTopic } from '@/features/family-conversations/FamilyConversationData'
 import { updateAdventure, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { getLumiTags, type LumiSuggestion } from '@/features/occupation-exploration/lib/LumiSuggestions'
-import { getLumiFriendship, lumiFriendshipRules } from '@/features/occupation-exploration/lib/LumiFriendship'
-import { LumiJournalPanel, LumiQuestion } from '@/features/occupation-exploration/components/LumiJournalPanel'
+import {
+  getLumiTags,
+  getLumiSuggestions,
+  type LumiSuggestion,
+} from '@/features/occupation-exploration/lib/LumiSuggestions'
+import { useLumiNow } from '@/features/occupation-exploration/lib/useLumiNow'
+import { LumiPortrait } from '@/features/occupation-exploration/components/LumiJournalPanel'
+import { useJourney } from '@/features/missions/store'
 import type { JournalEntry } from '@/features/occupation-exploration/types/AdventureTypes'
+import { DiscoveryStage } from '../discovery/DiscoveryStage'
+import { Parchment } from '../discovery/Parchment'
+import { CollectionSlot } from '../discovery/CollectionSlot'
+import { useReturnFocus } from '../discovery/useReturnFocus'
+import { useStudentUi } from '../ui-state'
+import { getLumiBond, type LumiBond } from '../journal/lumiBond'
+import { LumiBondPanel } from '../journal/LumiBondPanel'
+import '../journal/journal.css'
 
 type JournalScreen = 'home' | 'write' | 'detail'
 type JournalGrouping = 'timeline' | 'topics'
 
 function StudentJournalView() {
   const state = useAdventure()
+  const bond = getLumiBond(state.lumiRegistrations, useLumiNow())
   const [searchParams] = useSearchParams()
   const conversationTopic = getFamilyConversationTopic(searchParams.get('conversation') ?? '')
   const eventTitle = searchParams.get('event')
@@ -75,7 +83,13 @@ function StudentJournalView() {
         : (activityTitle ?? 'Conversación libre con Lumi'),
   )
   const [deleteOpen, setDeleteOpen] = useState(false)
+  const returnFocus = useReturnFocus()
   const [saveNotice, setSaveNotice] = useState('')
+  const requestedMemory = Number(searchParams.get('memory'))
+  useEffect(() => {
+    if (Number.isInteger(requestedMemory) && requestedMemory >= 1 && requestedMemory <= bond.memoriesOpened)
+      setScreen('home')
+  }, [requestedMemory, bond.memoriesOpened])
   const entries = useMemo(
     () => [...state.journal].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
     [state.journal],
@@ -123,13 +137,13 @@ function StudentJournalView() {
   }
 
   function saveEntry() {
-    if (!body.trim()) return
-    const remaining = getLumiFriendship(state.lumiRegistrations).remainingToday
+    if (!body.trim() || !entryTitle.trim()) return
+    const remaining = getLumiBond(state.lumiRegistrations).remainingToday
     updateAdventure((current) => {
       const existing = current.journal.find((entry) => entry.id === editingId)
       const entry: JournalEntry = {
         id: existing?.id ?? crypto.randomUUID(),
-        title: entryTitle,
+        title: entryTitle.trim(),
         body: body.trim(),
         kind: promptShown ? 'prompted' : 'open',
         createdAt: existing?.createdAt ?? new Date().toISOString(),
@@ -149,10 +163,10 @@ function StudentJournalView() {
     setScreen(editingId ? 'detail' : 'home')
     setSaveNotice(
       editingId
-        ? 'Conversación actualizada. Editar no suma puntos de amistad.'
+        ? 'Conversación actualizada. Editar no suma conversaciones.'
         : remaining > 0
-          ? '¡Conversación guardada! +1 punto de amistad con Lumi.'
-          : `Conversación guardada. Ya sumaste los ${lumiFriendshipRules.dailyPointLimit} puntos de hoy; mañana podrás sumar de nuevo.`,
+          ? '¡Conversación guardada! Tu amistad con Lumi suma una conversación.'
+          : `Conversación guardada. Hoy ya contaron tus 3 conversaciones; esta igual se guarda.`,
     )
   }
 
@@ -180,103 +194,98 @@ function StudentJournalView() {
   }
 
   return (
-    <div
-      className="journal-page min-h-full bg-[#eef1ed] px-4 py-6 text-[#2b2a28] sm:px-8 sm:py-10"
-      style={{ fontFamily: '"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif' }}
-    >
-      <main className="mx-auto max-w-5xl">
-        {saveNotice && (
-          <p
-            role="status"
-            className="mb-5 flex items-center justify-between gap-3 rounded-2xl border border-[#c7a65a]/40 bg-[#fff9e9] p-4 text-sm text-[#4b4066]"
-          >
-            {saveNotice}
-            <button type="button" aria-label="Cerrar aviso" onClick={() => setSaveNotice('')}>
-              <X className="size-4" />
-            </button>
-          </p>
-        )}
-        {screen === 'home' && (
-          <JournalHome
-            entries={filteredEntries}
-            grouping={grouping}
-            onChangeGrouping={setGrouping}
-            onSuggested={({ prompt, tags: defaultTags, activityId, title }) => {
-              setSaveNotice('')
-              setEditingId(undefined)
-              setBody('')
-              setTags(defaultTags)
-              setLockedTags(defaultTags)
-              setTagDraft('')
-              setPromptShown(prompt)
-              setLinkedActivityId(activityId)
-              setEntryTitle(title)
-              setScreen('write')
-            }}
-            onNew={startBlankEntry}
-            onOpen={(entry) => {
-              setSelectedId(entry.id)
-              setScreen('detail')
-            }}
-            query={query}
-            setQuery={setQuery}
-          />
-        )}
-        {screen === 'write' && (
-          <JournalEditor
-            body={body}
-            editing={Boolean(editingId)}
-            lockedTags={lockedTags}
-            onAddTag={addTag}
-            onBack={() => setScreen(editingId ? 'detail' : 'home')}
-            onBodyChange={setBody}
-            onRemoveTag={(tag) =>
-              !lockedTags.includes(tag) && setTags((current) => current.filter((item) => item !== tag))
-            }
-            onSave={saveEntry}
-            onTagDraftChange={setTagDraft}
-            prompt={promptShown}
-            suggestedTags={usedTags.filter((tag) => !tags.includes(tag))}
-            tagDraft={tagDraft}
-            tags={tags}
-          />
-        )}
-        {screen === 'detail' && selected && (
-          <JournalDetail
-            entry={selected}
-            onBack={() => setScreen('home')}
-            onDelete={() => setDeleteOpen(true)}
-            onEdit={() => editEntry(selected)}
-          />
-        )}
-      </main>
-
-      <JournalOnboarding
-        onBegin={startOnboardingEntry}
-        onOpenChange={(open) => {
-          if (!open) updateAdventure((current) => ({ ...current, journalOnboardingSeen: true }))
-        }}
-        open={!state.journalOnboardingSeen}
-      />
+    <DiscoveryStage ambient="journal">
+      {saveNotice && (
+        <p role="status" className="sx-j-save-notice">
+          {saveNotice}
+          <button type="button" aria-label="Cerrar aviso" onClick={() => setSaveNotice('')}>
+            <X aria-hidden="true" size={18} />
+          </button>
+        </p>
+      )}
+      {screen === 'home' && (
+        <JournalHome
+          entries={filteredEntries}
+          grouping={grouping}
+          onChangeGrouping={setGrouping}
+          onSuggested={({ prompt, tags: defaultTags, activityId, title }) => {
+            setSaveNotice('')
+            setEditingId(undefined)
+            setBody('')
+            setTags(defaultTags)
+            setLockedTags(defaultTags)
+            setTagDraft('')
+            setPromptShown(prompt)
+            setLinkedActivityId(activityId)
+            setEntryTitle(title)
+            setScreen('write')
+          }}
+          onNew={startBlankEntry}
+          onOpen={(entry) => {
+            setSelectedId(entry.id)
+            setScreen('detail')
+          }}
+          query={query}
+          setQuery={setQuery}
+          bond={bond}
+          onboarding={!state.journalOnboardingSeen}
+          onBegin={startOnboardingEntry}
+        />
+      )}
+      {screen === 'write' && (
+        <JournalEditor
+          body={body}
+          editing={Boolean(editingId)}
+          title={entryTitle}
+          onTitleChange={setEntryTitle}
+          remainingToday={bond.remainingToday}
+          lockedTags={lockedTags}
+          onAddTag={addTag}
+          onBack={() => setScreen(editingId ? 'detail' : 'home')}
+          onBodyChange={setBody}
+          onRemoveTag={(tag) =>
+            !lockedTags.includes(tag) && setTags((current) => current.filter((item) => item !== tag))
+          }
+          onSave={saveEntry}
+          onTagDraftChange={setTagDraft}
+          prompt={promptShown}
+          suggestedTags={usedTags.filter((tag) => !tags.includes(tag))}
+          tagDraft={tagDraft}
+          tags={tags}
+        />
+      )}
+      {screen === 'detail' && selected && (
+        <JournalDetail
+          entry={selected}
+          onBack={() => setScreen('home')}
+          onDelete={() => setDeleteOpen(true)}
+          onEdit={() => editEntry(selected)}
+        />
+      )}
       <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-md bg-[#eef1ed]">
+        <DialogContent {...returnFocus} className="sx-root sx-j-delete-dialog">
           <DialogHeader>
             <DialogTitle>Eliminar esta entrada</DialogTitle>
             <DialogDescription>
-              La conversación dejará de estar disponible. Esto no reinicia el límite diario de amistad.
+              La conversación dejará de estar disponible. Esto no reduce la amistad ni reinicia el límite
+              diario.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button onClick={() => setDeleteOpen(false)} variant="ghost">
+          <div className="sx-d-actions">
+            <button
+              className="sx-d-action sx-d-action-ghost"
+              onClick={() => setDeleteOpen(false)}
+              type="button"
+            >
               Conservar
-            </Button>
-            <Button onClick={deleteEntry} variant="destructive">
+            </button>
+            <button className="sx-d-action" onClick={deleteEntry} type="button">
               Eliminar
-            </Button>
+            </button>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </DiscoveryStage>
   )
 }
 
@@ -289,6 +298,9 @@ function JournalHome({
   onOpen,
   query,
   setQuery,
+  bond,
+  onboarding,
+  onBegin,
 }: {
   entries: JournalEntry[]
   grouping: JournalGrouping
@@ -298,121 +310,207 @@ function JournalHome({
   onOpen: (entry: JournalEntry) => void
   query: string
   setQuery: (query: string) => void
+  bond: LumiBond
+  onboarding: boolean
+  onBegin: () => void
 }) {
-  const grouped = entries.reduce<Record<string, JournalEntry[]>>((result, entry) => {
-    const key = entry.topicTags[0] ?? 'sin etiqueta'
-    result[key] = [...(result[key] ?? []), entry]
+  const adventure = useAdventure(),
+    journey = useJourney(),
+    ui = useStudentUi(),
+    [topic, setTopic] = useState<string>()
+  const suggestions = getLumiSuggestions(adventure, journey)
+  const unread = Array.from({ length: bond.memoriesOpened }, (_, i) => i + 1).some(
+    (n) => !ui.seenLumiMemories.includes(n),
+  )
+  const tags = [...new Set(entries.flatMap((e) => e.topicTags))]
+  const shown = grouping === 'topics' && topic ? entries.filter((e) => e.topicTags.includes(topic)) : entries
+  const months = shown.reduce<Record<string, JournalEntry[]>>((result, entry) => {
+    const month = new Date(entry.createdAt).toLocaleDateString('es-PE', {
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'America/Lima',
+    })
+    ;(result[month] ??= []).push(entry)
     return result
   }, {})
   return (
     <>
-      <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+      <header className="sx-d-header">
         <div>
-          <p className="flex items-center gap-2 text-sm font-semibold text-[#4b4066]">
-            <LockKeyhole className="size-4" /> Solo tú puedes leer este espacio
+          <p className="sx-j-private">
+            <LockKeyhole size={16} aria-hidden="true" />
+            Solo tú puedes leer este espacio
           </p>
-          <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Mi diario</h1>
-          <p className="mt-2 text-sm text-[#5c5a54]">
-            Cuéntale a tu compañera de viaje lo que vas descubriendo de ti.
-          </p>
+          <h1>Mi diario</h1>
+          <p>Cuéntale a tu compañera de viaje lo que vas descubriendo de ti.</p>
         </div>
       </header>
-      <LumiJournalPanel onNew={onNew} onSuggested={onSuggested} />
-      <h2 className="mt-8 text-xl font-bold text-[#4b4066]">Lo que le has contado a Lumi</h2>
-      <div className="my-7 flex flex-col gap-4 border-b border-[#dad6c9] pb-5 md:flex-row md:items-center md:justify-between">
-        <nav className="flex gap-1 rounded-xl bg-white/60 p-1" aria-label="Organizar conversaciones">
-          <JournalTab
-            active={grouping === 'timeline'}
-            label="Línea de tiempo"
-            onClick={() => onChangeGrouping('timeline')}
-          />
-          <JournalTab
-            active={grouping === 'topics'}
-            label="Por tema"
-            onClick={() => onChangeGrouping('topics')}
-          />
-        </nav>
-        <div className="relative w-full md:max-w-xs">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#5c5a54]" />
-          <Input
-            className="h-11 rounded-xl border-[#dad6c9] bg-white/75 pl-10"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Buscar por tema..."
-            value={query}
-          />
-        </div>
-      </div>
-      {entries.length === 0 ? (
-        <div className="rounded-3xl border border-[#dad6c9] bg-white/55 px-6 py-16 text-center">
-          <Feather className="mx-auto size-9 text-[#4b4066]" />
-          <h2 className="mt-4 text-xl font-bold">Todavía no has escrito nada aquí</h2>
-          <p className="mx-auto mt-2 max-w-lg text-sm leading-7 text-[#5c5a54]">
-            Este espacio está listo cuando quieras usarlo. No hace falta esperar a que algo importante pase.
-          </p>
-        </div>
-      ) : grouping === 'timeline' ? (
-        <div className="space-y-4">
-          {entries.map((entry) => (
-            <JournalCard entry={entry} key={entry.id} onOpen={() => onOpen(entry)} />
-          ))}
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {Object.entries(grouped).map(([topic, topicEntries]) => (
-            <section key={topic}>
-              <h2 className="mb-3 flex items-center gap-2 text-sm font-bold capitalize text-[#4b4066]">
-                <Tag className="size-4" /> {topic}
-              </h2>
-              <div className="space-y-3">
-                {topicEntries.map((entry) => (
+      <div className="sx-j-layout">
+        <LumiBondPanel bond={bond} />
+        <div className="sx-d-stack">
+          {onboarding ? (
+            <JournalOnboarding onBegin={onBegin} />
+          ) : (
+            <Parchment
+              className="sx-j-notebook sx-j-blank"
+              label="Página en blanco"
+              title="Lumi, hoy quiero contarte…"
+            >
+              <p>Algo que te pasó, una duda o una idea. No necesitas completar una actividad para empezar.</p>
+              <button className="sx-d-action" type="button" onClick={onNew}>
+                Conversación libre <ArrowRight aria-hidden="true" size={18} />
+              </button>
+            </Parchment>
+          )}
+          {unread && (
+            <div className="sx-j-memory-notice" role="status">
+              <span className="sx-j-lumi">
+                <LumiPortrait />
+              </span>
+              <div>
+                <h2>Lumi recordó algo nuevo</h2>
+                <p>Tu amistad creció y se abrió un recuerdo. Búscalo junto a tu amistad con Lumi.</p>
+              </div>
+            </div>
+          )}
+          <section aria-label="Cartas de Lumi por responder">
+            <h2 className="sx-j-letters-heading">
+              Cartas de Lumi por responder <span>{suggestions.length}</span>
+            </h2>
+            <p>Después de cada actividad, Lumi te deja una pregunta sobre lo que viviste.</p>
+            <div className="sx-j-letters">
+              {suggestions.length ? (
+                suggestions.map((item) => (
+                  <Parchment key={item.activityId} className="sx-j-letter">
+                    <span className="sx-j-letter-seal">
+                      <Sparkles aria-hidden="true" size={16} />
+                    </span>
+                    <p className="sx-d-eyebrow">Después de: {item.title}</p>
+                    <p className="sx-j-question">Lumi: “{item.prompt}”</p>
+                    <JournalTags tags={item.tags} />
+                    <button type="button" className="sx-d-action" onClick={() => onSuggested(item)}>
+                      Responder a Lumi
+                    </button>
+                  </Parchment>
+                ))
+              ) : (
+                <p className="sx-j-empty">
+                  Respondiste todas las cartas. Lumi te dejará otra al terminar tu próxima actividad.
+                </p>
+              )}
+            </div>
+          </section>
+          <Parchment className="sx-j-notebook" label="Tu cuaderno" title="Lo que le has contado a Lumi">
+            <div className="sx-j-notebook-controls">
+              <nav aria-label="Organizar conversaciones" className="sx-j-tabs">
+                <JournalTab
+                  active={grouping === 'timeline'}
+                  label="Línea de tiempo"
+                  onClick={() => onChangeGrouping('timeline')}
+                />
+                <JournalTab
+                  active={grouping === 'topics'}
+                  label="Por tema"
+                  onClick={() => onChangeGrouping('topics')}
+                />
+              </nav>
+              <label className="sx-j-search">
+                <Search aria-hidden="true" size={16} />
+                <span className="sr-only">Buscar por tema</span>
+                <input
+                  className="sx-d-input"
+                  placeholder="Buscar por tema..."
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                />
+              </label>
+            </div>
+            {grouping === 'topics' && (
+              <div className="sx-j-topic-filters">
+                {tags.map((tag) => (
+                  <button
+                    type="button"
+                    aria-pressed={topic === tag}
+                    key={tag}
+                    onClick={() => setTopic(topic === tag ? undefined : tag)}
+                  >
+                    #{tag} {entries.filter((e) => e.topicTags.includes(tag)).length}
+                  </button>
+                ))}
+              </div>
+            )}
+            {!shown.length ? (
+              <div className="sx-j-empty">
+                <span className="sx-j-empty-lumi">
+                  <LumiPortrait />
+                </span>
+                <h3>
+                  {entries.length
+                    ? 'No encontramos conversaciones con este tema'
+                    : 'Todavía no has escrito nada aquí'}
+                </h3>
+                <p>
+                  Este espacio está listo cuando quieras usarlo. No hace falta esperar a que algo importante
+                  pase.
+                </p>
+              </div>
+            ) : grouping === 'timeline' ? (
+              Object.entries(months).map(([month, items]) => (
+                <section className="sx-j-thread" key={month}>
+                  <h3>{month}</h3>
+                  {items.map((entry) => (
+                    <JournalCard entry={entry} key={entry.id} onOpen={() => onOpen(entry)} />
+                  ))}
+                </section>
+              ))
+            ) : (
+              <div className="sx-d-stack">
+                {shown.map((entry) => (
                   <JournalCard entry={entry} key={entry.id} onOpen={() => onOpen(entry)} />
                 ))}
               </div>
-            </section>
-          ))}
+            )}
+          </Parchment>
         </div>
-      )}
+      </div>
     </>
   )
 }
-
+function JournalTags({ tags }: { tags: string[] }) {
+  return (
+    <div className="sx-j-tags">
+      {tags.map((tag) => (
+        <span key={tag}>#{tag}</span>
+      ))}
+    </div>
+  )
+}
 function JournalCard({ entry, onOpen }: { entry: JournalEntry; onOpen: () => void }) {
   return (
-    <article className="rounded-3xl border border-[#dad6c9] bg-white/75 p-5 shadow-[0_8px_24px_rgb(43_42_40/4%)] sm:p-6">
-      <time className="text-xs font-semibold text-[#5c5a54]">
+    <article className="sx-j-entry" data-kind={entry.kind}>
+      <time>
         {new Date(entry.createdAt).toLocaleDateString('es-PE', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
+          dateStyle: 'long',
+          timeZone: 'America/Lima',
         })}
-        {entry.kind === 'open' ? ' · conversación libre' : ' · conversación sugerida'}
       </time>
-      <h3 className="mt-3 font-semibold">{entry.title}</h3>
-      {entry.promptShown && (
-        <p className="mt-2 text-sm leading-6 text-[#5c5a54]">Lumi: “{entry.promptShown}”</p>
-      )}
-      <p className="mt-3 line-clamp-2 max-w-3xl font-serif text-base leading-7 text-[#393734]">
-        {entry.body}
-      </p>
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
-          {entry.topicTags.map((tag) => (
-            <Badge className="bg-[#4b4066]/8 text-[#4b4066]" key={tag} variant="secondary">
-              #{tag}
-            </Badge>
-          ))}
-        </div>
-        <Button className="text-[#4b4066]" onClick={onOpen} size="sm" variant="ghost">
-          Leer más <ArrowRight />
-        </Button>
-      </div>
+      <span className="sx-j-origin">{entry.kind === 'open' ? 'Libre' : 'Carta de Lumi'}</span>
+      <h3>{entry.title}</h3>
+      {entry.promptShown && <p className="sx-j-question">Lumi: “{entry.promptShown}”</p>}
+      <p className="sx-d-clamp-two">{entry.body}</p>
+      <JournalTags tags={entry.topicTags} />
+      <button type="button" className="sx-d-action sx-d-action-ghost" onClick={onOpen}>
+        Leer completa <ArrowRight size={16} aria-hidden="true" />
+      </button>
     </article>
   )
 }
-
 function JournalEditor({
   body,
   editing,
+  title,
+  onTitleChange,
+  remainingToday,
   lockedTags,
   onAddTag,
   onBack,
@@ -427,6 +525,9 @@ function JournalEditor({
 }: {
   body: string
   editing: boolean
+  title: string
+  onTitleChange: (title: string) => void
+  remainingToday: number
   lockedTags: string[]
   onAddTag: (tag?: string) => void
   onBack: () => void
@@ -440,100 +541,114 @@ function JournalEditor({
   tags: string[]
 }) {
   return (
-    <section>
-      <Button className="-ml-3 text-[#5c5a54]" onClick={onBack} variant="ghost">
-        <ArrowLeft /> Volver
-      </Button>
-      <div className="mx-auto mt-5 max-w-3xl">
-        <h1 className="text-3xl font-bold">{editing ? 'Editar lo que le contaste' : 'Cuéntale a Lumi'}</h1>
-        <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-[#4b4066]">
-          <LockKeyhole className="size-4" /> Nadie más lee esto
-        </p>
-        <div className="mt-7">
-          <LumiQuestion
-            prompt={
-              prompt ?? '¿Qué te gustaría contarme hoy? Puede ser algo pequeño; te acompaño en el camino.'
-            }
-          />
+    <>
+      <button type="button" className="sx-d-back" onClick={onBack}>
+        <ArrowLeft aria-hidden="true" />
+        Volver al diario
+      </button>
+      <header className="sx-d-header">
+        <div>
+          <h1>{editing ? 'Editar lo que le contaste' : 'Cuéntale a Lumi'}</h1>
+          <p className="sx-j-private">
+            <LockKeyhole aria-hidden="true" size={16} />
+            Nadie más lee esto
+          </p>
         </div>
+      </header>
+      <Parchment className="sx-j-notebook sx-j-editor">
+        {prompt && <p className="sx-j-question sx-j-prompt">Lumi: “{prompt}”</p>}
+        <label className="sr-only" htmlFor="journal-title">
+          Título de la entrada
+        </label>
+        <input
+          id="journal-title"
+          className="sx-j-title-input"
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="Título de tu conversación"
+          required
+        />
         <textarea
           aria-label="Texto privado de la entrada"
           autoFocus
-          className="mt-6 min-h-[360px] w-full resize-y rounded-3xl border border-[#4b4066]/45 bg-white/75 p-6 font-serif text-lg leading-9 text-[#2b2a28] outline-none focus:ring-4 focus:ring-[#4b4066]/12"
-          onChange={(event) => onBodyChange(event.target.value)}
-          placeholder="Lumi, hoy quiero contarte…"
+          className="sx-j-writing"
           value={body}
+          onChange={(e) => onBodyChange(e.target.value)}
+          placeholder="Escribe con calma. Lo que pongas aquí solo lo lees tú."
+          required
         />
-        <div className="mt-6">
-          <label className="text-sm font-semibold" htmlFor="journal-tag">
-            Etiquetas <span className="font-normal text-[#5c5a54]">(opcional)</span>
-          </label>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {tags.map((tag) => (
-              <Badge className="gap-1 bg-[#4b4066]/10 text-[#4b4066]" key={tag} variant="secondary">
+        <label htmlFor="journal-tag">Etiquetas (opcional)</label>
+        <div className="sx-j-tags">
+          {tags.map((tag) => (
+            <span key={tag}>
+              #{tag}
+              {lockedTags.includes(tag) ? (
+                <small>sugerida</small>
+              ) : (
+                <button type="button" aria-label={`Quitar etiqueta ${tag}`} onClick={() => onRemoveTag(tag)}>
+                  <X aria-hidden="true" size={16} />
+                </button>
+              )}
+            </span>
+          ))}
+        </div>
+        <div className="sx-d-actions">
+          <input
+            id="journal-tag"
+            className="sx-d-input"
+            value={tagDraft}
+            onChange={(e) => onTagDraftChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                onAddTag()
+              }
+            }}
+            placeholder="Ej. familia, dudas, intereses"
+          />
+          <button
+            type="button"
+            className="sx-d-action sx-d-action-ghost"
+            disabled={!tagDraft.trim()}
+            onClick={() => onAddTag()}
+          >
+            Agregar
+          </button>
+        </div>
+        {!!suggestedTags.length && (
+          <div className="sx-j-tags">
+            <span>Usadas antes:</span>
+            {suggestedTags.slice(0, 5).map((tag) => (
+              <button type="button" key={tag} onClick={() => onAddTag(tag)}>
                 #{tag}
-                {lockedTags.includes(tag) ? (
-                  <span className="text-[10px] font-semibold opacity-65">sugerida</span>
-                ) : (
-                  <button
-                    aria-label={`Quitar etiqueta ${tag}`}
-                    onClick={() => onRemoveTag(tag)}
-                    type="button"
-                  >
-                    <X className="size-3" />
-                  </button>
-                )}
-              </Badge>
+              </button>
             ))}
           </div>
-          <div className="mt-3 flex max-w-md gap-2">
-            <Input
-              id="journal-tag"
-              className="h-11 rounded-xl border-[#dad6c9] bg-white/75"
-              onChange={(event) => onTagDraftChange(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter') {
-                  event.preventDefault()
-                  onAddTag()
-                }
-              }}
-              placeholder="Ej. familia, dudas, intereses"
-              value={tagDraft}
-            />
-            <Button disabled={!tagDraft.trim()} onClick={() => onAddTag()} variant="outline">
-              Agregar
-            </Button>
-          </div>
-          {suggestedTags.length > 0 && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-[#5c5a54]">
-              <span>Usadas antes:</span>
-              {suggestedTags.slice(0, 5).map((tag) => (
-                <button
-                  className="rounded-full border border-[#dad6c9] px-2.5 py-1"
-                  key={tag}
-                  onClick={() => onAddTag(tag)}
-                  type="button"
-                >
-                  #{tag}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="mt-8 flex justify-end">
-          <Button
-            className="bg-[#4b4066] text-white hover:bg-[#3f3656]"
-            disabled={!body.trim()}
+        )}
+        <div className="sx-j-editor-actions">
+          <button type="button" className="sx-d-action sx-d-action-ghost" onClick={onBack}>
+            Ahora no
+          </button>
+          <button
+            type="button"
+            className="sx-d-action sx-d-action-gold"
+            disabled={!body.trim() || !title.trim()}
             onClick={onSave}
           >
-            Guardar conversación
-          </Button>
+            Contarle a Lumi
+          </button>
         </div>
-      </div>
-    </section>
+        <p className="sx-j-save-help">
+          {editing
+            ? 'Editar no suma una conversación nueva.'
+            : remainingToday
+              ? 'Esta conversación suma a tu amistad con Lumi.'
+              : 'Hoy ya contaron tus 3 conversaciones; esta igual se guarda.'}
+        </p>
+      </Parchment>
+    </>
   )
 }
-
 function JournalDetail({
   entry,
   onBack,
@@ -546,135 +661,72 @@ function JournalDetail({
   onEdit: () => void
 }) {
   return (
-    <article>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <Button className="-ml-3" onClick={onBack} variant="ghost">
-          <ArrowLeft /> Volver
-        </Button>
-        <time className="text-sm text-[#5c5a54]">
-          {new Date(entry.createdAt).toLocaleDateString('es-PE', { dateStyle: 'long' })}
+    <>
+      <button type="button" className="sx-d-back" onClick={onBack}>
+        <ArrowLeft aria-hidden="true" />
+        Volver al diario
+      </button>
+      <Parchment className="sx-j-notebook sx-j-detail">
+        <time>
+          {new Date(entry.createdAt).toLocaleDateString('es-PE', {
+            dateStyle: 'long',
+            timeZone: 'America/Lima',
+          })}
         </time>
-      </div>
-      <div className="mx-auto mt-7 max-w-3xl">
-        <p className="mb-4 text-sm font-semibold text-[#4b4066]">Le contaste a Lumi · {entry.title}</p>
-        {entry.promptShown && (
-          <div className="mb-7">
-            <p className="text-xs font-semibold text-[#5c5a54]">Después de: “{entry.title}”</p>
-            <div className="mt-3">
-              <LumiQuestion prompt={entry.promptShown} />
-            </div>
-          </div>
-        )}
-        <div className="rounded-3xl border border-[#dad6c9] bg-white/75 p-6 sm:p-10">
-          <p className="whitespace-pre-wrap break-words font-serif text-lg leading-9 text-[#2b2a28]">
-            {entry.body}
-          </p>
-        </div>
-        <div className="mt-5 flex flex-wrap gap-2">
-          {entry.topicTags.map((tag) => (
-            <Badge className="bg-[#4b4066]/8 text-[#4b4066]" key={tag} variant="secondary">
-              #{tag}
-            </Badge>
-          ))}
-        </div>
-        <div className="mt-8 flex justify-end gap-2 border-t border-[#dad6c9] pt-5">
-          <Button onClick={onEdit} variant="ghost">
+        <p className="sx-j-origin">{entry.kind === 'open' ? 'Libre' : 'Carta de Lumi'}</p>
+        <h1>{entry.title}</h1>
+        {entry.promptShown && <p className="sx-j-question sx-j-prompt">Lumi: “{entry.promptShown}”</p>}
+        <p className="sx-j-full-text">{entry.body}</p>
+        <JournalTags tags={entry.topicTags} />
+        <div className="sx-j-editor-actions">
+          <button type="button" className="sx-d-action sx-d-action-ghost" onClick={onEdit}>
+            <PenLine aria-hidden="true" size={16} />
             Editar
-          </Button>
-          <Button onClick={onDelete} variant="ghost">
-            <Trash2 /> Eliminar
-          </Button>
+          </button>
+          <button type="button" className="sx-j-delete" onClick={onDelete}>
+            <Trash2 aria-hidden="true" size={16} />
+            Borrar
+          </button>
         </div>
+      </Parchment>
+    </>
+  )
+}
+function JournalOnboarding({ onBegin }: { onBegin: () => void }) {
+  return (
+    <Parchment className="sx-j-notebook sx-j-onboarding" title="Un espacio para ti y Lumi">
+      <p>
+        Tu diario se convierte en conversaciones con tu compañera de viaje. No hay respuestas automáticas: tú
+        decides qué contar.
+      </p>
+      <div className="sx-j-onboarding-points">
+        <CollectionSlot icon={<LockKeyhole />}>
+          <strong>Privado para siempre</strong>
+          <p>Nadie lee lo que escribes aquí. Ni tu orientadora, ni nadie del programa. Nunca.</p>
+        </CollectionSlot>
+        <CollectionSlot icon={<PenLine />}>
+          <strong>A tu manera</strong>
+          <p>No hay respuestas correctas. Puedes escribir una frase o una página.</p>
+        </CollectionSlot>
+        <CollectionSlot icon={<Compass />}>
+          <strong>Una señal separada</strong>
+          <p>
+            De vez en cuando te preguntaremos qué tan seguro te sientes de tu próximo paso. Tu orientadora ve
+            solo esa respuesta corta, nunca lo que escribes.
+          </p>
+        </CollectionSlot>
       </div>
-    </article>
+      <button type="button" className="sx-d-action sx-d-action-gold" onClick={onBegin}>
+        Entendido, empezar a escribir
+      </button>
+    </Parchment>
   )
 }
-
-function JournalOnboarding({
-  onBegin,
-  onOpenChange,
-  open,
-}: {
-  onBegin: () => void
-  onOpenChange: (open: boolean) => void
-  open: boolean
-}) {
-  return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="max-w-3xl bg-[#eef1ed] p-6 sm:p-10" showCloseButton={false}>
-        <DialogHeader className="pr-0 text-center">
-          <DialogTitle className="text-3xl">Un espacio para ti y Lumi</DialogTitle>
-          <DialogDescription>
-            Tu diario se convierte en conversaciones con tu compañera de viaje. No hay respuestas automáticas:
-            tú decides qué contar.
-          </DialogDescription>
-        </DialogHeader>
-        <Separator className="my-6 bg-[#dad6c9]" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <OnboardingPoint
-            icon={LockKeyhole}
-            text="Nadie lee lo que escribes aquí. Ni tu orientadora, ni nadie del programa. Nunca."
-            title="Privado para siempre"
-          />
-          <OnboardingPoint
-            icon={PenLine}
-            text="No hay respuestas correctas. Puedes escribir una frase o una página."
-            title="A tu manera"
-          />
-          <OnboardingPoint
-            accent="signal"
-            icon={Compass}
-            text="De vez en cuando te preguntaremos qué tan seguro te sientes de tu próximo paso. Tu orientadora ve solo esa respuesta corta, nunca lo que escribes."
-            title="Una señal separada"
-          />
-        </div>
-        <Button className="mx-auto mt-7 bg-[#4b4066] text-white hover:bg-[#3f3656]" onClick={onBegin}>
-          Entendido, empezar a escribir
-        </Button>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function OnboardingPoint({
-  accent = 'private',
-  icon: Icon,
-  text,
-  title,
-}: {
-  accent?: 'private' | 'signal'
-  icon: typeof LockKeyhole
-  text: string
-  title: string
-}) {
-  return (
-    <div
-      className={cn(
-        'rounded-2xl border p-5',
-        accent === 'signal' ? 'border-[#3e6259]/25 bg-[#3e6259]/8' : 'border-[#4b4066]/15 bg-white/60',
-      )}
-    >
-      <Icon className={cn('size-6', accent === 'signal' ? 'text-[#3e6259]' : 'text-[#4b4066]')} />
-      <h2 className="mt-4 font-bold">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-[#5c5a54]">{text}</p>
-    </div>
-  )
-}
-
 function JournalTab({ active, label, onClick }: { active: boolean; label: string; onClick: () => void }) {
   return (
-    <button
-      aria-pressed={active}
-      className={cn(
-        'rounded-lg px-4 py-2 text-sm font-semibold transition-colors',
-        active ? 'bg-[#4b4066] text-white' : 'text-[#5c5a54] hover:bg-white',
-      )}
-      onClick={onClick}
-      type="button"
-    >
+    <button type="button" aria-pressed={active} onClick={onClick}>
       {label}
     </button>
   )
 }
-
 export { StudentJournalView }

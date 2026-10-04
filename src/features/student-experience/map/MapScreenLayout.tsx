@@ -13,7 +13,7 @@ import { useStudentOverlays } from '../overlays/overlay-context'
 import { guideSteps } from '../guide-texts'
 import { updateStudentUi, useStudentUi } from '../ui-state'
 import { ActivityDrawer } from './ActivityDrawer'
-import { AdventurePanel } from './AdventurePanel'
+import { AdventurePanel, CollapsedAdventurePanel } from './AdventurePanel'
 import { CityLocked } from './CityLocked'
 import { MapCanvas, type MapCanvasHandle } from './MapCanvas'
 import { MapControls } from './MapControls'
@@ -142,6 +142,7 @@ export function MapScreenLayout({
           points={points}
           variant={zone === 'missions' ? 'route' : 'open'}
           panelOpen={!mobile && !ui.panelCollapsed}
+          panelInset={mobile ? 0 : ui.panelCollapsed ? 72 : 304}
           selectedId={selectedId}
           recommendedId={recommended?.id}
           onSelect={selectPoint}
@@ -162,6 +163,13 @@ export function MapScreenLayout({
           aria-label="Panel de aventura"
           inert={mobile ? true : undefined}
         >
+          {ui.panelCollapsed && (
+            <CollapsedAdventurePanel
+              progress={progress.value}
+              recommended={recommended}
+              onSelect={(id) => (locked ? navigate(appPaths.student.missions) : selectPoint(id))}
+            />
+          )}
           <div className="sx-panel-scroll" inert={ui.panelCollapsed ? true : undefined}>
             {panel}
           </div>

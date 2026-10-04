@@ -20,15 +20,11 @@ export function mapPosition(point: { x: number; y: number }, size: MapSize = can
     y: (point.y / logicalCanvasSize.height) * size.height,
   }
 }
-export function visibleCenter(bounds: Bounds, panelOpen: boolean) {
-  const left = panelOpen ? Math.min(304, bounds.width) : 0
+export function visibleCenter(bounds: Bounds, panelOpen: boolean, panelInset = panelOpen ? 304 : 0) {
+  const left = Math.min(Math.max(0, panelInset), bounds.width)
   return { x: left + (bounds.width - left) / 2, y: bounds.height / 2 }
 }
-export function clampTransform(
-  next: MapTransform,
-  bounds: Bounds,
-  size: MapSize = canvasSize,
-): MapTransform {
+export function clampTransform(next: MapTransform, bounds: Bounds, size: MapSize = canvasSize): MapTransform {
   const scale = Math.min(maxScale, Math.max(getMinimumScale(bounds, size), next.scale))
   const imageWidth = size.width * scale
   const imageHeight = size.height * scale
@@ -64,9 +60,10 @@ export function focusTransform(
   bounds: Bounds,
   panelOpen = false,
   size: MapSize = canvasSize,
+  panelInset = panelOpen ? 304 : 0,
 ) {
   const position = mapPosition(point, size)
-  const center = visibleCenter(bounds, panelOpen)
+  const center = visibleCenter(bounds, panelOpen, panelInset)
   return clampTransform(
     { ...current, x: center.x - position.x * current.scale, y: center.y - position.y * current.scale },
     bounds,

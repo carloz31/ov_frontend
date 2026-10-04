@@ -7,6 +7,8 @@ import {
   useAdventure,
   useAdventureStorageError,
 } from '@/features/occupation-exploration/lib/AdventureStore'
+import { updateDiscovery } from './discovery/discoveryStore'
+import { recordBadgeFirstSeenAt } from './profile/passport'
 import { getMissionsToSync } from './map/mapPoints'
 import { StudentModuleLayout } from './modules/StudentModuleLayout'
 import { OverlayQueue } from './overlays/OverlayQueue'
@@ -46,6 +48,10 @@ export function StudentShell() {
       updateStudentUi((current) => (current.lastMap === view ? current : { ...current, lastMap: view }))
     }
   }, [view, location.search])
+
+  useEffect(() => {
+    updateDiscovery((current) => recordBadgeFirstSeenAt(current, adventure))
+  }, [adventure])
 
   const outlet = <Outlet context={context} />
   return (

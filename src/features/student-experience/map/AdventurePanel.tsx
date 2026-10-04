@@ -1,6 +1,8 @@
 import { Link } from 'react-router'
 import {
   Backpack,
+  Building2,
+  MapPinned,
   BookOpen,
   ChevronRight,
   Compass,
@@ -47,24 +49,28 @@ export function AdventurePanel({
   const circumference = 2 * Math.PI * 40
   return (
     <div className="sx-panel-content">
-      <div className="sx-panel-user">
-        <span className="sx-panel-avatar" aria-hidden="true">
-          AL
-        </span>
-        <div>
-          <span>¡Qué bueno verte!</span>
-          <strong>Alex</strong>
+      <Link className="sx-panel-traveler" to={appPaths.student.profile}>
+        <div className="sx-panel-user">
+          <span className="sx-panel-avatar" aria-hidden="true">
+            AL
+          </span>
+          <div>
+            <span>¡Qué bueno verte!</span>
+            <strong>Alex</strong>
+          </div>
+          <ChevronRight aria-hidden="true" size={18} />
         </div>
-      </div>
-      <div className="sx-panel-level" aria-label={`Nivel ${level.number}: ${level.label}`}>
-        <span className="sx-level-medallion" aria-hidden="true">
-          <span>NIVEL</span>
-          <strong>{String(level.number).padStart(2, '0')}</strong>
-        </span>
-        <span className="sx-level-rank">
-          <strong>{level.label}</strong>
-        </span>
-      </div>
+        <div className="sx-panel-level" aria-label={`Nivel ${level.number}: ${level.label}`}>
+          <span className="sx-level-medallion" aria-hidden="true">
+            <span>NIVEL</span>
+            <strong>{String(level.number).padStart(2, '0')}</strong>
+          </span>
+          <span className="sx-level-rank">
+            <strong>{level.label}</strong>
+            <small>Tu título de viajero</small>
+          </span>
+        </div>
+      </Link>
       <section className="sx-panel-progress">
         <span
           className="sx-progress-ring"
@@ -75,13 +81,13 @@ export function AdventurePanel({
           aria-valuenow={percentage}
         >
           <svg viewBox="0 0 96 96" aria-hidden="true">
-            <circle cx={48} cy={48} r={40} fill="none" stroke="var(--border)" strokeWidth={7} />
+            <circle cx={48} cy={48} r={40} fill="none" stroke="var(--sx-night-raised)" strokeWidth={7} />
             <circle
               cx={48}
               cy={48}
               r={40}
               fill="none"
-              stroke="var(--primary)"
+              stroke="var(--sx-gold)"
               strokeWidth={7}
               strokeLinecap="round"
               strokeDasharray={circumference}
@@ -90,22 +96,31 @@ export function AdventurePanel({
           </svg>
           <strong>{Math.round(percentage)}%</strong>
         </span>
-        <h2>{progress.label}</h2>
+        <div>
+          <span className="sx-panel-zone">
+            {progress.label === 'Afinidad con la ciudad' ? (
+              <Building2 size={16} aria-hidden="true" />
+            ) : (
+              <MapPinned size={16} aria-hidden="true" />
+            )}
+            {progress.label === 'Afinidad con la ciudad' ? 'Ciudad' : 'Camino'}
+          </span>
+          <h2>{progress.label}</h2>
+          <p>
+            Crece con cada{' '}
+            {progress.label === 'Afinidad con la ciudad' ? 'llamado que atiendes.' : 'misión del camino.'}
+          </p>
+        </div>
       </section>
       <section className="sx-panel-section">
-        {greeting && (
-          <p className="sx-panel-return">
-            <strong>Lumi</strong>
-            {greeting}
-          </p>
-        )}
         {recommended ? (
           <button type="button" className="sx-next-step" onClick={() => onSelect(recommended.id)}>
             <span>
               <span className="sx-next-label">
-                <Target size={16} aria-hidden="true" />
+                <Target className="sx-next-target" size={24} aria-hidden="true" />
                 Siguiente paso
               </span>
+              {greeting && <small className="sx-panel-return">¡Qué bueno verte de nuevo!</small>}
               <strong>{recommended.title}</strong>
             </span>
             <ChevronRight size={22} aria-hidden="true" />
@@ -131,6 +146,18 @@ export function AdventurePanel({
           )}
         </div>
         {!signal && <p className="sx-panel-subtitle">¿Qué tan seguro te sientes hoy de tu próximo paso?</p>}
+        <div
+          className="sx-signal-segments"
+          role="progressbar"
+          aria-label="Señal de hoy"
+          aria-valuemin={0}
+          aria-valuemax={10}
+          aria-valuenow={signal?.value ?? 0}
+        >
+          {Array.from({ length: 10 }, (_, i) => (
+            <span key={i} data-filled={i < (signal?.value ?? 0)} />
+          ))}
+        </div>
         <div className="sx-signal-actions">
           <button type="button" className="sx-signal-edit" onClick={onCheckIn}>
             <PenLine size={14} aria-hidden="true" />
@@ -153,13 +180,20 @@ export function AdventurePanel({
             <BookOpen size={18} />
             <span>Mi diario</span>
           </Link>
-          <Link to={appPaths.student.conversations}>
+          <Link
+            to={appPaths.student.conversations}
+            title={!canAccessFamilyConversations(adventure) ? 'Se abre al llegar a la ciudad' : undefined}
+          >
             <HeartHandshake size={18} />
             <span>
               En familia
-              {!canAccessFamilyConversations(adventure) && <small>Se abre al llegar a la ciudad</small>}
+              {!canAccessFamilyConversations(adventure) && (
+                <small className="sr-only">Se abre al llegar a la ciudad</small>
+              )}
             </span>
-            {!canAccessFamilyConversations(adventure) && <LockKeyhole size={14} />}
+            {!canAccessFamilyConversations(adventure) && (
+              <LockKeyhole className="sx-quick-lock" size={12} aria-hidden="true" />
+            )}
           </Link>
           <Link to={appPaths.student.resources}>
             <Backpack size={18} />
@@ -176,7 +210,10 @@ export function AdventurePanel({
         </nav>
       </section>
       <section className="sx-panel-section">
-        <h2>Actividades disponibles</h2>
+        <h2>
+          Actividades disponibles{' '}
+          <span className="sx-panel-count">{getListedActivities(points, false).length}</span>
+        </h2>
         {visible.length ? (
           <>
             <div className="sx-available-list">
@@ -186,7 +223,11 @@ export function AdventurePanel({
                     <strong>{point.title}</strong>
                     <small>{point.subtitle}</small>
                   </span>
-                  <span className="sx-available-dot" />
+                  <span
+                    className="sx-available-dot"
+                    data-recommended={point.id === recommended?.id}
+                    aria-hidden="true"
+                  />
                 </button>
               ))}
             </div>
@@ -198,6 +239,35 @@ export function AdventurePanel({
           Ver más
         </Link>
       </section>
+    </div>
+  )
+}
+
+export function CollapsedAdventurePanel({
+  progress,
+  recommended,
+  onSelect,
+}: {
+  progress: number
+  recommended?: StudentMapPoint
+  onSelect: (id: string) => void
+}) {
+  return (
+    <div className="sx-panel-strip">
+      <Link to={appPaths.student.profile} aria-label="Mi perfil">
+        <span className="sx-panel-avatar">AL</span>
+      </Link>
+      <strong aria-label="Avance de la zona">{Math.round(Math.min(100, Math.max(0, progress)))}%</strong>
+      {recommended && (
+        <button
+          className="sx-strip-next"
+          type="button"
+          aria-label={`Siguiente paso: ${recommended.title}`}
+          onClick={() => onSelect(recommended.id)}
+        >
+          <Target aria-hidden="true" size={22} />
+        </button>
+      )}
     </div>
   )
 }

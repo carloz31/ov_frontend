@@ -1,15 +1,13 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   Backpack,
   BookOpen,
   Check,
-  ChevronRight,
   Compass,
   ExternalLink,
   FileText,
   Flame,
   Languages,
-  Lightbulb,
   LockKeyhole,
   MessageSquareQuote,
   Play,
@@ -19,13 +17,14 @@ import {
   Star,
   type LucideIcon,
 } from 'lucide-react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
-import { cn } from '@/lib/Utils'
+import { Dialog, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
+import { BackpackViewerFrame as DialogContent } from '../backpack/BackpackViewerFrame'
 import { ResourceText } from '@/features/missions/JourneyContent'
 import { useJourney } from '@/features/missions/store'
+import { activities } from '@/features/missions/content'
 import { updateAdventure, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 import {
   getTravelResources,
@@ -35,11 +34,17 @@ import {
   youtubeEmbedUrl,
   type TravelResource,
 } from '@/features/occupation-exploration/lib/TravelerResources'
+import { cityCases } from '@/features/occupation-exploration/data/AdventureData'
+import { DiscoveryStage } from '../discovery/DiscoveryStage'
+import { Parchment } from '../discovery/Parchment'
+import { TrailBar } from '../discovery/TrailBar'
+import { FavoriteButton } from '../discovery/FavoriteButton'
+import { getCiudadPoints } from '../map/mapPoints'
 import '@/features/missions/journey.css'
 import '@/features/occupation-exploration/resources.css'
+import '../backpack/backpack.css'
 
 type KindFilter = 'all' | 'sheet' | 'testimonial'
-type StatusFilter = 'all' | 'unlocked' | 'locked'
 const resourceIcons: Record<TravelResource['icon'], LucideIcon> = {
   compass: Compass,
   scroll: ScrollText,
@@ -50,34 +55,45 @@ const resourceIcons: Record<TravelResource['icon'], LucideIcon> = {
   languages: Languages,
 }
 const kindLabels = { sheet: 'Ficha', testimonial: 'Testimonio', interview: 'Entrevista' }
+const kinds = [
+  { id: 'all', label: 'Todo' },
+  { id: 'sheet', label: 'Fichas' },
+  { id: 'testimonial', label: 'Testimonios' },
+] as const
 
 function StudentBackpackView() {
-  const adventure = useAdventure()
-  const journey = useJourney()
-  const navigate = useNavigate()
-  const [kind, setKind] = useState<KindFilter>('all')
-  const [status, setStatus] = useState<StatusFilter>('all')
-  const [query, setQuery] = useState('')
-  const [favoritesOnly, setFavoritesOnly] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const resources = getTravelResources()
-  const isUnlocked = (resource: TravelResource) => isTravelResourceUnlocked(resource, journey, adventure)
-  const unlockedCount = resources.filter(isUnlocked).length
-  const allEntries = resources
-  const selected = allEntries.find((item) => item.id === selectedId)
-  const activeEntries = resources
-  const visible = activeEntries.filter(
+  const adventure = useAdventure(),
+    journey = useJourney(),
+    navigate = useNavigate()
+  const [params, setParams] = useSearchParams()
+  const rawKind = params.get('kind')
+  const kind: KindFilter = rawKind === 'sheet' || rawKind === 'testimonial' ? rawKind : 'all'
+  const tabs = useRef<(HTMLButtonElement | null)[]>([])
+  const [query, setQuery] = useState(''),
+    [favoritesOnly, setFavoritesOnly] = useState(false),
+    [selectedId, setSelectedId] = useState<string | null>(null)
+  const resources = getTravelResources(),
+    selected = resources.find((r) => r.id === selectedId)
+  const isUnlocked = (r: TravelResource) => isTravelResourceUnlocked(r, journey, adventure)
+  const visible = resources.filter(
     (item) =>
-      (kind === 'all' || item.kind === kind) &&
-      (status === 'all' || (status === 'unlocked') === isUnlocked(item)) &&
       (!favoritesOnly || (isUnlocked(item) && adventure.bookmarks.includes(item.id))) &&
-      `${item.title} ${item.summary} ${item.author ?? ''}`
+      `${item.title} ${item.summary} ${isUnlocked(item) ? (item.author ?? '') : ''}`
         .toLocaleLowerCase()
         .includes(query.trim().toLocaleLowerCase()),
   )
-
+  const sheets = resources.filter((r) => r.kind === 'sheet'),
+    voices = resources.filter((r) => r.kind === 'testimonial')
+  const cityPoints = getCiudadPoints(adventure, journey)
+  function chooseKind(next: KindFilter) {
+    setParams((current) => {
+      const nextParams = new URLSearchParams(current)
+      nextParams.set('kind', next)
+      return nextParams
+    })
+  }
   function toggleFavorite(id: string) {
-    const item = allEntries.find((entry) => entry.id === id)
+    const item = resources.find((r) => r.id === id)
     if (!item || !isUnlocked(item)) return
     updateAdventure((current) => ({
       ...current,
@@ -86,7 +102,6 @@ function StudentBackpackView() {
         : [...current.bookmarks, id],
     }))
   }
-
   function openResource(resource: TravelResource) {
     if (!isUnlocked(resource)) return
     setSelectedId(resource.id)
@@ -96,169 +111,169 @@ function StudentBackpackView() {
         : { ...current, visits: [...current.visits, resource.id] },
     )
   }
-
+  const clear = () => {
+    setQuery('')
+    chooseKind('all')
+    setFavoritesOnly(false)
+  }
   return (
-    <div className="adventure-page resource-page min-h-full p-4 sm:p-8">
-      <div className="mx-auto max-w-6xl">
-        <header className="resource-hero relative overflow-hidden rounded-3xl p-6 text-[#fff9e8] sm:p-8">
-          <div className="relative z-10 flex flex-col justify-between gap-7 sm:flex-row sm:items-center">
-            <div className="max-w-xl">
-              <p className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-[#d9ca97]">
-                <Compass className="size-3.5" /> PROVISIONES PARA TU AVENTURA
-              </p>
-              <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Tu mochila de viaje</h1>
-              <p className="mt-3 text-sm leading-6 text-[#fff9e8]/75">
-                Cada paso deja una nueva pista. Reúne fichas y voces profesionales, y guarda lo que quieras
-                llevar contigo.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-3 text-xs">
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-2">
-                  <Check className="size-3.5" /> {unlockedCount} de {resources.length} recursos desbloqueados
-                </span>
-                <span className="inline-flex items-center gap-2 rounded-full border border-white/15 px-3 py-2 text-[#e2d3a5]">
-                  <LockKeyhole className="size-3.5" /> {resources.length - unlockedCount} por descubrir
-                </span>
-              </div>
-            </div>
-            <div aria-hidden="true" className="resource-backpack hidden shrink-0 sm:grid">
-              <Backpack className="size-20 stroke-[1.25]" />
-              <span className="resource-backpack-charm">
-                <Sparkles className="size-5" />
-              </span>
-            </div>
-          </div>
-        </header>
-
-        <section className="pt-6" aria-label="Mi mochila">
-          <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
-              <p className="adventure-eyebrow">EL INVENTARIO DEL VIAJERO</p>
-              <h2 className="mt-2 text-xl font-bold">Tus hallazgos del camino</h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                Completa actividades para reunir fichas y misiones de Central de Casos para descubrir
-                testimonios.
-              </p>
-            </div>
-            <label className="resource-search relative block sm:w-64 sm:shrink-0">
-              <span className="sr-only">Buscar recursos</span>
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                className="adventure-input pl-10"
-                placeholder="Buscar en tu mochila…"
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </label>
-          </div>
-
-          <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-            <div
-              className="flex flex-wrap gap-1 rounded-xl border border-[#dedfce] bg-[#fffdf7] p-1"
-              role="group"
-              aria-label="Tipo de recurso"
-            >
-              {(
-                [
-                  { id: 'all', label: 'Todo', icon: Backpack },
-                  { id: 'sheet', label: 'Fichas', icon: ScrollText },
-                  { id: 'testimonial', label: 'Testimonios', icon: MessageSquareQuote },
-                ] as const
-              ).map((item) => (
-                <Button
-                  key={item.id}
-                  size="sm"
-                  variant={kind === item.id ? 'secondary' : 'ghost'}
-                  aria-pressed={kind === item.id}
-                  onClick={() => setKind(item.id)}
-                >
-                  <item.icon className="size-3.5" /> {item.label}
-                </Button>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <label className="sr-only" htmlFor="resource-status">
-                Disponibilidad del recurso
-              </label>
-              <select
-                id="resource-status"
-                className="rounded-xl border border-[#dedfce] bg-[#fffdf7] px-3 py-2 text-xs font-medium outline-none focus:ring-2 focus:ring-ring"
-                value={status}
-                onChange={(event) => setStatus(event.target.value as StatusFilter)}
-              >
-                <option value="all">Todos los estados</option>
-                <option value="unlocked">Desbloqueados</option>
-                <option value="locked">Bloqueados</option>
-              </select>
-              <Button
-                size="sm"
-                variant={favoritesOnly ? 'secondary' : 'outline'}
-                aria-pressed={favoritesOnly}
-                onClick={() => setFavoritesOnly(!favoritesOnly)}
-              >
-                <Star className={favoritesOnly ? 'fill-current' : ''} /> Favoritos
-              </Button>
-            </div>
-          </div>
-
-          <div className="resource-inventory rounded-3xl border border-[#dedfce] p-3 sm:p-5">
-            <div className="mb-4 flex items-center justify-between gap-3 px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#6c7b64]">
-              <span className="flex items-center gap-2">
-                <Backpack className="size-3.5" /> Compartimentos de tu mochila
-              </span>
-              <span>
-                {visible.length} {visible.length === 1 ? 'recurso' : 'recursos'}
-              </span>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {visible.map((item) => (
-                <ResourceCard
-                  key={item.id}
-                  resource={item}
-                  unlocked={isUnlocked(item)}
-                  saved={adventure.bookmarks.includes(item.id)}
-                  featured={
-                    adventure.interviewModeration[item.id]?.featured ?? item.id === 'demo-industrial-design'
-                  }
-                  onOpen={() => openResource(item)}
-                  onFavorite={() => toggleFavorite(item.id)}
-                  onRequirement={() => navigate(resourceRequirement(item).url)}
-                />
-              ))}
-            </div>
-            {visible.length === 0 && (
-              <div className="py-14 text-center">
-                <Backpack className="mx-auto size-10 text-[#809477]" />
-                <h3 className="mt-4 font-bold">
-                  {favoritesOnly ? 'Aún no hay favoritos aquí' : 'No encontramos recursos con estos filtros'}
-                </h3>
-                <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-                  {favoritesOnly
-                    ? 'Cuando desbloquees un recurso, toca su estrella para tenerlo siempre a mano.'
-                    : 'Prueba otra búsqueda o cambia el tipo de recurso y su disponibilidad.'}
-                </p>
-                <Button
-                  className="mt-5"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setQuery('')
-                    setKind('all')
-                    setStatus('all')
-                    setFavoritesOnly(false)
-                  }}
-                >
-                  Limpiar filtros
-                </Button>
-              </div>
-            )}
-          </div>
-          <p className="mt-4 flex items-start gap-2 text-xs leading-5 text-muted-foreground">
-            <Lightbulb className="mt-0.5 size-3.5 shrink-0 text-[#8c7c48]" /> Las estrellas son tuyas. Guarda
-            tus recursos favoritos para encontrarlos más rápido.
+    <DiscoveryStage ambient="backpack">
+      <header className="sx-d-header">
+        <div>
+          <p className="sx-d-eyebrow">Provisiones para tu aventura</p>
+          <h1>Tu mochila de viaje</h1>
+          <p>
+            Cada paso deja una nueva pista. Reúne fichas y voces de la ciudad, y guarda las que quieras tener
+            a mano cuando armes tus planes.
           </p>
-        </section>
-      </div>
-
+        </div>
+        <div className="sx-b-summary">
+          <Backpack aria-hidden="true" size={40} />
+          <div>
+            <h2>Compartimentos</h2>
+            <TrailBar
+              label="Fichas"
+              value={sheets.length ? (sheets.filter(isUnlocked).length / sheets.length) * 100 : 0}
+              text={`${sheets.filter(isUnlocked).length} de ${sheets.length}`}
+            />
+            <TrailBar
+              label="Voces de la ciudad"
+              value={voices.length ? (voices.filter(isUnlocked).length / voices.length) * 100 : 0}
+              text={`${voices.filter(isUnlocked).length} de ${voices.length}`}
+              muted
+            />
+          </div>
+        </div>
+      </header>
+      <section aria-label="Mi mochila">
+        <div className="sx-b-controls">
+          <div className="sx-b-tabs" role="tablist" aria-label="Tipo de recurso">
+            {kinds.map((item, i) => (
+              <button
+                key={item.id}
+                ref={(node) => {
+                  tabs.current[i] = node
+                }}
+                type="button"
+                id={`sx-backpack-tab-${item.id}`}
+                role="tab"
+                aria-selected={kind === item.id}
+                tabIndex={kind === item.id ? 0 : -1}
+                aria-controls="sx-backpack-compartments"
+                onClick={() => chooseKind(item.id)}
+                onKeyDown={(event) => {
+                  let index = i
+                  if (event.key === 'ArrowRight') index = (i + 1) % kinds.length
+                  else if (event.key === 'ArrowLeft') index = (i + kinds.length - 1) % kinds.length
+                  else if (event.key === 'Home') index = 0
+                  else if (event.key === 'End') index = kinds.length - 1
+                  else return
+                  event.preventDefault()
+                  chooseKind(kinds[index].id)
+                  tabs.current[index]?.focus()
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <label className="sx-b-search">
+            <Search aria-hidden="true" size={18} />
+            <span className="sr-only">Buscar recursos</span>
+            <input
+              className="sx-d-input"
+              placeholder="Buscar en tu mochila…"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </label>
+          <button
+            className="sx-d-action sx-d-action-ghost"
+            type="button"
+            aria-pressed={favoritesOnly}
+            onClick={() => setFavoritesOnly(!favoritesOnly)}
+          >
+            <Star aria-hidden="true" fill={favoritesOnly ? 'currentColor' : 'none'} />
+            Mis favoritos
+          </button>
+        </div>
+        <div
+          id="sx-backpack-compartments"
+          role="tabpanel"
+          aria-labelledby={`sx-backpack-tab-${kind}`}
+          className="sx-d-stack"
+        >
+          {(['sheet', 'testimonial'] as const)
+            .filter((type) => kind === 'all' || kind === type)
+            .map((type) => {
+              const items = visible.filter((r) => r.kind === type)
+              return (
+                <Parchment
+                  key={type}
+                  className={`sx-b-compartment ${type === 'testimonial' ? 'sx-d-dark' : ''}`}
+                  label={type === 'sheet' ? 'Compartimento de fichas' : 'Compartimento de testimonios'}
+                  title={type === 'sheet' ? 'Lo que aprendiste en el camino' : 'Voces de la ciudad'}
+                >
+                  <div className="sx-b-compartment-heading">
+                    <p>
+                      {type === 'sheet'
+                        ? 'Puedes abrirlas también desde las actividades, cuando las necesites.'
+                        : 'Personas reales que cuentan cómo llegaron a lo que hacen. Cada llamado que atiendes en la Central de Casos te acerca a una.'}
+                    </p>
+                    <strong>
+                      {items.length} {type === 'sheet' ? 'fichas' : 'voces'}
+                    </strong>
+                  </div>
+                  <div className={`sx-b-grid sx-b-grid-${type}`}>
+                    {items.map((resource) => (
+                      <BackpackCard
+                        key={resource.id}
+                        resource={resource}
+                        unlocked={isUnlocked(resource)}
+                        saved={adventure.bookmarks.includes(resource.id)}
+                        visited={adventure.visits.includes(resource.id)}
+                        playable={
+                          'caseId' in resource.requirement &&
+                          !!cityPoints.find(
+                            (p) =>
+                              p.id ===
+                              ('caseId' in resource.requirement ? resource.requirement.caseId : undefined),
+                          )?.actionEnabled
+                        }
+                        onOpen={() => openResource(resource)}
+                        onFavorite={() => toggleFavorite(resource.id)}
+                        onRequirement={() => navigate(resourceRequirement(resource).url)}
+                      />
+                    ))}
+                    {type === 'testimonial' && !favoritesOnly && !query.trim() && (
+                      <div className="sx-b-more">
+                        <Sparkles aria-hidden="true" />
+                        <h3>Más voces se suman a la ciudad</h3>
+                        <p>Con cada nuevo llamado aparecerán otras historias.</p>
+                      </div>
+                    )}
+                  </div>
+                  {!items.length && (
+                    <div className="sx-b-empty">
+                      <p>
+                        {favoritesOnly
+                          ? `Aún no marcas ${type === 'sheet' ? 'fichas' : 'voces'} como favoritas. Toca la estrella para guardarlas aquí.`
+                          : 'No encontramos recursos con estos filtros'}
+                      </p>
+                      <button className="sx-d-action sx-d-action-ghost" onClick={clear} type="button">
+                        Limpiar filtros
+                      </button>
+                    </div>
+                  )}
+                </Parchment>
+              )
+            })}
+        </div>
+      </section>
+      <p className="sx-b-footer">
+        <Star aria-hidden="true" size={18} />
+        Las estrellas son tuyas: guarda lo que quieras encontrar rápido cuando armes tus planes.
+      </p>
       <Dialog
         open={Boolean(selected && isUnlocked(selected))}
         onOpenChange={(open) => {
@@ -303,15 +318,16 @@ function StudentBackpackView() {
           </DialogContent>
         )}
       </Dialog>
-    </div>
+    </DiscoveryStage>
   )
 }
 
-function ResourceCard({
+function BackpackCard({
   resource,
   unlocked,
   saved,
-  featured,
+  visited,
+  playable,
   onOpen,
   onFavorite,
   onRequirement,
@@ -319,126 +335,116 @@ function ResourceCard({
   resource: TravelResource
   unlocked: boolean
   saved: boolean
-  featured: boolean
+  visited: boolean
+  playable: boolean
   onOpen: () => void
   onFavorite: () => void
   onRequirement: () => void
 }) {
-  const Icon = resourceIcons[resource.icon]
-  const requirement = resourceRequirement(resource)
+  const Icon = resourceIcons[resource.icon],
+    requirement = resourceRequirement(resource)
+  const activity =
+    'activityId' in resource.requirement
+      ? activities.find(
+          (a) =>
+            a.id === ('activityId' in resource.requirement ? resource.requirement.activityId : undefined),
+        )
+      : undefined
+  const call =
+    'caseId' in resource.requirement
+      ? cityCases.find(
+          (c) => c.id === ('caseId' in resource.requirement ? resource.requirement.caseId : undefined),
+        )
+      : undefined
+  const [name, role] = resource.author?.split(' · ') ?? []
   return (
     <article
-      className={cn(
-        'resource-slot relative flex flex-col overflow-hidden rounded-2xl border',
-        unlocked ? 'resource-slot-unlocked' : 'resource-slot-locked',
-      )}
+      className={`sx-b-card ${resource.kind === 'sheet' ? 'sx-b-sheet' : 'sx-b-voice'} ${unlocked ? 'sx-b-unlocked' : 'sx-b-locked'}`}
+      data-icon={resource.icon}
     >
-      <button
-        className="resource-open flex flex-1 flex-col text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#52775c] disabled:cursor-default"
-        type="button"
-        disabled={!unlocked}
-        onClick={onOpen}
-        aria-label={
-          unlocked
-            ? `Abrir ${kindLabels[resource.kind].toLowerCase()}: ${resource.title}`
-            : `${resource.title}. Bloqueado. ${requirement.text}`
-        }
-      >
-        {featured && resource.kind === 'interview' && (
-          <Badge className="mx-3 mt-3 w-fit" variant="secondary">
-            <Star className="size-3.5" /> Destacada
-          </Badge>
-        )}
-        <div
-          className={cn(
-            'resource-object-stage relative grid h-36 w-full place-items-center',
-            resource.kind !== 'sheet' && 'resource-object-stage-video',
+      {unlocked && <FavoriteButton compact icon="star" selected={saved} onToggle={onFavorite} />}
+      {resource.kind === 'sheet' ? (
+        <>
+          <div className="sx-b-object" aria-hidden="true">
+            <div className="sx-b-scroll">
+              <Icon size={32} />
+            </div>
+            {!unlocked && <LockKeyhole className="sx-b-object-lock" size={32} />}
+          </div>
+          {unlocked && !visited && <span className="sx-b-new">Nueva</span>}
+          <h3>{resource.title}</h3>
+          {unlocked ? (
+            <>
+              <p>{resource.summary}</p>
+              <p className="sx-b-origin">
+                Obtenida en{' '}
+                <strong>
+                  {activity?.titulo ??
+                    ('activityId' in resource.requirement ? resource.requirement.activityId : 'el camino')}
+                </strong>
+              </p>
+              <button type="button" className="sx-d-action sx-b-open-sheet" onClick={onOpen}>
+                Abrir ficha
+              </button>
+            </>
+          ) : (
+            <>
+              <p>
+                <LockKeyhole aria-hidden="true" size={16} /> Bloqueado · {requirement.text}
+              </p>
+              <button type="button" className="sx-d-action sx-d-action-ghost" onClick={onRequirement}>
+                {requirement.label}
+              </button>
+            </>
           )}
-        >
-          <span className="absolute left-3 top-3 text-[9px] font-bold uppercase tracking-[0.13em] text-[#7d795b]">
-            {kindLabels[resource.kind]}
-          </span>
-          <span
-            className={cn(
-              'resource-object',
-              !unlocked && 'resource-object-locked',
-              resource.kind !== 'sheet' && 'resource-object-video',
-            )}
-          >
-            {unlocked ? (
-              <Icon className="size-9 stroke-[1.5]" />
-            ) : (
-              <LockKeyhole className="size-7 stroke-[1.5]" />
-            )}
-          </span>
-          {unlocked && resource.kind !== 'sheet' && (
-            <span
-              aria-hidden="true"
-              className="absolute bottom-4 right-4 grid size-6 place-items-center rounded-full bg-[#52775c] text-white"
-            >
-              <Play className="size-3 fill-current" />
+        </>
+      ) : unlocked ? (
+        <>
+          <div className="sx-b-author">
+            <span>
+              {name
+                ?.split(' ')
+                .slice(0, 2)
+                .map((n) => n[0])
+                .join('') ?? 'VO'}
             </span>
-          )}
-        </div>
-        <div className="w-full px-4 pb-3 pt-4">
-          <p
-            className={cn(
-              'mb-2 flex items-center gap-1.5 text-[10px] font-bold',
-              unlocked ? 'text-[#557e60]' : 'text-[#8d8771]',
-            )}
-          >
-            {unlocked ? <Check className="size-3" /> : <LockKeyhole className="size-3" />}
-            {unlocked ? 'Desbloqueado' : 'Bloqueado'}
+            <div>
+              <strong>{name}</strong>
+              <p>{role}</p>
+            </div>
+          </div>
+          <h3>{resource.title}</h3>
+          <blockquote>“{resource.summary}”</blockquote>
+          <p>
+            Te la regaló el llamado <strong>{call?.title ?? 'de la ciudad'}</strong>
           </p>
-          <h3 className="break-words text-sm font-bold leading-5">{resource.title}</h3>
-          <p className={cn('mt-2 text-xs leading-5 text-muted-foreground', unlocked && 'line-clamp-3')}>
-            {unlocked ? resource.summary : requirement.text}
-          </p>
-        </div>
-      </button>
-      <div className="mt-auto px-4 pb-4">
-        {unlocked ? (
-          <button
-            type="button"
-            className="flex items-center gap-1 text-xs font-bold text-[#52775c] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            onClick={onOpen}
-          >
-            {resource.kind === 'sheet'
-              ? 'Ver ficha completa'
-              : resource.kind === 'interview'
-                ? 'Ver entrevista'
-                : 'Ver testimonio'}
-            <ChevronRight className="size-3.5" />
+          <button type="button" className="sx-d-action sx-d-action-gold" onClick={onOpen}>
+            <Play aria-hidden="true" size={18} />
+            Escuchar su historia
           </button>
-        ) : (
-          <button
-            type="button"
-            className="text-left text-[11px] font-semibold text-[#7c7359] underline decoration-[#b9b097] underline-offset-4 hover:text-[#304b3d]"
-            onClick={onRequirement}
-          >
-            {requirement.label}
-          </button>
-        )}
-      </div>
-      {unlocked && (
-        <button
-          className={cn(
-            'absolute right-2 top-2 z-10 grid size-8 place-items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-            saved ? 'bg-[#f8e8ad] text-[#936a1c]' : 'bg-white/60 text-[#8b8b71] hover:bg-[#f8e8ad]',
+        </>
+      ) : (
+        <>
+          <div className="sx-b-voice-mist" aria-hidden="true">
+            <span className="sx-b-silhouette" />
+            <LockKeyhole size={56} />
+          </div>
+          <p className="sx-b-voice-label">Una voz por descubrir</p>
+          <h3>{resource.title}</h3>
+          <p>{resource.summary}</p>
+          <div className="sx-b-requirement">{requirement.text}</div>
+          {playable ? (
+            <button type="button" className="sx-d-action sx-d-action-ghost" onClick={onRequirement}>
+              Ir a la Central de Casos
+            </button>
+          ) : (
+            <p className="sx-b-coming">Este llamado llega pronto</p>
           )}
-          type="button"
-          title={saved ? 'Quitar de favoritos' : 'Agregar a favoritos'}
-          aria-label={`${saved ? 'Quitar de favoritos' : 'Agregar a favoritos'}: ${resource.title}`}
-          aria-pressed={saved}
-          onClick={onFavorite}
-        >
-          <Star className={cn('size-4', saved && 'fill-current')} />
-        </button>
+        </>
       )}
     </article>
   )
 }
-
 function ResourceContent({ resource }: { resource: TravelResource }) {
   const videoUrl = youtubeEmbedUrl(resource.url)
   const fileUrl = resourceFileUrl(resource.url)

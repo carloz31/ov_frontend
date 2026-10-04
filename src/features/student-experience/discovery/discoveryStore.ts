@@ -31,6 +31,9 @@ export type StudentDiscoveryState = {
     interviewee?: string
   }[]
   reactions: Record<string, InterviewReaction>
+  profileBadges: string[]
+  profileBadgesConfigured: boolean
+  badgeFirstSeenAt: Record<string, string>
   viewedCareerIds: string[]
 }
 export const initialDiscoveryState = (): StudentDiscoveryState => ({
@@ -39,6 +42,9 @@ export const initialDiscoveryState = (): StudentDiscoveryState => ({
   planOrder: [],
   publishedResearch: [],
   reactions: {},
+  profileBadges: [],
+  profileBadgesConfigured: false,
+  badgeFirstSeenAt: {},
   viewedCareerIds: [],
 })
 const text = (v: unknown) => typeof v === 'string'
@@ -59,7 +65,14 @@ export function validDiscoveryState(v: unknown): v is StudentDiscoveryState {
     !isStrings(v.planOrder) ||
     !isStrings(v.viewedCareerIds) ||
     !Array.isArray(v.publishedResearch) ||
-    !isRecord(v.reactions)
+    !isRecord(v.reactions) ||
+    !isStrings(v.profileBadges) ||
+    v.profileBadges.length > 3 ||
+    new Set(v.profileBadges).size !== v.profileBadges.length ||
+    !v.profileBadges.every((code) => /^I\d+$/.test(code)) ||
+    typeof v.profileBadgesConfigured !== 'boolean' ||
+    !isRecord(v.badgeFirstSeenAt) ||
+    !Object.entries(v.badgeFirstSeenAt).every(([code, date]) => /^I\d+$/.test(code) && isIso(date))
   )
     return false
   if (v.research !== undefined) {
@@ -95,7 +108,32 @@ export function validDiscoveryState(v: unknown): v is StudentDiscoveryState {
     )
   )
 }
-const store = persistentStore('ov.student-discovery.v1', initialDiscoveryState, validDiscoveryState)
+// Additive migration: preserve every discovery field written by the first implementation.
+export function normalizeDiscoveryState(value: unknown): unknown {
+  if (!isRecord(value) || value.version !== 1) return value
+  const profileBadges = isStrings(value.profileBadges)
+    ? [...new Set(value.profileBadges.filter((code) => /^I\d+$/.test(code)))].slice(0, 3)
+    : []
+  return {
+    ...value,
+    profileBadges,
+    profileBadgesConfigured:
+      typeof value.profileBadgesConfigured === 'boolean'
+        ? value.profileBadgesConfigured
+        : profileBadges.length > 0,
+    badgeFirstSeenAt: isRecord(value.badgeFirstSeenAt)
+      ? Object.fromEntries(
+          Object.entries(value.badgeFirstSeenAt).filter(([code, date]) => /^I\d+$/.test(code) && isIso(date)),
+        )
+      : {},
+  }
+}
+const store = persistentStore(
+  'ov.student-discovery.v1',
+  initialDiscoveryState,
+  validDiscoveryState,
+  normalizeDiscoveryState,
+)
 export const useDiscovery = store.useState
 export const useDiscoveryError = store.useError
 export const updateDiscovery = store.update

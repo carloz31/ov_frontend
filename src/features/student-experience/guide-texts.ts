@@ -28,7 +28,10 @@ export const guideSteps: Record<StudentView, string[]> = {
     'Aquí encuentras tus actividades disponibles y realizadas, en Camino y Ciudad. Elige «Ver en el mapa» para abrir su ficha y continuar o revisar lo que descubriste.',
   ],
   journal: [
-    'Cuéntale a Lumi lo que descubres de ti. Cada conversación nueva suma un punto de amistad, hasta tres al día. Las entradas sugeridas aparecen al completar actividades. Tu orientadora solo verá la señal separada de seguridad vocacional.',
+    'Este es nuestro cuaderno. Solo tú puedes leerlo: ni tu orientadora ni tu familia ven lo que escribes.',
+    'Puedes contarme algo cuando quieras, o responder las cartas que te dejo después de cada actividad.',
+    'Cada conversación hace crecer nuestra amistad, hasta tres por día. La amistad nunca se pierde, aunque pasen días sin escribir.',
+    'Cuando nuestra amistad crece, recupero un recuerdo de mi viaje y te lo cuento.',
   ],
   'journal-signals': [
     'Este historial reúne únicamente tus señales. Puedes registrar o cambiar la señal de hoy y elegir un punto para consultar su fecha y valor. Tus entradas privadas permanecen en «Mi diario».',
@@ -39,7 +42,12 @@ export const guideSteps: Record<StudentView, string[]> = {
   investigations: [
     'Descubre investigaciones de tu salón y otros viajeros. Se abren al completar una misión de Central de Casos.',
   ],
-  resources: ['Tu mochila crece con cada paso: reúne fichas y testimonios, y guarda tus favoritos.'],
+  resources: [
+    'Esta es tu mochila. Aquí se guarda lo que reúnes en el camino.',
+    'Las fichas aparecen cuando completas actividades. Puedes abrirlas también desde las actividades.',
+    'Las voces de la ciudad son personas reales que cuentan su historia. Se descubren al atender los llamados de la Central de Casos.',
+    'Marca con la estrella lo que quieras encontrar rápido.',
+  ],
   'catalog-professions': [
     'Explora las profesiones sin buscar una respuesta definitiva. Guarda las que despierten tu curiosidad y vuelve a compararlas cuando descubras nuevas pistas.',
   ],
@@ -81,3 +89,10 @@ export const guideSteps: Record<StudentView, string[]> = {
     'Cada vez que ayudas, tu afinidad con la ciudad crece. La ves en tu panel.',
   ],
 }
+
+export const passportGuideSteps = [
+  'Este es tu pasaporte. Cada sello cuenta una parte de tu viaje.',
+  'Arriba ves tu título de viajero y qué te falta para el siguiente.',
+  'Pulsa una insignia para ver qué lograste, cómo la descubriste y qué significa. Las que aún no tienes te dicen cómo encontrarlas.',
+  'Puedes elegir hasta tres insignias para mostrar a tus compañeros.',
+]

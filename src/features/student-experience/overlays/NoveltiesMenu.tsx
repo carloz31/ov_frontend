@@ -28,6 +28,7 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
     ciudad: 'Nueva ciudad disponible',
     familia: 'Nueva conversación familiar disponible',
     plan: 'Revisa tus planes',
+    memory: 'Lumi recordó algo nuevo',
   }
   const icons = {
     badge: Award,
@@ -36,6 +37,7 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
     ciudad: Building2,
     familia: HeartHandshake,
     plan: BookOpen,
+    memory: BookOpen,
   }
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -80,14 +82,19 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
               <DropdownMenuItem
                 key={item.id}
                 asChild
-                onSelect={() => updateStudentUi((current) => markUnlocksSeen(current, [item]))}
+                onSelect={() => {
+                  // A memory is read only when its text actually opens in the diary.
+                  if (item.kind !== 'memory') updateStudentUi((current) => markUnlocksSeen(current, [item]))
+                }}
               >
                 <Link className="sx-novelty" to={item.href}>
                   <Icon size={18} aria-hidden="true" />
                   <span>
                     <strong>{titles[item.kind]}</strong>
                     <small>
-                      {item.kind === 'plan' ? item.description : `Se ha desbloqueado «${item.title}»`}
+                      {item.kind === 'plan' || item.kind === 'memory'
+                        ? item.description
+                        : `Se ha desbloqueado «${item.title}»`}
                     </small>
                   </span>
                   <span className="sx-novelty-dot" aria-hidden="true" />

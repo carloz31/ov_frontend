@@ -93,6 +93,6 @@ export function isDiscoveryView(view: StudentView) {
   return (
     view.startsWith('catalog-') ||
     view.startsWith('profile-') ||
-    ['research', 'research-guide', 'investigations'].includes(view)
+    ['research', 'research-guide', 'investigations', 'resources', 'journal'].includes(view)
   )
 }

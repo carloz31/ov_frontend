@@ -1,3 +1,92 @@
+# Adaptación visual: historial de señales y Mis actividades
+
+## Solicitud y alcance — 4 de octubre de 2026
+
+El usuario solicita aplicar el estilo de las pantallas recién implementadas. Esta solicitud autoriza la adaptación de estas dos vistas, aunque la sección 11.2 de la especificación base conservaba la presentación anterior. Se reutilizan DiscoveryStage y Parchment, los tokens nocturnos, pergaminos, sellos y rastros. El historial muestra la señal del día segmentada, el gráfico interactivo y su detalle; Mis actividades presenta filtros con iconos, resumen y cartas por actividad. Se conserva el estado inicial Disponibles y también se adapta Realizadas.
+
+No se cambian los registros de señales, diario, progreso, desbloqueos, clasificación de actividades ni destinos de los puntos. Se conservan el editor de señal existente, los doce registros más recientes y selección por clic/Enter/Espacio. Espacio evita desplazar la página y el gráfico expone los puntos como controles accesibles, con área de al menos 44 px y foco visible. El gráfico se desplaza dentro del pergamino en móvil.
+
+## Validación
+
+Build y lint aprobados. npm test: 208 pruebas, 202 aprobadas y los mismos seis fallos residuales de Recursos, por las mismas causas registradas abajo. Las pruebas existentes de edición de señal, privacidad, selección por teclado, clasificación de actividades y destinos del mapa pasan sin modificar sus aserciones. No se añaden pruebas que dupliquen estilos de presentación.
+
+Navegador: ambas vistas comprobadas a 1280×800, 1440×900 y 360×800, sin desbordamiento horizontal de la página. Filtros por Enter/Espacio, selección de puntos por teclado, área táctil de 44,8 px en móvil, registro manual, Escape y retorno de foco comprobados. El enlace a Incendio forestal abre el punto correspondiente en Ciudad. Se conserva la regla de movimiento reducido de DiscoveryStage. Cambios de esta adaptación limitados a los dos componentes, su CSS local y documentación; sin cambios en pruebas ni áreas protegidas.
+
+---
+
+# Segunda implementación: panel, mochila, diario y pasaporte
+
+## Acuerdos y preparación — 4 de octubre de 2026
+
+Prevalece `especificacion-panel-mochila-diario-pasaporte.md` para estas cuatro partes. Se reutilizan los patrones de descubrimiento. Decisiones confirmadas: título editable; pestañas Todo/Fichas/Testimonios con `kind` en URL y teclado; introducción del diario dentro de la página; mochila y diario sin ventanas automáticas; selección explícita vacía de insignias mediante `profileBadgesConfigured`. No se crean claves de almacenamiento. Se conserva el visor, el contenido de recursos, las escrituras existentes, señales y áreas protegidas.
+
+Antes de la fase 1 se ejecutó nuevamente `npm test`: 198 pruebas, 191 aprobadas y 7 fallidas. Build y lint habían aprobado al preparar este plan. Todos los fallos están en `tests/adventure-rendering.test.mjs`:
+
+| Prueba exacta | Línea | Causa |
+| --- | ---: | --- |
+| student resources open with backpack before posts, events and investigations | 1147 | Recursos muestra la mochila, sin Investigaciones, Publicaciones ni Eventos. Falla al buscar Investigaciones. |
+| resource unlocks follow actual activities and specific cases rather than review mode | 1165 | La ruta antigua `tab=community` redirige en SSR y no muestra el texto de Central de Casos. |
+| counselor moderation hides interviews in the student community | 2480 | La ruta antigua redirige en SSR, sin el título de la entrevista esperado. |
+| phase 9 panel has five direct links, a compact next-step action and the real traveler rank | 2878 | Hay seis enlaces, incluido Investigaciones, en lugar de cinco. La nueva especificación autoriza corregir esta expectativa. |
+| resource tabs separate the backpack, publications, events and published investigations | 2969 | Recursos no tiene la pestaña Publicaciones que exige la prueba antigua. |
+| resource tabs support arrow and boundary keys while retaining unrelated query parameters | 2996 | Las pestañas antiguas no existen; acceso a props de undefined. |
+| restored publication and event details keep reading, favorites and attendance in existing data | 3054 | PublicationCard no existe en el componente original de entrevistas; acceso a props de undefined. |
+
+Cada fase exige build, lint y todas las pruebas; ninguna regresión ni fallo nuevo. Registrar aserciones actualizadas y verificar cada fallo residual por su causa. Las pruebas de LumiFriendship permanecen intactas. Las expectativas sobre publicaciones/eventos y rutas antiguas quedan fuera de alcance.
+
+## Fases de la segunda implementación
+
+1. Panel: superficie nocturna, ficha, señal segmentada, seis accesos, tira plegada y geometría 304/72/0 px. Se conserva el siguiente paso sin tipo ni duración por su prueba vigente.
+2. Mochila: compartimentos, URL/teclado, privacidad de voces bloqueadas, favoritos, visor intacto y ayuda.
+3. Diario: conversaciones sin pérdida, recuerdos, cuaderno/editor/introducción y novedades.
+4. Pasaporte: ruta propia, grupos, detalle, elección persistente, fecha observada y ayuda.
+5. Cierre: aceptación, teclado, foco, movimiento reducido y navegador a 1280×800, 1440×900 y 360 px.
+
+## Registro de fases
+
+### Segunda fase 1 — panel
+
+Build y lint aprobados. npm test: 199 pruebas, 193 aprobadas y los seis fallos previos de Recursos por las mismas causas. La prueba nueva comprueba desplazamientos 304/72/0 y foco de puntos. Se corrige la expectativa de accesos rápidos a seis nombres y destinos. La aserción del centro inicial pasa a descontar los 304 px del panel; plegar/desplegar conserva zoom y desplazamiento, incluso con vista ajustada. El siguiente paso omite tipo/duración por la prueba vigente. No se modifican las seis pruebas residuales.
+
+### Segunda fase 2 — mochila
+
+Build y lint aprobados. npm test: 200 pruebas, 194 aprobadas y los mismos seis fallos residuales, por sus mismas aserciones y causas. Prueba nueva de compartimentos, identidad bloqueada, pestañas por URL/teclado y parámetros conservados. Visor y ResourceContent conservados sin cambios. Se reemplazan únicamente las aserciones de presentación «Ver ficha completa» por «Abrir ficha» y «Agregar a favoritos» por «Guardar en favoritos» en saved resources and counselor submissions...; sus aserciones de otros portales no cambian. La prueba montada de la cola verifica Recursos sin introducción automática y sigue comprobando llegada/señal en el mapa. No se cambia ninguna de las seis pruebas residuales.
+
+### Segunda fase 3 — diario
+
+Build y lint aprobados sin advertencias. npm test: 202 pruebas, 196 aprobadas y los mismos seis fallos residuales por las mismas causas. Nuevas pruebas de Lima, límite diario, registros futuros/duplicados/inválidos, umbrales/progreso, introducción integrada, título privado y registro conservado al borrar. Se actualiza Entradas sugeridas a Cartas de Lumi por responder. El harness de edición aporta reloj/foco explícitos; la prueba de novedades de fichas/insignias aísla el registro de conversaciones, que el store conserva entre pruebas, para comprobar sus dos destinos originales. Las novedades de recuerdos usan IDs propios y se leen al abrir el recuerdo. No se modifica LumiFriendship ni sus pruebas.
+
+### Segunda fase 4 — pasaporte
+
+Build y lint aprobados. npm test: 204 pruebas, 198 aprobadas y los mismos seis fallos residuales por las mismas causas. Las pruebas nuevas verifican selección inicial/ordenada/vacía, límite de tres y obtención, fechas observadas estables, migración aditiva y significado ausente en pendientes, incluido el futuro estado oculto. Se cambia solo Mi pasaporte por Pasaporte vocacional en la comprobación de la ruta del perfil de descubrimiento. Componentes originales conservados. La ficha usa la selección persistente; StudentShell registra la primera fecha observada; la ayuda distingue section=passport.
+
+### Segunda fase 5 — aceptación y cierre
+
+Build y lint aprobados. npm test: 208 pruebas, 202 aprobadas y los mismos seis fallos anteriores, sin regresiones. Las diez pruebas nuevas de esta implementación están aprobadas. La prueba de seis accesos queda retirada de la línea base. Se añaden aceptación de migración/recarga/sincronización y fallo de guardado, memoria leída tras recargar, acceso a recuerdos desde el editor sin leer novedades prematuramente, validación de título/texto y conservación de contexto en actividades, familia y eventos (asistencia y ausencia). La edición conserva registros y señales, y el borrado conserva las conversaciones contabilizadas.
+
+Navegador: panel, mochila, diario y pasaporte comprobados a 1280 × 800, 1440 × 900 y 360 × 800. Sin desbordamiento horizontal. La tira mide 56 px, descontando 72 px; el panel abierto descuenta 304 px y el móvil 0. Plegar/desplegar conserva la transformación; centrado y zoom siguen usando el espacio visible. El panel y los diálogos permiten desplazamiento interno. Objetivos de 44 px en cabeceras, controles, selección y cierre. Se comprobaron flechas/Inicio/Fin, Atrás/Adelante y parámetros conservados en mochila; favoritos sin abrir el visor; ayuda del pasaporte; tabulación contenida, Escape, cierre exterior y retorno de foco; título guardado/editado/borrado; primer recuerdo leído y sin aviso tras recargar; selección explícita vacía tras recargar.
+
+Un origen de QA separado verificó la voz desbloqueada, su visor, favoritos y cuatro insignias obtenidas: cuarta selección deshabilitada, retirada de una, elección de otra y selección conservada tras recargar. Se retiraron los archivos temporales y se cerró ese servidor. El video de ejemplo del visor indica «Video unavailable» en YouTube; se conserva su enlace/contenido original, por estar fuera del alcance.
+
+Correcciones de accesibilidad: texto del siguiente título oscuro sobre pergamino; oro elevado en superficies nocturnas; grupo III usa el primer plano del acento, porque el acento del tema es una superficie clara; voz abierta con texto oscuro; diana que pulsa sin atenuar su contraste; controles táctiles ampliados. Contrastes comprobados: siguiente paso 14,74:1, título actual 7,27:1, etiqueta nocturna 5,62:1 y grupo III 8,37:1. Movimiento reducido verificado en CSS: el navegador integrado no ofrece emulación de esa preferencia.
+
+El JSX y ResourceContent del visor están intactos; BackpackViewerFrame añade únicamente retorno de foco y tamaño de cierre desde la carpeta del estudiante. Los componentes originales de pasaporte, rutas/redirecciones de Recursos y StudentResourceBoard permanecen intactos. Revisión del diff: cambios solo en estudiante, pruebas autorizadas y documentación; seis pruebas residuales idénticas a HEAD; ninguna modificación de portales, compartidos ni modelos/lógica protegidos. git diff --check aprobado.
+
+#### Fallos residuales para otro trabajo
+
+Todos están en tests/adventure-rendering.test.mjs; se mantienen las mismas aserciones y causas:
+
+| Prueba exacta | Línea actual | Causa residual |
+| --- | ---: | --- |
+| student resources open with backpack before posts, events and investigations | 1147 | Sigue buscando Investigaciones en Recursos, que muestra la mochila. |
+| resource unlocks follow actual activities and specific cases rather than review mode | 1165 | La ruta antigua tab=community redirige en SSR, sin el texto esperado. |
+| counselor moderation hides interviews in the student community | 2480 | La ruta antigua redirige y no muestra la entrevista buscada. |
+| resource tabs separate the backpack, publications, events and published investigations | 2971 | Espera la pestaña Publicaciones del diseño antiguo. |
+| resource tabs support arrow and boundary keys while retaining unrelated query parameters | 2998 | La pestaña antigua no existe: props de undefined. |
+| restored publication and event details keep reading, favorites and attendance in existing data | 3056 | PublicationCard no existe en el componente original de entrevistas: props de undefined. |
+
+---
+
 # Implementación de vistas de descubrimiento
 
 ## Acuerdos

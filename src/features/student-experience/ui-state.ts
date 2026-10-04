@@ -9,6 +9,7 @@ export type StudentUiState = {
   introsSeen: Partial<Record<StudentView, true>>
   cityArrivalSeen: boolean
   checkInPromptDismissedOn?: string
+  seenLumiMemories: number[]
   seenUnlockIds: string[]
   announcedBadgeCodes: string[]
   initialized: boolean
@@ -24,6 +25,7 @@ export function initialStudentUiState(): StudentUiState {
     soundOn: true,
     introsSeen: {},
     cityArrivalSeen: false,
+    seenLumiMemories: [],
     seenUnlockIds: [],
     announcedBadgeCodes: [],
     initialized: false,
@@ -54,6 +56,16 @@ function parseState(raw: string | null): StudentUiState {
         /^\d{4}-\d{2}-\d{2}$/.test(value.checkInPromptDismissedOn)
           ? value.checkInPromptDismissedOn
           : undefined,
+      seenLumiMemories: Array.isArray(value.seenLumiMemories)
+        ? [
+            ...new Set<number>(
+              value.seenLumiMemories.filter(
+                (item: unknown): item is number =>
+                  typeof item === 'number' && Number.isInteger(item) && item >= 1 && item <= 4,
+              ),
+            ),
+          ]
+        : [],
       seenUnlockIds: stringList(value.seenUnlockIds),
       announcedBadgeCodes: stringList(value.announcedBadgeCodes),
       initialized: value.initialized === true,

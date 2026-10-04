@@ -1,20 +1,5 @@
-import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import {
-  Award,
-  Eye,
-  Heart,
-  Sparkles,
-  Compass,
-  KeyRound,
-  Flame,
-  Send,
-  Shield,
-  Users,
-  MessageCircle,
-  Telescope,
-} from 'lucide-react'
-import { ExplorationProfilePage } from '@/features/occupation-exploration/OccupationExplorationPages'
+import { Eye, Heart, Sparkles } from 'lucide-react'
 import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
 import { getAchievementGroups } from '@/features/occupation-exploration/lib/AdventureAchievements'
 import {
@@ -32,39 +17,25 @@ import { Parchment } from '../discovery/Parchment'
 import { Seal } from '../discovery/Seal'
 import { TrailBar } from '../discovery/TrailBar'
 import { CollectionSlot } from '../discovery/CollectionSlot'
-import { PendingNotice } from '../discovery/PendingNotice'
+import { StudentPassportView } from './StudentPassportView'
+import { achievementIcons, getProfileBadges } from './passport'
 import { getHelenaPages } from './helenaPages'
 import { getOrderedPlans, getPlanCompleteness } from '../plans/plans'
 
-const achievementIcons = {
-  campfire: Flame,
-  compass: Compass,
-  key: KeyRound,
-  message: MessageCircle,
-  people: Users,
-  send: Send,
-  shield: Shield,
-  sparkles: Sparkles,
-  telescope: Telescope,
-}
 export function ProfileRoute() {
   const [params] = useSearchParams()
-  return params.get('section') === 'passport' ? (
-    <ExplorationProfilePage view="general" />
-  ) : (
-    <StudentProfileView />
-  )
+  return params.get('section') === 'passport' ? <StudentPassportView /> : <StudentProfileView />
 }
 export function StudentProfileView() {
   const adventure = useAdventure(),
     journey = useJourney(),
     discovery = useDiscovery()
   const context = useOccupationExplorationContext()
-  const [notice, setNotice] = useState(false)
   const level = getTravelerLevel(adventure)
   const badges = getAchievementGroups(adventure).flatMap((g, index) =>
     g.items.filter((b) => b.done).map((b) => ({ ...b, group: index })),
   )
+  const visibleBadges = getProfileBadges(adventure, discovery)
   const pages = getHelenaPages(journey, discovery)
   const plans = getOrderedPlans(context.decisionSheets, discovery.planOrder)
   const extraFavorites = context.careerInterestIds.filter(
@@ -93,15 +64,19 @@ export function StudentProfileView() {
           <aside>
             <p>Lo que muestras a tus compañeros</p>
             <div className="sx-d-seal-row">
-              {[0, 1, 2].map((i) => (
-                <CollectionSlot key={i} compact collected={!!badges[i]} icon={<Award />}>
-                  {badges[i]?.title ?? 'Espacio libre'}
-                </CollectionSlot>
-              ))}
+              {[0, 1, 2].map((i) => {
+                const badge = visibleBadges[i]
+                const Icon = badge ? achievementIcons[badge.icon] : Sparkles
+                return (
+                  <CollectionSlot key={i} compact collected={!!badge} icon={<Icon />}>
+                    {badge?.title ?? 'Espacio libre'}
+                  </CollectionSlot>
+                )
+              })}
             </div>
-            <button type="button" className="sx-d-action sx-d-action-ghost" onClick={() => setNotice(true)}>
+            <Link className="sx-d-action sx-d-action-ghost" to={appPaths.student.passport}>
               Elegir qué muestro
-            </button>
+            </Link>
           </aside>
         </div>
       </Parchment>
@@ -200,9 +175,9 @@ export function StudentProfileView() {
       </div>
       <p className="sx-d-privacy">
         <Eye aria-hidden="true" />
-        Tus compañeros solo ven tu nivel y las tres insignias que elijas. Lo demás lo ven tú y tu orientadora.
+        Tus compañeros solo ven tu nivel y hasta tres insignias que elijas. Lo demás lo ven tú y tu
+        orientadora.
       </p>
-      {notice && <PendingNotice onClose={() => setNotice(false)} />}
     </DiscoveryStage>
   )
 }

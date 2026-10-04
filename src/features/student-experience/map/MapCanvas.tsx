@@ -35,6 +35,7 @@ type Props = {
   points: StudentMapPoint[]
   variant: 'route' | 'open'
   panelOpen: boolean
+  panelInset?: number
   selectedId?: string
   recommendedId?: string
   onSelect: (id: string) => void
@@ -51,6 +52,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
     points,
     variant,
     panelOpen,
+    panelInset = panelOpen ? 304 : 0,
     selectedId,
     recommendedId,
     onSelect,
@@ -64,6 +66,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   ref,
 ) {
   const viewport = useRef<HTMLDivElement>(null)
+  const panelMetrics = useRef({ panelOpen, panelInset })
+  panelMetrics.current = { panelOpen, panelInset }
   const drag = useRef<
     { pointerId: number; x: number; y: number; originX: number; originY: number } | undefined
   >(undefined)
@@ -89,7 +93,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   const centerMap = useCallback(() => {
     const bounds = viewport.current?.getBoundingClientRect()
     if (!bounds) return
-    const center = visibleCenter(bounds, false)
+    const center = visibleCenter(bounds, panelMetrics.current.panelOpen, panelMetrics.current.panelInset)
     const scale = Math.max(initialScale, getMinimumScale(bounds, mapSize))
     apply({
       scale,
@@ -102,7 +106,13 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
       const bounds = viewport.current?.getBoundingClientRect()
       if (bounds)
         apply(
-          zoomTransform(transformRef.current, scale, anchor ?? visibleCenter(bounds, false), bounds, mapSize),
+          zoomTransform(
+            transformRef.current,
+            scale,
+            anchor ?? visibleCenter(bounds, panelMetrics.current.panelOpen, panelMetrics.current.panelInset),
+            bounds,
+            mapSize,
+          ),
         )
     },
     [apply, mapSize],
@@ -124,10 +134,10 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
         const point = points.find((item) => item.id === id)
         const bounds = viewport.current?.getBoundingClientRect()
         if (point && bounds)
-          apply(focusTransform(transformRef.current, point, bounds, panelOpen, mapSize), true)
+          apply(focusTransform(transformRef.current, point, bounds, panelOpen, mapSize, panelInset), true)
       },
     }),
-    [centerMap, setScale, points, apply, panelOpen, mapSize],
+    [centerMap, setScale, points, apply, panelOpen, panelInset, mapSize],
   )
 
   useEffect(() => {
@@ -239,7 +249,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
                   const bounds = viewport.current?.getBoundingClientRect()
                   if (point && bounds)
                     apply(
-                      focusTransform(transformRef.current, point, bounds, panelOpen, mapSize),
+                      focusTransform(transformRef.current, point, bounds, panelOpen, mapSize, panelInset),
                       true,
                     )
                 }}
