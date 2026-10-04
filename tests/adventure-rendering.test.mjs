@@ -2138,7 +2138,7 @@ test('phase 8 every novelty kind retains its existing destination and unread two
   journeyStore.updateJourney(() => journeyLogic.initialJourney()); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
 })
 
-test('phase 9 PNG maps fill their triple-sized worlds and fit entirely at minimum zoom', () => {
+test('PNG maps fill their triple-sized worlds and cover the entire viewport at minimum zoom', () => {
   const geometry = load(path.resolve('src/features/student-experience/map/geometry.ts'))
   const { canvasSize, imageSize, initialScale, getMinimumScale, zoomTransform, clampTransform, mapPosition } = geometry
   assert.equal(canvasSize.width, 5016); assert.equal(canvasSize.height, 2823)
@@ -2153,20 +2153,42 @@ test('phase 9 PNG maps fill their triple-sized worlds and fit entirely at minimu
     assert.match(markup, /width:5016px;height:2823px/)
     assert.match(markup, /scale\(0.5\)/)
   }
-  for (const bounds of [{ width: 1280, height: 752 }, { width: 1440, height: 852 }, { width: 360, height: 752 }]) {
+  for (const bounds of [{ width: 1280, height: 752 }, { width: 1440, height: 852 }, { width: 360, height: 752 }, { width: 1907, height: 865 }]) {
     const minimum = getMinimumScale(bounds)
     const fitted = zoomTransform({ x: -999, y: -700, scale: .5 }, 0, { x: 0, y: bounds.height }, bounds)
     assert.equal(fitted.scale, minimum)
-    assert.ok(fitted.x >= 32 - 1e-8); assert.ok(fitted.y >= 32 - 1e-8)
-    assert.ok(fitted.x + canvasSize.width * minimum <= bounds.width - 32 + 1e-8)
-    assert.ok(fitted.y + canvasSize.height * minimum <= bounds.height - 32 + 1e-8)
-    const dragged = clampTransform({ ...fitted, x: -9999, y: 9999 }, bounds)
-    assert.deepEqual(dragged, fitted)
+    const width = canvasSize.width * minimum, height = canvasSize.height * minimum
+    assert.ok(width >= bounds.width - 1e-8); assert.ok(height >= bounds.height - 1e-8)
+    assert.ok(Math.abs(width - bounds.width) < 1e-8 || Math.abs(height - bounds.height) < 1e-8)
+    for (const x of [-9999, 9999]) for (const y of [-9999, 9999]) {
+      const dragged = clampTransform({ ...fitted, x, y }, bounds)
+      assert.ok(dragged.x <= 1e-8); assert.ok(dragged.y <= 1e-8)
+      assert.ok(dragged.x + width >= bounds.width - 1e-8)
+      assert.ok(dragged.y + height >= bounds.height - 1e-8)
+      assert.ok(Math.abs(dragged.x - (x < 0 ? bounds.width - width : 0)) < 1e-8)
+      assert.ok(Math.abs(dragged.y - (y < 0 ? bounds.height - height : 0)) < 1e-8)
+    }
   }
   const customSize = { width: 6000, height: 3000 }
   const position = mapPosition({ x: 540, y: 330 }, customSize)
   assert.equal(position.x, 3000); assert.equal(position.y, 1500)
-  assert.equal(getMinimumScale({ width: 1000, height: 600 }, customSize), 936 / 6000)
+  assert.equal(getMinimumScale({ width: 1000, height: 600 }, customSize), .2)
+})
+
+test('phase 10 focusing boundary points never reveals background beside the overlaid panel', () => {
+  const { focusTransform, canvasSize, getMinimumScale } = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  for (const bounds of [{ width: 1280, height: 752 }, { width: 360, height: 752 }, { width: 1907, height: 865 }]) {
+    for (const scale of [getMinimumScale(bounds), .5, 1.4]) {
+      for (const panelOpen of [false, true]) {
+        for (const point of [{ x: 0, y: 0 }, { x: 1080, y: 660 }]) {
+          const focused = focusTransform({ x: -100, y: -100, scale }, point, bounds, panelOpen)
+          assert.ok(focused.x <= 1e-8); assert.ok(focused.y <= 1e-8)
+          assert.ok(focused.x + canvasSize.width * focused.scale >= bounds.width - 1e-8)
+          assert.ok(focused.y + canvasSize.height * focused.scale >= bounds.height - 1e-8)
+        }
+      }
+    }
+  }
 })
 
 test('phase 9 initial view is centered at 50 percent and panel toggles preserve even the fitted view', () => {

@@ -10,8 +10,7 @@ type Bounds = MapSize
 export function getMinimumScale(bounds: Bounds, size: MapSize = canvasSize) {
   return Math.min(
     maxScale,
-    Math.max(1, bounds.width - 64) / size.width,
-    Math.max(1, bounds.height - 64) / size.height,
+    Math.max(Math.max(1, bounds.width) / size.width, Math.max(1, bounds.height) / size.height),
   )
 }
 
@@ -28,15 +27,14 @@ export function visibleCenter(bounds: Bounds, panelOpen: boolean) {
 export function clampTransform(
   next: MapTransform,
   bounds: Bounds,
-  focusBesidePanel = false,
   size: MapSize = canvasSize,
 ): MapTransform {
   const scale = Math.min(maxScale, Math.max(getMinimumScale(bounds, size), next.scale))
   const imageWidth = size.width * scale
   const imageHeight = size.height * scale
   const minX = imageWidth > bounds.width ? bounds.width - imageWidth : (bounds.width - imageWidth) / 2
-  // Explicit focus may move the left edge beneath the overlaid panel.
-  const maxX = imageWidth > bounds.width ? (focusBesidePanel ? Math.min(304, bounds.width) : 0) : minX
+  // Focus and drag share the same limits so neither can expose an empty strip.
+  const maxX = imageWidth > bounds.width ? 0 : minX
   const minY = imageHeight > bounds.height ? bounds.height - imageHeight : (bounds.height - imageHeight) / 2
   const maxY = imageHeight > bounds.height ? 0 : minY
   return { scale, x: Math.min(maxX, Math.max(minX, next.x)), y: Math.min(maxY, Math.max(minY, next.y)) }
@@ -57,7 +55,6 @@ export function zoomTransform(
       y: anchor.y - (anchor.y - current.y) * ratio,
     },
     bounds,
-    false,
     size,
   )
 }
@@ -73,7 +70,6 @@ export function focusTransform(
   return clampTransform(
     { ...current, x: center.x - position.x * current.scale, y: center.y - position.y * current.scale },
     bounds,
-    panelOpen,
     size,
   )
 }

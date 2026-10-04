@@ -134,3 +134,11 @@ location.href = '/student/missions';
 Esto elimina progreso, respuestas, diario y conversaciones guardados en esas claves, además de presentación y seguimiento. Los datos de demostración definidos por los stores vuelven a aparecer. No usar localStorage.clear().
 
 Archivos: geometría y componentes de mapa/panel, StudentBrand y CSS dentro de student-experience; pruebas del estudiante en adventure-rendering.test.mjs y este plan. Consumir las imágenes del usuario sin alterarlas. Verificar PNG, dimensiones, escala inicial, imagen completa al mínimo, invariancia del panel, secuencia, accesos, logo, tarjeta y nivel. Revisar 1280 × 800, 1440 × 900 y 360 px, arrastre, teclado, foco, contraste y movimiento reducido. Ejecutar build, lint y test, seleccionar solo cambios propios, commit y reporte; detenerse al terminar.
+
+## 10. Mapa sin márgenes — `Fase 10: Mapa sin márgenes`
+
+Ajuste autorizado tras revisar la captura: el zoom mínimo debe llenar todo el viewport. Sustituir el ajuste que mostraba la imagen completa con 32 px de margen por la escala mayor entre ancho/imagen y alto/imagen, sin deformar los PNG. Las zonas fuera de vista siguen accesibles mediante arrastre. Este comportamiento reemplaza el criterio de imagen completa simultáneamente de fase 9.
+
+Conservar vista inicial al 50 % (o mínimo necesario para cubrir), máximo 140 %, dimensiones, panel superpuesto y posición invariable al alternarlo. El enfoque sigue descontando el panel al calcular su destino, pero respeta los límites de la imagen para no dejar franjas vacías junto al panel. No cambiar imágenes, datos ni stores.
+
+Archivos: map/geometry.ts, map/MapCanvas.tsx, pruebas del estudiante en adventure-rendering.test.mjs y este plan. Verificar cobertura sin márgenes en pantallas de escritorio, formato ancho como la captura y 360 px; arrastre hasta los extremos, enfoque de puntos en bordes y panel abierto/cerrado. Ejecutar build, lint y test, revisar visualmente, seleccionar solo cambios propios y crear el commit; detenerse al terminar.

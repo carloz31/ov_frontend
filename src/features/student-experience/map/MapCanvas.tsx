@@ -73,11 +73,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   const [dragging, setDragging] = useState(false)
   const [moving, setMoving] = useState(false)
   const apply = useCallback(
-    (next: MapTransform, animate = false, focusBesidePanel = false) => {
+    (next: MapTransform, animate = false) => {
       const bounds = viewport.current?.getBoundingClientRect()
       if (!bounds) return
       clearTimeout(animationTimer.current)
-      const clamped = clampTransform(next, bounds, focusBesidePanel, mapSize)
+      const clamped = clampTransform(next, bounds, mapSize)
       transformRef.current = clamped
       setTransform(clamped)
       setMoving(animate)
@@ -124,7 +124,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
         const point = points.find((item) => item.id === id)
         const bounds = viewport.current?.getBoundingClientRect()
         if (point && bounds)
-          apply(focusTransform(transformRef.current, point, bounds, panelOpen, mapSize), true, panelOpen)
+          apply(focusTransform(transformRef.current, point, bounds, panelOpen, mapSize), true)
       },
     }),
     [centerMap, setScale, points, apply, panelOpen, mapSize],
@@ -241,7 +241,6 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
                     apply(
                       focusTransform(transformRef.current, point, bounds, panelOpen, mapSize),
                       true,
-                      panelOpen,
                     )
                 }}
               />
