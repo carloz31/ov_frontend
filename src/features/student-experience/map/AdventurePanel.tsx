@@ -9,6 +9,7 @@ import {
   LibraryBig,
   LockKeyhole,
   PenLine,
+  Search,
   Target,
   TrendingUp,
 } from 'lucide-react'
@@ -163,6 +164,10 @@ export function AdventurePanel({
           <Link to={appPaths.student.resources}>
             <Backpack size={18} />
             <span>Recursos</span>
+          </Link>
+          <Link to="/student/investigations">
+            <Search size={18} />
+            <span>Investigaciones</span>
           </Link>
           <Link to={appPaths.student.catalog.professions}>
             <LibraryBig size={18} />

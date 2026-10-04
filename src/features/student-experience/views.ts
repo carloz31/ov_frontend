@@ -9,6 +9,7 @@ export type StudentView =
   | 'journal-signals'
   | 'community'
   | 'resources'
+  | 'investigations'
   | 'conversations'
   | 'catalog-professions'
   | 'catalog-careers'
@@ -25,6 +26,7 @@ export const studentViews: StudentView[] = [
   'journal-signals',
   'community',
   'resources',
+  'investigations',
   'conversations',
   'catalog-professions',
   'catalog-careers',
@@ -34,7 +36,9 @@ export const studentViews: StudentView[] = [
 export function getStudentView(pathname: string): StudentView {
   const section = pathname.split('/')[2]
   if (pathname.endsWith('/journal/signal')) return 'journal-signals'
-  if (['activities', 'research', 'journal', 'community', 'resources', 'conversations'].includes(section))
+  if (
+    ['activities', 'research', 'journal', 'community', 'resources', 'investigations', 'conversations'].includes(section)
+  )
     return section as StudentView
   if (pathname.endsWith('/missions')) return 'missions'
   if (pathname.endsWith('/catalog/careers')) return 'catalog-careers'
@@ -54,6 +58,7 @@ export function getStudentViewLabel(view: StudentView): string {
     'journal-signals': 'Evolución de mi señal',
     community: 'Salón y Crew',
     resources: 'Recursos',
+    investigations: 'Investigaciones',
     conversations: 'En familia',
   }
   if (labels[view]) return labels[view]

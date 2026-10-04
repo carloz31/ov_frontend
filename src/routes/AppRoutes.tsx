@@ -38,6 +38,7 @@ import { StudentJournalView } from '@/features/student-experience/modules/Studen
 import { StudentSignalsView } from '@/features/student-experience/modules/StudentSignalsView'
 import { CommunityView } from '@/features/occupation-exploration/CommunityView'
 import { StudentResourcesView } from '@/features/student-experience/modules/StudentResourcesView'
+import { StudentResourceBoard } from '@/features/student-experience/modules/StudentResourceBoard'
 import { FamilyConversationsView } from '@/features/family-conversations/FamilyConversationsView'
 
 const roleHomePaths: Record<PlatformRole, string> = {
@@ -74,6 +75,7 @@ function AppRoutes() {
           <Route element={<StudentSignalsView />} path="journal/signal" />
           <Route element={<CommunityView />} path="community" />
           <Route element={<StudentResourcesView />} path="resources" />
+          <Route element={<StudentResourceBoard />} path="investigations" />
           <Route element={<Navigate replace to={appPaths.student.passport} />} path="achievements" />
           <Route element={<StudentFamilyConversationsView />} path="conversations" />
           <Route element={<ExplorationCatalogPage section="professions" />} path="catalog/professions" />

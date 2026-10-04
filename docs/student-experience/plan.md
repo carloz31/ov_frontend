@@ -172,3 +172,7 @@ Separar las investigaciones de Mi mochila y retirar la etiqueta Comunidad en Rec
 Mantener /student/resources y el alias /student/testimonials. Los enlaces existentes con ?tab=community abren Investigaciones, sin modificar la misión de investigación ni sus escrituras. Conservar datos, stores y claves. Reutilizar el diálogo compartido sin modificarlo para que los reportes/favoritos locales tengan Escape y foco; conservar una reacción activa por entrevista y prevenir reportes duplicados. Los comentarios recuperados del detalle anterior siguen solo en memoria durante esa visita, como antes; no añadir persistencia ni campos de consentimiento.
 
 Crear modules/StudentResourcesView.tsx, StudentBackpackView.tsx y StudentResourceBoard.tsx; modificar únicamente imports/rutas del estudiante, título/guía locales, estilos locales de pestañas, expectativas del estudiante y este plan. Probar separación de contenidos, acceso por URL y teclado, publicación existente, lectura, favoritos, asistencia, moderación y presentación móvil. Ejecutar build, lint y test, seleccionar solo cambios propios, commit y reporte; detenerse al terminar.
+
+### Corrección de alcance solicitada
+
+Recursos contiene únicamente Mi mochila. Investigaciones pasa a /student/investigations y tiene un enlace independiente en Accesos rápidos. Publicaciones y Eventos se retiran de la interfaz del estudiante, conservando los datos existentes. Esta corrección sustituye la organización de cuatro pestañas descrita arriba. No ejecutar ni modificar pruebas, build o lint, según la solicitud del usuario.
