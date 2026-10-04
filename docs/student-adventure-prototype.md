@@ -1,3 +1,5 @@
+La interfaz del estudiante ahora se rige por `docs/student-experience/especificacion-interfaz-inmersiva-estudiante.md`.
+
 # Aventura del estudiante
 
 Implementación de interfaz y mecánicas basada en `prototipo_modulo_estudiantes.md`.

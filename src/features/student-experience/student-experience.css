@@ -343,6 +343,12 @@
   font-weight: 700;
   color: var(--sx-lumi);
 }
+.sx-root.sx-glass .sx-character-name,
+.sx-root .sx-glass .sx-character-name,
+.sx-root.sx-glass .sx-player-eyebrow,
+.sx-root .sx-glass .sx-player-eyebrow {
+  color: color-mix(in srgb, var(--sx-lumi) 40%, var(--foreground));
+}
 .sx-root.sx-lumi-backdrop {
   position: fixed;
   inset: 0;
@@ -1470,6 +1476,9 @@
   background: color-mix(in srgb, var(--foreground) 35%, transparent);
   backdrop-filter: blur(12px);
 }
+.sx-root.sx-player[data-ambient='sunrise'] .sx-player-topbar {
+  background: color-mix(in srgb, var(--foreground) 82%, transparent);
+}
 .sx-root .sx-player-heading {
   display: flex;
   flex-direction: column;
@@ -2065,7 +2074,8 @@
 .sx-root.sx-player-exit {
   color: rgb(255 255 255 / 0.88);
 }
-.sx-root .sx-glass-dark :is(button, a):focus-visible,
+.sx-root .sx-glass-dark :is(button, a, textarea, input, select):focus-visible,
+.sx-root.sx-glass-dark :is(button, a, textarea, input, select):focus-visible,
 .sx-root .sx-player-topbar button:focus-visible {
   outline-color: var(--sx-lumi);
 }
@@ -2202,6 +2212,10 @@
   .sx-root .sx-map-header {
     padding: 0 12px;
   }
+  .sx-root.sx-activity-drawer {
+    width: 100vw;
+    border-radius: 0;
+  }
   .sx-root .sx-adventure-panel {
     display: none;
   }
@@ -2218,7 +2232,7 @@
   }
   .sx-root .sx-zone-switch {
     left: 12px;
-    top: 12px;
+    top: 72px;
     transform: none;
   }
   .sx-root .sx-zone-switch button {

@@ -1735,6 +1735,87 @@ test('overlay queue resumes earned badges after the player and presents them con
   } finally { queue.dispose(); clock.restore(); store.updateAdventure(() => store.createInitialAdventure()); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState()) }
 })
 
+test('student shell synchronizes v2 milestones into real levels and access without altering saved answers or private records', () => {
+  const { specActivityByMission } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const fixture = followUpFixture()
+  const saved = { ...journeyStore.useJourney(), drafts: { [fixture.key]: 'Borrador anterior conservado' } }
+  const initial = store.createInitialAdventure()
+  store.updateAdventure(() => ({ ...initial, journal: [{ ...initial.journal[0], id: 'private-entry', body: 'Texto privado conservado' }], readinessCheckIns: [{ id: 'saved-signal', value: 6, createdAt: new Date().toISOString(), linkedActivityId: 'daily-check-in' }] }))
+  const privateBefore = JSON.stringify([store.useAdventure().journal, store.useAdventure().readinessCheckIns, store.useAdventure().conversations])
+  resetNoveltyUi()
+  const shell = immersivePlayerHarness('../StudentShell', {
+    'react-router': { ...nativeRequire('react-router'), useLocation: () => ({ pathname: '/student/missions', search: '' }) },
+    '@/features/occupation-exploration/OccupationExplorationContext': { useOccupationExplorationContext: () => ({}) },
+  })
+  try {
+    for (const [count, level, codes] of [[1, 1, ['I1']], [3, 1, ['I1']], [4, 2, ['I1', 'I2']], [fieldMissions.length, 3, ['I1', 'I2', 'I3']]]) {
+      const completed = fieldMissions.slice(0, count)
+      journeyStore.updateJourney(() => ({ ...saved, progress: Object.fromEntries(completed.map(mission => [specActivityByMission[mission.id], { estado: 'completada' }])) }))
+      const journeyBefore = JSON.stringify(journeyStore.useJourney())
+      shell.draw({}); shell.draw({})
+      const adventure = store.useAdventure()
+      assert.deepEqual(Array.from(adventure.completedMissionIds), Array.from(completed, mission => mission.id))
+      assert.equal(store.getTravelerLevel(adventure).number, level)
+      assert.deepEqual(Array.from(noveltyLogic.getEarnedBadges(adventure).map(badge => badge.code)), codes)
+      assert.equal(store.isCityUnlocked(adventure), count === fieldMissions.length)
+      assert.equal(store.isFamilyUnlocked(adventure), count === fieldMissions.length)
+      assert.equal(JSON.stringify(journeyStore.useJourney()), journeyBefore)
+      assert.equal(JSON.stringify([adventure.journal, adventure.readinessCheckIns, adventure.conversations]), privateBefore)
+      assert.equal(journeyStore.useJourney().submissions[0].id, fixture.entry.id)
+      const synced = JSON.stringify(adventure)
+      shell.draw({}); assert.equal(JSON.stringify(store.useAdventure()), synced)
+    }
+  } finally {
+    shell.dispose(); store.updateAdventure(() => store.createInitialAdventure()); journeyStore.updateJourney(() => journeyLogic.initialJourney()); followUpStore.updateFollowUps(() => followUpStore.initialFollowUpState()); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
+  }
+})
+
+test('dialogue Enter completes text before advancing and never intercepts forms, controls or open dialogs', () => {
+  const previous = { window: context.window, document: context.document, HTMLElement: context.HTMLElement }
+  const listeners = new Set()
+  let modal = false, done = false, completed = 0, advanced = 0
+  class Target { constructor(blocked = false) { this.blocked = blocked } closest() { return this.blocked } }
+  context.HTMLElement = Target
+  context.document = { querySelector: () => modal }
+  context.window = { addEventListener: (_, listener) => listeners.add(listener), removeEventListener: (_, listener) => listeners.delete(listener) }
+  const dialogue = immersivePlayerHarness('DialogueBox', {
+    '../overlays/useTypewriter': { useTypewriter: text => ({ visible: done ? text : '', done, complete: () => { done = true; completed++ } }) },
+  })
+  const props = { speakerId: 'companero', text: 'Texto completo accesible', onContinue: () => advanced++ }
+  const enter = (patch = {}) => {
+    let prevented = false
+    const event = { key: 'Enter', target: new Target(), preventDefault() { prevented = true }, ...patch }
+    for (const listener of listeners) listener(event)
+    return prevented
+  }
+  try {
+    const tree = dialogue.draw(props)
+    assert.match(dialogue.text(tree), /Texto completo accesible/)
+    assert.equal(enter(), true); assert.equal(completed, 1); assert.equal(advanced, 0)
+    dialogue.draw(props)
+    assert.equal(enter({ target: new Target(true) }), false)
+    assert.equal(enter({ repeat: true }), false)
+    assert.equal(enter({ defaultPrevented: true }), false)
+    modal = true; assert.equal(enter(), false); assert.equal(advanced, 0)
+    modal = false; assert.equal(enter(), true); assert.equal(advanced, 1)
+  } finally { dialogue.dispose(); assert.equal(listeners.size, 0); Object.assign(context, previous) }
+})
+
+test('reduced-motion zone changes commit the destination immediately without scheduling a transition', () => {
+  const previous = context.window
+  const clock = followUpClock()
+  context.window = { matchMedia: () => ({ matches: true }) }
+  resetNoveltyUi({ lastMap: 'missions' })
+  const transition = immersivePlayerHarness('../map/ZoneTransition')
+  try {
+    transition.draw({ zone: 'central' })
+    assert.equal(noveltyUi.useStudentUi().lastMap, 'central')
+    assert.equal(clock.pending, 0)
+    assert.equal(transition.draw({ zone: 'central' }), null)
+    assert.equal(clock.pending, 0)
+  } finally { transition.dispose(); clock.restore(); context.window = previous; noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState()) }
+})
+
 test('every supplied mission node renders, including matrices, slides, questions and instrument items', () => {
   for (const activity of journeyContent.activities) {
     for (const node of activity.nodos) {

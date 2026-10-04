@@ -180,7 +180,14 @@ export function MapScreenLayout({
         </button>
       </div>
       <Sheet open={mobilePanelOpen} onOpenChange={setMobilePanelOpen}>
-        <SheetContent side="bottom" className="sx-root sx-mobile-panel">
+        <SheetContent
+          side="bottom"
+          className="sx-root sx-mobile-panel"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            mobilePanelButton.current?.focus()
+          }}
+        >
           <SheetTitle className="sr-only">Panel de aventura</SheetTitle>
           <SheetDescription className="sr-only">Tu progreso y los accesos de tu aventura.</SheetDescription>
           {panel}

@@ -1,3 +1,5 @@
+La interfaz del estudiante ahora se rige por `docs/student-experience/especificacion-interfaz-inmersiva-estudiante.md`.
+
 # Actividades dentro de Aventura
 
 Las rutas `/student/missions` y `/student/exploration` forman una sola sección llamada **Aventura**. El usuario cambia entre **Camino** y **Ciudad** mediante un selector sobre el mapa. Se conserva el mapa original de cada zona y no se modifica el funcionamiento de los casos.
