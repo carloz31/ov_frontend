@@ -305,6 +305,7 @@ export function StudentActivityPlayer({
                 node={node}
                 onSaved={advance}
                 onKeep={advance}
+                edit={edit}
               />
               {!node.obligatoria && (
                 <button type="button" className="sx-secondary-button" onClick={advance}>

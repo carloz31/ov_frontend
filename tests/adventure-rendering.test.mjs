@@ -1008,7 +1008,7 @@ test('immersive submission preserves validation, drafts, versions and the keep a
   const node = activity.nodos.find(node => node.tipo === 'consigna' && node.entregable.tipo === 'texto')
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
   let saved = 0, kept = 0, prevented = false
-  const props = { activity, node, onSaved: () => saved++, onKeep: () => kept++ }
+  const props = { activity, node, edit: true, onSaved: () => saved++, onKeep: () => kept++ }
   const form = immersivePlayerHarness('nodes/SubmissionNode')
   let tree = form.draw(props)
   tree.props.onSubmit({ preventDefault() { prevented = true } })
@@ -1234,6 +1234,340 @@ test('immersive choices preserve recorded responses and show reactions before th
   assert.equal(journeyStore.useJourney().choices.length, 1)
   player.dispose()
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
+})
+
+const followUpService = load(path.resolve('src/features/student-experience/player/followup/followUpService.ts'))
+const followUpStore = load(path.resolve('src/features/student-experience/player/followup/followUpStore.ts'))
+const responseCondenser = load(path.resolve('src/features/student-experience/player/followup/responseCondenser.ts'))
+function followUpClock() {
+  const previous = { setTimeout: context.setTimeout, clearTimeout: context.clearTimeout }
+  const timers = new Map()
+  let time = 0, id = 0
+  context.setTimeout = (callback, delay) => { timers.set(++id, { callback, at: time + delay }); return id }
+  context.clearTimeout = handle => timers.delete(handle)
+  return {
+    async tick(duration) {
+      const target = time + duration
+      for (;;) {
+        const entry = [...timers].filter(([, timer]) => timer.at <= target).sort((a, b) => a[1].at - b[1].at)[0]
+        if (!entry) break
+        time = entry[1].at; timers.delete(entry[0]); entry[1].callback()
+        for (let i = 0; i < 12; i++) await Promise.resolve()
+      }
+      time = target
+      for (let i = 0; i < 12; i++) await Promise.resolve()
+    },
+    get pending() { return timers.size },
+    restore() { Object.assign(context, previous) },
+  }
+}
+function followUpFixture() {
+  const activity = journeyContent.activities.find(activity => activity.tipo === 'registro' && activity.plantilla?.tipo !== 'matriz')
+  const node = activity.nodos.find(node => node.tipo === 'consigna' && node.entregable.tipo === 'texto')
+  const text = 'Quiero decidir por mí, con apoyo.'
+  const entry = { id: crypto.randomUUID(), estudianteId: 'est-prototipo', actividadId: activity.id, nodoId: node.id, contenido: { tipo: 'texto', texto: text }, version: 1, enviadoEn: new Date().toISOString() }
+  journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), submissions: [entry], progress: { [activity.id]: { estado: 'en_curso', nodoActualId: node.id } } }))
+  followUpStore.updateFollowUps(() => followUpStore.initialFollowUpState())
+  const key = activity.id + '/' + node.id
+  followUpStore.setFollowUpRecord(key, { textoInicial: text, versionInicial: 1, turnos: [] })
+  return { activity, node, text, key, entry }
+}
+const followUpTurn = (orden, pregunta, respuesta, omitida = false) => ({ orden, pregunta, respuesta, omitida, creadaEn: '2026-10-03T10:00:00.000Z', ...(respuesta !== undefined || omitida ? { respondidaEn: '2026-10-03T10:01:00.000Z' } : {}) })
+
+test('follow-up service waits 700ms, respects both text thresholds and never asks a third turn', async () => {
+  const clock = followUpClock()
+  try {
+    const input = { activityId: 'a', nodeId: 'n', premisa: 'Una premisa', texto: 'Una respuesta breve', turnosPrevios: [] }
+    let finished = false
+    const short = followUpService.mockFollowUpService.evaluate(input).then(value => { finished = true; return value })
+    await clock.tick(699); assert.equal(finished, false)
+    await clock.tick(1); assert.match((await short).pregunta, /momento concreto/)
+    const run = async patch => { const promise = followUpService.mockFollowUpService.evaluate({ ...input, ...patch }); await clock.tick(700); return promise }
+    assert.equal((await run({ texto: 'a'.repeat(80) })).pregunta, undefined)
+    assert.ok((await run({ texto: 'a'.repeat(99), minCaracteres: 50 })).pregunta)
+    assert.equal((await run({ texto: 'a'.repeat(100), minCaracteres: 50 })).pregunta, undefined)
+    assert.equal((await run({ turnosPrevios: [followUpTurn(1, 'Una pregunta', 'a'.repeat(39))] })).pregunta, '¿Hay algo más que te gustaría agregar antes de seguir?')
+    assert.equal((await run({ turnosPrevios: [followUpTurn(1, 'Una pregunta', 'a'.repeat(40))] })).pregunta, undefined)
+    assert.equal((await run({ turnosPrevios: [followUpTurn(1, 'Una pregunta', undefined, true)] })).pregunta, undefined)
+    assert.equal((await run({ turnosPrevios: [followUpTurn(1, 'Una pregunta', 'Sí'), followUpTurn(2, 'Otra', 'Sí')] })).pregunta, undefined)
+    assert.equal(clock.pending, 0)
+  } finally { clock.restore() }
+})
+
+test('follow-up evaluation silently resolves failures and a 10-second timeout without late questions', async () => {
+  const clock = followUpClock()
+  try {
+    const input = { activityId: 'a', nodeId: 'n', premisa: 'Una premisa', texto: 'Texto', turnosPrevios: [] }
+    assert.equal((await followUpService.evaluateFollowUp({ evaluate: async () => { throw new Error('Servicio caído') } }, input)).pregunta, undefined)
+    let release, finished = false
+    const promise = followUpService.evaluateFollowUp({ evaluate: () => new Promise(resolve => { release = resolve }) }, input).then(value => { finished = true; return value })
+    await clock.tick(9999); assert.equal(finished, false)
+    await clock.tick(1); assert.equal((await promise).pregunta, undefined)
+    release({ pregunta: 'Demasiado tarde' }); await clock.tick(0)
+    assert.equal((await promise).pregunta, undefined)
+    assert.equal(clock.pending, 0)
+  } finally { clock.restore() }
+})
+
+test('response condenser preserves exact labels and blank lines, excludes omitted turns and enforces capacity', async () => {
+  const turns = [followUpTurn(1, '¿Por qué?', 'Porque quiero decidir.'), followUpTurn(2, '¿Algo más?', undefined, true)]
+  const input = { textoInicial: 'autodeterminación', turnos: turns, premisa: 'Una premisa', maxCaracteres: 800 }
+  const expected = 'autodeterminación\n\nPregunta de Lumi: ¿Por qué?\nRespuesta: Porque quiero decidir.'
+  assert.equal(responseCondenser.buildCondensedResponse(input), expected)
+  assert.equal(await responseCondenser.templateCondenser.condense(input), expected)
+  const withBoth = { ...input, turnos: [...turns.slice(0, 1), followUpTurn(2, '¿Algo más?', 'Apoyo familiar.')] }
+  assert.equal(await responseCondenser.templateCondenser.condense(withBoth), expected + '\n\nPregunta de Lumi: ¿Algo más?\nRespuesta: Apoyo familiar.')
+  assert.equal(responseCondenser.responseCapacity({ ...input, maxCaracteres: undefined }, '¿Nueva?'), 400)
+  const prefix = '\n\nPregunta de Lumi: ¿Nueva?\nRespuesta: '
+  const limit = expected.length + prefix.length + 40
+  assert.equal(responseCondenser.responseCapacity({ ...input, maxCaracteres: limit }, '¿Nueva?'), 40)
+  assert.equal(responseCondenser.responseCapacity({ ...input, maxCaracteres: limit - 1 }, '¿Nueva?'), 39)
+  const filled = { ...input, maxCaracteres: limit, turnos: [turns[0], followUpTurn(2, '¿Nueva?', 'a'.repeat(40))] }
+  assert.equal((await responseCondenser.templateCondenser.condense(filled)).length, limit)
+  await assert.rejects(responseCondenser.templateCondenser.condense({ ...filled, maxCaracteres: limit - 1 }), /supera el límite/)
+})
+
+test('follow-up store survives remounts and reload events and tolerates corrupt or unavailable storage', () => {
+  const file = path.resolve('src/features/student-experience/player/followup/followUpStore.ts')
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+  const memory = new Map(), events = []
+  let unavailable = false
+  const storage = { getItem: key => { if (unavailable) throw new Error('No storage'); return memory.get(key) ?? null }, setItem: (key, value) => { if (unavailable) throw new Error('No storage'); memory.set(key, value) } }
+  const fresh = () => {
+    const exports = {}
+    const require = specifier => specifier === 'react' ? { ...React, useSyncExternalStore: (_, snapshot) => snapshot() } : specifier.includes('/missions/logic') ? journeyLogic : specifier.includes('/missions/store') ? journeyStore : specifier === './responseCondenser' ? responseCondenser : {}
+    vm.runInNewContext('(function(require,exports){' + js + '\n})', { localStorage: storage, window: { addEventListener: (_, callback) => events.push(callback) }, Date, crypto, Map, Set })(require, exports)
+    return exports
+  }
+  const first = fresh(), record = { textoInicial: 'Texto', versionInicial: 1, turnos: [followUpTurn(1, '¿Por qué?', 'Mi respuesta')] }
+  assert.equal(first.setFollowUpRecord('a/n', record), true)
+  assert.ok(memory.has('ov.student-followups.v1'))
+  const second = fresh()
+  assert.equal(second.getFollowUpRecord('a/n').turnos[0].respuesta, 'Mi respuesta')
+  memory.set('ov.student-followups.v1', JSON.stringify({ version: 1, records: { 'a/n': { ...record, textoInicial: 'Cambio en otra pestaña' }, invalid: { turnos: 'wrong' } } }))
+  events.at(-1)({ key: 'ov.student-followups.v1' })
+  assert.equal(second.getFollowUpRecord('a/n').textoInicial, 'Cambio en otra pestaña')
+  memory.set('ov.student-followups.v1', '{broken'); assert.equal(Object.keys(fresh().useFollowUps().records).length, 0)
+  unavailable = true; assert.equal(Object.keys(fresh().useFollowUps().records).length, 0)
+  assert.equal(second.setFollowUpRecord('b/n', record), false)
+  assert.equal(second.getFollowUpRecord('b/n'), undefined)
+})
+
+test('first text submission saves version one before follow-up; edits and matrices use the normal form', async () => {
+  const fixture = followUpFixture()
+  for (const kind of ['first', 'edit', 'matrix']) {
+    journeyStore.updateJourney(() => journeyLogic.initialJourney())
+    followUpStore.updateFollowUps(() => followUpStore.initialFollowUpState())
+    let advanced = 0
+    const activity = kind === 'matrix' ? { ...fixture.activity, plantilla: { tipo: 'matriz' } } : fixture.activity
+    const props = { activity, node: fixture.node, edit: kind === 'edit', onSaved: () => advanced++ }
+    const form = immersivePlayerHarness('nodes/SubmissionNode')
+    let tree = form.draw(props)
+    form.find(tree, element => element.type === 'textarea').props.onChange({ target: { value: fixture.text } })
+    tree = form.draw(props); tree.props.onSubmit({ preventDefault() {} })
+    tree = form.draw(props)
+    assert.equal(journeyLogic.latestSubmission(journeyStore.useJourney(), activity.id, fixture.node.id).version, 1)
+    if (kind === 'first') {
+      assert.equal(advanced, 0)
+      assert.equal(tree.type.name, 'FollowUp')
+      assert.equal(followUpStore.getFollowUpRecord(fixture.key).textoInicial, fixture.text)
+    } else {
+      assert.equal(advanced, 1)
+      assert.equal(followUpStore.getFollowUpRecord(fixture.key), undefined)
+    }
+    form.dispose()
+  }
+})
+
+test('follow-up accepts two replies, caps the field at available space and saves one condensed version', async () => {
+  const fixture = followUpFixture(), clock = followUpClock()
+  const ui = immersivePlayerHarness('followup/FollowUp')
+  let advanced = 0
+  const props = { activity: fixture.activity, node: fixture.node, onContinue: () => advanced++ }
+  try {
+    let tree = ui.draw(props); assert.match(ui.text(tree), /Tu respuesta/)
+    await clock.tick(700); tree = ui.draw(props); tree = ui.draw(props)
+    let field = ui.find(tree, element => element.type === 'textarea')
+    assert.equal(field.props.maxLength, 400)
+    assert.equal(ui.button(tree, 'Responder').props.disabled, true)
+    field.props.onChange({ target: { value: 'Porque quiero elegir.' } })
+    tree = ui.draw(props); ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
+    tree = ui.draw(props); tree = ui.draw(props); await clock.tick(700)
+    tree = ui.draw(props); tree = ui.draw(props)
+    field = ui.find(tree, element => element.type === 'textarea')
+    assert.ok(field)
+    field.props.onChange({ target: { value: 'Con el apoyo de mi familia.' } })
+    tree = ui.draw(props); ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
+    tree = ui.draw(props); await clock.tick(0); tree = ui.draw(props)
+    assert.equal(advanced, 0)
+    const entries = journeyStore.useJourney().submissions
+    assert.equal(entries.length, 2); assert.equal(entries[0].contenido.texto, fixture.text)
+    assert.equal(entries[1].version, 2)
+    assert.equal(entries[1].contenido.texto, responseCondenser.buildCondensedResponse({ textoInicial: fixture.text, turnos: followUpStore.getFollowUpRecord(fixture.key).turnos, premisa: fixture.node.premisa }))
+    assert.equal(journeyLogic.validateSubmission(fixture.node, entries[1].contenido), undefined)
+    assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 2)
+    assert.equal(followUpStore.getFollowUpRecord(fixture.key).versionCondensada, 2)
+    const dialogue = ui.find(tree, element => element.type.name === 'InlineDialogue' && element.props.text?.startsWith('Lo guardé'))
+    assert.ok(dialogue)
+    ui.button(tree, 'Continuar').props.onClick(); assert.equal(advanced, 1)
+  } finally { ui.dispose(); clock.restore() }
+})
+
+test('omitting all turns preserves version one, while a long reply ends follow-up after one turn', async () => {
+  for (const omit of [true, false]) {
+    const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('followup/FollowUp')
+    const props = { activity: fixture.activity, node: fixture.node, onContinue() {} }
+    try {
+      let tree = ui.draw(props); await clock.tick(700); tree = ui.draw(props); tree = ui.draw(props)
+      if (omit) ui.button(tree, 'Omitir').props.onClick()
+      else { ui.find(tree, element => element.type === 'textarea').props.onChange({ target: { value: 'Una respuesta de más de cuarenta caracteres que amplía lo que pienso.' } }); tree = ui.draw(props); ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} }) }
+      tree = ui.draw(props); tree = ui.draw(props); await clock.tick(700); tree = ui.draw(props); await clock.tick(0); tree = ui.draw(props)
+      assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 1)
+      assert.equal(journeyStore.useJourney().submissions.length, omit ? 1 : 2)
+      assert.ok(ui.button(tree, 'Continuar'))
+      if (omit) assert.ok(ui.find(tree, element => element.props.text === 'Tu respuesta quedó guardada tal como la escribiste.'))
+    } finally { ui.dispose(); clock.restore() }
+  }
+})
+
+test('no question, failure, timeout or fewer than 40 free characters advances silently with the original', async () => {
+  const service = followUpService.mockFollowUpService, original = service.evaluate
+  for (const kind of ['long', 'space', 'error', 'timeout']) {
+    const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('followup/FollowUp')
+    let advanced = 0
+    const node = kind === 'space' ? { ...fixture.node, entregable: { ...fixture.node.entregable, maxCaracteres: 80 } } : fixture.node
+    if (kind === 'long') followUpStore.setFollowUpRecord(fixture.key, { textoInicial: 'a'.repeat(200), versionInicial: 1, turnos: [] })
+    if (kind === 'error') service.evaluate = async () => { throw new Error('Service down') }
+    if (kind === 'timeout') service.evaluate = () => new Promise(() => {})
+    try {
+      ui.draw({ activity: fixture.activity, node, onContinue: () => advanced++ })
+      await clock.tick(kind === 'timeout' ? 10_000 : 700)
+      assert.equal(advanced, 1)
+      assert.equal(journeyStore.useJourney().submissions.length, 1)
+      assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 0)
+    } finally { service.evaluate = original; ui.dispose(); clock.restore() }
+  }
+})
+
+test('interrupted follow-up recovers only answered turns and loads the condensed form without duplicate versions', async () => {
+  const fixture = followUpFixture()
+  followUpStore.setFollowUpRecord(fixture.key, { textoInicial: fixture.text, versionInicial: 1, turnos: [followUpTurn(1, '¿Por qué?', 'Porque es mi decisión.'), followUpTurn(2, '¿Algo más?', undefined)] })
+  const form = immersivePlayerHarness('nodes/SubmissionNode')
+  const props = { activity: fixture.activity, node: fixture.node, edit: true, onSaved() {} }
+  let tree = form.draw(props); assert.match(form.text(tree), /Recuperando/)
+  await followUpStore.recoverFollowUp(fixture.activity, fixture.node)
+  for (let i = 0; i < 12; i++) await Promise.resolve()
+  tree = form.draw(props)
+  assert.equal(journeyStore.useJourney().submissions.length, 2)
+  assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 1)
+  const field = form.find(tree, element => element.type === 'textarea')
+  assert.match(field.props.value, /Pregunta de Lumi: ¿Por qué\?\nRespuesta: Porque es mi decisión\./)
+  assert.doesNotMatch(field.props.value, /Algo más/)
+  await followUpStore.recoverFollowUp(fixture.activity, fixture.node)
+  assert.equal(journeyStore.useJourney().submissions.length, 2)
+  field.props.onChange({ target: { value: field.props.value + ' Ahora agrego otra idea.' } })
+  tree = form.draw(props); tree.props.onSubmit({ preventDefault() {} })
+  assert.equal(journeyStore.useJourney().submissions.length, 3)
+  assert.equal(journeyLogic.latestSubmission(journeyStore.useJourney(), fixture.activity.id, fixture.node.id).version, 3)
+  assert.equal(form.draw(props).type, 'form')
+  form.dispose()
+})
+
+test('recovery detects a saved version without its follow-up marker and keeps invalid condensation as history only', async () => {
+  const fixture = followUpFixture(), turns = [followUpTurn(1, '¿Por qué?', 'Porque quiero elegir.')]
+  const record = { textoInicial: fixture.text, versionInicial: 1, turnos: turns }
+  followUpStore.setFollowUpRecord(fixture.key, record)
+  await followUpStore.saveFollowUpResponse(fixture.activity, fixture.node)
+  assert.equal(journeyStore.useJourney().submissions.length, 2)
+  followUpStore.setFollowUpRecord(fixture.key, record)
+  await followUpStore.recoverFollowUp(fixture.activity, fixture.node)
+  assert.equal(journeyStore.useJourney().submissions.length, 2)
+  assert.equal(followUpStore.getFollowUpRecord(fixture.key).versionCondensada, 2)
+  const next = followUpFixture()
+  followUpStore.setFollowUpRecord(next.key, record)
+  const result = await followUpStore.saveFollowUpResponse(next.activity, { ...next.node, entregable: { ...next.node.entregable, maxCaracteres: 35 } })
+  assert.equal(result.saved, false)
+  assert.equal(journeyStore.useJourney().submissions.length, 1)
+  assert.equal(followUpStore.getFollowUpRecord(next.key).versionCondensada, undefined)
+  assert.equal(followUpStore.getFollowUpRecord(next.key).turnos[0].respuesta, 'Porque quiero elegir.')
+  const invalid = await followUpStore.saveFollowUpResponse(next.activity, next.node, { condense: async () => '' })
+  assert.equal(invalid.saved, false)
+  assert.equal(journeyStore.useJourney().submissions.length, 1)
+  journeyStore.updateJourney(() => journeyLogic.initialJourney())
+  followUpStore.updateFollowUps(() => followUpStore.initialFollowUpState())
+})
+
+
+test('follow-up requires 40 free characters and stops before a second question that cannot fit', async () => {
+  const service = followUpService.mockFollowUpService, original = service.evaluate
+  service.evaluate = async () => ({ pregunta: '¿Por qué?' })
+  try {
+    for (const remaining of [39, 40]) {
+      const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('followup/FollowUp')
+      let advanced = 0
+      const maximum = fixture.text.length + '\n\nPregunta de Lumi: ¿Por qué?\nRespuesta: '.length + remaining
+      const node = { ...fixture.node, entregable: { ...fixture.node.entregable, maxCaracteres: maximum } }
+      const props = { activity: fixture.activity, node, onContinue: () => advanced++ }
+      try {
+        let tree = ui.draw(props); await clock.tick(0); tree = ui.draw(props); tree = ui.draw(props)
+        const field = ui.find(tree, element => element.type === 'textarea')
+        if (remaining === 39) {
+          assert.equal(advanced, 1); assert.equal(field, undefined)
+        } else {
+          assert.equal(advanced, 0); assert.equal(field.props.maxLength, 40)
+          field.props.onChange({ target: { value: 'a'.repeat(41) } }); tree = ui.draw(props)
+          ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
+          assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos[0].respuesta, undefined)
+          field.props.onChange({ target: { value: 'Una razón.' } }); tree = ui.draw(props)
+          ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
+          tree = ui.draw(props); await clock.tick(0); tree = ui.draw(props)
+          assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 1)
+          assert.equal(journeyStore.useJourney().submissions.length, 2)
+          assert.ok(ui.button(tree, 'Continuar'))
+          assert.equal(journeyLogic.validateSubmission(node, journeyStore.useJourney().submissions.at(-1).contenido), undefined)
+        }
+      } finally { ui.dispose(); clock.restore() }
+    }
+  } finally { service.evaluate = original }
+})
+
+test('leaving during evaluation never stores a late question and recovery preserves the replied turn', async () => {
+  const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('followup/FollowUp')
+  const props = { activity: fixture.activity, node: fixture.node, onContinue() { assert.fail('An unmounted follow-up must not advance') } }
+  try {
+    let tree = ui.draw(props); await clock.tick(700); tree = ui.draw(props); tree = ui.draw(props)
+    ui.find(tree, element => element.type === 'textarea').props.onChange({ target: { value: 'Quiero elegir.' } })
+    tree = ui.draw(props); ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
+    ui.draw(props); await clock.tick(699); ui.dispose(); await clock.tick(1)
+    assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 1)
+    assert.equal(journeyStore.useJourney().submissions.length, 1)
+    await followUpStore.recoverFollowUp(fixture.activity, fixture.node)
+    assert.equal(journeyStore.useJourney().submissions.length, 2)
+    assert.match(journeyStore.useJourney().submissions.at(-1).contenido.texto, /Respuesta: Quiero elegir\./)
+  } finally { ui.dispose(); clock.restore() }
+})
+
+test('failed delivery writes preserve version one and failed follow-up markers do not duplicate version two', async () => {
+  const fixture = followUpFixture(), original = context.localStorage.setItem
+  followUpStore.setFollowUpRecord(fixture.key, { textoInicial: fixture.text, versionInicial: 1, turnos: [followUpTurn(1, '¿Por qué?', 'Porque quiero decidir.')] })
+  try {
+    context.localStorage.setItem = key => { if (key === 'ov.missions.v2') throw new Error('Full storage') }
+    assert.equal((await followUpStore.saveFollowUpResponse(fixture.activity, fixture.node)).saved, false)
+    assert.equal(journeyStore.useJourney().submissions.length, 1)
+    assert.equal(followUpStore.getFollowUpRecord(fixture.key).versionCondensada, undefined)
+    context.localStorage.setItem = key => { if (key === 'ov.student-followups.v1') throw new Error('Full follow-up storage') }
+    assert.equal((await followUpStore.saveFollowUpResponse(fixture.activity, fixture.node)).saved, true)
+    assert.equal(journeyStore.useJourney().submissions.length, 2)
+    assert.equal(followUpStore.getFollowUpRecord(fixture.key).versionCondensada, undefined)
+    context.localStorage.setItem = original
+    await followUpStore.recoverFollowUp(fixture.activity, fixture.node)
+    assert.equal(journeyStore.useJourney().submissions.length, 2)
+    assert.equal(followUpStore.getFollowUpRecord(fixture.key).versionCondensada, 2)
+  } finally {
+    context.localStorage.setItem = original
+    journeyStore.updateJourney(() => journeyLogic.initialJourney())
+    followUpStore.updateFollowUps(() => followUpStore.initialFollowUpState())
+  }
 })
 
 test('every supplied mission node renders, including matrices, slides, questions and instrument items', () => {

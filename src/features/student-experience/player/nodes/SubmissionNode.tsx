@@ -1,20 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
 import type { Actividad, Entregable, NodoConsigna } from '@/features/missions/model'
 import { applyCompletion, latestSubmission, studentId, validateSubmission } from '@/features/missions/logic'
 import { updateJourney, useJourney } from '@/features/missions/store'
 import { CharacterAvatar } from '../CharacterAvatar'
+import { FollowUp } from '../followup/FollowUp'
+import { getFollowUpRecord, recoverFollowUp, setFollowUpRecord } from '../followup/followUpStore'
 
 export function SubmissionNode({
   activity,
   node,
   onSaved,
   onKeep,
+  edit = false,
 }: {
   activity: Actividad
   node: NodoConsigna
   onSaved: () => void
   onKeep?: () => void
+  edit?: boolean
 }) {
   const state = useJourney()
   const existing = latestSubmission(state, activity.id, node.id)
@@ -27,7 +31,33 @@ export function SubmissionNode({
   )
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [following, setFollowing] = useState(false)
+  const initialRecord = useRef(getFollowUpRecord(draftKey))
+  const [recovering, setRecovering] = useState(
+    () =>
+      !!initialRecord.current &&
+      !initialRecord.current.versionCondensada &&
+      initialRecord.current.turnos.some((turn) => !turn.omitida && !!turn.respuesta?.trim()),
+  )
   const spec = node.entregable
+  useEffect(() => {
+    if (
+      spec.tipo !== 'texto' ||
+      activity.plantilla?.tipo === 'matriz' ||
+      !initialRecord.current ||
+      initialRecord.current.versionCondensada
+    )
+      return
+    let cancelled = false
+    void recoverFollowUp(activity, node).then((result) => {
+      if (cancelled) return
+      if (result.saved && result.text !== undefined) setText(result.text)
+      setRecovering(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [activity, node, spec.tipo])
   useEffect(() => {
     if (spec.tipo === 'archivo' && !node.obligatoria) onSaved()
   }, [spec.tipo, node.obligatoria, onSaved])
@@ -61,8 +91,22 @@ export function SubmissionNode({
             drafts,
           })
         })
-      )
-        onSaved()
+      ) {
+        if (
+          !existing &&
+          !edit &&
+          spec.tipo === 'texto' &&
+          activity.plantilla?.tipo !== 'matriz' &&
+          content.tipo === 'texto' &&
+          setFollowUpRecord(draftKey, {
+            textoInicial: content.texto,
+            versionInicial: entry.version,
+            turnos: [],
+          })
+        )
+          setFollowing(true)
+        else onSaved()
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo guardar la entrega.')
     } finally {
@@ -70,6 +114,8 @@ export function SubmissionNode({
     }
   }
   if (spec.tipo === 'archivo') return <p>Esta entrega no está disponible en la plataforma.</p>
+  if (recovering) return <p role="status">Recuperando tu respuesta…</p>
+  if (following) return <FollowUp activity={activity} node={node} onContinue={onSaved} />
   return (
     <form
       className="sx-submission-form"
