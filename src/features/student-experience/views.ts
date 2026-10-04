@@ -53,7 +53,7 @@ export function getStudentViewLabel(view: StudentView): string {
     journal: 'Mi diario',
     'journal-signals': 'Evolución de mi señal',
     community: 'Salón y Crew',
-    resources: 'Recursos · Mi mochila',
+    resources: 'Recursos',
     conversations: 'En familia',
   }
   if (labels[view]) return labels[view]

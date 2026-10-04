@@ -862,13 +862,15 @@ test('family dashboard has four personal states, progress and no streak or deadl
   assert.match(html, /Visualizar regalo/)
   assert.doesNotMatch(html, /racha|semanas en compañía|fecha límite|se vence/i)
 })
-test('student resources open with discoveries before posts and events', () => {
+test('student resources open with backpack before posts, events and investigations', () => {
   const html = render('/student/resources')
-  assert.match(html, /Descubrimientos/)
-  assert.match(html, /Tu mochila está lista/)
+  assert.match(html, /Mi mochila/)
+  assert.match(html, /Tu mochila de viaje/)
   assert.match(html, /Publicaciones/)
   assert.match(html, /Eventos/)
-  assert.ok(html.indexOf('Descubrimientos') < html.indexOf('Publicaciones'))
+  assert.match(html, /Investigaciones/)
+  assert.doesNotMatch(html, />Comunidad</)
+  assert.ok(html.indexOf('Mi mochila') < html.indexOf('Publicaciones'))
 })
 test('family demo data covers shared and role-specific questions', () => {
   assert.ok(familyConversationTopics.some((topic) => topic.prompts.student === topic.prompts.parent))
@@ -2329,4 +2331,128 @@ test('separate signal history reuses check-in editing and keyboard point selecti
   const selectedValue = point.props['aria-label'].match(/: (\d+) de 10$/)[1]
   assert.match(history.text(tree), new RegExp(`Señal seleccionada · ${selectedValue}/10`))
   history.dispose()
+})
+
+test('resource tabs separate the backpack, publications, events and published investigations', () => {
+  const patch = {
+    solvedCaseIds: ['forest-fire'],
+    notices: [
+      { id: 'new-post', title: 'Pista de publicación de prueba', body: 'Una lectura para explorar.', date: '2026-09-01', attendees: [], kind: 'publication' },
+      { id: 'new-event', title: 'Evento de prueba del viajero', body: 'Una visita para explorar.', date: '2026-09-01', attendees: [], kind: 'event' },
+    ],
+    videos: [{ id: 'new-investigation', title: 'Investigación publicada de prueba', alias: 'Alex', url: 'https://example.com/interview', reflection: 'Mi descubrimiento sobre una carrera.', createdAt: '2026-09-01T10:00:00.000Z' }],
+  }
+  const backpack = render('/student/resources', patch)
+  for (const name of ['Mi mochila', 'Publicaciones', 'Eventos', 'Investigaciones']) assert.match(backpack, new RegExp(name))
+  assert.doesNotMatch(backpack, /Pista de publicación de prueba|Evento de prueba del viajero|Investigación publicada de prueba|>Comunidad</)
+  const posts = render('/student/resources?tab=posts', patch)
+  assert.match(posts, /Pista de publicación de prueba/)
+  assert.doesNotMatch(posts, /Evento de prueba del viajero|Investigación publicada de prueba|Tu mochila de viaje/)
+  const events = render('/student/resources?tab=events', patch)
+  assert.match(events, /Evento de prueba del viajero/)
+  assert.doesNotMatch(events, /Pista de publicación de prueba|Investigación publicada de prueba/)
+  const research = render('/student/resources?tab=research', patch)
+  assert.match(research, /Investigación publicada de prueba/)
+  assert.match(research, /Mi salón/)
+  assert.match(research, /Leyendas/)
+  assert.doesNotMatch(research, /Pista de publicación de prueba|Evento de prueba del viajero/)
+  assert.match(render('/student/resources?tab=community', patch), /id="sx-resource-tab-research"[^>]*aria-selected="true"/)
+  assert.match(render('/student/resources?tab=unknown', patch), /Tu mochila de viaje/)
+})
+
+test('resource tabs support arrow and boundary keys while retaining unrelated query parameters', () => {
+  let params = new URLSearchParams('keep=1'), focused = -1, prevented = 0
+  const page = immersivePlayerHarness('../modules/StudentResourcesView', {
+    'react-router': { useSearchParams: () => [params, update => { params = update(params) }] },
+  })
+  const tab = (tree, id) => page.find(tree, element => element.props.id === `sx-resource-tab-${id}`)
+  const event = key => ({ key, preventDefault() { prevented++ }, currentTarget: { parentElement: { querySelectorAll: () => Array.from({ length: 4 }, (_, index) => ({ focus: () => { focused = index } })) } } })
+  let tree = page.draw({})
+  tab(tree, 'backpack').props.onKeyDown(event('End'))
+  assert.equal(params.get('tab'), 'research'); assert.equal(params.get('keep'), '1'); assert.equal(focused, 3)
+  tree = page.draw({})
+  assert.equal(tab(tree, 'research').props['aria-selected'], true)
+  tab(tree, 'research').props.onKeyDown(event('ArrowRight'))
+  assert.equal(params.has('tab'), false); assert.equal(focused, 0)
+  tree = page.draw({})
+  tab(tree, 'backpack').props.onKeyDown(event('ArrowLeft'))
+  assert.equal(params.get('tab'), 'research')
+  tree = page.draw({})
+  tab(tree, 'research').props.onKeyDown(event('Home'))
+  assert.equal(params.has('tab'), false); assert.equal(params.get('keep'), '1'); assert.equal(prevented, 4)
+  page.dispose()
+})
+
+test('investigation cards preserve visits, favorites and a single reaction without changing the published draft', () => {
+  const previousWindow = context.window
+  context.window = { ...previousWindow, removeEventListener() {} }
+  let navigated
+  const board = immersivePlayerHarness('../modules/StudentResourceBoard', {
+    'react-router': { useNavigate: () => destination => { navigated = destination } },
+  })
+  try {
+  store.updateAdventure(() => ({ ...store.createInitialAdventure(), solvedCaseIds: ['forest-fire'] }))
+  const draftBefore = JSON.stringify(store.useAdventure().research)
+  let tree = board.draw({ tab: 'research' })
+  const article = board.find(tree, element => element.type === 'article' && board.text(element).includes('Objetos que hacen más fácil la vida diaria'))
+  const action = (tree, label) => board.find(tree, element => board.text(element) === label && element.props.onClick)
+  action(article, 'Agregar a favoritos').props.onClick()
+  assert.ok(store.useAdventure().bookmarks.includes('demo-industrial-design'))
+  action(article, 'Ver entrevista').props.onClick()
+  assert.ok(store.useAdventure().visits.includes('demo-industrial-design'))
+  tree = board.draw({ tab: 'research' })
+  const detail = board.find(tree, element => element.type?.name === 'InterviewDetail')
+  assert.equal(detail.props.video.id, 'demo-industrial-design')
+  detail.props.onReact({ label: 'Muy completa' })
+  detail.props.onReact({ label: 'Me enseñó algo que no sabía' })
+  assert.equal(store.useAdventure().reactions.filter(item => item.videoId === 'demo-industrial-design').length, 1)
+  assert.equal(JSON.stringify(store.useAdventure().research), draftBefore)
+  assert.equal(navigated, undefined)
+  store.updateAdventure(current => ({ ...current, interviewModeration: { ...current.interviewModeration, 'demo-industrial-design': { hidden: true, featured: false } } }))
+  tree = board.draw({ tab: 'research' })
+  assert.equal(board.find(tree, element => element.type?.name === 'InterviewDetail'), undefined)
+  assert.ok(!board.text(tree).includes('Objetos que hacen más fácil la vida diaria'))
+  } finally {
+    board.dispose()
+    context.window = previousWindow
+  }
+})
+
+test('restored publication and event details keep reading, favorites and attendance in existing data', () => {
+  const previousWindow = context.window
+  context.window = { ...previousWindow, removeEventListener() {} }
+  let navigated
+  const board = immersivePlayerHarness('../modules/StudentResourceBoard', {
+    'react-router': { useNavigate: () => destination => { navigated = destination } },
+  })
+  try {
+    store.updateAdventure(() => store.createInitialAdventure())
+    let tree = board.draw({ tab: 'posts' })
+    const post = board.find(tree, element => element.type?.name === 'PublicationCard')
+    post.props.onOpen(post.props.item)
+    assert.ok(store.useAdventure().visits.includes(post.props.item.id))
+    tree = board.draw({ tab: 'posts' })
+    let detail = board.find(tree, element => element.type?.name === 'ResourceDetail')
+    detail.props.onFavorite()
+    assert.ok(store.useAdventure().bookmarks.includes(post.props.item.id))
+    detail.props.onBack()
+    tree = board.draw({ tab: 'events' })
+    const event = board.find(tree, element => element.type?.name === 'EventCard' && element.props.item.id === 'science-lab-visit')
+    event.props.onOpen(event.props.item)
+    tree = board.draw({ tab: 'events' })
+    detail = board.find(tree, element => element.type?.name === 'ResourceDetail')
+    assert.equal(detail.props.past, true)
+    const journalBefore = JSON.stringify(store.useAdventure().journal)
+    detail.props.onEventOutcome(event.props.item, 'attended')
+    assert.equal(store.useAdventure().eventAttendance[event.props.item.id], 'attended')
+    assert.ok(store.useAdventure().bookmarks.includes(event.props.item.id))
+    const destination = new URL(navigated, 'https://example.com')
+    assert.equal(destination.pathname, '/student/journal')
+    assert.equal(destination.searchParams.get('event'), event.props.item.title)
+    assert.equal(destination.searchParams.get('outcome'), 'attended')
+    assert.equal(JSON.stringify(store.useAdventure().journal), journalBefore)
+  } finally {
+    board.dispose()
+    context.window = previousWindow
+  }
 })

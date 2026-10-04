@@ -23,7 +23,7 @@ export const guideSteps: Record<StudentView, string[]> = {
     'Algunos descubrimientos crecen al compartirlos. Invita a quienes quieras caminar contigo: tu Crew puede tener hasta tres viajeros, contigo incluido.',
   ],
   resources: [
-    'Tu mochila crece con cada paso: completa actividades para reunir fichas y misiones de Central de Casos para descubrir testimonios y entrevistas. Marca una estrella para guardar tus favoritos.',
+    'Tu mochila crece con cada paso: reúne fichas y testimonios, y guarda tus favoritos. En las pestañas separadas encuentras publicaciones, eventos e investigaciones de tu salón y otros viajeros. Las investigaciones se abren al completar una misión de Central de Casos.',
   ],
   'catalog-professions': [
     'Explora las profesiones sin buscar una respuesta definitiva. Guarda las que despierten tu curiosidad y vuelve a compararlas cuando descubras nuevas pistas.',

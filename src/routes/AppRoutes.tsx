@@ -15,7 +15,6 @@ import {
   ExplorationCatalogPage,
   ExplorationProfilePage,
   ForestFireCasePage,
-  TestimonialsPage,
 } from '@/features/occupation-exploration/OccupationExplorationPages'
 import { StudentShell } from '@/features/student-experience/StudentShell'
 import { StudentThemeScope } from '@/features/student-experience/StudentThemeScope'
@@ -37,7 +36,7 @@ import { ResearchMissionsView } from '@/features/occupation-exploration/Research
 import { StudentJournalView } from '@/features/student-experience/modules/StudentJournalView'
 import { StudentSignalsView } from '@/features/student-experience/modules/StudentSignalsView'
 import { CommunityView } from '@/features/occupation-exploration/CommunityView'
-import { AdventureResourcesView } from '@/features/occupation-exploration/AdventureResourcesView'
+import { StudentResourcesView } from '@/features/student-experience/modules/StudentResourcesView'
 import { FamilyConversationsView } from '@/features/family-conversations/FamilyConversationsView'
 
 const roleHomePaths: Record<PlatformRole, string> = {
@@ -73,13 +72,13 @@ function AppRoutes() {
           <Route element={<StudentJournalView />} path="journal" />
           <Route element={<StudentSignalsView />} path="journal/signal" />
           <Route element={<CommunityView />} path="community" />
-          <Route element={<AdventureResourcesView />} path="resources" />
+          <Route element={<StudentResourcesView />} path="resources" />
           <Route element={<Navigate replace to={appPaths.student.passport} />} path="achievements" />
           <Route element={<StudentFamilyConversationsView />} path="conversations" />
           <Route element={<ExplorationCatalogPage section="professions" />} path="catalog/professions" />
           <Route element={<ExplorationCatalogPage section="careers" />} path="catalog/careers" />
           <Route element={<ExplorationCatalogPage section="institutions" />} path="catalog/institutions" />
-          <Route element={<TestimonialsPage />} path="testimonials" />
+          <Route element={<StudentResourcesView />} path="testimonials" />
           <Route element={<ExplorationProfilePage view="general" />} path="profile" />
           <Route element={<ExplorationProfilePage view="decision" />} path="profile/decisions" />
           <Route element={<Navigate replace to={appPaths.student.exploration} />} path="*" />
