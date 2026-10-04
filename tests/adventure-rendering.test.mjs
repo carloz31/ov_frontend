@@ -449,13 +449,13 @@ test('presentation locks pending path missions while prototype city and research
   assert.match(html, /El inicio del viaje/)
   assert.match(html, /Las huellas que traigo, bloqueado/)
   assert.doesNotMatch(html, /La llave de la ciudad, bloqueado/)
-  assert.match(render('/student/exploration'), /Estación de investigación/)
-  assert.match(render('/student/research'), /Selecciona una carrera/)
+  assert.doesNotMatch(render('/student/exploration'), /Estación de investigación/)
+  assert.match(render('/student/research', { solvedCaseIds: ['forest-fire'] }), /Iniciar investigación/)
 })
 test('the city and research station render after the actual mission requirement', () => {
   const patch = { completedMissionIds: fieldMissions.map((item) => item.id) }
-  assert.match(render('/student/exploration', patch), /Estación de investigación/)
-  assert.match(render('/student/research', patch), /Selecciona una carrera/)
+  assert.doesNotMatch(render('/student/exploration', patch), /Estación de investigación/)
+  assert.match(render('/student/research', { ...patch, solvedCaseIds: ['forest-fire'] }), /Iniciar investigación/)
 })
 test('guide stays collapsed until its help button is activated', () => {
   const html = render('/student/missions')
@@ -503,7 +503,8 @@ test('student shell returns to the last visited zone and preserves module naviga
     assert.doesNotMatch(html, /role="dialog"/)
     ui.updateStudentUi(current => ({ ...current, lastMap: 'missions' }))
     assert.match(render('/student/research'), /href="\/student\/missions"/)
-    assert.match(render('/student/profile/decisions'), /aria-label="Secciones de mi perfil"/)
+    assert.match(render('/student/profile/decisions'), /Mis planes/)
+    assert.match(render('/student/profile/decisions'), /Lo que guardaste en el camino/)
     assert.doesNotMatch(render('/student/profile'), /class="sx-module-tabs"/)
   } finally {
     ui.updateStudentUi(() => ui.initialStudentUiState())
@@ -660,8 +661,8 @@ test('student point calculations preserve progress, recommendations and every dr
   assert.equal(review.actionLabel, 'Ver o modificar mis respuestas')
   assert.equal(getPointDetails(points.at(-1), adventure, journey).href, '/student/exploration')
   const city = getCiudadPoints(adventure, journey)
-  assert.equal(getRecommendedPoint(city).id, 'research')
-  assert.equal(getPointDetails(city.find(point => point.id === 'research'), adventure, journey).href, '/student/research')
+  assert.equal(getRecommendedPoint(city).id, 'mara-test')
+  assert.equal(getPointDetails(city.find(point => point.id === 'mara-test'), adventure, journey).activityId, 'act-tip-01')
   const fire = getPointDetails(city.find(point => point.id === 'forest-fire'), adventure, journey)
   assert.equal(fire.href, '/student/cases/forest-fire')
   assert.equal(fire.disabled, false)
@@ -756,7 +757,7 @@ test('return greeting uses the previous Lima visit and never reproaches absences
 test('student overlay queue prioritizes real city arrival, section introductions and the daily signal', () => {
   const { getNextOverlay } = load(path.resolve('src/features/student-experience/overlays/overlay-context.ts'))
   const { initialStudentUiState } = load(path.resolve('src/features/student-experience/ui-state.ts'))
-  const { studentViews } = load(path.resolve('src/features/student-experience/views.ts'))
+  const { studentViews, isDiscoveryView } = load(path.resolve('src/features/student-experience/views.ts'))
   const adventure = store.createInitialAdventure()
   adventure.completedMissionIds = []
   adventure.readinessCheckIns = []
@@ -770,6 +771,7 @@ test('student overlay queue prioritizes real city arrival, section introductions
   assert.equal(getNextOverlay({ ...args, arrivalDismissed: true }).kind, 'intro')
   ui.cityArrivalSeen = true
   for (const view of studentViews) {
+    if (isDiscoveryView(view)) { assert.equal(getNextOverlay({ ...args, view }), null); continue }
     assert.equal(getNextOverlay({ ...args, view }).view, view)
     ui.introsSeen[view] = true
     assert.equal(getNextOverlay({ ...args, view }).kind, 'check-in')
@@ -2720,7 +2722,7 @@ test('phase 8 activities combine zones, classify publications and return to the 
   const view = immersivePlayerHarness('../modules/StudentActivitiesView')
   let tree = view.draw({})
   let entries = view.find(tree, element => element.props.className === 'sx-activities-list').props.children
-  assert.deepEqual(Array.from(entries, element => element.key), ['beliefs', 'forest-fire', 'research', 'mara-test'])
+  assert.deepEqual(Array.from(entries, element => element.key), ['beliefs', 'forest-fire', 'mara-test'])
   assert.match(view.text(tree), /Camino · InformativaEn progreso/)
   assert.match(view.text(tree), /Ciudad · Central de casosDisponible/)
   const href = entries[0].props.children.at(-1).props.to
@@ -2732,7 +2734,7 @@ test('phase 8 activities combine zones, classify publications and return to the 
   store.updateAdventure(current => ({ ...current, videos: [{ id: 'publication' }] }))
   tree = view.draw({})
   entries = view.find(tree, element => element.props.className === 'sx-activities-list').props.children
-  assert.ok(entries.some(element => element.key === 'research'))
+  assert.ok(!entries.some(element => element.key === 'research'))
   view.dispose(); journeyStore.updateJourney(() => journeyLogic.initialJourney())
   const html = render('/student/activities')
   assert.match(html, /Mis actividades/); assert.match(html, /Actividades disponibles/)
@@ -3086,4 +3088,327 @@ test('restored publication and event details keep reading, favorites and attenda
     board.dispose()
     context.window = previousWindow
   }
+})
+
+
+test('discovery stores survive reload, validate nested data and report storage failures', () => {
+  const file = path.resolve('src/features/student-experience/discovery/persistentStore.ts')
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+  let raw = null, failWrite = false, listener
+  const isolated = vm.createContext({ localStorage: { getItem: () => raw, setItem: (_key, value) => { if (failWrite) throw Error('full'); raw = value } }, window: { addEventListener: (_name, value) => { listener = value } } })
+  const exported = {}
+  vm.runInContext(`(function(require,exports){${js}\n})`, isolated)(name => { assert.equal(name, 'react'); return { useSyncExternalStore: (_, snapshot) => snapshot() } }, exported)
+  const discovery = load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+  const first = exported.persistentStore('test-discovery', discovery.initialDiscoveryState, discovery.validDiscoveryState)
+  first.update(state => ({ ...state, revealedPages: ['intereses'], research: { occupationId: 'paramedic', before: 'Mi idea inicial sobre su trabajo', ownQuestions: ['Mi pregunta personal'] } }))
+  const reloaded = exported.persistentStore('test-discovery', discovery.initialDiscoveryState, discovery.validDiscoveryState)
+  assert.equal(reloaded.getSnapshot().research.before, 'Mi idea inicial sobre su trabajo')
+  failWrite = true
+  reloaded.update(state => ({ ...state, planOrder: ['sheet'] }))
+  assert.equal(reloaded.useError(), true)
+  assert.deepEqual(Array.from(reloaded.getSnapshot().planOrder), ['sheet'])
+  raw = JSON.stringify({ ...discovery.initialDiscoveryState(), reactions: { video: { learned: { text: 4, createdAt: 'invalid' } } } })
+  listener({ key: 'other-key' }); assert.equal(reloaded.useError(), true)
+  listener({ key: 'test-discovery' }); assert.equal(reloaded.useError(), false)
+  assert.deepEqual(Array.from(reloaded.getSnapshot().revealedPages), [])
+  const e = load(path.resolve('src/features/student-experience/discovery/explorationStore.ts'))
+  const { createDecisionSheet } = load(path.resolve('src/features/occupation-exploration/types/StudentDecisionTypes.ts'))
+  failWrite = false
+  const favorites = exported.persistentStore('test-exploration', e.initialExplorationState, e.validExplorationState)
+  favorites.update(state => ({ ...state, careerInterestIds: ['psychology'], institutionInterestIds: ['legacy-category'], profiles: state.profiles.map(p => ({ ...p, interested: true })), decisionSheets: [createDecisionSheet('Psicología', 'psychology')] }))
+  const restored = exported.persistentStore('test-exploration', e.initialExplorationState, e.validExplorationState)
+  assert.equal(JSON.stringify(restored.getSnapshot()), JSON.stringify(favorites.getSnapshot()))
+})
+
+test('student favorites remain separate from explicit decision sheets', () => {
+  const exploration = load(path.resolve('src/features/student-experience/discovery/explorationStore.ts'))
+  const saved = exploration.getExploration()
+  try {
+    exploration.updateExploration(() => exploration.initialExplorationState())
+    exploration.toggleCareerInterest('psychology')
+    exploration.toggleOccupationInterest('paramedic')
+    exploration.toggleInstitutionInterest('demo-university')
+    assert.equal(exploration.getExploration().decisionSheets.length, 0)
+    assert.ok(exploration.getExploration().careerInterestIds.includes('psychology'))
+    const { createDecisionSheet } = load(path.resolve('src/features/occupation-exploration/types/StudentDecisionTypes.ts'))
+    exploration.setDecisionSheets([createDecisionSheet('Psicología', 'psychology')])
+    assert.equal(exploration.getExploration().decisionSheets[0].sourceId, 'psychology')
+    assert.equal(exploration.validExplorationState({ ...exploration.getExploration(), decisionSheets: [{ id: 'broken' }] }), false)
+    exploration.toggleCareerInterest('psychology')
+    assert.equal(exploration.getExploration().decisionSheets.length, 1)
+  } finally { exploration.updateExploration(() => saved) }
+})
+
+
+test('discovery profile exposes the three chapters and keeps its passport route', () => {
+  const html = render('/student/profile')
+  for (const text of ['Lo que he logrado', 'Lo que Helena descubre de mí', 'Hacia dónde voy', 'Recorrido', 'Logros recientes']) assert.ok(html.includes(text), text)
+  assert.doesNotMatch(html, /Ver mi progreso|Mi punto de partida|Ver mis favoritos/)
+  assert.match(render('/student/profile?section=passport'), /Mi pasaporte/)
+  assert.doesNotMatch(html, /role="dialog"/)
+})
+
+test('Helena seals protect results and reveal a labeled example without changing real progress', () => {
+  const d = load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+  const pages = load(path.resolve('src/features/student-experience/profile/helenaPages.ts'))
+  const savedD = d.getDiscovery(), savedJ = journeyStore.useJourney()
+  try {
+    d.updateDiscovery(() => d.initialDiscoveryState())
+    const empty = journeyLogic.initialJourney()
+    assert.equal(pages.getHelenaPageState(false, true), 'sealed')
+    assert.equal(pages.getHelenaPageState(true, false), 'ready')
+    assert.equal(pages.getHelenaPageState(true, true), 'revealed')
+    assert.equal(pages.getHelenaPages(empty, d.getDiscovery())[0].result, undefined)
+    journeyStore.updateJourney(() => ({ ...empty, progress: { 'act-tip-01': { estado: 'completada' } } }))
+    let p = pages.getHelenaPages(journeyStore.useJourney(), d.getDiscovery())[0]
+    assert.equal(p.state, 'ready'); assert.equal(p.missions.done, 1); assert.equal(p.missions.total, 14)
+    let html = render('/student/profile/helena')
+    assert.match(html, /Romper el sello/); assert.doesNotMatch(html, /Social<|Investigador<|Artístico</)
+    d.updateDiscovery(state => ({ ...state, revealedPages: ['intereses'] }))
+    html = render('/student/profile/helena')
+    assert.match(html, /Descifrada/); assert.match(html, /Ocupaciones afines/); assert.match(html, /Este ejemplo no es tu resultado personal/)
+    assert.equal(journeyStore.useJourney().results.length, 0)
+    const unlocks = load(path.resolve('src/features/student-experience/overlays/unlocks.ts'))
+    assert.equal(unlocks.getUnlocks(store.createInitialAdventure(), empty, d.getDiscovery()).filter(u => u.id === 'plans:intereses').length, 1)
+  } finally { d.updateDiscovery(() => savedD); journeyStore.updateJourney(() => savedJ) }
+})
+
+
+test('discovery plans compute completeness, preserve archives and honor priority and the three-plan limit', () => {
+  const plans = load(path.resolve('src/features/student-experience/plans/plans.ts'))
+  const { createDecisionSheet } = load(path.resolve('src/features/occupation-exploration/types/StudentDecisionTypes.ts'))
+  const first = createDecisionSheet('Psicología', 'psychology')
+  assert.equal(plans.getPlanCompleteness(first), 0)
+  const full = { ...first, motivation: 'Me interesa', strengths: 'Escuchar', challenges: 'Organizarme', budgets: [{ name: 'Universidad' }], preparation: ['Idiomas'] }
+  assert.equal(plans.getPlanCompleteness(full), 4)
+  const sheets = [first, ...[1,2,3].map(i => ({ ...createDecisionSheet(`Plan ${i}`, `career-${i}`), createdAt: `2026-10-0${i}T12:00:00Z` }))]
+  const ordered = plans.getOrderedPlans(sheets, [sheets[2].id, first.id])
+  assert.equal(ordered.length, 3); assert.equal(ordered[0].id, sheets[2].id)
+  assert.equal(plans.addPlan(sheets, 'Otro', 'other'), sheets)
+  const archived = plans.archivePlan([first], first.id)
+  assert.equal(archived[0].timeline.at(-1).type, 'archived')
+  assert.equal(archived[0].motivation, first.motivation)
+  assert.equal(plans.addPlan(archived, 'Psicología', 'psychology').length, 2)
+  assert.equal(plans.addPlan([first], 'Psicología', 'psychology').length, 1)
+})
+
+
+test('discovery research gates access, exposes guide states and retains classroom moderation', () => {
+  const d = load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+  const saved = d.getDiscovery()
+  try {
+    d.updateDiscovery(() => d.initialDiscoveryState())
+    assert.match(render('/student/research'), /Las investigaciones se abren al resolver tu primer caso/)
+    let html = render('/student/research', { solvedCaseIds: ['forest-fire'] })
+    assert.match(html, /Iniciar investigación/); assert.doesNotMatch(html, /Aliados|aprendieron algo|[0-9] reacciones/)
+    d.updateDiscovery(s => ({ ...s, research: { occupationId: 'paramedic', before: 'Pienso que ayuda en emergencias', ownQuestions: ['¿Qué te sorprendió de tu trabajo?'], guideStep: 2, guideReadyAt: '2026-10-04T14:00:00Z' } }))
+    html = render('/student/research', { solvedCaseIds: ['forest-fire'] })
+    assert.match(html, /Ver mi guion/); assert.match(html, /Aliados/); assert.match(html, /Publicar mi entrevista/); assert.doesNotMatch(html, /Iniciar investigación/)
+    html = render('/student/research', { solvedCaseIds: ['forest-fire'], interviewModeration: { 'demo-industrial-design': { hidden: true, featured: false } } })
+    assert.doesNotMatch(html, /Objetos que hacen más fácil la vida diaria/); assert.match(html, /Así se investiga la calidad del agua/)
+    assert.doesNotMatch(html, /role="dialog"/)
+    assert.match(render('/student/investigations', { solvedCaseIds: ['forest-fire'] }), /Publicar mi entrevista/)
+    d.updateDiscovery(() => d.initialDiscoveryState())
+    const guide = render('/student/research/guion', { solvedCaseIds: ['forest-fire'] })
+    for (const question of ['¿Cómo es un día normal en tu trabajo?', '¿Qué estudiaste para llegar a donde estás?', '¿Qué consejo le darías a alguien de mi edad?']) assert.ok(guide.includes(question))
+  } finally { d.updateDiscovery(() => saved) }
+})
+
+test('discovery publishing and positive reactions are validated, private and idempotent', () => {
+  const d = load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+  const r = load(path.resolve('src/features/student-experience/research/research.ts'))
+  const saved = d.getDiscovery(), savedA = store.useAdventure()
+  try {
+    d.updateDiscovery(() => ({ ...d.initialDiscoveryState(), research: { occupationId: 'paramedic', before: 'Mi idea inicial', ownQuestions: ['¿Cómo te preparas?'], guideReadyAt: '2026-10-04T15:00:00Z' } }))
+    store.updateAdventure(() => store.createInitialAdventure())
+    const form = { interviewee: 'Profesional', summary: 'Aprendí cómo organiza su trabajo durante una emergencia.', videoUrl: 'https://youtu.be/ysz5S6PUM-U', coauthors: [], change: 'Mi reflexión privada de la entrevista' }
+    assert.equal(r.publishResearch({ ...form, summary: 'Corto' }), undefined)
+    assert.equal(r.publishResearch({ ...form, videoUrl: 'javascript:alert(1)' }), undefined)
+    const id = r.publishResearch(form); assert.ok(id)
+    assert.equal(r.publishResearch(form), id); assert.equal(store.useAdventure().videos.length, 1)
+    assert.equal(store.useAdventure().videos[0].reflection, form.summary)
+    assert.ok(!JSON.stringify(store.useAdventure().videos).includes(form.change))
+    assert.equal(d.getDiscovery().publishedResearch[0].change, form.change)
+    assert.equal(r.saveLearned('other-video', 'Breve'), false)
+    assert.equal(r.saveLearned('other-video', 'Aprendí a comparar caminos de formación.'), true)
+    r.toggleLiked('other-video'); assert.ok(d.getDiscovery().reactions['other-video'].liked)
+    assert.ok(d.getDiscovery().reactions['other-video'].learned)
+    r.toggleLiked('other-video'); assert.equal(d.getDiscovery().reactions['other-video'].liked, undefined)
+    assert.ok(d.getDiscovery().reactions['other-video'].learned)
+  } finally { d.updateDiscovery(() => saved); store.updateAdventure(() => savedA) }
+})
+
+
+test('discovery atlas covers existing IDs, symmetric relations and gated affinity', () => {
+  const data = load(path.resolve('src/features/student-experience/catalog/catalogDetails.ts'))
+  const selectors = load(path.resolve('src/features/student-experience/catalog/catalogSelectors.ts'))
+  const catalog = load(path.resolve('src/features/occupation-exploration/data/OccupationExplorationData.ts'))
+  assert.equal(data.occupationDetails.length, catalog.occupationCatalog.length)
+  assert.equal(data.careerDetails.length, 6)
+  assert.ok(data.institutionDetails.filter(i => i.type === 'UNIVERSITARIA').length >= 2)
+  assert.ok(data.institutionDetails.some(i => i.type === 'TECNICA'))
+  assert.ok(data.institutionDetails.some(i => i.type === 'FFAA_POLICIA'))
+  for (const career of data.careerDetails) {
+    assert.ok(selectors.getFamily(career.familyId))
+    for (const id of career.occupationIds) assert.ok(selectors.getOccupation(id)?.careerIds.includes(career.id), `${career.id}:${id}`)
+    for (const id of career.institutionIds) assert.ok(selectors.getInstitution(id)?.careerIds.includes(career.id), `${career.id}:${id}`)
+  }
+  for (const institution of data.institutionDetails) for (const id of institution.careerIds) assert.ok(selectors.getCareer(id)?.institutionIds.includes(institution.id))
+  for (const occupation of data.occupationDetails) for (const id of occupation.careerIds) assert.ok(selectors.getCareer(id)?.occupationIds.includes(occupation.id))
+  assert.equal(selectors.isAffine('paramedic', []), undefined)
+  assert.equal(selectors.isAffine('paramedic', ['intereses']), 'Gran ajuste')
+  assert.equal(selectors.matchesName('Psicología', 'PSICOLOGIA'), true)
+})
+
+test('discovery atlas details are pages, retain favorites and handle missing IDs', () => {
+  const career = render('/student/catalog/careers/psychology')
+  for (const text of ['Cuánto se gana', 'Jóvenes', 'Adultos', 'Dónde estudiarla', 'Datos de demostración']) assert.ok(career.includes(text))
+  const occupation = render('/student/catalog/professions/paramedic')
+  assert.doesNotMatch(occupation, /grado|Formación que suele requerir|role="dialog"/)
+  assert.match(occupation, /Qué hacen/); assert.match(occupation, /O\*NET por incorporar/)
+  assert.match(render('/student/catalog/institutions/demo-horizonte-public'), /Institución ficticia/)
+  assert.match(render('/student/catalog/careers/unknown'), /No encontramos esta página del atlas/)
+  for (const route of ['/student/catalog/professions', '/student/catalog/careers', '/student/catalog/institutions', '/student/catalog/careers/psychology', '/student/catalog/professions/paramedic', '/student/catalog/institutions/demo-horizonte-public']) {
+    const html = render(route); assert.doesNotMatch(html, /role="dialog"/); assert.match(html, /aria-label="Secciones del catálogo"/)
+    const moduleHeader = html.match(/<header class="sx-module-header">[\s\S]*?<\/header>/)?.[0]
+    assert.ok(moduleHeader); assert.doesNotMatch(moduleHeader, /Secciones del catálogo/)
+    const navigation = html.match(/<nav class="sx-d-catalog-nav"[\s\S]*?<\/nav>/)?.[0]
+    assert.ok(navigation); assert.equal((navigation.match(/<svg /g) ?? []).length, 3)
+    assert.match(navigation, /aria-current="page"/)
+  }
+  const professions = render('/student/catalog/professions')
+  assert.match(professions, /Tu exploración/); assert.match(professions, /ocupaciones descubiertas/)
+  assert.doesNotMatch(professions, /ocupaciones con ícono|sx-d-collection-mini/)
+})
+
+
+test('discovery guide resumes its exact step and asks before replacing saved work', () => {
+  const d = load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+  const e = load(path.resolve('src/features/student-experience/discovery/explorationStore.ts'))
+  const saved = d.getDiscovery(), savedA = store.useAdventure()
+  let params = new URLSearchParams()
+  const overrides = {
+    '../discovery/useReturnFocus': { useReturnFocus: () => ({}) },
+    '@/features/occupation-exploration/OccupationExplorationContext': { useOccupationExplorationContext: () => e.getExploration() },
+    'react-router': { Link: 'a', useSearchParams: () => [params, update => { params = update(params) }] },
+  }
+  let page = immersivePlayerHarness('../research/ResearchGuideView', overrides)
+  try {
+    store.updateAdventure(() => ({ ...store.createInitialAdventure(), solvedCaseIds: ['forest-fire'] }))
+    d.updateDiscovery(() => ({ ...d.initialDiscoveryState(), research: { occupationId: 'paramedic', before: '', ownQuestions: [], guideStep: 0 } }))
+    let tree = page.draw({})
+    assert.equal(page.button(tree, 'Seguir con las preguntas').props.disabled, true)
+    page.find(tree, el => el.type === 'textarea').props.onChange({ target: { value: 'Creo que atiende emergencias y quiero conocer su rutina.' } })
+    tree = page.draw({}); page.button(tree, 'Seguir con las preguntas').props.onClick()
+    page.dispose(); page = immersivePlayerHarness('../research/ResearchGuideView', overrides)
+    tree = page.draw({}); assert.equal(page.find(tree, el => el.type?.name === 'Parchment').props.title, 'Mi lista de preguntas')
+    assert.equal(page.button(tree, 'Terminar mi guion').props.disabled, true)
+    page.find(tree, el => el.type === 'input' && el.props.onKeyDown).props.onChange({ target: { value: '¿Qué fue lo más difícil al empezar?' } })
+    tree = page.draw({})
+    page.find(tree, el => el.type === 'input' && el.props.onKeyDown).props.onKeyDown({ key: 'Enter', nativeEvent: { isComposing: false }, preventDefault() {} })
+    tree = page.draw({}); page.button(tree, 'Terminar mi guion').props.onClick()
+    assert.ok(d.getDiscovery().research.guideReadyAt)
+    const draft = JSON.stringify(d.getDiscovery().research)
+    params = new URLSearchParams('occupationId=graphic-designer&keep=1')
+    page.draw({}); tree = page.draw({})
+    assert.match(page.text(tree), /¿Cambiar de ocupación?/)
+    page.button(tree, 'Conservar mi guion').props.onClick()
+    assert.equal(JSON.stringify(d.getDiscovery().research), draft)
+    assert.equal(params.get('keep'), '1'); assert.equal(params.has('occupationId'), false)
+    params = new URLSearchParams('occupationId=graphic-designer')
+    page.draw({}); tree = page.draw({}); page.button(tree, 'Reemplazar mi guion').props.onClick()
+    assert.equal(d.getDiscovery().research.occupationId, 'graphic-designer')
+    assert.equal(d.getDiscovery().research.before, '')
+    assert.equal(d.getDiscovery().research.ownQuestions.length, 0)
+    assert.equal(d.validDiscoveryState({ ...d.getDiscovery(), research: { ...d.getDiscovery().research, guideStep: '1' } }), false)
+  } finally { page.dispose(); d.updateDiscovery(() => saved); store.updateAdventure(() => savedA) }
+})
+
+test('discovery plan actions create explicitly, reorder and archive only on confirmation', () => {
+  const d = load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+  const e = load(path.resolve('src/features/student-experience/discovery/explorationStore.ts'))
+  const savedD = d.getDiscovery(), savedE = e.getExploration()
+  const page = immersivePlayerHarness('../plans/StudentPlansView', {
+    '../discovery/useReturnFocus': { useReturnFocus: () => ({}) },
+    '@/features/occupation-exploration/OccupationExplorationContext': { useOccupationExplorationContext: () => ({ ...e.getExploration(), setDecisionSheets: e.setDecisionSheets }) },
+    'react-router': { Link: 'a' },
+  })
+  try {
+    d.updateDiscovery(() => d.initialDiscoveryState()); e.updateExploration(() => e.initialExplorationState())
+    e.toggleCareerInterest('psychology'); e.toggleCareerInterest('nursing')
+    let tree = page.draw({}); assert.equal(e.getExploration().decisionSheets.length, 0)
+    page.button(tree, 'Hacer mi plan A').props.onClick()
+    tree = page.draw({}); page.button(tree, 'Hacer mi plan B').props.onClick()
+    tree = page.draw({}); const first = page.find(tree, el => el.type?.name === 'PlanCard' && el.props.index === 0)
+    const originalId = first.props.sheet.id; first.props.onMove(1)
+    tree = page.draw({}); assert.equal(page.find(tree, el => el.type?.name === 'PlanCard' && el.props.index === 1).props.sheet.id, originalId)
+    page.find(tree, el => el.type?.name === 'PlanCard' && el.props.index === 1).props.onArchive()
+    tree = page.draw({}); page.button(tree, 'Cancelar').props.onClick()
+    assert.equal(e.getExploration().decisionSheets.find(s => s.id === originalId).status, 'active')
+    tree = page.draw({}); page.find(tree, el => el.type?.name === 'PlanCard' && el.props.index === 1).props.onArchive()
+    tree = page.draw({}); page.button(tree, 'Archivar plan').props.onClick()
+    const archived = e.getExploration().decisionSheets.find(s => s.id === originalId)
+    assert.equal(archived.status, 'archived'); assert.equal(archived.timeline.at(-1).type, 'archived')
+    tree = page.draw({}); page.button(tree, 'Hacer mi plan B').props.onClick()
+    assert.equal(e.getExploration().decisionSheets.length, 3)
+    assert.ok(e.getExploration().decisionSheets.some(s => s.id !== originalId && s.sourceId === archived.sourceId && s.status !== 'archived'))
+  } finally { page.dispose(); d.updateDiscovery(() => savedD); e.updateExploration(() => savedE) }
+})
+
+test('discovery research tabs accept boundary keys and detail navigation uses history', () => {
+  const d = load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+  const saved = d.getDiscovery(), savedA = store.useAdventure()
+  let params = new URLSearchParams('keep=1'), focused
+  const page = immersivePlayerHarness('../research/StudentResearchView', {
+    'react-router': { Link: 'a', useNavigate: () => () => {}, useSearchParams: () => [params, update => { params = update(params) }] },
+  })
+  const event = key => ({ key, preventDefault() {}, currentTarget: { parentElement: { querySelectorAll: () => [0,1].map(i => ({ focus: () => { focused = i } })) } } })
+  try {
+    d.updateDiscovery(() => d.initialDiscoveryState())
+    store.updateAdventure(() => ({ ...store.createInitialAdventure(), solvedCaseIds: ['forest-fire'] }))
+    let tree = page.draw({})
+    page.find(tree, el => el.props.id === 'sx-research-tab-classroom').props.onKeyDown(event('End'))
+    tree = page.draw({}); assert.equal(focused, 1); assert.equal(page.find(tree, el => el.props.id === 'sx-research-tab-mine').props['aria-selected'], true)
+    page.find(tree, el => el.props.id === 'sx-research-tab-mine').props.onKeyDown(event('ArrowRight'))
+    tree = page.draw({}); assert.equal(focused, 0)
+    const card = page.find(tree, el => el.type?.name === 'InterviewCard')
+    card.props.onOpen(); page.draw({}); tree = page.draw({})
+    assert.equal(params.get('entrevista'), card.props.video.id); assert.equal(params.get('keep'), '1')
+    assert.ok(store.useAdventure().visits.includes(card.props.video.id))
+    page.find(tree, el => el.type?.name === 'InterviewDetail').props.onBack()
+    page.draw({}); tree = page.draw({}); assert.equal(page.find(tree, el => el.type?.name === 'InterviewDetail'), undefined)
+    assert.equal(params.get('keep'), '1')
+  } finally { page.dispose(); d.updateDiscovery(() => saved); store.updateAdventure(() => savedA) }
+})
+
+
+test('Helena prefers complete valid real results over examples and invalid older results', () => {
+  const file = path.resolve('src/features/student-experience/profile/helenaPages.ts')
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+  const ids = Array.from({ length: 14 }, (_, i) => `act-tip-${String(i + 1).padStart(2, '0')}`)
+  const dimensions = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'].map(name => ({ id: name[0], nombre: name }))
+  const instrument = { id: 'tip', clave: { dimensiones: dimensions } }
+  let calculated
+  const exported = {}
+  vm.runInContext(`(function(require,exports){${js}\n})`, context)(name => {
+    if (name.endsWith('/content')) return { catalog: { instrumentos: [instrument] }, tipActivityIds: ids }
+    if (name.endsWith('/logic')) return { calculateResult: () => calculated }
+    throw Error(name)
+  }, exported)
+  const d = load(path.resolve('src/features/student-experience/discovery/discoveryStore.ts'))
+  const discovery = { ...d.initialDiscoveryState(), revealedPages: ['intereses'] }
+  const valid = { instrumentoId: 'tip', puntajes: dimensions.map((dimension, i) => ({ dimensionId: dimension.id, puntaje: i * 10 })) }
+  const journey = { ...journeyLogic.initialJourney(), progress: Object.fromEntries(ids.map(id => [id, { estado: 'completada' }])), results: [{ instrumentoId: 'tip', puntajes: [] }, valid] }
+  let page = exported.getHelenaPages(journey, discovery)[0]
+  assert.equal(page.result.source, 'real'); assert.equal(page.demo, false); assert.equal(page.missions.done, 14)
+  assert.equal(page.result.areas[0].name, 'Convencional')
+  assert.equal(exported.getHelenaPages(journey, d.initialDiscoveryState())[0].result, undefined)
+  calculated = valid
+  page = exported.getHelenaPages({ ...journey, results: [journey.results[0]] }, discovery)[0]
+  assert.equal(page.result.source, 'real')
+  page = exported.getHelenaPages({ ...journey, progress: { 'act-tip-01': { estado: 'completada' } } }, discovery)[0]
+  assert.equal(page.result.source, 'demo'); assert.equal(page.missions.done, 1)
+  calculated = { ...valid, puntajes: [{ dimensionId: 'S', puntaje: NaN }] }
+  page = exported.getHelenaPages({ ...journey, results: [] }, discovery)[0]
+  assert.equal(page.result.source, 'demo')
 })

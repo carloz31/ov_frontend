@@ -8,12 +8,14 @@ import {
 } from '@/features/occupation-exploration/lib/TravelerResources'
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import { appPaths } from '@/routes/paths'
+import type { StudentDiscoveryState } from '../discovery/discoveryStore'
 import type { StudentUiState } from '../ui-state'
 
 export type UnlockItem = {
   id: string
-  kind: 'badge' | 'ficha' | 'heroe' | 'ciudad' | 'familia'
+  kind: 'badge' | 'ficha' | 'heroe' | 'ciudad' | 'familia' | 'plan'
   title: string
+  description?: string
   href: string
 }
 
@@ -23,8 +25,19 @@ export function getEarnedBadges(adventure: AdventureState) {
     .filter((badge) => badge.done)
 }
 
-export function getUnlocks(adventure: AdventureState, journey: JourneyState): UnlockItem[] {
+export function getUnlocks(
+  adventure: AdventureState,
+  journey: JourneyState,
+  discovery?: StudentDiscoveryState,
+): UnlockItem[] {
   return [
+    ...(discovery?.revealedPages ?? []).map((id): UnlockItem => ({
+      id: `plans:${id}`,
+      kind: 'plan',
+      title: 'Revisa tus planes',
+      description: `Página de ${id} descifrada. Un nuevo descubrimiento puede abrir otra ruta.`,
+      href: appPaths.student.decisions,
+    })),
     ...getEarnedBadges(adventure).map((badge): UnlockItem => ({
       id: `badge:${badge.code}`,
       kind: 'badge',

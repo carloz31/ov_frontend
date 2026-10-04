@@ -2587,3 +2587,24 @@ body:has([data-student-experience] .sx-shell) {
     width: 100%;
   }
 }
+
+.sx-root {
+  --sx-parchment: color-mix(in srgb, var(--warning-soft) 60%, var(--card));
+  --sx-parchment-edge: color-mix(in srgb, var(--warning) 28%, var(--card));
+  --sx-parchment-ink: var(--foreground);
+  --sx-parchment-muted: color-mix(in srgb, var(--foreground) 68%, var(--warning-soft));
+  --sx-gold: var(--sx-lumi);
+  --sx-gold-deep: color-mix(in srgb, var(--warning) 70%, var(--foreground));
+  --sx-seal: color-mix(in srgb, var(--danger) 72%, var(--accent));
+  --sx-night-raised: color-mix(in srgb, var(--sx-night) 82%, var(--primary));
+  --sx-night-border: color-mix(in srgb, var(--primary) 40%, var(--sx-night));
+  --sx-night-text: rgb(255 255 255 / .92);
+  --sx-night-muted: rgb(255 255 255 / .74);
+  --sx-amb-profile: var(--primary);
+  --sx-amb-plans: var(--warning);
+  --sx-amb-research: var(--case-mint);
+  --sx-amb-atlas: var(--case-blue);
+  --sx-plan-a: var(--warning);
+  --sx-plan-b: var(--case-mint);
+  --sx-plan-c: var(--data-secondary);
+}

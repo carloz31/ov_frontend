@@ -2,6 +2,9 @@ export type StudentView =
   | 'activities'
   | 'central'
   | 'missions'
+  | 'profile-helena'
+  | 'research-guide'
+  | 'catalog-detail'
   | 'profile-general'
   | 'profile-decisions'
   | 'research'
@@ -19,6 +22,9 @@ export const studentViews: StudentView[] = [
   'activities',
   'central',
   'missions',
+  'profile-helena',
+  'research-guide',
+  'catalog-detail',
   'profile-general',
   'profile-decisions',
   'research',
@@ -34,10 +40,22 @@ export const studentViews: StudentView[] = [
 ]
 
 export function getStudentView(pathname: string): StudentView {
+  if (pathname === '/student/profile/helena') return 'profile-helena'
+  if (pathname === '/student/research/guion') return 'research-guide'
+  if (/^\/student\/catalog\/(careers|professions|institutions)\/[^/]+$/.test(pathname))
+    return 'catalog-detail'
   const section = pathname.split('/')[2]
   if (pathname.endsWith('/journal/signal')) return 'journal-signals'
   if (
-    ['activities', 'research', 'journal', 'community', 'resources', 'investigations', 'conversations'].includes(section)
+    [
+      'activities',
+      'research',
+      'journal',
+      'community',
+      'resources',
+      'investigations',
+      'conversations',
+    ].includes(section)
   )
     return section as StudentView
   if (pathname.endsWith('/missions')) return 'missions'
@@ -53,7 +71,10 @@ export function getStudentView(pathname: string): StudentView {
 export function getStudentViewLabel(view: StudentView): string {
   const labels: Partial<Record<StudentView, string>> = {
     activities: 'Mis actividades',
-    research: 'Misión de investigación',
+    research: 'Investigaciones',
+    'research-guide': 'Mi guion de entrevista',
+    'profile-helena': 'El libro de Helena',
+    'profile-decisions': 'Mis planes',
     journal: 'Mi diario',
     'journal-signals': 'Evolución de mi señal',
     community: 'Salón y Crew',
@@ -66,4 +87,12 @@ export function getStudentViewLabel(view: StudentView): string {
   if (view === 'central' || view === 'missions') return 'Aventura'
   if (view === 'profile-general' || view === 'profile-decisions') return 'Mi perfil'
   return 'Exploración'
+}
+
+export function isDiscoveryView(view: StudentView) {
+  return (
+    view.startsWith('catalog-') ||
+    view.startsWith('profile-') ||
+    ['research', 'research-guide', 'investigations'].includes(view)
+  )
 }

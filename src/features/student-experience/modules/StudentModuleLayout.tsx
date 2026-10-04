@@ -24,14 +24,6 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
         </Link>
         <span aria-hidden="true" className="sx-module-separator" />
         <h1 className="sx-module-title">{getStudentViewLabel(view)}</h1>
-        {view === 'profile-decisions' && (
-          <nav className="sx-module-tabs" aria-label="Secciones de mi perfil">
-            <Link to={appPaths.student.profile}>Información general</Link>
-            <Link to={appPaths.student.decisions} aria-current="page">
-              Mi decisión
-            </Link>
-          </nav>
-        )}
         <div className="sx-module-actions">
           <button
             type="button"

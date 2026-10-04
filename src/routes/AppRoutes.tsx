@@ -12,10 +12,15 @@ import { StudentsView } from '@/features/counselor-portal/StudentsView'
 import { OccupationExplorationModule } from '@/features/occupation-exploration/OccupationExplorationModule'
 import {
   ExplorationCaseIntroPage,
-  ExplorationCatalogPage,
-  ExplorationProfilePage,
   ForestFireCasePage,
 } from '@/features/occupation-exploration/OccupationExplorationPages'
+import { StudentCatalogView } from '@/features/student-experience/catalog/StudentCatalogView'
+import { CareerDetailView } from '@/features/student-experience/catalog/CareerDetailView'
+import { OccupationDetailView } from '@/features/student-experience/catalog/OccupationDetailView'
+import { InstitutionDetailView } from '@/features/student-experience/catalog/InstitutionDetailView'
+import { StudentPlansView } from '@/features/student-experience/plans/StudentPlansView'
+import { ProfileRoute } from '@/features/student-experience/profile/StudentProfileView'
+import { HelenaBookView } from '@/features/student-experience/profile/HelenaBookView'
 import { StudentShell } from '@/features/student-experience/StudentShell'
 import { StudentThemeScope } from '@/features/student-experience/StudentThemeScope'
 import { StudentActivitiesView } from '@/features/student-experience/modules/StudentActivitiesView'
@@ -33,12 +38,12 @@ import { parentChildren } from '@/features/parent-portal/data/ParentPortalData'
 import { RoleSelectionScreen } from '@/features/role-selection/RoleSelectionScreen'
 import type { PlatformRole } from '@/features/role-selection/types/RoleSelectionTypes'
 import { appPaths } from './paths'
-import { ResearchMissionsView } from '@/features/occupation-exploration/ResearchMissionsView'
+import { ResearchRoute } from '@/features/student-experience/research/StudentResearchView'
+import { ResearchGuideView } from '@/features/student-experience/research/ResearchGuideView'
 import { StudentJournalView } from '@/features/student-experience/modules/StudentJournalView'
 import { StudentSignalsView } from '@/features/student-experience/modules/StudentSignalsView'
 import { CommunityView } from '@/features/occupation-exploration/CommunityView'
 import { StudentResourcesView } from '@/features/student-experience/modules/StudentResourcesView'
-import { StudentResourceBoard } from '@/features/student-experience/modules/StudentResourceBoard'
 import { FamilyConversationsView } from '@/features/family-conversations/FamilyConversationsView'
 
 const roleHomePaths: Record<PlatformRole, string> = {
@@ -70,20 +75,25 @@ function AppRoutes() {
           <Route element={<CiudadScreen />} path="exploration" />
           <Route element={<CaminoScreen />} path="missions" />
           <Route element={<StudentActivitiesView />} path="activities" />
-          <Route element={<ResearchMissionsView />} path="research" />
+          <Route element={<ResearchRoute />} path="research" />
+          <Route element={<ResearchGuideView />} path="research/guion" />
           <Route element={<StudentJournalView />} path="journal" />
           <Route element={<StudentSignalsView />} path="journal/signal" />
           <Route element={<CommunityView />} path="community" />
           <Route element={<StudentResourcesView />} path="resources" />
-          <Route element={<StudentResourceBoard />} path="investigations" />
+          <Route element={<ResearchRoute />} path="investigations" />
           <Route element={<Navigate replace to={appPaths.student.passport} />} path="achievements" />
           <Route element={<StudentFamilyConversationsView />} path="conversations" />
-          <Route element={<ExplorationCatalogPage section="professions" />} path="catalog/professions" />
-          <Route element={<ExplorationCatalogPage section="careers" />} path="catalog/careers" />
-          <Route element={<ExplorationCatalogPage section="institutions" />} path="catalog/institutions" />
+          <Route element={<StudentCatalogView section="professions" />} path="catalog/professions" />
+          <Route element={<StudentCatalogView section="careers" />} path="catalog/careers" />
+          <Route element={<StudentCatalogView section="institutions" />} path="catalog/institutions" />
           <Route element={<StudentResourcesView />} path="testimonials" />
-          <Route element={<ExplorationProfilePage view="general" />} path="profile" />
-          <Route element={<ExplorationProfilePage view="decision" />} path="profile/decisions" />
+          <Route element={<CareerDetailView />} path="catalog/careers/:careerId" />
+          <Route element={<OccupationDetailView />} path="catalog/professions/:occupationId" />
+          <Route element={<InstitutionDetailView />} path="catalog/institutions/:institutionId" />
+          <Route element={<ProfileRoute />} path="profile" />
+          <Route element={<HelenaBookView />} path="profile/helena" />
+          <Route element={<StudentPlansView />} path="profile/decisions" />
           <Route element={<Navigate replace to={appPaths.student.exploration} />} path="*" />
         </Route>
         <Route element={<ExplorationCaseIntroPage />} path="cases/:caseId" />

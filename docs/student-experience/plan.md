@@ -1,3 +1,116 @@
+# Implementación de vistas de descubrimiento
+
+## Acuerdos
+
+La especificación de descubrimiento prevalece en las vistas que cubre. Los planes se crean explícitamente; favoritos y hojas se persisten en `ov.student-exploration.v1` mediante un store exclusivo del estudiante consumido por OccupationExplorationModule. `ov.student-discovery.v1` no duplica esos datos. Se conserva la API del contexto.
+
+Intereses cuenta las 14 actividades reales. Completar act-tip-01 habilita un ejemplo identificado, sin registrar puntuaciones ficticias en journey. Las instituciones nuevas son ficticias; códigos O*NET y páginas oficiales faltantes se muestran pendientes. Las instituciones genéricas favoritas se conservan como categorías heredadas. Helena se usa en estas vistas sin modificar el contenido protegido que dice Elena.
+
+Se mantienen Recursos, sus pruebas, accesos rápidos y componentes originales de entrevistas. /student/investigations muestra la misma vista nueva que /student/research. No se modifican áreas del apoderado/orientadora, componentes compartidos ni datos, tipos o lógica protegidos.
+
+## Línea base antes de la fase 1
+
+Ejecutado `npm test` el 4 de octubre de 2026: 185 pruebas, 178 aprobadas, 7 fallidas. Todas están en `tests/adventure-rendering.test.mjs`; las líneas son las de la ejecución inicial.
+
+| Nombre exacto | Línea inicial | Causa |
+| --- | ---: | --- |
+| student resources open with backpack before posts, events and investigations | 1145 | No aparece Investigaciones en Recursos: la vista actual muestra la mochila. |
+| resource unlocks follow actual activities and specific cases rather than review mode | 1163 | El render estático de la ruta antigua redirige y no muestra el texto de Central de Casos esperado. |
+| counselor moderation hides interviews in the student community | 2478 | La ruta antigua de Recursos redirige; el render estático no contiene la entrevista no moderada esperada. |
+| phase 9 panel has five direct links, a compact next-step action and the real traveler rank | 2876 | La lista actual incluye el acceso Investigaciones y difiere de los cinco enlaces esperados. |
+| resource tabs separate the backpack, publications, events and published investigations | 2967 | Recursos no contiene la pestaña Publicaciones que espera la prueba. |
+| resource tabs support arrow and boundary keys while retaining unrelated query parameters | 2994 | La pestaña buscada no existe; se intenta leer props de undefined. |
+| restored publication and event details keep reading, favorites and attendance in existing data | 3052 | StudentResourceBoard solo contiene entrevistas; no existe PublicationCard y se lee props de undefined. |
+
+## Criterio de cierre por fase
+
+Ejecutar build, lint y npm test al cerrar cada fase. Build y lint deben aprobarse. Solo se admiten los fallos anteriores por el mismo motivo; cualquier otro fallo se corrige en la fase. Todas las pruebas nuevas deben aprobarse. Las expectativas invalidadas dentro del alcance se actualizan en su fase y se documentan. Recursos, sus pruebas y la prueba de accesos rápidos quedan intactos. Los fallos previos que se resuelvan se retiran de la lista residual.
+
+## Fases
+
+1. Base: stores, persistencia, rutas propias, patrones visuales, vistas y ayuda.
+2. Perfil y libro: capítulos, revelaciones, demostración y novedades.
+3. Planes: cartas, completitud, prioridad, creación y archivo.
+4. Investigaciones: guion, aliados, publicación, entrevistas, reacciones y retiro de estación.
+5. Atlas: datos propios, relaciones, listas y detalles.
+6. Cierre: pruebas de aceptación, accesibilidad, navegador y revisión del diff.
+
+## Verificaciones
+
+Se registra aquí el resultado de cada fase y las aserciones actualizadas.
+
+### Fase 1
+Build y lint aprobados. npm test: 187 pruebas, 180 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Dos pruebas nuevas verifican persistencia/recarga/eventos storage, datos inválidos, fallos de escritura y favoritos separados de la creación explícita. No se modificaron aserciones existentes.
+
+### Fase 2
+Build y lint aprobados. npm test: 189 pruebas, 182 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Pruebas nuevas: capítulos y pasaporte; estados del sello, ocultación, demostración 1 de 14 sin alterar resultados y novedad por página. No se modificaron aserciones existentes.
+
+### Fase 3
+Build y lint aprobados. npm test: 190 pruebas, 183 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Nueva prueba de completitud, orden, límite, archivo e histórico y recreación. En student shell returns to the last visited zone and preserves module navigation, la aserción Secciones de mi perfil de decisiones se reemplazó por Mis planes y Lo que guardaste en el camino, pues la nueva vista no duplica pestañas.
+
+### Fase 4
+Build y lint aprobados. npm test: 192 pruebas, 185 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Nuevas pruebas de estados, acceso real por caso, moderación en la ruta nueva, alias, preguntas sugeridas, publicación validada/idempotente y privacidad de reflexión, y reacciones positivas.
+Aserciones actualizadas: presentation locks pending path missions... y the city and research station... verifican ausencia de estación e inicio de investigación tras resolver un caso; student point calculations... recomienda mara-test y verifica su actividad; phase 8 activities combine zones... retira research del orden de puntos y verifica que publicar un video no recrea la estación. No se cambiaron pruebas de Recursos ni de accesos rápidos. Se añade guideStep al estado de guion para reanudar el paso exacto.
+
+### Fase 5
+Build y lint aprobados. npm test: 194 pruebas, 187 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Nuevas pruebas verifican cobertura de ocupaciones y carreras, cuatro instituciones ficticias, relaciones simétricas, búsqueda sin tildes, afinidad sellada y páginas de detalle/IDs inexistentes sin diálogos. No se modificaron aserciones existentes.
+
+
+### Fase 6 — cierre
+
+Build aprobado; lint aprobado sin advertencias. `npm test`: 198 pruebas, 191 aprobadas y 7 fallidas. Las 13 pruebas añadidas pasan. Se verificó cada fallo residual por su aserción y causa, y se compararon los cuerpos de las siete pruebas con HEAD: permanecen idénticos.
+
+Las últimas pruebas cubren reanudación del paso exacto del guion, pregunta con Enter, conservación/reemplazo del guion, creación explícita, prioridad y archivo solo tras confirmar, recreación conservando el histórico, teclas de pestañas, navegación de detalles, recarga de perfiles/favoritos/hojas y prioridad de resultados reales completos frente a resultados inválidos anteriores o demostraciones. Se usan datos de prueba para el instrumento real futuro; el contenido de misiones permanece intacto.
+
+Aserción actualizada en `student overlay queue prioritizes real city arrival, section introductions and the daily signal`: las vistas de descubrimiento devuelven ninguna presentación automática; las demás vistas conservan la cola original. Este ajuste cumple el criterio del plan aprobado de abrir rutas sin diálogos antes de interacción. La ayuda manual sigue disponible, con los pasos de cada vista, y devuelve el foco a su botón al cerrar.
+
+#### Validación en navegador
+
+Se revisaron perfil, Helena, planes, investigación, guion, alias de investigaciones, las tres listas del catálogo, los tres tipos de detalle y un ID inexistente: 13 rutas en cada tamaño, 39 comprobaciones. En todos los casos el escenario se renderizó, no hubo desbordamiento horizontal ni diálogo automático y los objetivos de las rutas nuevas y su cabecera alcanzaron 44 px.
+
+| Tamaño | Comprobaciones | Resultado |
+| --- | ---: | --- |
+| 1280 × 800 | 13 | Aprobadas |
+| 1440 × 900 | 13 | Aprobadas |
+| 360 × 800 | 13 | Aprobadas |
+
+Interacciones comprobadas: favorito sin navegación accidental y recarga; creación y archivo de plan; Escape y retorno de foco; revelación persistente y novedad por página; Tab/Enter en ayuda con foco visible; Enter al agregar una pregunta; End/Home en pestañas; guion y borrador recuperados tras recarga; publicación con coautor, detalle propio y las dos reacciones en una entrevista ajena sin mostrar conteos ajenos. La vista desbloqueada de investigación se comprobó con una página temporal de aceptación en un origen local separado; esa página se eliminó al terminar.
+
+Se corrigieron la cabecera del catálogo móvil, el contraste de insignias sobre la ficha nocturna, las etiquetas de cierre de paneles y el retorno de foco de diálogos/paneles. Se midió 5.62:1 para el texto dorado sobre la superficie nocturna. Las acciones doradas se aclararon con tokens existentes; no se añadieron hexadecimales. La consola de la aplicación no presentó errores ni advertencias.
+
+Movimiento reducido: se revisaron las reglas `prefers-reduced-motion`, incluidas animaciones de sello, niebla, revelación, cartas y raíces de paneles/diálogos. El navegador integrado no expone emulación de esa preferencia, por lo que esa parte se verificó por inspección de CSS. Un enlace de video de prueba de YouTube indicó video no disponible; la reproducción depende del enlace externo, y la validación de publicación y el resto del flujo se comprobaron.
+
+El diff y `git diff --check` fueron revisados: no cambian portales protegidos, componentes compartidos, misiones, modelos/lógica/datos protegidos, Recursos, sus pruebas ni la prueba de accesos rápidos. Los componentes originales de perfil, catálogo, decisiones, investigación y entrevistas se conservan.
+
+#### Lista residual para otro trabajo
+
+Los siguientes siete fallos siguen en `tests/adventure-rendering.test.mjs`, por las mismas causas de la línea base. Las líneas de esta tabla corresponden al cierre; no se reemplazó ninguno por una regresión bajo el mismo nombre.
+
+| Prueba exacta | Línea final | Causa residual |
+| --- | ---: | --- |
+| student resources open with backpack before posts, events and investigations | 1147 | Recursos muestra la mochila; falta el texto Investigaciones esperado. |
+| resource unlocks follow actual activities and specific cases rather than review mode | 1165 | La ruta antigua redirige en SSR y no muestra el texto esperado de Central de Casos. |
+| counselor moderation hides interviews in the student community | 2480 | La ruta antigua redirige en SSR y no contiene la entrevista visible esperada. |
+| phase 9 panel has five direct links, a compact next-step action and the real traveler rank | 2878 | El panel mantiene seis enlaces, incluido Investigaciones, y la prueba espera cinco. |
+| resource tabs separate the backpack, publications, events and published investigations | 2969 | Falta la pestaña Publicaciones en la vista actual de Recursos. |
+| resource tabs support arrow and boundary keys while retaining unrelated query parameters | 2996 | La pestaña buscada no existe; se lee props de undefined. |
+| restored publication and event details keep reading, favorites and attendance in existing data | 3054 | No existe PublicationCard en el componente de entrevistas; se lee props de undefined. |
+
+## Ajuste posterior del catálogo — 4 de octubre de 2026
+
+Por solicitud del usuario, el selector de Profesiones, Carreras e Instituciones educativas se mueve de la cabecera global al inicio del contenido del atlas. Cada opción incluye su ícono y conserva la sección activa tanto en listas como en detalles. El contador con total y casillas se reemplaza por el resumen «Tu exploración · 6 ocupaciones descubiertas», con cantidad dinámica y singular cuando corresponda. Se actualizan las secciones 5 y 11 de la especificación.
+
+Build y lint aprobados. `npm test`: 198 pruebas, 191 aprobadas y los mismos siete fallos residuales; se verificaron sus aserciones y causas, sin nuevas regresiones. Se amplía la prueba existente `discovery atlas details are pages, retain favorites and handle missing IDs` para comprobar la ubicación del selector, sus tres íconos, la sección activa y el resumen sin casillas. No se cambian las pruebas protegidas.
+
+Navegador: revisión visual a 1280 × 800 y 360 × 800, comprobación de instituciones a 1440 × 900, navegación entre secciones con Enter/clic y conservación del selector en detalle. Sin desbordamiento horizontal; opciones de al menos 44 px. `git diff --check` sin errores.
+
+## Registro histórico de la implementación anterior
+
+El registro siguiente se conserva como antecedente. Sus instrucciones de trabajo, estado de rama y cifras de validación corresponden a la implementación anterior; para estas vistas prevalecen el plan y los acuerdos de descubrimiento registrados arriba.
+
+<details>
+<summary>Plan anterior de la interfaz inmersiva</summary>
+
 # Implementación de la interfaz inmersiva del estudiante
 
 La fuente de verdad es `especificacion-interfaz-inmersiva-estudiante.md`, en su versión final. El significado y la evaluación de los nodos siguen `../mission-spec.md`, salvo las excepciones de la especificación.
@@ -176,3 +289,5 @@ Crear modules/StudentResourcesView.tsx, StudentBackpackView.tsx y StudentResourc
 ### Corrección de alcance solicitada
 
 Recursos contiene únicamente Mi mochila. Investigaciones pasa a /student/investigations y tiene un enlace independiente en Accesos rápidos. Publicaciones y Eventos se retiran de la interfaz del estudiante, conservando los datos existentes. Esta corrección sustituye la organización de cuatro pestañas descrita arriba. No ejecutar ni modificar pruebas, build o lint, según la solicitud del usuario.
+
+</details>

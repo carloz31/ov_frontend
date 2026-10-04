@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react'
 import { isCityUnlocked } from '@/features/occupation-exploration/lib/AdventureStore'
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import type { StudentUiState } from '../ui-state'
-import type { StudentView } from '../views'
+import { isDiscoveryView, type StudentView } from '../views'
 import { getTodayCheckIn, localDateKey } from './checkIn'
 
 export type AutomaticOverlay =
@@ -25,7 +25,8 @@ export function getNextOverlay({
   arrivalDismissed?: boolean
   now?: Date
 }): AutomaticOverlay | null {
-  if (activityOpen) return null
+  // Discovery pages open unobstructed; their help is available from the header.
+  if (activityOpen || isDiscoveryView(view)) return null
   if (isCityUnlocked(adventure) && !ui.cityArrivalSeen && !arrivalDismissed) return { kind: 'arrival' }
   if (!ui.introsSeen[view]) return { kind: 'intro', view }
   const day = localDateKey(now)

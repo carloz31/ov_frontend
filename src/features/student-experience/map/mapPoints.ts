@@ -1,6 +1,6 @@
 import type { JourneyState } from '@/features/missions/logic'
 import { activityById } from '@/features/missions/content'
-import { BookOpen, Building2, ClipboardList, Feather, KeyRound, Search, type LucideIcon } from 'lucide-react'
+import { BookOpen, Building2, ClipboardList, Feather, KeyRound, type LucideIcon } from 'lucide-react'
 import {
   cityCases,
   fieldMissions,
@@ -147,17 +147,6 @@ export function getCiudadPoints(adventure: AdventureState, journey: JourneyState
       actionEnabled: item.id === 'forest-fire',
     })),
     {
-      id: 'research',
-      title: 'Estación de investigación',
-      subtitle: 'Conoce una carrera de cerca',
-      x: 980,
-      y: 140,
-      icon: Search,
-      status: adventure.videos.length > 0 ? 'completed' : 'available',
-      zone: 'ciudad',
-      actionEnabled: true,
-    },
-    {
       id: 'mara-test',
       title: 'Una vuelta por el molino',
       subtitle: testCompleted ? 'Test · Primera interacción completada' : 'Test · Interacción 1 de 14',
@@ -295,19 +284,6 @@ export function getPointDetails(
       actionLabel: 'Ir a la ciudad',
       disabled: false,
       href: appPaths.student.exploration,
-    }
-  if (point.id === 'research')
-    return {
-      title: 'Misión de investigación',
-      region: 'Estación de investigación',
-      badge,
-      meta: 'Exploración libre',
-      type: 'Exploración libre',
-      description:
-        'Elige una carrera, invita hasta dos compañeros y prepara una guía de preguntas para conocer cómo se vive realmente esa profesión.',
-      actionLabel: 'Iniciar',
-      disabled: false,
-      href: appPaths.student.research,
     }
   if (point.id === 'mara-test')
     return {

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Award, Bell, BookOpen, Building2, HeartHandshake, UserRound, X } from 'lucide-react'
+import { useDiscovery } from '../discovery/discoveryStore'
 import { Link } from 'react-router'
 import {
   DropdownMenu,
@@ -14,7 +15,7 @@ import { getUnlocks, markUnlocksSeen, orderUnlocks } from './unlocks'
 
 export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
   const ui = useStudentUi()
-  const items = getUnlocks(useAdventure(), useJourney())
+  const items = getUnlocks(useAdventure(), useJourney(), useDiscovery())
   const ordered = ui.initialized
     ? orderUnlocks(items, ui).filter((item) => !ui.seenUnlockIds.includes(item.id))
     : []
@@ -26,6 +27,7 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
     heroe: 'Nuevo héroe disponible',
     ciudad: 'Nueva ciudad disponible',
     familia: 'Nueva conversación familiar disponible',
+    plan: 'Revisa tus planes',
   }
   const icons = {
     badge: Award,
@@ -33,6 +35,7 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
     heroe: UserRound,
     ciudad: Building2,
     familia: HeartHandshake,
+    plan: BookOpen,
   }
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -83,7 +86,9 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
                   <Icon size={18} aria-hidden="true" />
                   <span>
                     <strong>{titles[item.kind]}</strong>
-                    <small>Se ha desbloqueado «{item.title}»</small>
+                    <small>
+                      {item.kind === 'plan' ? item.description : `Se ha desbloqueado «${item.title}»`}
+                    </small>
                   </span>
                   <span className="sx-novelty-dot" aria-hidden="true" />
                   <span className="sr-only">Sin ver</span>

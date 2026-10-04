@@ -10,6 +10,20 @@ export const familyDetailGuide =
   'Las respuestas tienen el mismo valor. La guía sirve para escucharse y encontrar preguntas que quieran seguir explorando juntos.'
 
 export const guideSteps: Record<StudentView, string[]> = {
+  'catalog-detail': [
+    'Esta es la página del atlas. Guárdala en favoritos para tenerla a mano cuando armes tus planes.',
+  ],
+  'research-guide': [
+    'Antes de preguntar, anotemos lo que piensas hoy de esta ocupación. Cuando vuelvas de la entrevista será interesante ver qué cambió.',
+    'Te dejé unas preguntas para empezar. Agrega las tuyas: lo que de verdad te da curiosidad saber.',
+    'Lo más importante ocurre fuera de aquí: la conversación con esa persona.',
+  ],
+  'profile-helena': [
+    'Este es el libro de Helena. Cada página guarda algo que ella descubre de ti.',
+    'Una página sellada se abre cuando completas sus misiones en la ciudad.',
+    'Cuando Helena termina de leer una página, el sello brilla. Rómpelo cuando quieras verla.',
+    'Ninguna página es mejor que otra: describen cómo eres, no cuánto vales.',
+  ],
   activities: [
     'Aquí encuentras tus actividades disponibles y realizadas, en Camino y Ciudad. Elige «Ver en el mapa» para abrir su ficha y continuar o revisar lo que descubriste.',
   ],
@@ -25,9 +39,7 @@ export const guideSteps: Record<StudentView, string[]> = {
   investigations: [
     'Descubre investigaciones de tu salón y otros viajeros. Se abren al completar una misión de Central de Casos.',
   ],
-  resources: [
-    'Tu mochila crece con cada paso: reúne fichas y testimonios, y guarda tus favoritos.',
-  ],
+  resources: ['Tu mochila crece con cada paso: reúne fichas y testimonios, y guarda tus favoritos.'],
   'catalog-professions': [
     'Explora las profesiones sin buscar una respuesta definitiva. Guarda las que despierten tu curiosidad y vuelve a compararlas cuando descubras nuevas pistas.',
   ],
@@ -38,13 +50,20 @@ export const guideSteps: Record<StudentView, string[]> = {
     'Cada institución ofrece una experiencia distinta. Observa sus características y guarda las alternativas que podrían encajar con tu camino.',
   ],
   'profile-general': [
-    'Este espacio reúne los intereses y hallazgos que vas guardando. Úsalo para mirar cómo cambia tu exploración con el tiempo.',
+    'Este es tu perfil de viajero. Aquí se reúne todo lo que vas descubriendo.',
+    'En el primer capítulo ves lo que has logrado y qué te falta para tu siguiente nivel.',
+    'En el segundo, lo que Helena va descifrando de ti. Cuando una página brilla, tiene algo nuevo que mostrarte.',
+    'Y en el tercero, los caminos que estás considerando y lo que guardaste en el atlas.',
   ],
   'profile-decisions': [
-    'Aquí puedes ordenar tus opciones y registrar qué información te falta. Una decisión se construye comparando, preguntando y volviendo a mirar.',
+    'Tus planes son las rutas que estás considerando. Puedes tener hasta tres: A, B y C.',
+    'Cada carta se completa con tu motivación, tus fortalezas y obstáculos, un presupuesto y cómo te preparas.',
+    'Puedes cambiar su prioridad cuando quieras. Lo que descubras en el camino puede confirmar un plan o abrir otro.',
   ],
   research: [
-    'Investigar es hacer preguntas y escuchar. Elige una carrera que despierte tu curiosidad, prepara tus preguntas y registra lo que descubras. Tu cierre puede esperar hasta que tengas la entrevista.',
+    'Aquí conoces el mundo profesional de cerca: entrevistando a alguien que ya trabaja en lo que te interesa.',
+    'Primero armas tu guion conmigo. Luego haces la entrevista fuera de la plataforma y vuelves a compartirla.',
+    'También puedes ver las entrevistas de tu salón y reaccionar a ellas.',
   ],
   conversations: [
     'No hace falta estar de acuerdo en todo. Respondan desde su propia mirada y usen la guía cuando encuentren un momento tranquilo para escucharse.',
@@ -58,7 +77,7 @@ export const guideSteps: Record<StudentView, string[]> = {
   ],
   central: [
     'Bienvenido a la ciudad. Aquí tú decides el orden: cada llamado de sus habitantes es una oportunidad para descubrir cómo se complementan distintas profesiones.',
-    'También puedes visitar la estación de investigación para conocer una carrera de cerca, o pasar por el molino a conversar con Mara.',
+    'Puedes entrar a Investigaciones desde tu panel para conocer una ocupación de cerca, o pasar por el molino a conversar con Mara.',
     'Cada vez que ayudas, tu afinidad con la ciudad crece. La ves en tu panel.',
   ],
 }
