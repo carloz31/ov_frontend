@@ -7,6 +7,7 @@ import { canAccessCity } from '@/features/occupation-exploration/lib/AdventureSt
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import { appPaths } from '@/routes/paths'
 import { StudentUserMenu } from '../modules/StudentUserMenu'
+import { StudentBrand } from '../modules/StudentBrand'
 import { NoveltiesMenu } from '../overlays/NoveltiesMenu'
 import { useStudentOverlays } from '../overlays/overlay-context'
 import { guideSteps } from '../guide-texts'
@@ -27,6 +28,7 @@ import {
 import { ZoneSwitch } from './ZoneSwitch'
 import { ZoneTransition } from './ZoneTransition'
 import { ZoomControls } from './ZoomControls'
+import { initialScale } from './geometry'
 
 export function MapScreenLayout({
   zone,
@@ -46,7 +48,8 @@ export function MapScreenLayout({
   const returnPoint = useRef<string | undefined>(undefined)
   const mobilePanelButton = useRef<HTMLButtonElement>(null)
   const selectedId = params.get('punto') ?? undefined
-  const [scale, setScale] = useState(0.8)
+  const [scale, setScale] = useState(initialScale)
+  const [minimumScale, setMinimumScale] = useState(0)
   const { openGuide, openCheckIn } = useStudentOverlays()
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
   const [mobile, setMobile] = useState(false)
@@ -129,6 +132,7 @@ export function MapScreenLayout({
     <div className={`sx-map-screen sx-zone-${zone}`}>
       <h1 className="sr-only">Aventura · {zone === 'missions' ? 'Camino' : 'Ciudad'}</h1>
       <header className="sx-map-header">
+        <StudentBrand />
         <NoveltiesMenu />
         <StudentUserMenu />
       </header>
@@ -142,12 +146,13 @@ export function MapScreenLayout({
           recommendedId={recommended?.id}
           onSelect={selectPoint}
           onScaleChange={setScale}
+          onMinimumScaleChange={setMinimumScale}
           locked={locked}
           label={
             zone === 'missions' ? 'Aventura · Camino de misiones' : 'Central de Casos · Llamados de la ciudad'
           }
           backgroundImage={
-            zone === 'missions' ? '/images/adventure/journey-map.jpeg' : '/images/adventure/city-map.jpeg'
+            zone === 'missions' ? '/images/adventure/journey-map.png' : '/images/adventure/city-map.png'
           }
         />
         {locked && <CityLocked adventure={adventure} />}
@@ -181,6 +186,7 @@ export function MapScreenLayout({
         <MapControls onHelp={() => openGuide(guideSteps[zone])} />
         <ZoomControls
           scale={scale}
+          minimumScale={minimumScale}
           onZoom={(factor) => canvas.current?.zoom(factor)}
           onScale={(value) => canvas.current?.setScale(value)}
           onCenter={() => canvas.current?.centerMap()}

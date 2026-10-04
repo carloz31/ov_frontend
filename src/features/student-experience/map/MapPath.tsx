@@ -1,13 +1,13 @@
-import { mapPosition, canvasSize } from './geometry'
+import { mapPosition, canvasSize, type MapSize } from './geometry'
 import type { StudentMapPoint } from './mapPoints'
 
-export function MapPath({ points }: { points: StudentMapPoint[] }) {
+export function MapPath({ points, mapSize = canvasSize }: { points: StudentMapPoint[]; mapSize?: MapSize }) {
   return (
-    <svg aria-hidden="true" className="sx-map-path" viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}>
+    <svg aria-hidden="true" className="sx-map-path" viewBox={`0 0 ${mapSize.width} ${mapSize.height}`}>
       {points.slice(1).map((point, index) => {
         const previous = points[index]
-        const start = mapPosition(previous)
-        const end = mapPosition(point)
+        const start = mapPosition(previous, mapSize)
+        const end = mapPosition(point, mapSize)
         const done = previous.status === 'completed' && point.status === 'completed'
         const frontier = previous.status === 'completed' && point.status === 'available'
         return (

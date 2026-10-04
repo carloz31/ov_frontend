@@ -337,7 +337,7 @@ test('new map canvases draw segments only on the path, with completion and front
   journey.progress['mission-welcome'] = { estado: 'completada' }
   journey.progress['enc-mitos'] = { estado: 'completada' }
   const points = getCaminoPoints(store.createInitialAdventure(), journey)
-  const props = { points, panelOpen: false, onSelect() {}, onScaleChange() {}, backgroundImage: '/images/adventure/journey-map.jpeg', label: 'Mapa de prueba' }
+  const props = { points, panelOpen: false, onSelect() {}, onScaleChange() {}, backgroundImage: '/images/adventure/journey-map.png', label: 'Mapa de prueba' }
   const route = renderToStaticMarkup(React.createElement(MapCanvas, { ...props, variant: 'route' }))
   const city = renderToStaticMarkup(React.createElement(MapCanvas, { ...props, variant: 'open' }))
   assert.equal((route.match(/data-map-segment=/g) ?? []).length, points.length - 1)
@@ -392,7 +392,7 @@ test('student point calculations preserve progress, recommendations and every dr
 })
 
 test('map zoom preserves its cursor anchor, respects bounds and focuses beside the open panel', () => {
-  const { minScale, maxScale, clampTransform, zoomTransform, focusTransform, visibleCenter, mapPosition } = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  const { getMinimumScale, canvasSize, maxScale, clampTransform, zoomTransform, focusTransform, visibleCenter, mapPosition } = load(path.resolve('src/features/student-experience/map/geometry.ts'))
   const bounds = { width: 1280, height: 752 }
   const current = { x: -400, y: -200, scale: .8 }
   const cursor = { x: 700, y: 320 }
@@ -400,10 +400,10 @@ test('map zoom preserves its cursor anchor, respects bounds and focuses beside t
   assert.ok(Math.abs((cursor.x - current.x) / current.scale - (cursor.x - zoomed.x) / zoomed.scale) < .00001)
   assert.ok(Math.abs((cursor.y - current.y) / current.scale - (cursor.y - zoomed.y) / zoomed.scale) < .00001)
   assert.equal(zoomTransform(current, 99, cursor, bounds).scale, maxScale)
-  assert.equal(zoomTransform(current, .01, cursor, bounds).scale, minScale)
+  assert.equal(zoomTransform(current, .01, cursor, bounds).scale, getMinimumScale(bounds))
   const clamped = clampTransform({ x: 9999, y: -9999, scale: .8 }, bounds)
   assert.equal(clamped.x, 0)
-  assert.equal(clamped.y, bounds.height - 1519 * .8)
+  assert.equal(clamped.y, bounds.height - canvasSize.height * .8)
   const point = { x: 590, y: 290 }
   const position = mapPosition(point)
   const focused = focusTransform(current, point, bounds, true)
@@ -2061,7 +2061,7 @@ test('phase 8 map labels contain names only and use activity icons or a question
   }
   assert.equal(logic.getPointDetails(points.find(point => point.id === 'forest-fire'), adventure, journey).type, 'Central de casos')
   const header = render('/student/missions').match(/<header class="sx-map-header">([\s\S]*?)<\/header>/)[1]
-  assert.match(header, /Novedades[\s\S]*Menú de Alex/); assert.doesNotMatch(header, /Niv\.|Explora|sx-user-details/)
+  assert.match(header, /Orientación[\s\S]*Explora[\s\S]*Novedades[\s\S]*Menú de Alex/); assert.doesNotMatch(header, /Niv\.|sx-user-details/)
   assert.doesNotMatch(render('/student/missions'), /Arrastra el mapa para explorar/)
 })
 
@@ -2136,4 +2136,108 @@ test('phase 8 every novelty kind retains its existing destination and unread two
   }
   menu.dispose(); store.updateAdventure(() => store.createInitialAdventure())
   journeyStore.updateJourney(() => journeyLogic.initialJourney()); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
+})
+
+test('phase 9 PNG maps fill their triple-sized worlds and fit entirely at minimum zoom', () => {
+  const geometry = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  const { canvasSize, imageSize, initialScale, getMinimumScale, zoomTransform, clampTransform, mapPosition } = geometry
+  assert.equal(canvasSize.width, 5016); assert.equal(canvasSize.height, 2823)
+  assert.equal(initialScale, .5)
+  for (const name of ['journey-map', 'city-map']) {
+    const png = readFileSync(path.resolve(`public/images/adventure/${name}.png`))
+    assert.equal(png.subarray(1, 4).toString(), 'PNG')
+    assert.equal(png.readUInt32BE(16), imageSize.width)
+    assert.equal(png.readUInt32BE(20), imageSize.height)
+    const markup = render(name === 'journey-map' ? '/student/missions' : '/student/exploration')
+    assert.match(markup, new RegExp(`src="/images/adventure/${name}\\.png"`))
+    assert.match(markup, /width:5016px;height:2823px/)
+    assert.match(markup, /scale\(0.5\)/)
+  }
+  for (const bounds of [{ width: 1280, height: 752 }, { width: 1440, height: 852 }, { width: 360, height: 752 }]) {
+    const minimum = getMinimumScale(bounds)
+    const fitted = zoomTransform({ x: -999, y: -700, scale: .5 }, 0, { x: 0, y: bounds.height }, bounds)
+    assert.equal(fitted.scale, minimum)
+    assert.ok(fitted.x >= 32 - 1e-8); assert.ok(fitted.y >= 32 - 1e-8)
+    assert.ok(fitted.x + canvasSize.width * minimum <= bounds.width - 32 + 1e-8)
+    assert.ok(fitted.y + canvasSize.height * minimum <= bounds.height - 32 + 1e-8)
+    const dragged = clampTransform({ ...fitted, x: -9999, y: 9999 }, bounds)
+    assert.deepEqual(dragged, fitted)
+  }
+  const customSize = { width: 6000, height: 3000 }
+  const position = mapPosition({ x: 540, y: 330 }, customSize)
+  assert.equal(position.x, 3000); assert.equal(position.y, 1500)
+  assert.equal(getMinimumScale({ width: 1000, height: 600 }, customSize), 936 / 6000)
+})
+
+test('phase 9 initial view is centered at 50 percent and panel toggles preserve even the fitted view', () => {
+  const previous = { ResizeObserver: context.ResizeObserver, setTimeout: context.setTimeout, clearTimeout: context.clearTimeout }
+  context.ResizeObserver = class { observe() {} disconnect() {} }
+  context.setTimeout = setTimeout; context.clearTimeout = clearTimeout
+  const { getMinimumScale, canvasSize } = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  try {
+    for (const variant of ['route', 'open']) {
+      const canvas = immersivePlayerHarness('../map/MapCanvas'), ref = { current: null }
+      const bounds = { width: 1280, height: 752 }
+      let minimum
+      const props = { ref, points: [], panelOpen: true, variant, onSelect() {}, onScaleChange() {}, onMinimumScaleChange: value => { minimum = value }, backgroundImage: '', label: 'Mapa' }
+      const mount = tree => { tree.props.ref.current = { getBoundingClientRect: () => bounds, addEventListener() {}, removeEventListener() {} } }
+      const transform = tree => canvas.find(tree, element => element.props.className === 'sx-map-canvas').props.style.transform
+      canvas.draw(props, mount)
+      let tree = canvas.draw(props, mount)
+      assert.equal(transform(tree), `translate3d(${(bounds.width - canvasSize.width * .5) / 2}px, ${(bounds.height - canvasSize.height * .5) / 2}px, 0) scale(0.5)`)
+      assert.equal(minimum, getMinimumScale(bounds))
+      for (const scale of [.5, minimum, 1.4]) {
+        ref.current.setScale(scale); tree = canvas.draw(props, mount)
+        const before = transform(tree)
+        assert.equal(transform(canvas.draw({ ...props, panelOpen: false }, mount)), before)
+        assert.equal(transform(canvas.draw(props, mount)), before)
+      }
+      ref.current.centerMap(); tree = canvas.draw(props, mount)
+      assert.match(transform(tree), /scale\(0.5\)/)
+      canvas.dispose()
+    }
+  } finally { Object.assign(context, previous) }
+})
+
+test('phase 9 zoom controls use actual percentages and the viewport minimum', () => {
+  const zoom = immersivePlayerHarness('../map/ZoomControls')
+  let requested
+  const props = { scale: .5, minimumScale: .06, onScale: value => { requested = value }, onZoom() {}, onCenter() {} }
+  let tree = zoom.draw(props)
+  const input = zoom.find(tree, element => element.type === 'input')
+  assert.equal(input.props.value, 50); assert.equal(input.props.min, 6); assert.equal(input.props.max, 140)
+  assert.equal(input.props['aria-valuetext'], '50 %')
+  input.props.onChange({ target: { value: '25' } }); assert.equal(requested, .25)
+  tree = zoom.draw({ ...props, scale: .06 })
+  const minus = zoom.find(tree, element => element.props['aria-label'] === 'Alejar mapa')
+  assert.equal(minus.props.disabled, true)
+  zoom.dispose()
+})
+
+test('phase 9 panel has five direct links, a compact next-step action and the real traveler rank', () => {
+  const panel = immersivePlayerHarness('../map/AdventurePanel', {
+    '../overlays/checkIn': { useCheckInDay() {}, getTodayCheckIn: () => undefined },
+  })
+  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
+  const points = logic.getCaminoPoints(adventure, journey)
+  let selected
+  let tree = panel.draw({ adventure, points, recommended: points[0], progress: { label: 'Recorrido', value: 0 }, onSelect: id => { selected = id }, onCheckIn() {} })
+  const links = panel.find(tree, element => element.props['aria-label'] === 'Accesos rápidos').props.children
+  assert.deepEqual(Array.from(links, element => panel.text(element)), ['Mi perfil', 'Mi diario', 'En familia', 'Recursos', 'Información'])
+  assert.deepEqual(Array.from(links, element => element.props.to), ['/student/profile', '/student/journal', '/student/conversations', '/student/resources', '/student/catalog/professions'])
+  assert.ok(links.every(element => element.type !== 'button'))
+  const next = panel.button(tree, 'Siguiente paso')
+  assert.ok(next); assert.match(panel.text(next), /El inicio del viaje/)
+  assert.doesNotMatch(panel.text(next), /Ver misión|Informativa|4 min/)
+  next.props.onClick(); assert.equal(selected, 'welcome')
+  let rank = panel.find(tree, element => element.props.className === 'sx-panel-level')
+  assert.equal(rank.props['aria-label'], `Nivel ${store.getTravelerLevel(adventure).number}: ${store.getTravelerLevel(adventure).label}`)
+  assert.match(panel.text(rank), /NIVEL01/)
+  adventure.completedMissionIds = fieldMissions.map(mission => mission.id)
+  tree = panel.draw({ adventure, points: [], progress: { label: 'Recorrido', value: 100 }, onSelect() {}, onCheckIn() {} })
+  rank = panel.find(tree, element => element.props.className === 'sx-panel-level')
+  assert.match(panel.text(rank), /NIVEL03Tu rango de viajeroCartógrafo de posibilidades/)
+  assert.equal(panel.button(tree, 'Siguiente paso'), undefined)
+  panel.dispose()
 })

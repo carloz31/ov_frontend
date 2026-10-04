@@ -14,12 +14,14 @@ import type { StudentMapPoint } from './mapPoints'
 
 import {
   canvasSize,
-  minScale,
+  initialScale,
+  getMinimumScale,
   visibleCenter,
   clampTransform,
   zoomTransform,
   focusTransform,
   type MapTransform,
+  type MapSize,
 } from './geometry'
 
 export type MapCanvasHandle = {
@@ -37,6 +39,8 @@ type Props = {
   recommendedId?: string
   onSelect: (id: string) => void
   onScaleChange: (scale: number) => void
+  onMinimumScaleChange?: (scale: number) => void
+  mapSize?: MapSize
   backgroundImage: string
   label: string
   locked?: boolean
@@ -51,6 +55,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
     recommendedId,
     onSelect,
     onScaleChange,
+    onMinimumScaleChange,
+    mapSize = canvasSize,
     backgroundImage,
     label,
     locked,
@@ -62,43 +68,44 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
     { pointerId: number; x: number; y: number; originX: number; originY: number } | undefined
   >(undefined)
   const animationTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const transformRef = useRef<MapTransform>({ x: 0, y: 0, scale: 0.8 })
+  const transformRef = useRef<MapTransform>({ x: 0, y: 0, scale: initialScale })
   const [transform, setTransform] = useState(transformRef.current)
   const [dragging, setDragging] = useState(false)
   const [moving, setMoving] = useState(false)
-  const apply = useCallback((next: MapTransform, animate = false, focusBesidePanel = false) => {
-    const bounds = viewport.current?.getBoundingClientRect()
-    if (!bounds) return
-    clearTimeout(animationTimer.current)
-    const clamped = clampTransform(next, bounds, focusBesidePanel)
-    transformRef.current = clamped
-    setTransform(clamped)
-    setMoving(animate)
-    if (animate) animationTimer.current = setTimeout(() => setMoving(false), 400)
-  }, [])
+  const apply = useCallback(
+    (next: MapTransform, animate = false, focusBesidePanel = false) => {
+      const bounds = viewport.current?.getBoundingClientRect()
+      if (!bounds) return
+      clearTimeout(animationTimer.current)
+      const clamped = clampTransform(next, bounds, focusBesidePanel, mapSize)
+      transformRef.current = clamped
+      setTransform(clamped)
+      setMoving(animate)
+      if (animate) animationTimer.current = setTimeout(() => setMoving(false), 400)
+    },
+    [mapSize],
+  )
 
   const centerMap = useCallback(() => {
     const bounds = viewport.current?.getBoundingClientRect()
     if (!bounds) return
     const center = visibleCenter(bounds, false)
-    const fitScale = Math.min(
-      (bounds.width - 64) / canvasSize.width,
-      (bounds.height - 64) / canvasSize.height,
-    )
-    const scale = Math.min(0.9, Math.max(minScale, fitScale * 1.55))
+    const scale = Math.max(initialScale, getMinimumScale(bounds, mapSize))
     apply({
       scale,
-      x: center.x - (canvasSize.width * scale) / 2,
-      y: center.y - (canvasSize.height * scale) / 2,
+      x: center.x - (mapSize.width * scale) / 2,
+      y: center.y - (mapSize.height * scale) / 2,
     })
-  }, [apply])
+  }, [apply, mapSize])
   const setScale = useCallback(
     (scale: number, anchor?: { x: number; y: number }) => {
       const bounds = viewport.current?.getBoundingClientRect()
       if (bounds)
-        apply(zoomTransform(transformRef.current, scale, anchor ?? visibleCenter(bounds, false), bounds))
+        apply(
+          zoomTransform(transformRef.current, scale, anchor ?? visibleCenter(bounds, false), bounds, mapSize),
+        )
     },
-    [apply],
+    [apply, mapSize],
   )
 
   useImperativeHandle(
@@ -117,10 +124,10 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
         const point = points.find((item) => item.id === id)
         const bounds = viewport.current?.getBoundingClientRect()
         if (point && bounds)
-          apply(focusTransform(transformRef.current, point, bounds, panelOpen), true, panelOpen)
+          apply(focusTransform(transformRef.current, point, bounds, panelOpen, mapSize), true, panelOpen)
       },
     }),
-    [centerMap, setScale, points, apply, panelOpen],
+    [centerMap, setScale, points, apply, panelOpen, mapSize],
   )
 
   useEffect(() => {
@@ -128,11 +135,14 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
   }, [transform.scale, onScaleChange])
   useEffect(() => {
     centerMap()
+    const bounds = viewport.current?.getBoundingClientRect()
+    if (bounds) onMinimumScaleChange?.(getMinimumScale(bounds, mapSize))
     let previousBounds = viewport.current?.getBoundingClientRect()
     const observer = new ResizeObserver(() => {
       const bounds = viewport.current?.getBoundingClientRect()
       if (bounds && (bounds.width !== previousBounds?.width || bounds.height !== previousBounds?.height)) {
         previousBounds = bounds
+        onMinimumScaleChange?.(getMinimumScale(bounds, mapSize))
         centerMap()
       }
     })
@@ -141,7 +151,7 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
       observer.disconnect()
       clearTimeout(animationTimer.current)
     }
-  }, [centerMap])
+  }, [centerMap, mapSize, onMinimumScaleChange])
   useEffect(() => {
     const element = viewport.current
     if (!element) return
@@ -200,8 +210,8 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
         className="sx-map-canvas"
         data-moving={moving || undefined}
         style={{
-          width: canvasSize.width,
-          height: canvasSize.height,
+          width: mapSize.width,
+          height: mapSize.height,
           transform: `translate3d(${transform.x}px, ${transform.y}px, 0) scale(${transform.scale})`,
           transformOrigin: '0 0',
         }}
@@ -212,14 +222,15 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
           <>
             {variant === 'route' && (
               <>
-                <MapPath points={points} />
-                <BlockSign points={points} />
+                <MapPath points={points} mapSize={mapSize} />
+                <BlockSign points={points} mapSize={mapSize} />
               </>
             )}
             {points.map((point) => (
               <MapNode
                 key={point.id}
                 point={point}
+                mapSize={mapSize}
                 recommended={recommendedId === point.id}
                 selected={selectedId === point.id}
                 onSelect={onSelect}
@@ -227,7 +238,11 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
                   const point = points.find((item) => item.id === id)
                   const bounds = viewport.current?.getBoundingClientRect()
                   if (point && bounds)
-                    apply(focusTransform(transformRef.current, point, bounds, panelOpen), true, panelOpen)
+                    apply(
+                      focusTransform(transformRef.current, point, bounds, panelOpen, mapSize),
+                      true,
+                      panelOpen,
+                    )
                 }}
               />
             ))}

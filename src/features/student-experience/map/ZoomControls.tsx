@@ -1,13 +1,15 @@
 import { Locate, Minus, Plus } from 'lucide-react'
-import { minScale, maxScale } from './geometry'
+import { maxScale } from './geometry'
 
 export function ZoomControls({
   scale,
+  minimumScale,
   onZoom,
   onScale,
   onCenter,
 }: {
   scale: number
+  minimumScale: number
   onZoom: (factor: number) => void
   onScale: (value: number) => void
   onCenter: () => void
@@ -18,7 +20,7 @@ export function ZoomControls({
         type="button"
         className="sx-icon-button"
         aria-label="Alejar mapa"
-        disabled={scale <= minScale}
+        disabled={scale <= minimumScale}
         onClick={() => onZoom(1 / 1.15)}
       >
         <Minus size={18} />
@@ -26,11 +28,16 @@ export function ZoomControls({
       <input
         type="range"
         aria-label="Escala del mapa"
-        min={0}
-        max={100}
-        value={((scale - minScale) / (maxScale - minScale)) * 100}
-        onChange={(event) => onScale(minScale + (Number(event.target.value) / 100) * (maxScale - minScale))}
+        min={minimumScale * 100}
+        max={maxScale * 100}
+        step="any"
+        value={scale * 100}
+        aria-valuetext={`${Math.round(scale * 100)} %`}
+        onChange={(event) => onScale(Number(event.target.value) / 100)}
       />
+      <span className="sx-zoom-value" aria-hidden="true">
+        {Math.round(scale * 100)}%
+      </span>
       <button
         type="button"
         className="sx-icon-button"

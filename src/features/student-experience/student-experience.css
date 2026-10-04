@@ -754,6 +754,36 @@ body:has([data-student-experience] .sx-shell) {
   background: color-mix(in srgb, var(--card) 95%, transparent);
   backdrop-filter: blur(16px);
 }
+.sx-root .sx-student-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-right: auto;
+  color: var(--foreground);
+}
+.sx-root .sx-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.sx-root .sx-brand-name {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+.sx-root .sx-brand-name > span {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.sx-root .sx-brand-name strong {
+  font-size: 16px;
+  font-weight: 800;
+}
 .sx-root .sx-map-stage {
   position: relative;
   flex: 1;
@@ -786,7 +816,7 @@ body:has([data-student-experience] .sx-shell) {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   opacity: 0.85;
   pointer-events: none;
 }
@@ -812,25 +842,25 @@ body:has([data-student-experience] .sx-shell) {
   --sx-node-color: var(--sx-zone-camino);
   position: absolute;
   display: flex;
-  width: 216px;
+  width: 300px;
   align-items: center;
   flex-direction: column;
   gap: 14px;
   padding: 8px;
-  transform: translate(-50%, -60px);
+  transform: translate(-50%, -78px);
   border-radius: var(--radius-lg);
   text-align: center;
   cursor: pointer;
 }
 .sx-root .sx-node-ciudad {
   --sx-node-color: var(--sx-zone-ciudad);
-  transform: translate(-50%, -54px);
+  transform: translate(-50%, -70px);
 }
 .sx-root .sx-node-circle {
   position: relative;
   display: grid;
-  width: 104px;
-  height: 104px;
+  width: 140px;
+  height: 140px;
   place-items: center;
   border: 4px solid color-mix(in srgb, var(--sx-node-color) 75%, white);
   border-radius: 50%;
@@ -840,8 +870,8 @@ body:has([data-student-experience] .sx-shell) {
   transition: transform 180ms ease;
 }
 .sx-root .sx-node-ciudad .sx-node-circle {
-  width: 92px;
-  height: 92px;
+  width: 124px;
+  height: 124px;
 }
 .sx-root .sx-map-node:hover .sx-node-circle {
   transform: translateY(-4px);
@@ -886,13 +916,13 @@ body:has([data-student-experience] .sx-shell) {
   color: var(--primary-foreground);
 }
 .sx-root .sx-node-label {
-  width: 200px;
-  max-width: 200px;
+  width: 284px;
+  max-width: 284px;
   padding: 8px 10px;
 }
 .sx-root .sx-node-label strong {
   display: block;
-  font-size: 20px;
+  font-size: 28px;
   line-height: 1.2;
   font-weight: 700;
 }
@@ -964,6 +994,14 @@ body:has([data-student-experience] .sx-shell) {
   width: 96px;
   accent-color: var(--primary);
   cursor: pointer;
+}
+.sx-root .sx-zoom-value {
+  min-width: 38px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
 }
 .sx-root button:disabled {
   cursor: not-allowed;
@@ -1037,9 +1075,88 @@ body:has([data-student-experience] .sx-shell) {
   font-weight: 700;
 }
 .sx-root .sx-panel-level {
-  margin: 10px 0 16px;
-  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  color: var(--primary);
+}
+.sx-root .sx-level-medallion {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 80px;
+  border: 3px solid var(--data-secondary);
+  border-radius: 22px 22px 32px 32px;
+  background: linear-gradient(145deg, var(--primary), var(--sx-zone-ciudad));
+  color: var(--primary-foreground);
+  box-shadow:
+    inset 0 2px 0 #ffffff60,
+    0 4px 0 var(--primary-soft),
+    0 7px 16px #2457b825;
+}
+.sx-root .sx-level-medallion > span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.sx-root .sx-level-medallion strong {
+  font-size: 32px;
+  line-height: 1.1;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.sx-root .sx-level-rank {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sx-root .sx-level-rank small {
   color: var(--muted-foreground);
+  font-size: 10px;
+}
+.sx-root .sx-level-rank strong {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.sx-root .sx-next-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--data-secondary);
+  border-radius: 16px 6px 16px 6px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--data-secondary) 35%, transparent);
+}
+.sx-root .sx-next-step:hover {
+  background: color-mix(in srgb, var(--primary-soft) 90%, var(--data-secondary));
+}
+.sx-root .sx-next-step > svg {
+  flex-shrink: 0;
+}
+.sx-root .sx-next-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.sx-root .sx-next-step strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 800;
 }
 .sx-root .sx-panel-progress {
   display: flex;

@@ -112,3 +112,25 @@ Archivos: StudentThemeScope.tsx; map/navigation.ts; modules/StudentActivitiesVie
 Verificar secuencia, bloqueos, revisión, protección de enlaces, continuación, transformaciones de mapa, iconos, badges, listado y lectura individual. Mantener cobertura de nodos mediante renderizado directo. Revisar 1280 × 800, 1440 × 900 y 360 px, foco, Escape, contraste y movimiento reducido. Ejecutar build, lint y test; seleccionar solo cambios propios, crear el commit y reportar limitaciones.
 
 Criterio de mínima modificación: los puntos de Ciudad con acción aún no implementada se omiten de pendientes; los completados conservan su ficha. El listado utiliza botones con aria-pressed, sin una nueva clave de almacenamiento. Solo el enfoque explícito descuenta el panel; centrado, límites y zoom usan el lienzo completo.
+
+## 9. Mapa y panel del viajero — `Fase 9: Mapa y panel del viajero`
+
+Usar los PNG proporcionados (1672 × 941) en un mundo navegable de 5016 × 2823, sin recortes ni deformaciones. Vista inicial centrada al 50 %, máximo 140 % y mínimo calculado según el viewport completo, con 32 px de margen alrededor. Mostrar el porcentaje real. El panel sigue superpuesto a cualquier zoom: plegarlo o desplegarlo no altera escala ni posición. Conservar coordenadas proporcionales, zoom hacia el cursor y enfoque explícito junto al panel; pasar dimensiones a la geometría, puntos, segmentos y letreros. Centrar mapa vuelve a la vista inicial; redimensionar conserva el comportamiento previo de centrado. Nombres legibles al 50 %.
+
+Restaurar el logo local de brújula y “Orientación / Explora” en Camino y Ciudad. Accesos directos en este orden: Mi perfil (perfil general), Mi diario, En familia (bloqueo actual), Recursos (mochila), Información (profesiones, con las pestañas internas existentes). Retirar desplegables y acceso rápido a Héroes, conservando sus rutas. Siguiente paso pasa a una tarjeta compacta completamente clicable con flecha, que enfoca y abre la ficha. Nivel como insignia con número de dos dígitos y título del rango real, usando azul y celeste. No cambiar umbrales, secuencia, stores ni prototypeAllUnlocked.
+
+Conservar bienvenida → mitos → registro, una pendiente disponible por vez; las demás pendientes cerradas y las completadas revisables. Ciudad mantiene su comportamiento actual. No reiniciar datos automáticamente ni agregar botón. Para probar sin borrar datos, abrir una ventana privada. Para reiniciar el navegador actual, ejecutar en la consola del sitio:
+
+```js
+[
+  'ov.student-adventure.v1',
+  'ov.missions.v2',
+  'ov.student-ui.v1',
+  'ov.student-followups.v1',
+].forEach(key => localStorage.removeItem(key));
+location.href = '/student/missions';
+```
+
+Esto elimina progreso, respuestas, diario y conversaciones guardados en esas claves, además de presentación y seguimiento. Los datos de demostración definidos por los stores vuelven a aparecer. No usar localStorage.clear().
+
+Archivos: geometría y componentes de mapa/panel, StudentBrand y CSS dentro de student-experience; pruebas del estudiante en adventure-rendering.test.mjs y este plan. Consumir las imágenes del usuario sin alterarlas. Verificar PNG, dimensiones, escala inicial, imagen completa al mínimo, invariancia del panel, secuencia, accesos, logo, tarjeta y nivel. Revisar 1280 × 800, 1440 × 900 y 360 px, arrastre, teclado, foco, contraste y movimiento reducido. Ejecutar build, lint y test, seleccionar solo cambios propios, commit y reporte; detenerse al terminar.

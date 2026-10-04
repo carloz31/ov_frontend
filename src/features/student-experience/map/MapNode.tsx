@@ -1,5 +1,5 @@
 import { Check, CircleHelp } from 'lucide-react'
-import { mapPosition } from './geometry'
+import { mapPosition, type MapSize } from './geometry'
 import type { StudentMapPoint } from './mapPoints'
 
 function splitTitleLines(title: string): string[] {
@@ -23,14 +23,16 @@ export function MapNode({
   selected,
   onSelect,
   onFocus,
+  mapSize,
 }: {
   point: StudentMapPoint
   recommended: boolean
   selected: boolean
   onSelect: (id: string) => void
   onFocus: (id: string) => void
+  mapSize?: MapSize
 }) {
-  const position = mapPosition(point)
+  const position = mapPosition(point, mapSize)
   const Icon = point.status === 'locked' ? CircleHelp : point.icon
   return (
     <button
@@ -45,7 +47,7 @@ export function MapNode({
       aria-label={`${point.title}${point.status === 'locked' ? ', bloqueado' : point.status === 'completed' ? ', completado' : ''}`}
     >
       <span className="sx-node-circle">
-        <Icon size={40} aria-hidden="true" />
+        <Icon size={56} aria-hidden="true" />
         {point.status === 'completed' && (
           <span className="sx-node-badge">
             <Check size={20} />

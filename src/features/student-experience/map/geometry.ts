@@ -1,24 +1,39 @@
 export const logicalCanvasSize = { width: 1080, height: 660 }
-export const canvasSize = { width: 2700, height: 1519 }
-export const minScale = 0.55
+export const imageSize = { width: 1672, height: 941 }
+export const canvasSize = { width: imageSize.width * 3, height: imageSize.height * 3 }
+export const initialScale = 0.5
 export const maxScale = 1.4
 export type MapTransform = { x: number; y: number; scale: number }
-type Bounds = { width: number; height: number }
+export type MapSize = { width: number; height: number }
+type Bounds = MapSize
 
-export function mapPosition(point: { x: number; y: number }) {
+export function getMinimumScale(bounds: Bounds, size: MapSize = canvasSize) {
+  return Math.min(
+    maxScale,
+    Math.max(1, bounds.width - 64) / size.width,
+    Math.max(1, bounds.height - 64) / size.height,
+  )
+}
+
+export function mapPosition(point: { x: number; y: number }, size: MapSize = canvasSize) {
   return {
-    x: (point.x / logicalCanvasSize.width) * canvasSize.width,
-    y: (point.y / logicalCanvasSize.height) * canvasSize.height,
+    x: (point.x / logicalCanvasSize.width) * size.width,
+    y: (point.y / logicalCanvasSize.height) * size.height,
   }
 }
 export function visibleCenter(bounds: Bounds, panelOpen: boolean) {
   const left = panelOpen ? Math.min(304, bounds.width) : 0
   return { x: left + (bounds.width - left) / 2, y: bounds.height / 2 }
 }
-export function clampTransform(next: MapTransform, bounds: Bounds, focusBesidePanel = false): MapTransform {
-  const scale = Math.min(maxScale, Math.max(minScale, next.scale))
-  const imageWidth = canvasSize.width * scale
-  const imageHeight = canvasSize.height * scale
+export function clampTransform(
+  next: MapTransform,
+  bounds: Bounds,
+  focusBesidePanel = false,
+  size: MapSize = canvasSize,
+): MapTransform {
+  const scale = Math.min(maxScale, Math.max(getMinimumScale(bounds, size), next.scale))
+  const imageWidth = size.width * scale
+  const imageHeight = size.height * scale
   const minX = imageWidth > bounds.width ? bounds.width - imageWidth : (bounds.width - imageWidth) / 2
   // Explicit focus may move the left edge beneath the overlaid panel.
   const maxX = imageWidth > bounds.width ? (focusBesidePanel ? Math.min(304, bounds.width) : 0) : minX
@@ -31,8 +46,9 @@ export function zoomTransform(
   scale: number,
   anchor: { x: number; y: number },
   bounds: Bounds,
+  size: MapSize = canvasSize,
 ) {
-  const nextScale = Math.min(maxScale, Math.max(minScale, scale))
+  const nextScale = Math.min(maxScale, Math.max(getMinimumScale(bounds, size), scale))
   const ratio = nextScale / current.scale
   return clampTransform(
     {
@@ -41,6 +57,8 @@ export function zoomTransform(
       y: anchor.y - (anchor.y - current.y) * ratio,
     },
     bounds,
+    false,
+    size,
   )
 }
 export function focusTransform(
@@ -48,12 +66,14 @@ export function focusTransform(
   point: { x: number; y: number },
   bounds: Bounds,
   panelOpen = false,
+  size: MapSize = canvasSize,
 ) {
-  const position = mapPosition(point)
+  const position = mapPosition(point, size)
   const center = visibleCenter(bounds, panelOpen)
   return clampTransform(
     { ...current, x: center.x - position.x * current.scale, y: center.y - position.y * current.scale },
     bounds,
     panelOpen,
+    size,
   )
 }
