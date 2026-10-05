@@ -1,3 +1,33 @@
+# Fondos de actividades por zona
+
+## Cambio — 5 de octubre de 2026
+
+Por solicitud del usuario, las actividades del Camino usan `/images/background/forest.png` y las de Ciudad usan `/images/background/afueras.png`. Cada pantalla pasa la imagen al reproductor y este a PlayerAmbient. Se conservan el encuadre centrado con cover, los ambientes noche/amanecer y su velo al 85 %. Las imágenes originales no se modifican.
+
+Build aprobado, lint de los tres componentes modificados aprobado y 145 pruebas de adventure-rendering aprobadas. Sin cambios en lógica ni datos de actividades.
+
+---
+
+# Acceso unificado y selector de perfiles
+
+## Solicitud y alcance — 5 de octubre de 2026
+
+El usuario solicita un login común para estudiante, apoderado y orientador, que acepte cualquier usuario y contraseña y muestre después el selector de perfiles. Se implementa en src/features/access, con el azul de la paleta staff, superficie nocturna, oro, brújula y tres caminos decorativos. El formulario permanece claro y sencillo; el móvil reduce la ilustración para priorizar los campos. No se agregan controles de registro o recuperación sin funcionalidad.
+
+La raíz y /login muestran el acceso. Tras completar ambos campos se abre /profiles, con los tres destinos originales. Se añade DemoAccessGate en App, antes de AppRoutes, para exigir el acceso común a las rutas del selector y los tres portales. Las rutas internas y los componentes protegidos se mantienen. Volver a la raíz durante la sesión permite regresar al selector. Cerrar sesión desde el selector devuelve al login y limpia el indicador.
+
+El modo de demostración se informa en el formulario. No se comprueban credenciales contra un servidor ni se guardan usuario o contraseña: sessionStorage conserva únicamente ov.demo-access.v1 = 1 durante la sesión de la pestaña. Si el almacenamiento no está disponible, el acceso funciona en memoria. Los campos requieren contenido, admiten cualquier formato y una contraseña de un carácter; Enter envía el formulario y el botón del ojo alterna su visibilidad. Se actualizan los títulos de documento del login y el selector.
+
+## Validación
+
+Build y lint aprobados. npm test: **209 pruebas, 209 aprobadas, 0 fallidas (100 %)**. Tres pruebas nuevas cubren formulario/credenciales arbitrarias/visibilidad, sesión/recarga/cierre/almacenamiento inválido o bloqueado, y acceso al selector y a los tres portales. Las pruebas de rutas internas continúan comprobando sus componentes mediante AppRoutes; el límite de acceso se verifica por separado en DemoAccessGate, utilizado por App.
+
+Navegador: diseño comprobado a 1280×800, 1440×900 y 360×800, sin desbordamiento horizontal. Validación de campos vacíos, mostrar/ocultar contraseña y envío por Enter comprobados. Un usuario arbitrario y contraseña x abren el selector; recargar conserva el acceso; las tres tarjetas llegan a /student/missions, /parent/overview y /counselor/home. Cerrar sesión borra los campos y el acceso; una entrada directa al portal vuelve a /login. Sin errores de consola. Controles de 44 px o más, etiquetas y foco visible; CSS respeta movimiento reducido.
+
+Revisión del diff: cambios en el acceso nuevo, App, rutas, selector, pruebas y documentación; ninguna modificación de portales protegidos ni componentes compartidos. git diff --check aprobado. No se ha desplegado desde esta tarea.
+
+---
+
 # Alineación de respuestas en actividades informativas
 
 ## Cambio — 4 de octubre de 2026

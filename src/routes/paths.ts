@@ -1,5 +1,7 @@
 const appPaths = {
   home: '/',
+  login: '/login',
+  roleSelection: '/profiles',
   student: {
     root: '/student',
     exploration: '/student/exploration',
@@ -48,7 +50,8 @@ const appPaths = {
       `/counselor/students/${studentId}/family-records/${activityId}`,
     reviews: '/counselor/reviews',
     publications: '/counselor/publications',
-    interview: (interviewId: string) => `/counselor/publications/interviews/${encodeURIComponent(interviewId)}`,
+    interview: (interviewId: string) =>
+      `/counselor/publications/interviews/${encodeURIComponent(interviewId)}`,
     priorities: '/counselor/priorities',
     families: '/counselor/families',
     teachers: '/counselor/teachers',

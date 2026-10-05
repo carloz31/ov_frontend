@@ -17,6 +17,7 @@ export function CiudadScreen() {
       <div className="sx-player-host">
         <StudentActivityPlayer
           activity={activity}
+          imageUrl="/images/background/afueras.png"
           direct={params.get('modo') === 'directa'}
           onClose={() => setParams({})}
           onNext={() => setParams({})}

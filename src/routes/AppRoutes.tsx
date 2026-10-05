@@ -38,6 +38,8 @@ import { parentChildren } from '@/features/parent-portal/data/ParentPortalData'
 import { RoleSelectionScreen } from '@/features/role-selection/RoleSelectionScreen'
 import type { PlatformRole } from '@/features/role-selection/types/RoleSelectionTypes'
 import { appPaths } from './paths'
+import { LoginScreen } from '@/features/access/LoginScreen'
+import { useDemoAccess, startDemoAccess, endDemoAccess } from '@/features/access/demoAccess'
 import { ResearchRoute } from '@/features/student-experience/research/StudentResearchView'
 import { ResearchGuideView } from '@/features/student-experience/research/ResearchGuideView'
 import { StudentJournalView } from '@/features/student-experience/modules/StudentJournalView'
@@ -55,13 +57,37 @@ const roleHomePaths: Record<PlatformRole, string> = {
 function RoleSelectionRoute() {
   const navigate = useNavigate()
 
-  return <RoleSelectionScreen onSelectRole={(role) => navigate(roleHomePaths[role])} />
+  return (
+    <RoleSelectionScreen
+      onSelectRole={(role) => navigate(roleHomePaths[role])}
+      onSignOut={() => {
+        endDemoAccess()
+        navigate(appPaths.login, { replace: true })
+      }}
+    />
+  )
+}
+
+function LoginRoute() {
+  const navigate = useNavigate()
+  const active = useDemoAccess()
+  if (active) return <Navigate replace to={appPaths.roleSelection} />
+  return (
+    <LoginScreen
+      onEnter={() => {
+        startDemoAccess()
+        navigate(appPaths.roleSelection, { replace: true })
+      }}
+    />
+  )
 }
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route element={<RoleSelectionRoute />} path="/" />
+      <Route element={<LoginRoute />} path="/" />
+      <Route element={<LoginRoute />} path={appPaths.login} />
+      <Route element={<RoleSelectionRoute />} path={appPaths.roleSelection} />
       <Route
         element={
           <StudentThemeScope>

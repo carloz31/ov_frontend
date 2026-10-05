@@ -24,6 +24,7 @@ import { ResultNode } from './nodes/ResultNode'
 
 export function StudentActivityPlayer({
   activity,
+  imageUrl,
   direct = false,
   edit = false,
   onClose,
@@ -31,6 +32,7 @@ export function StudentActivityPlayer({
   nextActivityOverride,
 }: {
   activity: Actividad
+  imageUrl?: string
   nextActivityOverride?: Actividad | null
   direct?: boolean
   edit?: boolean
@@ -203,7 +205,7 @@ export function StudentActivityPlayer({
       className={`fixed inset-0 z-40 sx-root sx-player location-${activity.id}`}
       data-ambient={mode}
     >
-      <PlayerAmbient mode={mode} />
+      <PlayerAmbient mode={mode} imageUrl={imageUrl} />
       <PlayerTopBar
         activity={activity}
         finished={!node && !reaction}

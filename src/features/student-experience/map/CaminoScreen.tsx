@@ -30,6 +30,7 @@ export function CaminoScreen() {
         <StudentActivityPlayer
           key={activity.id}
           activity={activity}
+          imageUrl="/images/background/forest.png"
           nextActivityOverride={getNextCaminoActivity(points)}
           edit={params.get('revision') === '1'}
           onClose={() => setParams({})}
