@@ -2516,17 +2516,33 @@ test('moderation hides interviews in student investigations while retaining visi
 test('classroom dashboard aggregates current profiles without student names or private content', () => {
   const { studentProfiles } = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
   const html = render('/counselor/home?salon=5.%C2%B0%20A')
-  const headings = ['Alertas','Cuestionarios','Actividades de registro','Carreras de interés','Instituciones de interés','Seguridad y diario']
+  const interests = render('/counselor/home?salon=5.%C2%B0%20A&section=interests')
+  const headings = ['Alertas','Cuestionarios','Actividades de registro','Seguridad y diario']
   let previous = -1
   for (const title of headings) { const index = html.indexOf(`>${title}</h2>`); assert.ok(index > previous,title); previous = index }
+  for (const title of ['Carreras de interés','Instituciones de interés']) {
+    assert.ok(interests.includes(`>${title}</h2>`), title)
+    assert.ok(!html.includes(`>${title}</h2>`), title)
+  }
+  for (const title of headings) assert.ok(!interests.includes(`>${title}</h2>`), title)
   assert.match(html,/Ver estudiantes del salón/)
   assert.match(html,/salon=5.%C2%B0\+A/)
+  assert.match(interests,/salon=5.%C2%B0\+A/)
+  assert.match(interests,/>12 estudiantes</)
   assert.match(html,/alertas=with/)
   assert.match(html,/>12 estudiantes</)
-  assert.equal((html.match(/<h2/g) ?? []).length, 6)
+  assert.equal((html.match(/<h2/g) ?? []).length, 4)
+  assert.equal((interests.match(/<h2/g) ?? []).length, 2)
+  assert.equal((html.match(/role="tab"/g) ?? []).length, 2)
+  assert.match(html,/aria-selected="true"[^>]*>Seguimiento</)
+  assert.match(interests,/aria-selected="true"[^>]*>Intereses vocacionales</)
+  assert.match(render('/counselor/home?section=unknown'),/aria-selected="true"[^>]*>Seguimiento</)
   assert.doesNotMatch(html,/Mostrar cuestionarios|Mostrar actividades de registro|Sobre 12 estudiantes/)
-  assert.doesNotMatch(html,/role="tab"|Autopercepción de la cohorte|En observación|Activos \(7 días\)/)
-  for (const student of studentProfiles) assert.ok(!html.includes(`${student.nombres} ${student.apellidos}`))
+  assert.doesNotMatch(html,/Autopercepción de la cohorte|En observación|Activos \(7 días\)/)
+  for (const student of studentProfiles) {
+    assert.ok(!html.includes(`${student.nombres} ${student.apellidos}`))
+    assert.ok(!interests.includes(`${student.nombres} ${student.apellidos}`))
+  }
   assert.match(html,/de 10/)
   assert.match(html,/Guiadas/)
   assert.match(html,/Pregunta del día/)
