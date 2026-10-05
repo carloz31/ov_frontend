@@ -1144,16 +1144,14 @@ test('family dashboard has four personal states, progress and no streak or deadl
   assert.match(html, /Visualizar regalo/)
   assert.doesNotMatch(html, /racha|semanas en compañía|fecha límite|se vence/i)
 })
-test('student resources open with backpack before posts, events and investigations', () => {
+test('student resources show only the backpack and retain the testimonials route', () => {
   const html = render('/student/resources')
   assert.match(html, /Tu mochila de viaje/)
   assert.match(html, /Mi mochila/)
   assert.match(html, /Testimonios/)
-  assert.match(html, /Investigaciones/)
-  assert.match(html, /Publicaciones/)
-  assert.match(html, /Eventos/)
-  assert.ok(html.indexOf('Mi mochila') < html.indexOf('Publicaciones'))
-  assert.doesNotMatch(html, />Comunidad</)
+  assert.doesNotMatch(html, /Investigaciones|>Comunidad</)
+  assert.match(html, /Lo que aprendiste en el camino/)
+  assert.match(html, /Voces de la ciudad/)
   assert.match(html, /Bloqueado/)
   assert.match(html, /La plaza de los rumores/)
   assert.match(html, /Incendio forestal/)
@@ -1210,15 +1208,23 @@ test('resource unlocks follow actual activities and specific cases rather than r
     ),
     false,
   )
-  const community = { requirement: { anyCase: true } }
+  const researchAccess = { requirement: { anyCase: true } }
   assert.equal(
-    resources.isTravelResourceUnlocked(community, blank, { ...adventure, solvedCaseIds: ['unknown-case'] }),
+    resources.isTravelResourceUnlocked(researchAccess, blank, { ...adventure, solvedCaseIds: ['unknown-case'] }),
     false,
   )
-  assert.equal(resources.isTravelResourceUnlocked(community, blank, solved), true)
-  assert.match(render('/student/resources?tab=community'), /Completa una misión de Central de Casos/)
-  assert.doesNotMatch(render('/student/resources?tab=community'), /Ver entrevista<|personas la marcaron/)
-  assert.match(render('/student/resources?tab=community', solved), /Ver entrevista/)
+  assert.equal(resources.isTravelResourceUnlocked(researchAccess, blank, solved), true)
+  for (const route of ['/student/research', '/student/investigations']) {
+    const locked = render(route)
+    assert.match(locked, /Las investigaciones se abren al resolver tu primer caso en la Central de Casos/)
+    assert.doesNotMatch(locked, /Ver la entrevista/)
+    assert.match(locked, /Completa una misión de Central de Casos para descubrir esta investigación/)
+    assert.match(locked, /Ir a Central de Casos/)
+    const unlocked = render(route, solved)
+    assert.match(unlocked, /Ver la entrevista/)
+    assert.match(unlocked, /Objetos que hacen más fácil la vida diaria/)
+    assert.doesNotMatch(unlocked, /Las investigaciones se abren al resolver tu primer caso/)
+  }
 })
 
 test('resource viewers normalize YouTube URLs and reject unsafe file or video URLs', () => {
@@ -2309,6 +2315,18 @@ test('every supplied mission node renders, including matrices, slides, questions
       assert.match(html, /fixed inset-0 z-40/)
       assert.match(html, /sx-root sx-player location-/)
       assert.doesNotMatch(html, /\bpts\b|\bpuntos\b|type="file"|Volver atrás/)
+      if (['item', 'pregunta', 'eleccion'].includes(node.tipo)) {
+        const previous = activity.nodos[activity.nodos.indexOf(node) - 1]
+        const prompt = node.tipo === 'item'
+          ? journeyContent.catalog.instrumentos.find(instrument => instrument.id === node.instrumentoId)?.items.find(item => item.id === node.itemId)?.texto
+          : node.tipo === 'pregunta' ? node.enunciado
+          : previous?.tipo === 'dialogo' ? previous.texto : '¿Qué le dirías?'
+        assert.ok(prompt, `${activity.id}/${node.id}: missing response prompt`)
+        const heading = renderToStaticMarkup(React.createElement('h2', {}, prompt))
+        const headingIndex = html.indexOf(heading)
+        assert.ok(headingIndex >= 0 && headingIndex < html.indexOf('sx-player-options'), `${activity.id}/${node.id}: prompt must precede response options`)
+        assert.match(html, node.tipo === 'pregunta' && node.formato === 'opcion_multiple' ? /Selecciona una o más respuestas\./ : /Selecciona una respuesta\./)
+      }
       if (node.tipo === 'item') assert.match(html, /No hay respuestas correctas o incorrectas/)
       if (node.tipo === 'diapositiva') assert.match(html, /Entendido/)
       if (node.tipo === 'consigna' && activity.plantilla?.tipo === 'matriz') {
@@ -2324,6 +2342,7 @@ test('every supplied mission node renders, including matrices, slides, questions
 test('direct instrument route starts on the official first item and omits Mara dialogue', () => {
   const html = render('/student/exploration?actividad=act-tip-01&modo=directa')
   assert.match(html, /Aceptarías trabajar escribiendo artículos/)
+  assert.match(html, /Selecciona una respuesta\./)
   assert.doesNotMatch(html, /Soy Mara/)
   assert.doesNotMatch(html, /¿Qué le dirías/)
 })
@@ -2477,10 +2496,20 @@ test('publications expose direct interview routes, reports and read-only reactio
   assert.match(render('/counselor/publications?salon=unknown'), /Todos los salones/)
 })
 
-test('counselor moderation hides interviews in the student community', () => {
-  const markup = render('/student/resources?tab=community', { interviewModeration: { 'demo-industrial-design': { hidden: true, featured: false } } })
-  assert.doesNotMatch(markup, /Objetos que hacen más fácil la vida diaria/)
-  assert.match(markup, /Así se investiga la calidad del agua/)
+test('moderation hides interviews in student investigations while retaining visible interviews', () => {
+  const solved = { solvedCaseIds: ['forest-fire'] }
+  const visible = render('/student/research', solved)
+  assert.match(visible, /Objetos que hacen más fácil la vida diaria/)
+  assert.match(visible, /Así se investiga la calidad del agua/)
+  for (const route of ['/student/research', '/student/investigations']) {
+    const markup = render(route, {
+      ...solved,
+      interviewModeration: { 'demo-industrial-design': { hidden: true, featured: false } },
+    })
+    assert.doesNotMatch(markup, /Objetos que hacen más fácil la vida diaria/)
+    assert.match(markup, /Así se investiga la calidad del agua/)
+    assert.match(markup, /Ver la entrevista/)
+  }
 })
 
 
@@ -2968,56 +2997,6 @@ test('separate signal history reuses check-in editing and keyboard point selecti
   history.dispose()
 })
 
-test('resource tabs separate the backpack, publications, events and published investigations', () => {
-  const patch = {
-    solvedCaseIds: ['forest-fire'],
-    notices: [
-      { id: 'new-post', title: 'Pista de publicación de prueba', body: 'Una lectura para explorar.', date: '2026-09-01', attendees: [], kind: 'publication' },
-      { id: 'new-event', title: 'Evento de prueba del viajero', body: 'Una visita para explorar.', date: '2026-09-01', attendees: [], kind: 'event' },
-    ],
-    videos: [{ id: 'new-investigation', title: 'Investigación publicada de prueba', alias: 'Alex', url: 'https://example.com/interview', reflection: 'Mi descubrimiento sobre una carrera.', createdAt: '2026-09-01T10:00:00.000Z' }],
-  }
-  const backpack = render('/student/resources', patch)
-  for (const name of ['Mi mochila', 'Publicaciones', 'Eventos', 'Investigaciones']) assert.match(backpack, new RegExp(name))
-  assert.doesNotMatch(backpack, /Pista de publicación de prueba|Evento de prueba del viajero|Investigación publicada de prueba|>Comunidad</)
-  const posts = render('/student/resources?tab=posts', patch)
-  assert.match(posts, /Pista de publicación de prueba/)
-  assert.doesNotMatch(posts, /Evento de prueba del viajero|Investigación publicada de prueba|Tu mochila de viaje/)
-  const events = render('/student/resources?tab=events', patch)
-  assert.match(events, /Evento de prueba del viajero/)
-  assert.doesNotMatch(events, /Pista de publicación de prueba|Investigación publicada de prueba/)
-  const research = render('/student/resources?tab=research', patch)
-  assert.match(research, /Investigación publicada de prueba/)
-  assert.match(research, /Mi salón/)
-  assert.match(research, /Leyendas/)
-  assert.doesNotMatch(research, /Pista de publicación de prueba|Evento de prueba del viajero/)
-  assert.match(render('/student/resources?tab=community', patch), /id="sx-resource-tab-research"[^>]*aria-selected="true"/)
-  assert.match(render('/student/resources?tab=unknown', patch), /Tu mochila de viaje/)
-})
-
-test('resource tabs support arrow and boundary keys while retaining unrelated query parameters', () => {
-  let params = new URLSearchParams('keep=1'), focused = -1, prevented = 0
-  const page = immersivePlayerHarness('../modules/StudentResourcesView', {
-    'react-router': { useSearchParams: () => [params, update => { params = update(params) }] },
-  })
-  const tab = (tree, id) => page.find(tree, element => element.props.id === `sx-resource-tab-${id}`)
-  const event = key => ({ key, preventDefault() { prevented++ }, currentTarget: { parentElement: { querySelectorAll: () => Array.from({ length: 4 }, (_, index) => ({ focus: () => { focused = index } })) } } })
-  let tree = page.draw({})
-  tab(tree, 'backpack').props.onKeyDown(event('End'))
-  assert.equal(params.get('tab'), 'research'); assert.equal(params.get('keep'), '1'); assert.equal(focused, 3)
-  tree = page.draw({})
-  assert.equal(tab(tree, 'research').props['aria-selected'], true)
-  tab(tree, 'research').props.onKeyDown(event('ArrowRight'))
-  assert.equal(params.has('tab'), false); assert.equal(focused, 0)
-  tree = page.draw({})
-  tab(tree, 'backpack').props.onKeyDown(event('ArrowLeft'))
-  assert.equal(params.get('tab'), 'research')
-  tree = page.draw({})
-  tab(tree, 'research').props.onKeyDown(event('Home'))
-  assert.equal(params.has('tab'), false); assert.equal(params.get('keep'), '1'); assert.equal(prevented, 4)
-  page.dispose()
-})
-
 test('investigation cards preserve visits, favorites and a single reaction without changing the published draft', () => {
   const previousWindow = context.window
   context.window = { ...previousWindow, removeEventListener() {} }
@@ -3052,46 +3031,6 @@ test('investigation cards preserve visits, favorites and a single reaction witho
     context.window = previousWindow
   }
 })
-
-test('restored publication and event details keep reading, favorites and attendance in existing data', () => {
-  const previousWindow = context.window
-  context.window = { ...previousWindow, removeEventListener() {} }
-  let navigated
-  const board = immersivePlayerHarness('../modules/StudentResourceBoard', {
-    'react-router': { useNavigate: () => destination => { navigated = destination } },
-  })
-  try {
-    store.updateAdventure(() => store.createInitialAdventure())
-    let tree = board.draw({ tab: 'posts' })
-    const post = board.find(tree, element => element.type?.name === 'PublicationCard')
-    post.props.onOpen(post.props.item)
-    assert.ok(store.useAdventure().visits.includes(post.props.item.id))
-    tree = board.draw({ tab: 'posts' })
-    let detail = board.find(tree, element => element.type?.name === 'ResourceDetail')
-    detail.props.onFavorite()
-    assert.ok(store.useAdventure().bookmarks.includes(post.props.item.id))
-    detail.props.onBack()
-    tree = board.draw({ tab: 'events' })
-    const event = board.find(tree, element => element.type?.name === 'EventCard' && element.props.item.id === 'science-lab-visit')
-    event.props.onOpen(event.props.item)
-    tree = board.draw({ tab: 'events' })
-    detail = board.find(tree, element => element.type?.name === 'ResourceDetail')
-    assert.equal(detail.props.past, true)
-    const journalBefore = JSON.stringify(store.useAdventure().journal)
-    detail.props.onEventOutcome(event.props.item, 'attended')
-    assert.equal(store.useAdventure().eventAttendance[event.props.item.id], 'attended')
-    assert.ok(store.useAdventure().bookmarks.includes(event.props.item.id))
-    const destination = new URL(navigated, 'https://example.com')
-    assert.equal(destination.pathname, '/student/journal')
-    assert.equal(destination.searchParams.get('event'), event.props.item.title)
-    assert.equal(destination.searchParams.get('outcome'), 'attended')
-    assert.equal(JSON.stringify(store.useAdventure().journal), journalBefore)
-  } finally {
-    board.dispose()
-    context.window = previousWindow
-  }
-})
-
 
 test('discovery stores survive reload, validate nested data and report storage failures', () => {
   const file = path.resolve('src/features/student-experience/discovery/persistentStore.ts')
@@ -3449,6 +3388,8 @@ test('new backpack separates provisions, protects locked identities and navigate
   assert.equal(params.get('kind'),'all')
   tree=page.draw({});tab(tree,'all').props.onKeyDown({key:'ArrowLeft',preventDefault(){}})
   assert.equal(params.get('kind'),'testimonial')
+  tree=page.draw({});tab(tree,'testimonial').props.onKeyDown({key:'Home',preventDefault(){}})
+  assert.equal(params.get('kind'),'all');assert.equal(params.get('keep'),'1')
   params=new URLSearchParams('kind=unknown&keep=1');tree=page.draw({});assert.equal(tab(tree,'all').props['aria-selected'],true)
   assert.equal(navigated,undefined)
  }finally{page.dispose()}

@@ -1,3 +1,87 @@
+# Alineación de respuestas en actividades informativas
+
+## Cambio — 4 de octubre de 2026
+
+El usuario solicita alinear las respuestas a la izquierda, mostrando el ejemplo de mitos. QuestionNode separa el texto de cada opción en un span; sus opciones usan justify-content: flex-start y el marcador tiene ancho fijo sin margen adicional. Las respuestas cortas y de varias líneas empiezan en la misma posición junto al marcador. Las elecciones con flecha y los ítems de instrumentos mantienen su presentación existente. No se modifica contenido, selección ni evaluación.
+
+## Validación
+
+Build y lint aprobados. npm test: **206 pruebas, 206 aprobadas, 0 fallidas**. Se mantiene la cobertura de preguntas, selección, evaluación, reintentos y consignas. git diff --check aprobado. Modificaciones únicamente en QuestionNode, CSS del estudiante y este registro; no se añaden pruebas que repliquen reglas CSS.
+
+---
+
+# Consignas visibles dentro de las tarjetas de respuesta
+
+## Solicitud y alcance — 4 de octubre de 2026
+
+El usuario requiere repetir la consigna del personaje encima del selector, seguida por Selecciona una respuesta. como texto secundario. Se adapta la presentación de ItemNode (todos los formatos de instrumento, con y sin personaje), QuestionNode y ChoiceNode dentro de la carpeta del estudiante. En preguntas múltiples se indica Selecciona una o más respuestas. El enunciado se conserva también en el diálogo y durante la retroalimentación de preguntas. No se modifica el contenido de instrumentos, respuestas, puntuación, guardado ni lógica de misiones.
+
+## Validación
+
+Build y lint aprobados. npm test: **206 pruebas, 206 aprobadas, 0 fallidas**. La prueba que renderiza todos los nodos suministrados ahora comprueba que cada ítem, pregunta y elección muestre su consigna real como h2 antes de las opciones y la indicación correspondiente. La ruta directa también exige la indicación secundaria y sigue sin diálogo de Mara. La selección, reintentos y guardado mantienen sus pruebas aprobadas.
+
+Revisión en navegador de la primera pregunta del test de intereses: consigna completa, indicación secundaria y Sí/No visibles a 360×800 sin desbordamiento horizontal. El flujo con personaje conserva el diálogo de Mara. git diff --check aprobado. Cambios limitados a los tres nodos del estudiante, CSS local, pruebas de presentación y documentación.
+
+---
+
+# Corrección de imágenes al desplegar la Central de Casos
+
+## Causa y cambio — 4 de octubre de 2026
+
+El usuario reporta un 404 de forest-fire-case-background.png en Vercel. ExplorationAssets utiliza import.meta.env.BASE_URL; Vite tenía base './', de modo que las imágenes se resolvían como rutas relativas al caso. Se cambia únicamente la base de Vite a '/': los recursos públicos ahora se piden en /images/... y los bundles en /assets/..., independientemente de la ruta del estudiante. No se modifican el helper protegido, los datos del caso ni portales.
+
+Se añade tests/deployment-assets.test.mjs, que utiliza la base real de la configuración y el helper de imágenes. Comprueba las tres fases del incendio en rutas anidadas con y sin barra final y en el mapa con query, preservando ?v=2 y verificando que cada archivo público existe. Antes de la corrección esta prueba falla por resolver la imagen dentro de /student/cases/...; después pasa.
+
+## Validación
+
+Build y lint aprobados. npm test: **206 pruebas, 206 aprobadas, 0 fallidas (100 %)**. Se verifica también el artefacto de producción: index.html referencia assets desde la raíz; los tres fondos están en dist/images y tienen firma PNG válida. git diff --check aprobado. La corrección está en el repositorio local y requiere un nuevo despliegue para llegar al sitio de Vercel; no se ha publicado desde esta tarea.
+
+---
+
+# Corrección de expectativas de Recursos e Investigaciones
+
+## Solicitud y alcance — 4 de octubre de 2026
+
+El usuario confirma que Investigaciones no pertenece a Recursos y que Recursos no tiene pestaña Comunidad; solicita corregir las tres pruebas residuales. Esta autorización reemplaza la obligación anterior de conservar esas aserciones antiguas. Cambios exclusivamente en tests/adventure-rendering.test.mjs y este registro, sin modificar código de aplicación ni áreas protegidas.
+
+- student resources show only the backpack and retain the testimonials route (línea 1147): comprueba la mochila, sus compartimentos, los bloqueos y la ruta compatible de testimonios. Exige que Investigaciones y Comunidad no se presenten dentro de Recursos.
+- resource unlocks follow actual activities and specific cases rather than review mode (línea 1163): conserva todas las aserciones puras de desbloqueo, incluidos IDs de casos desconocidos. Comprueba el contenido directamente en /student/research y /student/investigations. En estado bloqueado exige el aviso, los adelantos y la acción Ir a Central de Casos, sin Ver la entrevista. Con un caso válido resuelto exige entrevistas abiertas y ausencia del aviso de bloqueo. La primera ejecución detectó que los títulos de los adelantos sí se muestran; se corrigió esa nueva expectativa para conservar el comportamiento actual, sin tocar la implementación.
+- moderation hides interviews in student investigations while retaining visible interviews (línea 2486): comprueba primero que ambas entrevistas existen sin moderación. Después, con un caso resuelto, exige en ambas rutas que la ocultada desaparezca y que la otra siga visible y se pueda abrir. Evita una comprobación vacía por el bloqueo o una redirección estática.
+
+## Cierre
+
+npm test: **205 pruebas, 205 aprobadas, 0 fallidas (100 %)**. Build y lint aprobados. git diff --check aprobado. No se omiten pruebas ni se alteran modelos o lógica para alcanzar el resultado; las tres pruebas restantes se actualizan al contrato vigente. Publicaciones/Eventos permanecen retirados de la cobertura obsoleta del estudiante según la solicitud anterior. Las listas residuales de las secciones históricas siguientes quedan resueltas y ya no representan el estado actual.
+
+---
+
+# Retirada de pruebas obsoletas de Publicaciones y Eventos
+
+## Solicitud y cambios — 4 de octubre de 2026
+
+El usuario confirma que Publicaciones y Eventos ya no estarán en la plataforma y pide retirarlos de las pruebas y explicar los fallos restantes. Esta instrucción autoriza retirar sus expectativas antiguas, antes conservadas como línea base; no se modifica código de aplicación ni portales protegidos.
+
+Se eliminan tres pruebas del portal del estudiante:
+
+- resource tabs separate the backpack, publications, events and published investigations: exige cuatro pestañas antiguas, Publicaciones/Eventos y sus tarjetas. Las investigaciones actuales tienen sus propias pruebas en su ruta.
+- resource tabs support arrow and boundary keys while retaining unrelated query parameters: opera esas mismas cuatro pestañas inexistentes. La cobertura vigente usa Todo/Fichas/Testimonios y kind; se conserva y añade Inicio, manteniendo los demás parámetros.
+- restored publication and event details keep reading, favorites and attendance in existing data: busca PublicationCard/EventCard y detalles retirados.
+
+En la prueba inicial de Recursos se eliminan solamente las expectativas Publicaciones, Eventos y su orden; se renombra student resources show the backpack and investigations. Se mantienen las demás aserciones para identificar el fallo residual. Las pruebas de entradas heredadas del diario, datos existentes y otros portales no se retiran.
+
+## Resultado actual y causas residuales
+
+Build y lint aprobados. npm test: 205 pruebas, 202 aprobadas y 3 fallidas (98,54 %). No se omiten ni se marcan como aprobadas las tres pruebas restantes. git diff --check aprobado.
+
+| Prueba | Archivo y línea | Causa exacta y actualización necesaria |
+| --- | --- | --- |
+| student resources show the backpack and investigations | tests/adventure-rendering.test.mjs:1147; aserción 1152 | Busca Investigaciones en /student/resources. Esa ruta muestra exclusivamente la mochila; Investigaciones vive en /student/research y /student/investigations. Actualizar esta expectativa de navegación, conservando las comprobaciones de mochila y compatibilidad de testimonios. |
+| resource unlocks follow actual activities and specific cases rather than review mode | tests/adventure-rendering.test.mjs:1162; aserción 1216 | Las aserciones puras de desbloqueo pasan. Las tres comprobaciones finales renderizan /student/resources?tab=community: StudentResourcesView devuelve Navigate, cuyo efecto no se ejecuta en renderToStaticMarkup. No se renderiza la vista de destino. Comprobar el destino en una prueba montada de redirección y el contenido directamente en /student/research. Actualizar el aviso a Las investigaciones se abren al resolver tu primer caso... y la acción a Ver la entrevista; la prueba antigua exige Ver entrevista. |
+| counselor moderation hides interviews in the student community | tests/adventure-rendering.test.mjs:2477; aserción 2480 | La misma ruta antigua produce el contenedor sin entrevistas en SSR. La ausencia de la entrevista oculta pasa por estar vacío; la presencia de Así se investiga la calidad del agua falla. Comprobar ambas condiciones en /student/research o /student/investigations, proporcionando solvedCaseIds: ['forest-fire'] para abrir las investigaciones. La prueba actual de descubrimiento ya verifica esta moderación y pasa. |
+
+Para el 100 % hace falta actualizar estas tres expectativas al contrato actual, preservando las verificaciones de desbloqueo, redirección y moderación. No hay evidencia de un fallo de esos mecanismos en las pruebas actuales aprobadas.
+
+---
+
 # Adaptación visual: historial de señales y Mis actividades
 
 ## Solicitud y alcance — 4 de octubre de 2026

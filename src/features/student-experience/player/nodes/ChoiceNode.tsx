@@ -16,7 +16,8 @@ export function ChoiceNode({
       <div className="sx-scene-space">
         <section className="sx-glass-dark sx-scene-panel">
           <p className="sx-player-eyebrow">Tu voz también cuenta</p>
-          <h2>¿Qué le dirías?</h2>
+          <h2>{previous?.texto ?? '¿Qué le dirías?'}</h2>
+          <p className="sx-player-response-instruction">Selecciona una respuesta.</p>
           <div className="sx-player-options">
             {node.opciones.map((option) => (
               <button

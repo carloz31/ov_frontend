@@ -65,9 +65,17 @@ export function QuestionNode({
         <section
           className={`sx-glass-dark sx-scene-panel ${feedback ? `sx-question-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'}` : ''}`}
         >
+          <h2>{node.enunciado}</h2>
+          {!feedback && (
+            <p className="sx-player-response-instruction">
+              {node.formato === 'opcion_multiple'
+                ? 'Selecciona una o más respuestas.'
+                : 'Selecciona una respuesta.'}
+            </p>
+          )}
           {!feedback ? (
             <>
-              <div className={`sx-player-options ${grid ? 'sx-question-grid' : ''}`}>
+              <div className={`sx-player-options sx-question-options ${grid ? 'sx-question-grid' : ''}`}>
                 {node.opciones.map((option) => (
                   <button
                     type="button"
@@ -87,7 +95,7 @@ export function QuestionNode({
                     <span className="sx-option-marker" aria-hidden="true">
                       {selected.includes(option.id) ? '●' : '○'}
                     </span>
-                    {option.texto}
+                    <span className="sx-question-option-text">{option.texto}</span>
                   </button>
                 ))}
               </div>

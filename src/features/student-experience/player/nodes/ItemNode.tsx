@@ -21,12 +21,9 @@ export function ItemNode({
 }) {
   const panel = (
     <>
-      {direct && (
-        <>
-          <p className="sx-player-eyebrow">{node.etiqueta ?? 'Para conocerte mejor:'}</p>
-          <h2>{text}</h2>
-        </>
-      )}
+      {direct && <p className="sx-player-eyebrow">{node.etiqueta ?? 'Para conocerte mejor:'}</p>}
+      <h2>{text}</h2>
+      <p className="sx-player-response-instruction">Selecciona una respuesta.</p>
       <div className="sx-player-options">
         {options.map((option) => (
           <button

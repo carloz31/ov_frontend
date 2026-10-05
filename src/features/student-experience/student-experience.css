@@ -2970,3 +2970,23 @@ body:has([data-student-experience] .sx-shell) {
     transform: none;
   }
 }
+
+.sx-root .sx-player-response-instruction {
+  margin: 0 0 20px;
+  color: var(--sx-night-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.sx-root .sx-question-options .sx-player-option {
+  justify-content: flex-start;
+}
+.sx-root .sx-question-options .sx-option-marker {
+  flex-shrink: 0;
+  width: 16px;
+  margin-right: 0;
+}
+.sx-root .sx-question-option-text {
+  min-width: 0;
+  text-align: left;
+}
