@@ -137,7 +137,7 @@ function ParentOverviewView() {
                     )}
                   </span>
                   <span className="sr-only">
-                    {activity.title}:{' '}
+                    {activity.titulo}:{' '}
                     {completedActivityIds.includes(activity.id) ? 'Completada' : 'Pendiente'}
                   </span>
                 </li>
@@ -145,7 +145,7 @@ function ParentOverviewView() {
             </ol>
           )}
           <div className="mt-auto space-y-3">
-            {!route.complete && route.next && <p className="text-sm font-semibold">{route.next.title}</p>}
+            {!route.complete && route.next && <p className="text-sm font-semibold">{route.next.titulo}</p>}
             <Button
               asChild
               variant={route.complete ? 'outline' : 'default'}

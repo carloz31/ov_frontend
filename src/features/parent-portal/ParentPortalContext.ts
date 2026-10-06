@@ -1,7 +1,6 @@
 import { useOutletContext } from 'react-router'
 
 type ParentPortalContext = {
-  completeActivity: (activityId: string) => void
   completedActivityIds: string[]
 }
 

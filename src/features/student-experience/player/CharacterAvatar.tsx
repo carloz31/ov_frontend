@@ -1,3 +1,4 @@
+import { catalog } from '@/features/missions/content'
 import { getCharacterVisual } from '../characters'
 
 export function CharacterAvatar({
@@ -8,6 +9,7 @@ export function CharacterAvatar({
   size?: 'sm' | 'md' | 'lg'
   expression?: string
 }) {
+  if (catalog.personajes.find((person) => person.id === id)?.rol === 'narrador') return null
   const character = getCharacterVisual(id)
   return (
     <div className="sx-character">

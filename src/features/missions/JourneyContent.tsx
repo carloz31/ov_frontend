@@ -17,6 +17,7 @@ export function Character({
   const person = catalog.personajes.find((person) => person.id === id)
   const url = (expression && person?.expresiones?.[expression]) || person?.avatarUrl
   const [failed, setFailed] = useState('')
+  if (person?.rol === 'narrador') return null
   const name = id === 'companero' ? 'Lumi' : (person?.nombre ?? id)
   return (
     <div className={`journey-character ${small ? 'is-small' : ''}`}>
@@ -140,6 +141,37 @@ export function ContentBlocks({ blocks }: { blocks: BloqueContenido[] }) {
             )
           case 'reflexion':
             return <blockquote key={i}>{block.texto}</blockquote>
+          case 'tabla':
+            return (
+              <section key={i}>
+                {block.titulo && <h3>{block.titulo}</h3>}
+                <div className="journey-content-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        {block.columnas.map((column, col) => (
+                          <th scope="col" key={col}>
+                            {column}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {block.filas.map((row, index) => (
+                        <tr key={index}>
+                          {row.map((cell, col) => (
+                            <td data-label={block.columnas[col]} key={col}>
+                              {cell}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {block.nota && <p className="text-sm">{block.nota}</p>}
+              </section>
+            )
           case 'fuente':
             return (
               <p key={i} className="journey-source">

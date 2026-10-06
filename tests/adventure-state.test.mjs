@@ -169,6 +169,29 @@ test('family conversations unlock after the student completes the sequential pro
   assert.equal(store.isFamilyUnlocked(store.useAdventure()), true)
   assert.equal(store.isCityUnlocked(store.useAdventure()), true)
 })
+test('new Camino requires ACT-07 while migrated finished routes preserve access without invented answers', () => {
+  const app = loadAdventure()
+  const oldIds = app.data.fieldMissions
+    .filter((mission) => mission.id !== 'pregones')
+    .map((mission) => mission.id)
+  const newState = { ...app.store.createInitialAdventure(), completedMissionIds: oldIds }
+  assert.equal(app.store.isCityUnlocked(newState), false)
+  assert.equal(app.store.isFamilyUnlocked(newState), false)
+  const legacy = { ...newState, caminoContentVersion: undefined, legacyCaminoCompleted: undefined }
+  const migrated = loadAdventure(JSON.stringify(legacy))
+  assert.equal(migrated.store.useAdventure().legacyCaminoCompleted, true)
+  assert.equal(migrated.store.isCityUnlocked(migrated.store.useAdventure()), true)
+  assert.equal(migrated.store.isFamilyUnlocked(migrated.store.useAdventure()), true)
+  assert.equal(migrated.store.useAdventure().completedMissionIds.includes('pregones'), false)
+  const persisted = JSON.parse(migrated.persisted())
+  assert.equal(persisted.caminoContentVersion, 2)
+  assert.equal(persisted.legacyCaminoCompleted, true)
+  assert.equal(loadAdventure(migrated.persisted()).store.isCityUnlocked(persisted), true)
+  const partial = loadAdventure(JSON.stringify({ ...legacy, completedMissionIds: ['welcome', 'beliefs'] }))
+  assert.equal(partial.store.useAdventure().legacyCaminoCompleted, false)
+  assert.equal(partial.store.isCityUnlocked(partial.store.useAdventure()), false)
+})
+
 test('review mode permits cases while duplicate and unknown cases do not inflate progress', () => {
   const { store } = loadAdventure()
   store.completeCase('forest-fire')

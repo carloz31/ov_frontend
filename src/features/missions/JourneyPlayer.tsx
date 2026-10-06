@@ -366,7 +366,7 @@ export function JourneyPlayer({
                         <ArrowRight />
                       </Button>
                     )}
-                    {activity.siguienteSugerida === 'act-07' && (
+                    {!nextActivity && activity.siguienteSugerida === 'act-07' && (
                       <Button onClick={() => onNext('act-07')}>
                         Revisar mis propias creencias
                         <ArrowRight />

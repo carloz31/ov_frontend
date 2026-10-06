@@ -2,22 +2,18 @@ import { useMemo } from 'react'
 import { BookOpenCheck, Compass, LayoutDashboard, UsersRound } from 'lucide-react'
 import { Outlet, useLocation, useNavigate } from 'react-router'
 import { AppShell, type AppNavigationGroup } from '@/components/layout/AppShell'
+import { ThemeProvider } from '@/components/ThemeScope'
 import { appPaths } from '@/routes/paths'
-import { parentActivities, parentChildren, parentProfile } from './data/ParentPortalData'
-import { parentRoute } from './selectors'
+import { parentActivities, parentProfile } from './data/ParentPortalData'
 import type { ParentPortalContext } from './ParentPortalContext'
-import { updateAdventure, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { useParentJourney } from './missionStore'
+import { completedParentActivities } from './missionLogic'
 
 function ParentPortalModule() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { parentCompletedActivityIds: completedActivityIds } = useAdventure()
-  const assignedIds = new Set(
-    parentRoute(parentActivities, parentChildren, completedActivityIds).assigned.map(
-      (activity) => activity.id,
-    ),
-  )
-  const assignedCompletedIds = [...new Set(completedActivityIds)].filter((id) => assignedIds.has(id))
+  const journey = useParentJourney()
+  const completedActivityIds = completedParentActivities(parentActivities, journey)
   const routeState = getParentRouteState(location.pathname)
   const navigationGroups = useMemo<AppNavigationGroup[]>(
     () => [
@@ -54,13 +50,14 @@ function ParentPortalModule() {
     [navigate],
   )
 
-  const completeActivity = (activityId: string) => {
-    if (!assignedIds.has(activityId)) return
-    updateAdventure((current) => ({
-      ...current,
-      parentCompletedActivityIds: [...new Set([...current.parentCompletedActivityIds, activityId])],
-    }))
-  }
+  if (/^\/parent\/activities\/[^/]+\/?$/.test(location.pathname))
+    return (
+      <ThemeProvider theme="staff">
+        <div className="theme-staff min-h-svh bg-background text-foreground">
+          <Outlet context={{ completedActivityIds } satisfies ParentPortalContext} />
+        </div>
+      </ThemeProvider>
+    )
 
   return (
     <AppShell
@@ -73,11 +70,7 @@ function ParentPortalModule() {
       userName={parentProfile.name}
       userRole={parentProfile.relationship}
     >
-      <Outlet
-        context={
-          { completeActivity, completedActivityIds: assignedCompletedIds } satisfies ParentPortalContext
-        }
-      />
+      <Outlet context={{ completedActivityIds } satisfies ParentPortalContext} />
     </AppShell>
   )
 }

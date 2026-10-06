@@ -90,7 +90,7 @@ export function FinishScreen({
                 <ArrowRight size={18} />
               </button>
             )}
-            {allowLegacySuggestion && activity.siguienteSugerida === 'act-07' && (
+            {allowLegacySuggestion && !nextActivity && activity.siguienteSugerida === 'act-07' && (
               <button type="button" className="sx-primary-button" onClick={() => onNext('act-07')}>
                 Revisar mis propias creencias
                 <ArrowRight size={18} />

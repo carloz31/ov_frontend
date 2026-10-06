@@ -35,6 +35,8 @@ export function SubmissionNode({
   const initialRecord = useRef(getFollowUpRecord(draftKey))
   const [recovering, setRecovering] = useState(
     () =>
+      activity.tipo === 'registro' &&
+      activity.plantilla?.tipo !== 'matriz' &&
       !!initialRecord.current &&
       !initialRecord.current.versionCondensada &&
       initialRecord.current.turnos.some((turn) => !turn.omitida && !!turn.respuesta?.trim()),
@@ -42,6 +44,7 @@ export function SubmissionNode({
   const spec = node.entregable
   useEffect(() => {
     if (
+      activity.tipo !== 'registro' ||
       spec.tipo !== 'texto' ||
       activity.plantilla?.tipo === 'matriz' ||
       !initialRecord.current ||
@@ -93,6 +96,7 @@ export function SubmissionNode({
         })
       ) {
         if (
+          activity.tipo === 'registro' &&
           !existing &&
           !edit &&
           spec.tipo === 'texto' &&

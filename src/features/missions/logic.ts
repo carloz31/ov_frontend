@@ -125,7 +125,11 @@ export function isActivityComplete(activity: Actividad, state: JourneyState) {
     })
   )
 }
-export function applyCompletion(activity: Actividad, state: JourneyState): JourneyState {
+export function applyCompletion(
+  activity: Actividad,
+  state: JourneyState,
+  participantId = studentId,
+): JourneyState {
   if (!isActivityComplete(activity, state) || state.progress[activity.id]?.estado === 'completada')
     return state
   const date = new Date().toISOString()
@@ -135,22 +139,27 @@ export function applyCompletion(activity: Actividad, state: JourneyState): Journ
       ...state.progress,
       [activity.id]: {
         ...state.progress[activity.id],
-        estudianteId: studentId,
+        estudianteId: participantId,
         actividadId: activity.id,
         estado: 'completada',
         completadaEn: date,
       },
     },
-    rewards: state.rewards.some((row) => row.actividadId === activity.id)
-      ? state.rewards
-      : [
-          ...state.rewards,
-          { actividadId: activity.id, cantidad: activity.recompensa?.afinidad ?? 0, fecha: date },
-        ],
+    rewards:
+      activity.audiencia === 'apoderado'
+        ? state.rewards
+        : state.rewards.some((row) => row.actividadId === activity.id)
+          ? state.rewards
+          : [
+              ...state.rewards,
+              { actividadId: activity.id, cantidad: activity.recompensa?.afinidad ?? 0, fecha: date },
+            ],
     pieces: [
       ...new Set([
         ...state.pieces,
-        ...(activity.recompensa?.piezaLlave ? [activity.recompensa.piezaLlave] : []),
+        ...(activity.audiencia !== 'apoderado' && activity.recompensa?.piezaLlave
+          ? [activity.recompensa.piezaLlave]
+          : []),
       ]),
     ],
     resources: [...new Set([...state.resources, ...(activity.recompensa?.recursoIds ?? [])])],
@@ -176,6 +185,24 @@ export function visibleNodes(activity: Actividad, direct: boolean) {
 export function nextPendingNode(activity: Actividad, state: JourneyState, direct: boolean) {
   const nodes = visibleNodes(activity, direct)
   const saved = state.progress[activity.id]?.nodoActualId
+  // Older encounters could finish their written application before reaching the end.
+  // Keep completed runs, but resume pending runs at an unanswered blocking question.
+  if (activity.tipo === 'encuentro' && state.progress[activity.id]?.estado !== 'completada') {
+    const savedIndex = saved === '$fin' ? nodes.length : nodes.findIndex((node) => node.id === saved)
+    const pending = nodes.find(
+      (node, index) =>
+        index <= savedIndex &&
+        node.tipo === 'pregunta' &&
+        node.bloqueante &&
+        !state.attempts.some(
+          (attempt) =>
+            attempt.actividadId === activity.id &&
+            attempt.nodoId === node.id &&
+            (attempt.correcta || attempt.revelada),
+        ),
+    )
+    if (pending) return pending
+  }
   if (saved === '$fin') return undefined
   let index = Math.max(
     0,

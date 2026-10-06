@@ -472,7 +472,7 @@ test('classroom priority average follows current settings and ignores nonpriorit
 
 const family = load(path.resolve('src/features/parent-portal/selectors.ts'))
 test('family route ignores unknown or unassigned completions and handles empty and complete routes', () => {
-  const activities=[{id:'a'},{id:'b',childId:'child'},{id:'c',childId:'other'}]
+  const activities=[{id:'a',audiencia:'apoderado',orden:1,requisitos:[]},{id:'b',audiencia:'apoderado',orden:2,requisitos:['a']},{id:'c',audiencia:'estudiante',orden:1,requisitos:[]}]
   const children=[{id:'child'}]
   const partial=family.parentRoute(activities,children,['a','a','c','unknown'])
   assert.equal(partial.completed,1);assert.equal(partial.total,2);assert.equal(partial.next.id,'b');assert.equal(partial.complete,false)

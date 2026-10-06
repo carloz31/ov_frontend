@@ -1,3 +1,5 @@
+> Actualización del 5 de octubre de 2026: para audiencia, nodos permitidos, tablas, narradores y actividades del apoderado prevalece [la especificación de actividades comunes](./especificacion-actividades-comunes.md). Los encuentros ya no admiten consignas; el significado restante de los nodos se conserva.
+
 # Spec de prototipo: tipos de actividad
 
 Archivos:

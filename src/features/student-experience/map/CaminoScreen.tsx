@@ -31,7 +31,14 @@ export function CaminoScreen() {
           key={activity.id}
           activity={activity}
           imageUrl="/images/background/forest.png"
-          nextActivityOverride={getNextCaminoActivity(points)}
+          nextActivityOverride={
+            activity.siguienteSugerida &&
+            points.some(
+              (point) => point.specActivityId === activity.siguienteSugerida && point.status !== 'locked',
+            )
+              ? activityById(activity.siguienteSugerida)
+              : getNextCaminoActivity(points)
+          }
           edit={params.get('revision') === '1'}
           onClose={() => setParams({})}
           onNext={(id) => {

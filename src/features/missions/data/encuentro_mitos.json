@@ -70,7 +70,6 @@
       "hablanteId": "companero",
       "texto": "Claro que sí. Pero primero, veamos qué es exactamente lo que hay que revisar."
     },
-
     {
       "id": "e06",
       "tipo": "diapositiva",
@@ -98,7 +97,6 @@
         }
       ]
     },
-
     {
       "id": "e07",
       "tipo": "diapositiva",
@@ -133,7 +131,6 @@
         }
       ]
     },
-
     {
       "id": "e08",
       "tipo": "pregunta",
@@ -172,7 +169,6 @@
         }
       ]
     },
-
     {
       "id": "e09",
       "tipo": "dialogo",
@@ -180,7 +176,6 @@
       "expresion": "contento",
       "texto": "¡Ya entiendo el truco! Entonces revisemos mis pregones uno por uno. El primero lo grito todas las mañanas..."
     },
-
     {
       "id": "e10",
       "tipo": "diapositiva",
@@ -221,7 +216,6 @@
       ],
       "recursoIds": ["rec-ponteencarrera"]
     },
-
     {
       "id": "e11",
       "tipo": "pregunta",
@@ -254,14 +248,12 @@
         }
       ]
     },
-
     {
       "id": "e12",
       "tipo": "dialogo",
       "hablanteId": "aurelio",
       "texto": "Uno menos. El siguiente lo aprendí de mi abuelo... y ahora me da un poco de vergüenza."
     },
-
     {
       "id": "e13",
       "tipo": "diapositiva",
@@ -299,14 +291,12 @@
       ],
       "recursoIds": ["rec-unesco-stem"]
     },
-
     {
       "id": "e14",
       "tipo": "dialogo",
       "hablanteId": "aurelio",
       "texto": "El tercero es el que más escucho en las casas..."
     },
-
     {
       "id": "e15",
       "tipo": "diapositiva",
@@ -345,7 +335,6 @@
         }
       ]
     },
-
     {
       "id": "e16",
       "tipo": "pregunta",
@@ -384,7 +373,6 @@
         }
       ]
     },
-
     {
       "id": "e17",
       "tipo": "dialogo",
@@ -392,7 +380,6 @@
       "expresion": "dudoso",
       "texto": "Y el último... este lo gritaba para que los jóvenes se tomaran en serio su decisión. Pero creo que los asustaba."
     },
-
     {
       "id": "e18",
       "tipo": "diapositiva",
@@ -428,7 +415,6 @@
       ],
       "recursoIds": ["rec-video-mitos"]
     },
-
     {
       "id": "e19",
       "tipo": "pregunta",
@@ -473,7 +459,6 @@
         }
       ]
     },
-
     {
       "id": "e20",
       "tipo": "diapositiva",
@@ -491,11 +476,14 @@
             "Tu primera elección es un paso, no una sentencia."
           ]
         },
-        { "tipo": "destacado", "variante": "dato", "texto": "Esta ficha se guardó en tu sección Recursos." }
+        {
+          "tipo": "destacado",
+          "variante": "dato",
+          "texto": "Esta ficha se guardó en tu sección Recursos."
+        }
       ],
       "recursoIds": ["ficha-mitos"]
     },
-
     {
       "id": "e21",
       "tipo": "dialogo",
@@ -504,14 +492,41 @@
     },
     {
       "id": "e22",
-      "tipo": "consigna",
+      "tipo": "pregunta",
       "hablanteId": "aurelio",
-      "obligatoria": true,
-      "visibilidad": "estudiante_orientadora",
-      "premisa": "Escribe el consejo que Aurelio le daría a Lucía. Usa lo que aprendiste hoy.",
-      "ayuda": "Puedes pensar en qué mitos está escuchando Lucía, qué preguntas le ayudarían a revisarlos y qué información podría buscar.",
-      "placeholder": "Lucía, lo que te están diciendo...",
-      "entregable": { "tipo": "texto", "minCaracteres": 120, "maxCaracteres": 800 }
+      "formato": "opcion_unica",
+      "bloqueante": true,
+      "alAgotarPistas": "revelar_y_continuar",
+      "enunciado": "¿Cuál de estos consejos usa mejor lo que aprendimos hoy?",
+      "opciones": [
+        {
+          "id": "a",
+          "texto": "\"Hazle caso a tu familia: ellos saben más.\"",
+          "correcta": false,
+          "retroalimentacion": "La familia importa, pero aquí repite dos pregones sin revisarlos."
+        },
+        {
+          "id": "b",
+          "texto": "\"Esas frases son mitos: ninguna profesión es de hombres o de mujeres, y lo técnico no es de segunda. Revisa qué institutos están licenciados, cómo les va a sus egresados y conversa con tu familia con esos datos.\"",
+          "correcta": true,
+          "retroalimentacion": "Exacto: identifica los mitos y propone buscar información para conversar."
+        },
+        {
+          "id": "c",
+          "texto": "\"Ignora a tu familia y haz lo que quieras.\"",
+          "correcta": false,
+          "retroalimentacion": "Defiende su interés, pero no la ayuda a revisar los mitos ni a conversar con su familia."
+        }
+      ],
+      "explicacion": "Lucía está escuchando dos pregones a la vez: \"hay trabajos de hombres y de mujeres\" y \"si no vas a la universidad, no llegas a nada\". Un buen consejo los nombra, propone buscar información y no rompe la conversación con su familia.",
+      "pistas": [
+        {
+          "id": "e22p1",
+          "tipo": "dialogo",
+          "hablanteId": "companero",
+          "texto": "Busca el consejo que nombra los mitos y propone buscar información."
+        }
+      ]
     },
     {
       "id": "e23",
@@ -525,7 +540,7 @@
       "tipo": "dialogo",
       "hablanteId": "companero",
       "expresion": "pensativo",
-      "texto": "¡Una pieza de la llave! Oye... Aurelio tenía sus pregones. Seguro tú también has escuchado frases así en tu casa o en el colegio. Cuando quieras, las revisamos juntos."
+      "texto": "¡Una pieza de la llave! Oye... Aurelio tenía sus pregones. Seguro tú también has escuchado frases así en tu casa o en el colegio. En la siguiente misión las revisamos juntos."
     }
   ],
   "recompensa": {

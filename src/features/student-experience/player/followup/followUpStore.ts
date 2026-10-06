@@ -101,6 +101,7 @@ export function saveFollowUpResponse(
   node: NodoConsigna,
   condenser: ResponseCondenser = templateCondenser,
 ) {
+  if (activity.tipo !== 'registro') return { saved: false, text: undefined }
   const key = `${activity.id}/${node.id}`
   const pending = saving.get(key)
   if (pending) return pending
@@ -159,6 +160,7 @@ export function saveFollowUpResponse(
 }
 
 export async function recoverFollowUp(activity: Actividad, node: NodoConsigna) {
+  if (activity.tipo !== 'registro') return { saved: false, text: undefined }
   const key = `${activity.id}/${node.id}`
   const record = getFollowUpRecord(key)
   if (!record || record.versionCondensada) return { saved: false }

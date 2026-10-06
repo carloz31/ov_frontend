@@ -9,13 +9,33 @@ export const fieldMissions = [
     y: 140,
   },
   {
+    id: 'beliefs',
+    title: 'Más allá de los mitos',
+    kind: 'reflection',
+    region: 'Puente de las preguntas',
+    description:
+      'Piensa en una creencia sobre elegir una carrera. ¿De dónde viene? ¿Qué te gustaría investigar?',
+    x: 400,
+    y: 140,
+  },
+  {
+    id: 'pregones',
+    title: 'Mis propios pregones',
+    kind: 'reflection',
+    region: 'Fuente de la plaza',
+    description:
+      'Revisa una frase sobre estudios o trabajo que has escuchado cerca de ti y construye tu propia postura.',
+    x: 495,
+    y: 210,
+  },
+  {
     id: 'story',
     title: 'Las huellas que traigo',
     kind: 'reflection',
     region: 'Bosque de recuerdos',
     description: '¿Qué experiencia de tu historia te enseñó algo sobre ti?',
-    x: 400,
-    y: 140,
+    x: 590,
+    y: 290,
   },
   {
     id: 'future',
@@ -24,16 +44,6 @@ export const fieldMissions = [
     region: 'Mirador del mañana',
     description:
       '¿Cómo imaginas tu futuro y el de tu entorno? Cuéntale a Lumi lo que te ilusiona o te inquieta.',
-    x: 590,
-    y: 290,
-  },
-  {
-    id: 'beliefs',
-    title: 'Más allá de los mitos',
-    kind: 'reflection',
-    region: 'Puente de las preguntas',
-    description:
-      'Piensa en una creencia sobre elegir una carrera. ¿De dónde viene? ¿Qué te gustaría investigar?',
     x: 360,
     y: 390,
   },
@@ -241,7 +251,9 @@ export const resourceDemoNotices = [
 
 export const resourceDemoVideos = [
   {
-    id: 'i3', title: 'Creadora audiovisual', alias: 'Daniela, Sofía y Marcos',
+    id: 'i3',
+    title: 'Creadora audiovisual',
+    alias: 'Daniela, Sofía y Marcos',
     url: 'https://example.com/audiovisual',
     reflection: 'Aprendimos cómo se combinan narrativa, tecnología y coordinación en una producción.',
     createdAt: '2026-09-17T18:00:00.000Z',

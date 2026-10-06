@@ -44,6 +44,13 @@
         "dudoso": "/img/personajes/aurelio_dudoso.png",
         "contento": "/img/personajes/aurelio_contento.png"
       }
+    },
+    {
+      "id": "orientacion",
+      "nombre": "Equipo de orientación",
+      "rol": "narrador",
+      "descripcion": "Voz neutra de las actividades del apoderado. No tiene avatar ni personalidad: el front la muestra como nota o pista en texto, sin diálogo ni efecto de escritura.",
+      "avatarUrl": ""
     }
   ],
   "piezasLlave": [
@@ -82,6 +89,22 @@
       "titulo": "[Video corto sugerido: testimonios que rompen mitos — por producir o seleccionar]",
       "tipo": "video",
       "guardableEnRecursos": true
+    },
+    {
+      "id": "ficha-pad-rol",
+      "titulo": "Ficha: Acompañar sin decidir por él o ella",
+      "tipo": "ficha",
+      "guardableEnRecursos": true,
+      "fuente": "Programa de orientación vocacional (ACT-P01) y fuentes indicadas",
+      "contenido": "## Acompañar sin decidir por él o ella\n\n**Por qué importa:** la familia es una de las influencias más fuertes en la elección de estudios y trabajo de los adolescentes.\n\n**De dónde vienen nuestras expectativas:** de nuestra propia historia, del miedo a que pasen necesidades, de lo que se dice en el entorno y de información de otra época. Tenerlas es natural; lo importante es distinguir cuáles son nuestras y cuáles son de nuestro hijo.\n\n| Forma de influencia | Cómo se ve |\n|---|---|\n| Apoyo | Escuchar, interesarse, ofrecer información y experiencias, aceptar las dudas. |\n| Interferencia | Decidir por él, descalificar sus opciones, presionar. |\n| Desconexión | No involucrarse: \"tú verás\". |\n\n**Frases que abren:** \"¿Qué te atrae de esa opción?\", \"Busquemos juntos cómo es ese trabajo\", \"Es normal tener dudas\", \"Cuenta conmigo para pensarlo\".\n\n**Cinco acciones:** escuchar primero, preguntar con curiosidad, separar sus deseos de los de su hijo, ofrecer experiencias y mostrar confianza.\n\n**Recuerde:** la duda es parte del proceso. Si la angustia es muy intensa o dura semanas, converse con la psicóloga del colegio."
+    },
+    {
+      "id": "ficha-pad-info",
+      "titulo": "Ficha: Conversar con información de hoy",
+      "tipo": "ficha",
+      "guardableEnRecursos": true,
+      "fuente": "Programa de orientación vocacional (ACT-P02) y fuentes indicadas",
+      "contenido": "## Conversar con información de hoy\n\n| Ruta | Dónde | Duración referencial |\n|---|---|---|\n| Universitaria | Universidades | En general 5 años |\n| Técnica | Institutos y escuelas de educación superior | En general de 2 a 3 años en institutos |\n| Fuerzas Armadas y Policía | Escuelas de oficiales y suboficiales | Variable |\n\n**Antes de elegir una institución:**\n1. Que esté licenciada (universidades: SUNEDU; institutos y escuelas: Ministerio de Educación).\n2. Que la carrera esté autorizada.\n3. Qué pasa con sus egresados (Ponte en Carrera).\n4. Cuánto cuesta en total.\n\n**Una pregunta mejor que \"¿da plata?\":** ¿cuánto ganan, en qué trabajan y cuánto tardan en conseguir empleo quienes estudian esa carrera en esa institución?\n\n**Costo real:** admisión + matrícula + pensiones de toda la carrera + materiales + transporte o vivienda.\n\n**Financiamiento:** instituciones públicas, Beca 18 (PRONABEC), becas de las propias instituciones y créditos educativos.\n\n**Resultados de los cuestionarios:** son una fotografía del momento para conversar, no un diagnóstico ni una orden. Para interpretarlos a fondo, acuda a la orientadora del colegio."
     }
   ],
   "instrumentos": [

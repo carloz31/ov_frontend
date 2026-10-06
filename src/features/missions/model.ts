@@ -24,7 +24,7 @@ export type FechaISO = string
 export interface Personaje {
   id: ID
   nombre: string
-  rol: 'companero' | 'npc'
+  rol: 'companero' | 'npc' | 'narrador'
   descripcion: string // para el equipo de diseño, no se muestra
   ubicacion?: string // "Molino", "Plaza", "Río"...
   avatarUrl: string
@@ -86,6 +86,7 @@ export type BloqueContenido =
   | { tipo: 'pasos'; titulo?: string; pasos: { titulo: string; texto: string }[] }
   | { tipo: 'reflexion'; texto: string } // pregunta abierta, no se responde
   | { tipo: 'fuente'; texto: string; url?: string }
+  | { tipo: 'tabla'; titulo?: string; columnas: string[]; filas: string[][]; nota?: string }
 
 /* ---------- Nodos ---------- */
 
@@ -103,6 +104,8 @@ export interface NodoDialogo extends NodoBase {
 /** Respuesta RPG del jugador. No se evalúa. Por defecto no se guarda. */
 export interface NodoEleccion extends NodoBase {
   tipo: 'eleccion'
+  enunciado?: string
+  nota?: string
   opciones: {
     id: ID
     texto: string
@@ -113,6 +116,7 @@ export interface NodoEleccion extends NodoBase {
 
 export interface NodoDiapositiva extends NodoBase {
   tipo: 'diapositiva'
+  etiqueta?: string
   presentadorId?: ID
   titulo: string
   bloques: BloqueContenido[]
@@ -199,7 +203,7 @@ export type Plantilla = PlantillaMatriz | { tipo: 'secuencial' } // secuencial =
 export type TipoActividad = 'encuentro' | 'registro' | 'instrumento'
 
 export const NODOS_PERMITIDOS: Record<TipoActividad, Nodo['tipo'][]> = {
-  encuentro: ['dialogo', 'eleccion', 'diapositiva', 'pregunta', 'consigna'],
+  encuentro: ['dialogo', 'eleccion', 'diapositiva', 'pregunta'],
   registro: ['dialogo', 'eleccion', 'consigna'],
   instrumento: ['dialogo', 'eleccion', 'item', 'resultado'],
 }
@@ -208,6 +212,7 @@ export interface Actividad {
   id: ID
   codigo?: string
   tipo: TipoActividad
+  audiencia?: 'estudiante' | 'apoderado'
   titulo: string
   subtitulo?: string
   bloque: number

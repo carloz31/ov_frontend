@@ -165,11 +165,7 @@ function getFamilyConversationDemo(id: string) {
 
 function getFamilyGiftLetter(state: AdventureState, audience: ConversationAudience) {
   if (audience === 'student') {
-    const commitment = state.familyGift.parentCommitment?.trim()
-    if (!commitment)
-      return 'Me comprometo a escucharte con curiosidad, acompañarte a investigar y darte el tiempo que necesites para construir tu propia decisión.'
-    if (/^me comprometo\b/i.test(commitment)) return commitment
-    return `Me comprometo contigo a ${commitment.charAt(0).toLocaleLowerCase('es-PE')}${commitment.slice(1)}`
+    return 'Me comprometo a escucharte con curiosidad, acompañarte a investigar y darte el tiempo que necesites para construir tu propia decisión.'
   }
   const expectation = state.reflectionDrafts.expectations?.trim()
   return expectation

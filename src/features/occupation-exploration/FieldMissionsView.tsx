@@ -22,6 +22,7 @@ const specActivityByMission: Partial<Record<FieldMission['id'], string>> = {
   story: 'mission-story',
   future: 'mission-future',
   beliefs: 'enc-mitos',
+  pregones: 'act-07',
   compass: 'mission-compass',
   plan: 'act-06',
   expectations: 'mission-expectations',

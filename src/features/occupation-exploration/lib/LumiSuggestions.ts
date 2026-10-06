@@ -10,6 +10,7 @@ const legacyActivityIds: Record<string, string> = {
   story: 'mission-story',
   future: 'mission-future',
   beliefs: 'enc-mitos',
+  pregones: 'act-07',
   compass: 'mission-compass',
   plan: 'act-06',
   expectations: 'mission-expectations',
@@ -21,7 +22,7 @@ export function getLumiTags(activityId: string) {
   if (id.startsWith('family-')) return ['familia', 'conversación']
   if (id.startsWith('case-')) return ['exploración', 'experiencia']
   if (id.startsWith('act-tip-') || id === 'inst-mara') return ['autoconocimiento', 'intereses']
-  if (id === 'enc-mitos') return ['creencias', 'decisiones']
+  if (id === 'enc-mitos' || id === 'act-07') return ['creencias', 'decisiones']
   if (id === 'mission-story' || id === 'reg-linea-tiempo') return ['mi historia', 'autoconocimiento']
   if (id === 'mission-future' || id === 'act-06' || id === 'mission-next-step')
     return ['mi futuro', 'próximos pasos']

@@ -16,7 +16,7 @@ export function SlideNode({
     <div className="sx-card-stage">
       <article className="sx-glass-dark sx-player-card sx-slide-card case-scrollbar">
         <header className="sx-slide-header">
-          <p className="sx-player-eyebrow">Una pista para tu camino</p>
+          <p className="sx-player-eyebrow">{node.etiqueta ?? 'Una pista para tu camino'}</p>
           {node.presentadorId && <CharacterAvatar id={node.presentadorId} size="sm" />}
         </header>
         <h2>{node.titulo}</h2>

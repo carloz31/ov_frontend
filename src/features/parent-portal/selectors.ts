@@ -1,4 +1,5 @@
-import type { ParentActivity, ParentChild } from './types/ParentPortalTypes'
+import type { Actividad } from '@/features/missions/model'
+import type { ParentChild } from './types/ParentPortalTypes'
 import type { FamilyConversation } from '@/features/occupation-exploration/types/AdventureTypes'
 import type { QuestionnaireApplication } from '@/features/counselor-portal/profile/types'
 import {
@@ -6,10 +7,10 @@ import {
   type PrioritySettings,
 } from '@/features/counselor-portal/priorities/PrioritySettings'
 
-export function parentRoute(activities: ParentActivity[], children: ParentChild[], completedIds: string[]) {
-  const assigned = activities.filter(
-    (activity) => !activity.childId || children.some((child) => child.id === activity.childId),
-  )
+export function parentRoute(activities: Actividad[], _children: ParentChild[], completedIds: string[]) {
+  const assigned = activities
+    .filter((activity) => activity.audiencia === 'apoderado')
+    .sort((a, b) => a.orden - b.orden)
   const completed = assigned.filter((activity) => completedIds.includes(activity.id)).length
   return {
     assigned,
@@ -17,7 +18,10 @@ export function parentRoute(activities: ParentActivity[], children: ParentChild[
     total: assigned.length,
     complete: assigned.length > 0 && completed === assigned.length,
     percent: assigned.length ? (completed / assigned.length) * 100 : 0,
-    next: assigned.find((activity) => !completedIds.includes(activity.id)),
+    next: assigned.find(
+      (activity) =>
+        !completedIds.includes(activity.id) && activity.requisitos.every((id) => completedIds.includes(id)),
+    ),
   }
 }
 export function familySharedIds(settings: PrioritySettings) {

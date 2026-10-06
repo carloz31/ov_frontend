@@ -7,23 +7,6 @@ type ParentChild = {
   progress: number
 }
 
-type ParentActivityStep = {
-  title: string
-  body: string
-  prompt?: string
-  options?: string[]
-}
-
-type ParentActivity = {
-  id: string
-  title: string
-  description: string
-  duration: number
-  category: 'informational' | 'child'
-  childId?: string
-  steps: ParentActivityStep[]
-}
-
 type ParentPortalView = 'overview' | 'activities' | 'children' | 'careers' | 'activity-player'
 
-export type { ParentActivity, ParentActivityStep, ParentChild, ParentPortalView }
+export type { ParentChild, ParentPortalView }

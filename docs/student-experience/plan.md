@@ -494,3 +494,32 @@ Crear modules/StudentResourcesView.tsx, StudentBackpackView.tsx y StudentResourc
 Recursos contiene únicamente Mi mochila. Investigaciones pasa a /student/investigations y tiene un enlace independiente en Accesos rápidos. Publicaciones y Eventos se retiran de la interfaz del estudiante, conservando los datos existentes. Esta corrección sustituye la organización de cuatro pestañas descrita arriba. No ejecutar ni modificar pruebas, build o lint, según la solicitud del usuario.
 
 </details>
+
+
+## Actividades comunes de estudiante y apoderado — 5 de octubre de 2026
+
+Por solicitud del usuario, `../especificacion-actividades-comunes.md` prevalece para el formato común de actividades y los cambios de esta entrega. Se autorizó expresamente la excepción de AGENTS.md para el portal del apoderado; el portal de orientadores y su prueba protegida permanecen excluidos.
+
+- ACT-P01 y ACT-P02 sustituyen la ruta anterior del apoderado. Son encuentros informativos con preguntas de comprensión y elecciones sin registro, cargados desde JSON y presentados sin avatares ni animaciones. ACT-P02 requiere ACT-P01, incluso por URL directa.
+- El avance se guarda por cuenta en `ov.parent-missions.v1`, separado de `ov.missions.v2`. El prototipo usa `apo-prototipo`. Los registros comunes no cambian: el identificador de cuenta ocupa `estudianteId`. La ruta antigua se conserva en AdventureState pero no convalida las actividades nuevas.
+- El diploma y el acceso a los resultados compartidos dependen de la nueva ruta. Las fichas están disponibles en el cierre y en las tarjetas completadas. La carta familiar utiliza el texto predeterminado; no se añade un editor en Conversaciones.
+- El cierre e21–e24 de mitos se reemplaza con el adjunto. e22 es ahora un reto bloqueante. Las entregas y borradores antiguos no se borran; los encuentros pendientes que pasaron el nuevo reto sin responderlo retoman allí, y los encuentros ya completados se conservan.
+- ACT-07, «Mis propios pregones», tiene su propio punto después de mitos y antes de historia. Cuenta para completar el Camino en recorridos nuevos, aparece en Mis actividades y admite reanudación, revisión, seguimiento de Lumi y diario.
+- `caminoContentVersion: 2` distingue la nueva ruta. La migración de rutas antiguas terminadas conserva Ciudad/Familia con `legacyCaminoCompleted`, sin inventar respuestas ni dar ACT-07 por completada. Se conserva `prototypeAllUnlocked` y el progreso real se calcula por separado.
+- Los encuentros ya no admiten consignas; la creación y recuperación de seguimientos se limita a registros. Las tablas se muestran con desplazamiento horizontal en escritorio y como tarjetas por fila en móvil.
+
+### Validación de la entrega
+
+- Build y lint aprobados. Vite conserva su advertencia sobre el tamaño del bundle principal; no hubo errores de compilación.
+- 213 pruebas aprobadas, ejecutando todas las suites permitidas y excluyendo `tests/counselor-portal.test.mjs`. Se verificaron evaluación única, múltiple y V/F, pistas y revelación, bloqueo y completitud, recompensas idempotentes, reanudación, cuentas separadas, errores de almacenamiento, fichas, repaso, diploma y resultados.
+- La cobertura incluye la migración de accesos antiguos, el nuevo e22, las tres consignas de ACT-07, sus límites, seguimiento, recomendaciones y sincronización con el progreso real del Camino.
+- Revisión visual en escritorio (1280 × 720) y móvil (360 × 800): ambas actividades del apoderado completadas con respuestas de prueba, fichas y tablas sin desbordamiento horizontal, navegación por teclado, foco de retroalimentación y cierre de diálogos con Escape. La recarga retomó la diapositiva guardada.
+- ACT-07 se completó con respuestas de prueba en otra sesión local: mostró las tres consignas y la sugerencia de diario; el mapa cambió de pendiente a completado y actualizó el porcentaje del Camino. No se añadieron backend, autenticación ni editor de carta.
+
+### Ajuste del reproductor para padres
+
+Por solicitud posterior del usuario, las actividades informativas del apoderado se abren a pantalla completa con una única barra superior: título de la actividad, paso/progreso y X para regresar a Mis actividades. Se retiran el menú lateral y la columna de progreso durante la actividad; el contenido se alinea a la izquierda en un área más amplia.
+
+«Anterior» permite recorrer los nodos ya visitados. En actividades pendientes guarda el nodo al que se retrocedió sin borrar intentos ni respuestas; si falla el guardado, mantiene la pantalla actual. En actividades completadas el retroceso y el repaso conservan la finalización y sus recursos. Se verificaron escritorio, móvil, salida con X y retroceso por teclado, además de las pruebas de persistencia y reanudación.
+
+Build y lint aprobados; 215 pruebas permitidas aprobadas tras este ajuste. La prueba de orientadores continúa excluida.

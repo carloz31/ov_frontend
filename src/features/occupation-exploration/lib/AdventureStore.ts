@@ -10,6 +10,8 @@ export const prototypeAllUnlocked = true
 export function createInitialAdventure(): AdventureState {
   return {
     version: 1,
+    caminoContentVersion: 2,
+    legacyCaminoCompleted: false,
     completedMissionIds: [],
     parentCompletedActivityIds: [],
     bookmarks: ['first-steps', 'career-route-forum'],
@@ -81,6 +83,13 @@ function readState(): AdventureState {
     return {
       ...initial,
       ...parsed,
+      caminoContentVersion: 2,
+      legacyCaminoCompleted:
+        parsed.legacyCaminoCompleted === true ||
+        (parsed.caminoContentVersion !== 2 &&
+          fieldMissions
+            .filter((mission) => mission.id !== 'pregones')
+            .every((mission) => parsed.completedMissionIds?.includes(mission.id))),
       journal: [...journalById.values()],
       lumiRegistrations: normalizeLumiRegistrations(
         (Array.isArray(parsed.lumiRegistrations) ? parsed.lumiRegistrations : undefined) ??
@@ -90,7 +99,12 @@ function readState(): AdventureState {
       ),
       readinessCheckIns: [...checkInsById.values()],
       readinessScale: 10,
-      interviewModeration: parsed.interviewModeration && typeof parsed.interviewModeration === 'object' && !Array.isArray(parsed.interviewModeration) ? parsed.interviewModeration : {},
+      interviewModeration:
+        parsed.interviewModeration &&
+        typeof parsed.interviewModeration === 'object' &&
+        !Array.isArray(parsed.interviewModeration)
+          ? parsed.interviewModeration
+          : {},
       questionnaire: { ...initial.questionnaire, ...parsed.questionnaire },
       research: { ...initial.research, ...parsed.research },
     }
@@ -100,6 +114,13 @@ function readState(): AdventureState {
 }
 let state = readState()
 let storageError = false
+try {
+  const saved = JSON.parse(localStorage.getItem(storageKey) || 'null')
+  if (saved?.version === 1 && saved.caminoContentVersion !== 2)
+    localStorage.setItem(storageKey, JSON.stringify(state))
+} catch {
+  storageError = true
+}
 const listeners = new Set<() => void>()
 function subscribe(listener: () => void) {
   listeners.add(listener)
@@ -134,7 +155,10 @@ export function useAdventureStorageError() {
   return useSyncExternalStore(subscribe, () => storageError)
 }
 export function isCityUnlocked(value: AdventureState) {
-  return fieldMissions.every((mission) => value.completedMissionIds.includes(mission.id))
+  return (
+    value.legacyCaminoCompleted === true ||
+    fieldMissions.every((mission) => value.completedMissionIds.includes(mission.id))
+  )
 }
 export function isFamilyUnlocked(value: AdventureState) {
   return isCityUnlocked(value)

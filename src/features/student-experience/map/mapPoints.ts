@@ -34,6 +34,7 @@ export const specActivityByMission: Partial<Record<FieldMission['id'], string>> 
   story: 'mission-story',
   future: 'mission-future',
   beliefs: 'enc-mitos',
+  pregones: 'act-07',
   compass: 'mission-compass',
   plan: 'act-06',
   expectations: 'mission-expectations',
@@ -70,6 +71,7 @@ export function getActivityType(mission: FieldMission) {
   return 'Registro'
 }
 export function getMissionMeta(mission: FieldMission) {
+  if (mission.id === 'pregones') return '10 min'
   if (mission.kind === 'information') return '4 min'
   if (mission.kind === 'reflection') return 'A tu ritmo'
   if (mission.kind === 'deliverable') return '5 min'
@@ -80,7 +82,7 @@ export function getMissionIcon(mission: FieldMission): LucideIcon {
   return type === 'Informativa' ? BookOpen : type === 'Test' ? ClipboardList : Feather
 }
 
-export const caminoSequence = ['welcome', 'beliefs', 'story'] as const
+export const caminoSequence = ['welcome', 'beliefs', 'pregones', 'story'] as const
 
 const orderedMissions = [
   ...caminoSequence.map((id) => fieldMissions.find((mission) => mission.id === id)!),

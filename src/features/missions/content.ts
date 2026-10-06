@@ -2,7 +2,10 @@ import rawCatalog from './data/catalogo.json'
 import mara from './data/instrumento_mara.json'
 import map from './data/registro_linea_tiempo.json'
 import myths from './data/encuentro_mitos.json'
-import { NODOS_PERMITIDOS } from './model'
+import pregones from './data/registro_mis_pregones.json'
+import parentRole from './data/pad_01_acompanar.json'
+import parentInfo from './data/pad_02_informacion.json'
+import { validateActivity } from './validation'
 import type { Actividad, Instrumento, Personaje, Recurso } from './model'
 import { compassInstrument, standardActivities } from './standardActivities'
 
@@ -13,11 +16,22 @@ export const catalog = rawCatalog as {
   piezasLlave: { id: string; nombre: string; descripcion: string }[]
 }
 catalog.instrumentos.push(compassInstrument)
-export const activities = [...standardActivities, map, myths, mara] as Actividad[]
-for (const activity of activities) {
-  if (activity.nodos.some((node) => !NODOS_PERMITIDOS[activity.tipo].includes(node.tipo)))
-    throw new Error(`Nodos incompatibles en ${activity.id}`)
-}
+const allActivities = [
+  ...standardActivities,
+  map,
+  myths,
+  mara,
+  pregones,
+  parentRole,
+  parentInfo,
+] as Actividad[]
+for (const activity of allActivities) validateActivity(activity)
+export const activities = allActivities.filter(
+  (activity) => (activity.audiencia ?? 'estudiante') === 'estudiante',
+)
+export const parentActivities = allActivities
+  .filter((activity) => activity.audiencia === 'apoderado')
+  .sort((a, b) => a.orden - b.orden)
 export const tipActivityIds = Array.from(
   { length: 14 },
   (_, i) => `act-tip-${String(i + 1).padStart(2, '0')}`,

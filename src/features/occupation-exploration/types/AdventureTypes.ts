@@ -50,6 +50,8 @@ export type AdventureNotice = {
 }
 export type AdventureState = {
   version: 1
+  caminoContentVersion?: 2
+  legacyCaminoCompleted?: boolean
   completedMissionIds: string[]
   parentCompletedActivityIds: string[]
   bookmarks: string[]

@@ -1,5 +1,13 @@
 La interfaz del estudiante ahora se rige por `docs/student-experience/especificacion-interfaz-inmersiva-estudiante.md`.
 
+## Actualización: actividades comunes — 5 de octubre de 2026
+
+La entrega descrita en `especificacion-actividades-comunes.md` actualiza el modelo y complementa el registro histórico de implementación de este documento. ACT-07 ya tiene contenido real y se incorpora al Camino después de mitos. La reflexión escrita e22 del encuentro se reemplaza por una pregunta de aplicación.
+
+El portal del apoderado usa el mismo modelo `Actividad`, evaluación y criterio de completitud, con un reproductor sobrio independiente. Su progreso y fichas se guardan por cuenta en `ov.parent-missions.v1`. Las actividades antiguas y los compromisos guardados se conservan como datos históricos; no conceden el diploma nuevo ni personalizan la carta predeterminada.
+
+Los acuerdos, la migración del Camino y los límites de esta entrega están registrados en `student-experience/plan.md`.
+
 # Actividades dentro de Aventura
 
 Las rutas `/student/missions` y `/student/exploration` forman una sola sección llamada **Aventura**. El usuario cambia entre **Camino** y **Ciudad** mediante un selector sobre el mapa. Se conserva el mapa original de cada zona y no se modifica el funcionamiento de los casos.

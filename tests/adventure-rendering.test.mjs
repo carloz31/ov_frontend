@@ -56,7 +56,36 @@ const { familyConversationDemoData, familyConversationTopics } = load(
 )
 const { AdventureMap } = load(path.resolve('src/components/AdventureMap.tsx'))
 const { AppRoutes } = load(path.resolve('src/routes/AppRoutes.tsx'))
+const parentMissionStore = load(path.resolve('src/features/parent-portal/missionStore.ts'))
+function completedParentJourney() {
+  const { parentActivities } = load(path.resolve('src/features/missions/content.ts'))
+  const { initialJourney } = load(path.resolve('src/features/missions/logic.ts'))
+  const journey = initialJourney()
+  for (const activity of parentActivities) {
+    journey.progress[activity.id] = {
+      estudianteId: 'apo-prototipo',
+      actividadId: activity.id,
+      estado: 'completada',
+      nodoActualId: '$fin',
+    }
+    journey.attempts.push(
+      ...activity.nodos
+        .filter((node) => node.tipo === 'pregunta')
+        .map((node) => ({
+          estudianteId: 'apo-prototipo',
+          actividadId: activity.id,
+          nodoId: node.id,
+          correcta: true,
+          revelada: false,
+        })),
+    )
+    journey.resources.push(...(activity.recompensa?.recursoIds ?? []))
+  }
+  return journey
+}
 function render(route, patch = {}) {
+  const { initialJourney } = load(path.resolve('src/features/missions/logic.ts'))
+  parentMissionStore.updateParentJourney(() => patch.parentJourney ?? initialJourney())
   store.updateAdventure(() => ({ ...store.createInitialAdventure(), ...patch }))
   return renderToStaticMarkup(
     React.createElement(MemoryRouter, { initialEntries: [route] }, React.createElement(AppRoutes)),
@@ -651,7 +680,7 @@ test('student point calculations preserve progress, recommendations and every dr
   assert.equal(replay.actionLabel, 'Volver a realizar esta misión')
   assert.equal(replay.revision, true)
   assert.equal(replay.journal.completed, true)
-  assert.equal(getZoneProgress('missions', adventure, journey).value, 12.5)
+  assert.equal(getZoneProgress('missions', adventure, journey).value, 100 / fieldMissions.length)
   assert.equal(getRecommendedPoint(completed).id, 'beliefs')
   const locked = getPointDetails({ ...completed[1], status: 'locked' }, adventure, journey)
   assert.equal(locked.actionLabel, 'Actividad bloqueada')
@@ -2298,6 +2327,7 @@ test('every supplied mission node renders, including matrices, slides, questions
     for (const node of activity.nodos) {
       journeyStore.updateJourney(() => ({
         ...journeyLogic.initialJourney(),
+        attempts: activity.nodos.slice(0, activity.nodos.indexOf(node)).filter(entry => entry.tipo === 'pregunta').map(entry => ({ actividadId: activity.id, nodoId: entry.id, correcta: true })),
         progress: {
           'act-06': { estudianteId: 'est-prototipo', actividadId: 'act-06', estado: 'completada' },
           [activity.id]: {
@@ -2320,7 +2350,7 @@ test('every supplied mission node renders, including matrices, slides, questions
         const prompt = node.tipo === 'item'
           ? journeyContent.catalog.instrumentos.find(instrument => instrument.id === node.instrumentoId)?.items.find(item => item.id === node.itemId)?.texto
           : node.tipo === 'pregunta' ? node.enunciado
-          : previous?.tipo === 'dialogo' ? previous.texto : '¿Qué le dirías?'
+          : node.enunciado ?? (previous?.tipo === 'dialogo' ? previous.texto : '¿Qué le dirías?')
         assert.ok(prompt, `${activity.id}/${node.id}: missing response prompt`)
         const heading = renderToStaticMarkup(React.createElement('h2', {}, prompt))
         const headingIndex = html.indexOf(heading)
@@ -2432,8 +2462,7 @@ test('Prioritarios starts read-only and shows one list through the tools and rec
 
 test('family results require assigned route completion and honor sharing independently of priorities', () => {
   const { prioritySettingsStore } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
-  const { parentActivities } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
-  const completed = { parentCompletedActivityIds: parentActivities.map(a => a.id) }
+  const completed = { parentJourney: completedParentJourney() }
   const route = '/parent/children/ejemplo-07/questionnaires/interests'
   const saved = prioritySettingsStore.getSnapshot()
   assert.match(render('/parent/overview'), /Podrás ver los resultados de Gabriela/)
@@ -2452,8 +2481,8 @@ test('family results require assigned route completion and honor sharing indepen
 })
 
 test('family home unites own route and shared child summary with no private student fields', () => {
-  const { parentActivities, parentChildren } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
-  const html = render('/parent/overview',{parentCompletedActivityIds:parentActivities.map(a=>a.id)})
+  const { parentChildren } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
+  const html = render('/parent/overview',{parentJourney: completedParentJourney()})
   assert.equal(parentChildren.length,1)
   assert.equal(parentChildren[0].id,'ejemplo-07')
   assert.match(html,/Hola, José|Hola, Jos/)
@@ -2464,8 +2493,7 @@ test('family home unites own route and shared child summary with no private stud
 })
 
 test('family detail reuses complete results but never reveals favorites or plans', () => {
-  const { parentActivities } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
-  const complete = {parentCompletedActivityIds:parentActivities.map(a=>a.id)}
+  const complete = {parentJourney: completedParentJourney()}
   const interests = render('/parent/children/ejemplo-07/questionnaires/interests',complete)
   for (const title of ['Qué mide este cuestionario','Cómo leer este resultado','Resultado por dimensión','Qué significa cada dimensión','Ocupaciones afines','Carreras que llevan a estas ocupaciones','Cómo tomar estas recomendaciones']) assert.ok(interests.includes(title),title)
   assert.doesNotMatch(interests,/Favorita|En sus planes|Relacionada con sus planes|No ha marcado|Volver al perfil/)
@@ -2579,10 +2607,10 @@ test('family presentation adapts flat profiles without generating a code or expo
 })
 
 test('family child selection replaces the entire summary and pending results stay private', () => {
-  const { parentActivities,parentChildren } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
+  const { parentChildren } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
   parentChildren.push({id:'ejemplo-05',name:'Elena Espinoza León',initials:'EE',grade:'5.° de secundaria · A',school:'Colegio Nuevo Horizonte',progress:0})
   try {
-    const html=render('/parent/overview?child=ejemplo-05',{parentCompletedActivityIds:parentActivities.map(a=>a.id)})
+    const html=render('/parent/overview?child=ejemplo-05',{parentJourney: completedParentJourney()})
     assert.match(html,/role="tab"/)
     assert.match(html,/>Elena Espinoza León<|Aún no lo completa/)
     assert.doesNotMatch(html,/>Gabriela García Muñoz<|Ver resultado completo|Código de interés/)
@@ -2594,8 +2622,8 @@ test('phase 8 path sequence respects both completion records without changing ca
   const originalIds = fieldMissions.map(mission => mission.id)
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   let points = logic.getCaminoPoints(adventure, journey)
-  assert.deepEqual(Array.from(points.slice(0, 3), point => point.id), ['welcome', 'beliefs', 'story'])
-  points.slice(0, 3).forEach((point, index) => {
+  assert.deepEqual(Array.from(points.slice(0, 4), point => point.id), ['welcome', 'beliefs', 'pregones', 'story'])
+  points.slice(0, 4).forEach((point, index) => {
     assert.equal(point.x, fieldMissions[index].x); assert.equal(point.y, fieldMissions[index].y)
   })
   assert.equal(points[0].status, 'available')
@@ -2610,17 +2638,20 @@ test('phase 8 path sequence respects both completion records without changing ca
   journey.progress['enc-mitos'] = { estado: 'completada' }
   points = logic.getCaminoPoints(adventure, journey)
   assert.equal(points[2].status, 'available')
+  assert.equal(logic.getNextCaminoActivity(points).id, 'act-07')
+  journey.progress['act-07'] = { estado: 'completada' }
+  points = logic.getCaminoPoints(adventure, journey)
   assert.equal(logic.getNextCaminoActivity(points).id, 'mission-story')
   journey.progress['mission-story'] = { estado: 'completada' }
   points = logic.getCaminoPoints(adventure, journey)
   assert.equal(logic.getNextCaminoActivity(points), null)
   assert.equal(logic.getRecommendedPoint(points.map(point => point.id === 'city' ? { ...point, status: 'locked' } : point)), undefined)
-  assert.ok(points.slice(3, -1).filter(point => point.id !== 'future').every(point => point.status === 'locked'))
+  assert.ok(points.slice(4, -1).filter(point => point.id !== 'future').every(point => point.status === 'locked'))
   assert.equal(logic.getPointDetails(points.find(point => point.id === 'future'), adventure, journey).revision, true)
   assert.deepEqual(Array.from(fieldMissions, mission => mission.id), Array.from(originalIds))
   assert.equal(store.prototypeAllUnlocked, true)
-  assert.equal(store.isCityUnlocked({ ...adventure, completedMissionIds: ['welcome', 'beliefs', 'story'] }), false)
-  assert.equal(logic.getZoneProgress('missions', { ...adventure, completedMissionIds: ['welcome'] }, journey).value, 37.5)
+  assert.equal(store.isCityUnlocked({ ...adventure, completedMissionIds: ['welcome', 'beliefs', 'pregones', 'story'] }), false)
+  assert.equal(logic.getZoneProgress('missions', { ...adventure, completedMissionIds: ['welcome'] }, journey).value, 400 / fieldMissions.length)
 })
 
 test('phase 8 direct links open blocked details instead of starting unavailable players', () => {
@@ -2652,7 +2683,7 @@ test('phase 8 finish overrides follow the selected path and omit closed legacy s
   const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
   const { FinishScreen } = load(path.resolve('src/features/student-experience/player/FinishScreen.tsx'))
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
-  for (const [completed, expected] of [[['welcome'], 'enc-mitos'], [['welcome', 'beliefs'], 'mission-story'], [['welcome', 'beliefs', 'story'], undefined]]) {
+  for (const [completed, expected] of [[['welcome'], 'enc-mitos'], [['welcome', 'beliefs'], 'act-07'], [['welcome', 'beliefs', 'pregones'], 'mission-story'], [['welcome', 'beliefs', 'pregones', 'story'], undefined]]) {
     adventure.completedMissionIds = completed
     const next = logic.getNextCaminoActivity(logic.getCaminoPoints(adventure, journey))
     assert.equal(next?.id, expected)

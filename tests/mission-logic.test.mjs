@@ -12,6 +12,68 @@ const map = json('registro_linea_tiempo')
 const myths = json('encuentro_mitos')
 const mara = json('instrumento_mara')
 const catalog = json('catalogo')
+const pregones = json('registro_mis_pregones')
+
+test('ACT-07 requires three valid submissions and keeps versions, affinity and journal prompt', () => {
+  let state = logic.initialJourney()
+  const nodes = pregones.nodos.filter((node) => node.tipo === 'consigna')
+  assert.equal(nodes.length, 3)
+  assert.deepEqual(pregones.requisitos, ['enc-mitos'])
+  assert.ok(pregones.promptDiario)
+  for (const node of nodes) {
+    assert.ok(
+      logic.validateSubmission(node, { tipo: 'texto', texto: 'x'.repeat(node.entregable.minCaracteres - 1) }),
+    )
+    assert.ok(
+      logic.validateSubmission(node, { tipo: 'texto', texto: 'x'.repeat(node.entregable.maxCaracteres + 1) }),
+    )
+    const content = { tipo: 'texto', texto: 'x'.repeat(node.entregable.minCaracteres) }
+    assert.equal(logic.validateSubmission(node, content), undefined)
+    assert.equal(logic.isActivityComplete(pregones, state), false)
+    state.submissions.push({
+      id: node.id,
+      estudianteId: 'est-prototipo',
+      actividadId: pregones.id,
+      nodoId: node.id,
+      contenido: content,
+      version: 1,
+    })
+  }
+  assert.equal(logic.isActivityComplete(pregones, state), true)
+  state = logic.applyCompletion(pregones, state)
+  assert.equal(state.progress[pregones.id].estado, 'completada')
+  assert.equal(state.rewards[0].cantidad, 1)
+  state.submissions.push({ ...state.submissions[0], version: 2 })
+  assert.equal(logic.applyCompletion(pregones, state).rewards.length, 1)
+  assert.equal(state.submissions.length, 4)
+})
+
+test('pending legacy myths resume at new e22 without deleting history or reopening completed runs', () => {
+  const state = logic.initialJourney()
+  state.attempts = myths.nodos
+    .filter((node) => node.tipo === 'pregunta' && node.id !== 'e22')
+    .map((node) => ({ actividadId: myths.id, nodoId: node.id, correcta: true }))
+  state.submissions = [
+    {
+      actividadId: myths.id,
+      nodoId: 'e22',
+      contenido: { tipo: 'texto', texto: 'Consejo anterior' },
+      version: 1,
+    },
+  ]
+  state.drafts['enc-mitos/e22'] = 'Borrador anterior'
+  for (const saved of ['e23', 'e24', '$fin']) {
+    state.progress[myths.id] = { estado: 'en_curso', nodoActualId: saved }
+    assert.equal(logic.nextPendingNode(myths, state, false).id, 'e22')
+  }
+  assert.equal(state.submissions[0].contenido.texto, 'Consejo anterior')
+  assert.equal(state.drafts['enc-mitos/e22'], 'Borrador anterior')
+  state.progress[myths.id] = { estado: 'completada', nodoActualId: '$fin' }
+  assert.equal(logic.nextPendingNode(myths, state, false), undefined)
+  state.progress[myths.id] = { estado: 'en_curso', nodoActualId: 'e23' }
+  state.attempts.push({ actividadId: myths.id, nodoId: 'e22', revelada: true })
+  assert.equal(logic.nextPendingNode(myths, state, false).id, 'e23')
+})
 const submission = (node, content, version = 1) => ({
   id: `${node.id}/${version}`,
   estudianteId: 'est-prototipo',
@@ -47,21 +109,31 @@ test('failed attempts consume hints before revealing and never assign student sc
   )
   assert.equal(logic.evaluateQuestion({ ...question, bloqueante: false }, ['a'], 0).canContinue, true)
 })
-test('encounter requires a real 120-character application and rewards only once', () => {
-  const node = myths.nodos.find((node) => node.id === 'e22')
-  assert.ok(logic.validateSubmission(node, { tipo: 'texto', texto: ' '.repeat(150) }))
-  assert.ok(logic.validateSubmission(node, { tipo: 'texto', texto: 'x'.repeat(119) }))
-  assert.ok(logic.validateSubmission(node, { tipo: 'texto', texto: 'x'.repeat(801) }))
+test('encounter requires its blocking questions and ending; rewards apply only once', () => {
+  assert.equal(myths.nodos.find((node) => node.id === 'e22').tipo, 'pregunta')
+  assert.equal(
+    myths.nodos.some((node) => node.tipo === 'consigna'),
+    false,
+  )
   let state = logic.initialJourney()
-  state.submissions = [
-    { ...submission(node, { tipo: 'texto', texto: 'x'.repeat(120) }), actividadId: myths.id },
-  ]
+  state.progress[myths.id] = {
+    estudianteId: 'est-prototipo',
+    actividadId: myths.id,
+    estado: 'en_curso',
+    nodoActualId: '$fin',
+  }
+  assert.equal(logic.isActivityComplete(myths, state), false)
+  state.attempts = myths.nodos
+    .filter((node) => node.tipo === 'pregunta' && node.bloqueante)
+    .map((node) => ({ actividadId: myths.id, nodoId: node.id, correcta: true, revelada: false }))
+  assert.equal(logic.isActivityComplete(myths, state), true)
   state = logic.applyCompletion(myths, state)
   assert.equal(state.progress[myths.id].estado, 'completada')
   assert.deepEqual(state.pieces, ['pieza-plaza'])
   assert.deepEqual(state.resources, ['ficha-mitos'])
   assert.equal(logic.applyCompletion(myths, state).rewards.length, 1)
 })
+
 test('timeline completes with seven required entries while five cells remain optional', () => {
   const state = logic.initialJourney()
   const required = map.nodos.filter((node) => node.tipo === 'consigna' && node.obligatoria)
