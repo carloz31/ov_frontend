@@ -1,5 +1,9 @@
 La interfaz del estudiante ahora se rige por `docs/student-experience/especificacion-interfaz-inmersiva-estudiante.md`.
 
+## Actualización: progreso y retroalimentación de padres — 6 de octubre de 2026
+
+El reproductor de padres incorpora la presentación y la evaluación de hasta dos intentos acordadas. Inicio y cierre comparten `parentRoute` para el diploma, y el repaso funciona en memoria. Los registros históricos se conservan; el estudiante mantiene su evaluación anterior. Los acuerdos, las ocho transiciones y los resultados de verificación están en [progreso y retroalimentación del apoderado](parent-experience/progreso-retroalimentacion.md).
+
 ## Actualización: actividades comunes — 5 de octubre de 2026
 
 La entrega descrita en `especificacion-actividades-comunes.md` actualiza el modelo y complementa el registro histórico de implementación de este documento. ACT-07 ya tiene contenido real y se incorpora al Camino después de mitos. La reflexión escrita e22 del encuentro se reemplaza por una pregunta de aplicación.

@@ -120,7 +120,8 @@
           "hablanteId": "orientacion",
           "texto": "Revise la segunda idea de \"Lo que conviene saber\"."
         }
-      ]
+      ],
+      "transicion": "Listo, ya conoce las rutas de estudio. Ahora, compruebe cómo se pueden combinar."
     },
     {
       "id": "p2-04",
@@ -164,7 +165,8 @@
           "url": "https://www.ponteencarrera.pe"
         }
       ],
-      "recursoIds": ["rec-ponteencarrera"]
+      "recursoIds": ["rec-ponteencarrera"],
+      "transicion": "Listo, ya revisó cómo combinar las rutas. Ahora, vea cómo reconocer una institución confiable."
     },
     {
       "id": "p2-05",
@@ -325,7 +327,8 @@
           "hablanteId": "orientacion",
           "texto": "Hay tres opciones correctas. Piense en la duración completa de la carrera."
         }
-      ]
+      ],
+      "transicion": "Listo, ya revisó los costos de estudiar. Ahora, compruebe qué gastos debe considerar."
     },
     {
       "id": "p2-09",
@@ -420,12 +423,12 @@
           ]
         },
         {
-          "tipo": "destacado",
-          "variante": "dato",
-          "texto": "Este resumen queda guardado como ficha. Lo que aprendió en estas actividades le servirá en las conversaciones guiadas con su hijo."
+          "tipo": "parrafo",
+          "texto": "Lo que aprendió en estas actividades le servirá en las conversaciones guiadas con su hijo."
         }
       ],
-      "recursoIds": ["ficha-pad-info"]
+      "recursoIds": ["ficha-pad-info"],
+      "transicion": "Listo, ya revisó cómo conversar con información. Ahora, repase las ideas que se lleva."
     }
   ],
   "recompensa": {

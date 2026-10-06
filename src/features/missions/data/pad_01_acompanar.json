@@ -129,7 +129,8 @@
           "tipo": "reflexion",
           "texto": "¿Alguna de sus expectativas tiene que ver con algo que usted quiso hacer y no pudo?"
         }
-      ]
+      ],
+      "transicion": "Listo, ya identificó su preocupación. Ahora, revise de dónde vienen sus expectativas."
     },
     {
       "id": "p1-04",
@@ -205,7 +206,8 @@
           "hablanteId": "orientacion",
           "texto": "Fíjese si el papá muestra interés por lo que Daniela le contó o si da por cerrada la conversación."
         }
-      ]
+      ],
+      "transicion": "Listo, ya conoce las tres formas de influencia. Ahora, un caso para comprobar."
     },
     {
       "id": "p1-06",
@@ -417,7 +419,8 @@
             }
           ]
         }
-      ]
+      ],
+      "transicion": "Listo, ya revisó cómo acompañar sus dudas. Ahora, conozca cinco acciones para ponerlo en práctica."
     },
     {
       "id": "p1-12",
@@ -505,12 +508,12 @@
           ]
         },
         {
-          "tipo": "destacado",
-          "variante": "dato",
-          "texto": "Este resumen queda guardado como ficha para que pueda repasarlo cuando quiera. En la siguiente actividad verá información actual sobre carreras, instituciones y costos para conversar con datos."
+          "tipo": "parrafo",
+          "texto": "En la siguiente actividad verá información actual sobre carreras, instituciones y costos para conversar con datos."
         }
       ],
-      "recursoIds": ["ficha-pad-rol"]
+      "recursoIds": ["ficha-pad-rol"],
+      "transicion": "Listo, ya eligió una acción para comenzar. Ahora, repase las ideas que se lleva."
     }
   ],
   "recompensa": {

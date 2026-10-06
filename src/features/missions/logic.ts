@@ -129,9 +129,9 @@ export function applyCompletion(
   activity: Actividad,
   state: JourneyState,
   participantId = studentId,
+  completionCheck = isActivityComplete,
 ): JourneyState {
-  if (!isActivityComplete(activity, state) || state.progress[activity.id]?.estado === 'completada')
-    return state
+  if (!completionCheck(activity, state) || state.progress[activity.id]?.estado === 'completada') return state
   const date = new Date().toISOString()
   return {
     ...state,

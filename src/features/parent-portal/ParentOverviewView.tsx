@@ -7,7 +7,7 @@ import {
   MessageCircleHeart,
   Circle,
 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -19,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { appPaths } from '@/routes/paths'
 import { parentActivities, parentChildren, parentProfile, conversationChildId } from './data/ParentPortalData'
 import { parentMotivation } from './data/ParentMotivation'
+import './components/parent-activities.css'
 import { useParentPortalContext } from './ParentPortalContext'
 import {
   completeFamilyResult,
@@ -43,6 +44,8 @@ import {
 
 function ParentOverviewView() {
   const mainRef = useRef<HTMLElement>(null)
+  const diplomaRef = useRef<HTMLDivElement>(null)
+  const [highlightDiploma, setHighlightDiploma] = useState(false)
   useEffect(() => {
     mainRef.current?.scrollIntoView({ block: 'start' })
   }, [])
@@ -59,6 +62,15 @@ function ParentOverviewView() {
     }
   }, [child, params, setParams])
   const route = parentRoute(parentActivities, parentChildren, completedActivityIds)
+  const requestedDiploma = params.get('diploma') === '1'
+  useEffect(() => {
+    if (!requestedDiploma || !route.complete) return
+    diplomaRef.current?.focus({ preventScroll: true })
+    diplomaRef.current?.scrollIntoView({ block: 'center' })
+    setHighlightDiploma(true)
+    const timer = window.setTimeout(() => setHighlightDiploma(false), 2000)
+    return () => window.clearTimeout(timer)
+  }, [requestedDiploma, route.complete])
   const shared = questionnaires.filter((q) => familySharedIds(settings).includes(q.id))
   const conversation = conversationSummary(
     familyConversationTopics,
@@ -115,11 +127,18 @@ function ParentOverviewView() {
             </div>
           </div>
           {route.complete ? (
-            <div className="flex items-center gap-4 rounded-xl border bg-primary-soft p-4">
+            <div
+              ref={diplomaRef}
+              tabIndex={-1}
+              aria-labelledby="parent-diploma-title"
+              className={`parent-diploma-recognition flex items-center gap-4 rounded-xl border bg-primary-soft p-4 ${highlightDiploma ? 'parent-diploma-highlight' : ''}`}
+            >
               <Award className="size-10 shrink-0 text-primary" aria-hidden />
               <div>
                 <p className="text-xs text-muted-foreground">Diploma de tu recorrido</p>
-                <h3 className="font-bold">Conozco mi rol</h3>
+                <h3 id="parent-diploma-title" className="font-bold">
+                  Conozco mi rol
+                </h3>
                 <p className="mt-1 text-sm">Completaste tu ruta</p>
               </div>
             </div>

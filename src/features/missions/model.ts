@@ -92,6 +92,7 @@ export type BloqueContenido =
 
 export interface NodoBase {
   id: ID
+  transicion?: string
 }
 
 export interface NodoDialogo extends NodoBase {

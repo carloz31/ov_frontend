@@ -1,7 +1,8 @@
 import type { BloqueContenido } from '@/features/missions/model'
+import { Check } from 'lucide-react'
 import './parent-activities.css'
 
-export function ParentContent({ blocks }: { blocks: BloqueContenido[] }) {
+export function ParentContent({ blocks, summary = false }: { blocks: BloqueContenido[]; summary?: boolean }) {
   return (
     <div className="parent-reading">
       {blocks.map((block, index) => {
@@ -13,9 +14,16 @@ export function ParentContent({ blocks }: { blocks: BloqueContenido[] }) {
             return (
               <section key={index}>
                 {block.titulo && <h3>{block.titulo}</h3>}
-                <List>
+                <List className={summary ? 'parent-summary-list' : undefined}>
                   {block.items.map((text, i) => (
-                    <li key={i}>{text}</li>
+                    <li key={i}>
+                      {summary && (
+                        <span aria-hidden>
+                          <Check size={18} />
+                        </span>
+                      )}
+                      <span>{text}</span>
+                    </li>
                   ))}
                 </List>
               </section>

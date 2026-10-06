@@ -68,6 +68,8 @@ function fixture(saved = {}) {
           parentActivities: load('src/features/missions/content.ts').parentActivities,
           parentProfile: { name: 'Prueba local', relationship: 'Madre' },
         }
+      if (specifier.endsWith('counselor-portal/priorities/PrioritySettings'))
+        return { shareableQuestionnaireIds: [] }
       if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
       const base = specifier.startsWith('@/')
         ? path.resolve('src', specifier.slice(2))
@@ -185,8 +187,8 @@ test('parents answer exact sets, consume hints, reveal and cannot bypass a block
   assert.equal(state.attempts[1].revelada, true)
   assert.equal(state.attempts[1].numeroIntento, 2)
   assert.notEqual(app.parent.advanceParentActivity(activity, node.id, state, 'account-a'), state)
-  state = app.parent.answerParentQuestion(activity, node, ['c', 'a'], state, 'account-a')
-  assert.equal(state.attempts[2].correcta, true)
+  assert.equal(app.parent.answerParentQuestion(activity, node, ['c', 'a'], state, 'account-a'), state)
+  assert.equal(state.attempts.length, 2)
   assert.ok(state.attempts.every((attempt) => attempt.estudianteId === 'account-a'))
 })
 test('new parent route ignores old completion IDs, gates ACT-P02 and completes without affinity or key pieces', () => {
@@ -358,12 +360,12 @@ test('sobriety, step count, direct-link lock, resume, completion resources and r
   state.progress[first.id].nodoActualId = question.id
   state = app.parent.answerParentQuestion(first, question, ['a'], state, 'apo-prototipo')
   app.store.updateParentJourney(() => state)
-  assert.match(app.render(), /Pista/)
+  assert.match(app.render(), /Casi\. Piénselo una vez más\./)
   assert.match(app.render(), /Volver a intentarlo/)
   assert.doesNotMatch(app.render(), /Equipo de orientación|Para recordar/)
   app.store.updateParentJourney(() => finish(app, first))
-  assert.match(app.render(), /Material de consulta/)
-  assert.match(app.render(), /Ver ficha/)
+  assert.match(app.render(), /material de consulta/i)
+  assert.match(app.render(), /Abrir ficha/)
   const before = clone(app.store.getParentJourney())
   assert.match(app.render('pad-01-rol', 'repasar=1'), /Paso 1 de 13/)
   assert.deepEqual(clone(app.store.getParentJourney()), before)
@@ -402,7 +404,7 @@ test('backward navigation preserves attempts, resumes at the saved node and leav
   assert.equal(returned.progress[first.id].nodoActualId, question.id)
   assert.deepEqual(clone(returned.attempts), clone(state.attempts))
   const reloaded = fixture(Object.fromEntries(app.disk))
-  assert.match(reloaded.render(), /Respuesta correcta/)
+  assert.match(reloaded.render(), /Su respuesta · Correcta/)
   assert.equal(reloaded.store.getParentJourney().progress[first.id].nodoActualId, question.id)
   const complete = finish(app, first)
   assert.equal(app.parent.retreatParentActivity(first, '$fin', complete), complete)
@@ -465,4 +467,220 @@ test('table blocks preserve headings and mobile labels, choices show their own p
   assert.match(html, /No se guarda/)
   const { CharacterAvatar } = app.load('src/features/student-experience/player/CharacterAvatar.tsx')
   assert.equal(renderToStaticMarkup(React.createElement(CharacterAvatar, { id: 'orientacion' })), '')
+})
+
+test('parent feedback uses the agreed two-attempt flow for unique, multiple and two-option questions', () => {
+  const app = fixture(),
+    first = app.content.parentActivities[0]
+  const single = first.nodos.find((node) => node.formato === 'opcion_unica')
+  const multiple = first.nodos.find((node) => node.formato === 'opcion_multiple')
+  const binary = first.nodos.find((node) => node.formato === 'verdadero_falso')
+  const evaluate = app.parent.evaluateParentQuestion
+  const good = single.opciones.find((option) => option.correcta),
+    bad = single.opciones.filter((option) => !option.correcta)
+  assert.equal(evaluate(single, [good.id], 0).correct, true)
+  const hint = evaluate(single, [bad[0].id], 0)
+  assert.equal(hint.title, 'Casi. Piénselo una vez más.')
+  assert.equal(hint.canContinue, false)
+  assert.equal(hint.revealed, false)
+  assert.deepEqual(clone(hint.explanations), [bad[0].retroalimentacion])
+  assert.ok(!hint.title.includes(good.texto))
+  const final = evaluate(single, [bad[1].id], 1)
+  assert.equal(final.revealed, true)
+  assert.equal(final.canContinue, true)
+  assert.ok(final.title.includes(good.texto))
+  assert.deepEqual(clone(final.explanations), [good.retroalimentacion])
+  assert.equal(evaluate(single, [good.id], 1).correct, true)
+  const binaryBad = binary.opciones.find((option) => !option.correcta)
+  assert.equal(evaluate(binary, [binaryBad.id], 0).revealed, true)
+  const correctSet = multiple.opciones.filter((option) => option.correcta),
+    wrong = multiple.opciones.find((option) => !option.correcta)
+  const mixed = evaluate(multiple, [correctSet[0].id, wrong.id], 0)
+  assert.equal(
+    mixed.title,
+    'Va por buen camino. Algunas de sus opciones no corresponden y quedaron marcadas en naranja. Revise si falta alguna.',
+  )
+  assert.deepEqual(clone(mixed.wrongIds), [wrong.id])
+  assert.deepEqual(clone(mixed.explanations), [wrong.retroalimentacion])
+  const missing = evaluate(multiple, [correctSet[0].id], 0)
+  assert.equal(missing.title, 'Va por buen camino, pero falta al menos una opción.')
+  assert.deepEqual(clone(missing.explanations), [])
+  assert.deepEqual(clone(missing.wrongIds), [])
+  assert.equal(evaluate(multiple, [wrong.id], 0).title, 'Casi. Piénselo una vez más.')
+  assert.equal(evaluate(multiple, [correctSet[0].id], 1).revealed, true)
+  assert.equal(evaluate(multiple, [...correctSet.map((option) => option.id), wrong.id], 1).correct, false)
+  assert.equal(evaluate(multiple, correctSet.map((option) => option.id).reverse(), 1).correct, true)
+  const fallback = {
+    ...single,
+    opciones: single.opciones.map((option) => ({ ...option, retroalimentacion: '' })),
+  }
+  assert.deepEqual(clone(evaluate(fallback, [bad[0].id], 0).explanations), [single.explicacion])
+})
+
+test('disabled incorrect choices cannot be recorded again, partial answers do not count as first-attempt success', () => {
+  const app = fixture(),
+    activity = app.content.parentActivities[0]
+  const node = activity.nodos.find((node) => node.formato === 'opcion_multiple')
+  const correctIds = node.opciones.filter((option) => option.correcta).map((option) => option.id),
+    wrongId = node.opciones.find((option) => !option.correcta).id
+  let state = app.parent.startParentActivity(activity, app.logic.initialJourney(), 'apo-prototipo')
+  state.progress[activity.id].nodoActualId = node.id
+  state = app.parent.answerParentQuestion(activity, node, [correctIds[0], wrongId], state, 'apo-prototipo')
+  assert.equal(state.attempts[0].correcta, false)
+  const original = clone(state.attempts[0])
+  assert.equal(
+    app.parent.answerParentQuestion(activity, node, [...correctIds, wrongId], state, 'apo-prototipo'),
+    state,
+  )
+  state = app.parent.answerParentQuestion(activity, node, correctIds, state, 'apo-prototipo')
+  assert.equal(state.attempts[1].correcta, true)
+  assert.equal(state.attempts[1].numeroIntento, 2)
+  assert.deepEqual(clone(state.attempts[0]), original)
+  assert.equal(app.parent.answerParentQuestion(activity, node, correctIds, state, 'apo-prototipo'), state)
+  assert.equal(state.attempts.filter((attempt) => attempt.numeroIntento === 1 && attempt.correcta).length, 0)
+})
+
+test('two-option reveal resolves new and historical attempts without rewriting old records or changing student evaluation', () => {
+  const app = fixture(),
+    activity = app.content.parentActivities[0],
+    node = activity.nodos.find((node) => node.formato === 'verdadero_falso')
+  const wrongId = node.opciones.find((option) => !option.correcta).id
+  let state = app.parent.startParentActivity(activity, app.logic.initialJourney(), 'apo-prototipo')
+  state.progress[activity.id].nodoActualId = node.id
+  state = app.parent.answerParentQuestion(activity, node, [wrongId], state, 'apo-prototipo')
+  assert.equal(state.attempts[0].revelada, true)
+  assert.equal(app.parent.answerParentQuestion(activity, node, [wrongId], state, 'apo-prototipo'), state)
+  assert.equal(app.logic.evaluateQuestion(node, [wrongId], 0).revealed, false)
+  const legacy = clone(state)
+  legacy.attempts[0].revelada = false
+  const oldRecords = clone(legacy.attempts)
+  const advanced = app.parent.advanceParentActivity(activity, node.id, legacy, 'apo-prototipo')
+  assert.notEqual(advanced, legacy)
+  assert.deepEqual(clone(advanced.attempts), oldRecords)
+  assert.equal(
+    app.parent.nextParentPendingNode(activity, advanced).id,
+    activity.nodos.find((candidate) => candidate.tipo === 'pregunta').id,
+  )
+  const previouslyFinished = finish(app, activity)
+  previouslyFinished.attempts = previouslyFinished.attempts.map((attempt) =>
+    attempt.nodoId === node.id ? { ...legacy.attempts[0] } : attempt,
+  )
+  previouslyFinished.progress[activity.id].estado = 'en_curso'
+  previouslyFinished.progress[activity.id].nodoActualId = activity.nodos.at(-1).id
+  const complete = app.parent.advanceParentActivity(
+    activity,
+    activity.nodos.at(-1).id,
+    previouslyFinished,
+    'apo-prototipo',
+  )
+  assert.equal(complete.progress[activity.id].estado, 'completada')
+  assert.deepEqual(clone(complete.attempts), clone(previouslyFinished.attempts))
+  assert.equal(app.parent.completedParentActivities(app.content.parentActivities, complete).length, 1)
+})
+
+test('feedback markup separates hints and final answers, summary uses the ficha card and repaso starts without saved answers', () => {
+  const app = fixture(),
+    first = app.content.parentActivities[0],
+    node = first.nodos.find((node) => node.formato === 'opcion_multiple')
+  const good = node.opciones.filter((option) => option.correcta),
+    wrong = node.opciones.find((option) => !option.correcta)
+  let state = app.parent.startParentActivity(first, app.logic.initialJourney(), 'apo-prototipo')
+  for (const earlier of first.nodos.slice(0, first.nodos.indexOf(node)))
+    if (earlier.tipo === 'pregunta')
+      state = app.parent.answerParentQuestion(
+        first,
+        earlier,
+        earlier.opciones.filter((option) => option.correcta).map((option) => option.id),
+        state,
+        'apo-prototipo',
+      )
+  state.progress[first.id].nodoActualId = node.id
+  app.store.updateParentJourney(() => state)
+  assert.match(app.render(), /Comprobar respuesta/)
+  assert.match(app.render(), /aria-valuetext="Paso 8 de 13"/)
+  state = app.parent.answerParentQuestion(first, node, [good[0].id, wrong.id], state, 'apo-prototipo')
+  app.store.updateParentJourney(() => state)
+  const hint = app.render()
+  assert.match(hint, /data-tone="wrong"/)
+  assert.match(hint, /aria-live="polite"/)
+  assert.doesNotMatch(hint, /data-tone="correct"|Para recordar|Respuestas correctas|Revise la respuesta/)
+  state = app.parent.answerParentQuestion(
+    first,
+    node,
+    good.map((option) => option.id),
+    state,
+    'apo-prototipo',
+  )
+  app.store.updateParentJourney(() => state)
+  assert.match(app.render(), /Su respuesta · Correcta/)
+  assert.match(app.render(), /Para recordar/)
+  state = finish(app, first)
+  app.store.updateParentJourney(() => state)
+  const before = clone(app.store.getParentJourney())
+  app.fail(true)
+  assert.equal(
+    app.parent.answerParentQuestion(
+      first,
+      node,
+      good.map((option) => option.id),
+      state,
+      'apo-prototipo',
+    ),
+    state,
+  )
+  app.render(first.id, 'repasar=1')
+  assert.deepEqual(clone(app.store.getParentJourney()), before)
+  app.fail(false)
+  const summaryState = clone(state)
+  summaryState.progress[first.id].estado = 'en_curso'
+  summaryState.progress[first.id].nodoActualId = first.nodos.at(-1).id
+  app.store.updateParentJourney(() => summaryState)
+  const summary = app.render()
+  assert.match(summary, /NUEVA FICHA EN SU MATERIAL DE CONSULTA/)
+  assert.match(summary, /parent-summary-list/)
+  assert.match(summary, /Terminar actividad/)
+  assert.doesNotMatch(summary, /Este resumen queda guardado como ficha/)
+})
+
+test('completion counts all parent blocks and uses the same route completeness for diploma and next activity', () => {
+  const app = fixture(),
+    [first, second] = app.content.parentActivities
+  const later = {
+    ...first,
+    id: 'pad-later',
+    bloque: 8,
+    orden: 99,
+    titulo: 'Otro momento de la ruta',
+    requisitos: [second.id],
+  }
+  app.content.parentActivities.push(later)
+  let state = finish(app, second, finish(app, first))
+  app.store.updateParentJourney(() => state)
+  const html = app.render(second.id)
+  assert.match(html, /2 de 3 actividades/)
+  assert.match(html, /Otro momento de la ruta/)
+  assert.match(html, /Empezar/)
+  assert.doesNotMatch(html, /Obtuvo su diploma|Anterior/)
+  state = finish(app, later, state)
+  app.store.updateParentJourney(() => state)
+  const complete = app.render(later.id)
+  assert.match(complete, /3 de 3 actividades/)
+  assert.match(complete, /Ver mi diploma en el inicio/)
+  assert.doesNotMatch(complete, /Anterior/)
+})
+
+test('editorial transitions appear only at the eight approved moments and stay short', () => {
+  const app = fixture(),
+    expected = ['p1-03', 'p1-05', 'p1-11', 'p1-13', 'p2-03', 'p2-04', 'p2-08', 'p2-11']
+  const nodes = app.content.parentActivities.flatMap((activity) =>
+    activity.nodos.filter((node) => node.transicion),
+  )
+  assert.deepEqual(clone(nodes.map((node) => node.id)), expected)
+  assert.ok(
+    nodes.every(
+      (node) =>
+        node.transicion.split(/\s+/).length <= 20 && /^Listo, ya .+\. Ahora, .+\.$/.test(node.transicion),
+    ),
+  )
+  assert.ok(app.content.parentActivities.every((activity) => !activity.nodos[0].transicion))
 })

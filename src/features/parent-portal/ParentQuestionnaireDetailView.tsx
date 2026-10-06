@@ -3,14 +3,6 @@ import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/Breadcrumb'
 import { studentProfiles, questionnaires } from '@/features/counselor-portal/profile/data'
 import { displayDate } from '@/features/counselor-portal/profile/selectors'
 import { QuestionnaireDetailContent } from '@/features/counselor-portal/profile/Questionnaires'
@@ -60,25 +52,6 @@ export function ParentQuestionnaireDetailView() {
   }
   return (
     <main ref={mainRef} className="min-w-0 space-y-6 break-words p-4 sm:p-6 lg:p-8">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild className="inline-flex min-h-11 items-center">
-              <Link to={back}>Inicio</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild className="inline-flex min-h-11 items-center">
-              <Link to={back}>{student.nombres}</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage>{definition.name}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
       <Button asChild variant="link" className="min-h-11 px-0">
         <Link to={back}>
           <ArrowLeft aria-hidden />
