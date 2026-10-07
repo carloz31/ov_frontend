@@ -5,6 +5,7 @@ import { Link } from 'react-router'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Progress } from '@/components/ui/Progress'
+import { StaffMetric } from '@/components/staff/StaffPatterns'
 import { prioritiesPath } from './navigation'
 import { displayDate, questionnaireState } from './selectors'
 import type { ActivityState, QuestionnaireApplication } from './types'
@@ -119,28 +120,21 @@ export function ProgressIndicator({
   returnTo?: string
 }) {
   return (
-    <section className="min-w-0">
-      <h2 className="text-sm text-muted-foreground">{title}</h2>
-      {total ? (
-        <>
-          <div className="mt-1">
-            <ActivityStatus
-              state={completed === total ? 'completed' : completed ? 'in-progress' : 'not-started'}
-              label={`${percent} %`}
-            />
-          </div>
-          <Progress aria-label={title} value={percent} className="mt-2 h-1.5" />
-          <p className="mt-1 text-xs text-muted-foreground">
-            {completed} de {total} actividades
-          </p>
-        </>
-      ) : (
-        <>
-          <p className="mt-2">{priority ? 'Aún no defines prioritarios' : 'Aún no hay actividades'}</p>
-          {priority && <PriorityLink returnTo={returnTo} />}
-        </>
-      )}
-    </section>
+    <StaffMetric
+      label={title}
+      primary={priority}
+      value={total ? `${percent} %` : '—'}
+      percent={total ? percent : undefined}
+      detail={
+        total
+          ? `${completed} de ${total} actividades`
+          : priority
+            ? 'Aún no defines prioritarios'
+            : 'Aún no hay actividades'
+      }
+    >
+      {!total && priority && <PriorityLink returnTo={returnTo} />}
+    </StaffMetric>
   )
 }
 export function PriorityLink({ returnTo }: { returnTo?: string }) {

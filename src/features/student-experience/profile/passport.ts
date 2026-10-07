@@ -15,7 +15,10 @@ import {
 } from '@/features/occupation-exploration/lib/AdventureAchievements'
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import type { StudentDiscoveryState } from '../discovery/discoveryStore'
+import type { JourneyState } from '@/features/missions/logic'
+import { challenges } from '../challenges/data'
 import { appPaths } from '@/routes/paths'
+import { additionalMissions } from '../reflection/config'
 // Presentation names copied in order from getTravelerLevel in AdventureStore; calculations stay there.
 export const travelerTitles = [
   'Observador del horizonte',
@@ -37,6 +40,53 @@ export const achievementIcons = {
   telescope: Telescope,
 }
 export type PassportBadge = Achievement & { hidden?: boolean }
+export function getStudentAchievementGroups(adventure: AdventureState, journey?: JourneyState) {
+  const badges: PassportBadge[] = challenges.flatMap((c) =>
+    c.logroOculto && /^I\d+$/.test(c.logroOculto.codigo)
+      ? [
+          {
+            code: c.logroOculto.codigo as `I${number}`,
+            title: c.logroOculto.nombre,
+            hidden: true,
+            done: !!journey?.challengeResults?.some((r) => r.logroOculto === c.logroOculto?.codigo),
+            icon: 'sparkles',
+            message: `Disipaste a ${c.nombre} sin perder destellos.`,
+            description: 'Vence al enemigo sin perder destellos en tu primera victoria.',
+            metaphor: 'La información hace brillar tu camino.',
+            vocationalMeaning: 'Contrastar las ideas te permite explorar con mejores preguntas.',
+          },
+        ]
+      : [],
+  )
+  badges.push(
+    ...additionalMissions
+      .filter((m) => journey?.progress[m.id]?.estado === 'completada')
+      .map((m): PassportBadge => ({
+        code: m.insignia.codigo,
+        title: m.insignia.nombre,
+        hidden: true,
+        done: true,
+        icon: 'sparkles',
+        message: `Completaste ${m.titulo}.`,
+        description: m.descripcion,
+        metaphor: 'Una nueva mirada viaja contigo.',
+        vocationalMeaning: 'Explorar tu historia y tus ideas amplía tus posibilidades.',
+      })),
+  )
+  return [
+    ...getAchievementGroups(adventure),
+    ...(badges.length
+      ? [
+          {
+            title: 'La luz que despeja caminos',
+            description: 'Descubrimientos que aparecen al enfrentar ideas equivocadas.',
+            icon: 'key' as const,
+            items: badges,
+          },
+        ]
+      : []),
+  ]
+}
 export const badgeDestinations: Record<string, { label: string; href: string }> = {
   I1: { label: 'Ir al camino', href: appPaths.student.missions },
   I2: { label: 'Ir al camino', href: appPaths.student.missions },
@@ -48,8 +98,12 @@ export const badgeDestinations: Record<string, { label: string; href: string }> 
   I8: { label: 'Ir a Investigaciones', href: appPaths.student.research },
   I9: { label: 'Ir a la Central de Casos', href: appPaths.student.exploration },
 }
-export function getProfileBadges(adventure: AdventureState, discovery: StudentDiscoveryState) {
-  const earned = getAchievementGroups(adventure).flatMap((g, index) =>
+export function getProfileBadges(
+  adventure: AdventureState,
+  discovery: StudentDiscoveryState,
+  journey?: JourneyState,
+) {
+  const earned = getStudentAchievementGroups(adventure, journey).flatMap((g, index) =>
     g.items.filter((b) => b.done).map((b) => ({ ...b, group: index })),
   )
   return discovery.profileBadgesConfigured
@@ -65,10 +119,15 @@ export function toggleProfileBadge(
   discovery: StudentDiscoveryState,
   adventure: AdventureState,
   code: string,
+  journey?: JourneyState,
 ): StudentDiscoveryState {
-  if (!getAchievementGroups(adventure).some((g) => g.items.some((b) => b.code === code && b.done)))
+  if (
+    !getStudentAchievementGroups(adventure, journey).some((g) =>
+      g.items.some((b) => b.code === code && b.done),
+    )
+  )
     return discovery
-  const selected: string[] = getProfileBadges(adventure, discovery).map((b) => b.code)
+  const selected: string[] = getProfileBadges(adventure, discovery, journey).map((b) => b.code)
   if (!selected.includes(code) && selected.length >= 3) return discovery
   return {
     ...discovery,
@@ -80,8 +139,9 @@ export function recordBadgeFirstSeenAt(
   discovery: StudentDiscoveryState,
   adventure: AdventureState,
   now = new Date().toISOString(),
+  journey?: JourneyState,
 ): StudentDiscoveryState {
-  const codes = getAchievementGroups(adventure).flatMap((g) =>
+  const codes = getStudentAchievementGroups(adventure, journey).flatMap((g) =>
     g.items.filter((b) => b.done && !discovery.badgeFirstSeenAt[b.code]).map((b) => b.code),
   )
   return codes.length
@@ -89,7 +149,12 @@ export function recordBadgeFirstSeenAt(
         ...discovery,
         badgeFirstSeenAt: {
           ...discovery.badgeFirstSeenAt,
-          ...Object.fromEntries(codes.map((code) => [code, now])),
+          ...Object.fromEntries(
+            codes.map((code) => [
+              code,
+              journey?.challengeResults?.find((r) => r.logroOculto === code)?.fechaHora ?? now,
+            ]),
+          ),
         },
       }
     : discovery

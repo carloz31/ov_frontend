@@ -125,7 +125,11 @@ export function StudentCatalogView({ section }: { section: 'professions' | 'care
                 {params.get('afines') === '1' && isAffine(o.id, discovery.revealedPages) && (
                   <p>Afín a tu perfil · Demostración</p>
                 )}
-                <small>Perfil de intereses de demostración</small>
+                <small>
+                  {o.contentStatus === 'pending'
+                    ? 'Ficha en preparación desde O*NET'
+                    : 'Perfil de intereses de demostración'}
+                </small>
               </Link>
             </article>
           ))}

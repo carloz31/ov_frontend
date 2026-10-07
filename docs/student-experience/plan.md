@@ -1,3 +1,39 @@
+# Central de casos: Incendio forestal
+
+## Corrección de interacción y presentación — 6 de octubre de 2026
+
+Por solicitud directa del usuario, la especificación actualizada `(1).md` y las dos imágenes de referencia sustituyen el acuerdo inicial sobre Escuchar y asignación de contactos. Se conserva la ilustración de cada fase en todo el fondo. La escena cubre su ventana y se recorre arrastrándola dentro de límites; las pistas se abren una por una y Escuchar ya no ofrece lista. Lumi explica mediante «?» y recuerda la primera apertura por fase. Tab lleva a la vista los puntos que quedan fuera de pantalla.
+
+En escritorio se usan encabezado en una fila, columna izquierda de 400 px, centro libre y contactos de 500 px en dos columnas. Los paneles del problema son oscuros y translúcidos. El estudiante puede arrastrar contactos, usar + o agregarlos desde la hoja de vida, que sustituye la lista dentro del panel. En móvil se muestran problema, equipo y directorio dentro de una pantalla, con desplazamiento propio para listas y hoja inferior solo para la ficha. La salida sigue el formulario de las actividades (escudo, panel, título y acciones), pero advierte que el intento del caso se descartará; el cierre confirma el resultado guardado.
+
+Build, lint y 71 pruebas autorizadas aprobados. Revisión a 1280×800, 375×667 y 360×667 de escena, foco, arrastre, fichas y salida. Se mantienen puntaje, recompensas, migración y contenido pendiente. Detalles y tablas en `implementacion-central-casos-incendio-forestal.md`. Trabajo local sin despliegue ni dependencias nuevas; cambios anteriores preservados y sin acceso a portales protegidos.
+
+## Solicitud e implementación — 6 de octubre de 2026
+
+Se implementa el plan aprobado para el único caso jugable: recorrido guiado con pistas en la escena, directorio y hojas de vida del catálogo, revisión del equipo y resultados. Se conservan las tres fases y presupuesto de 16. El máximo es 14 y el mínimo para superar es 10. Se registran el mejor puntaje y las recompensas al mostrar el cierre; abandono y agotamiento no guardan puntaje. La migración única aprobada reinicia la superación antigua y los íconos de las 15 ocupaciones del caso, preservando favoritos y demás datos.
+
+La especificación adjunta se conserva en `especificacion-central-casos-incendio-forestal.md`. Los acuerdos, lista de 13 fichas pendientes, posiciones finales, usos de campos antiguos y validación están en `implementacion-central-casos-incendio-forestal.md`. Se mantienen paramédico y fotógrafo; los perfiles pendientes no presentan información profesional ni afinidad inventada. Ambos drawers muestran Disponible, En progreso o Superado, puntaje y mínimo. La sección profesional adicional queda conservada detrás de `SHOW_EXTRA_PROFESSIONAL = false`.
+
+Build, lint y 67 pruebas autorizadas aprobados. Revisión visual y funcional a 360×800 y en escritorio, incluidos diálogos, fichas y cierre. Sin despliegue, dependencias nuevas ni acceso a portales protegidos; se conservan cambios locales anteriores. El prototipo enlazado no pudo consultarse.
+
+---
+
+# Progreso, comprobaciones, cierres y desafíos
+
+## Solicitud e implementación — 6 de octubre de 2026
+
+El usuario solicita implementar la especificación adjunta para la vista del estudiante. Se conserva en `especificacion-progreso-comprobaciones-desafios.md` y se registra el detalle técnico, las diferencias del modelo y los límites de backend en `implementacion-progreso-comprobaciones-desafios.md`.
+
+Se implementan la barra de Lumi a todo el ancho, comprobaciones con dos intentos y estados dentro de cada opción, cierres con tarjetas animadas, el desafío de demostración El Rumor y exploración inesperada desde carreras/ocupaciones. Se reutilizan progreso, recursos y recompensas, sin librerías nuevas. Las fichas leídas se distinguen de las guardadas; los registros anteriores migran preservando los datos. Los resultados del desafío y los eventos de visitas usan las claves locales existentes. Se mantiene la regla pendiente de la insignia de exploración por familias.
+
+El Rumor aparece en la ciudad, exige la ficha de mitos, usa 5 vidas frente a 3 destellos y diez preguntas con cuatro opciones. La primera victoria entrega una ficha; conservar todos los destellos en esa victoria entrega I10 Luz sin fisuras. Los intentos en curso no se guardan y las repeticiones posteriores son prácticas. La publicación/validación del servidor y el consumo de la métrica por el panel de análisis quedan descritos como integración de backend; no se modifica el orientador.
+
+Build y lint aprobados. Se ejecutan 43 pruebas autorizadas, incluidas 15 nuevas: 43 aprobadas, 0 fallidas. No se ejecuta npm test porque sus suites cargan los portales protegidos e incluyen la prueba prohibida por AGENTS.md. No se cambian aserciones anteriores. Comprobación en navegador de reintento, foco, lectura/habilitación, batalla, confirmación de salida, victoria, recompensa, insignia y navegación inesperada. Las vistas revisadas a 360×800 no tienen desplazamiento horizontal. El informe detalla la revisión de movimiento reducido.
+
+No se abren ni modifican los directorios de apoderado/orientador ni su prueba prohibida. Las ampliaciones compartidas son aditivas; Sheet mantiene su etiqueta anterior por defecto. git diff --check aprobado. Cambios locales sin despliegue.
+
+---
+
 # Fondos de actividades por zona
 
 ## Cambio — 5 de octubre de 2026
@@ -102,11 +138,11 @@ En la prueba inicial de Recursos se eliminan solamente las expectativas Publicac
 
 Build y lint aprobados. npm test: 205 pruebas, 202 aprobadas y 3 fallidas (98,54 %). No se omiten ni se marcan como aprobadas las tres pruebas restantes. git diff --check aprobado.
 
-| Prueba | Archivo y línea | Causa exacta y actualización necesaria |
-| --- | --- | --- |
-| student resources show the backpack and investigations | tests/adventure-rendering.test.mjs:1147; aserción 1152 | Busca Investigaciones en /student/resources. Esa ruta muestra exclusivamente la mochila; Investigaciones vive en /student/research y /student/investigations. Actualizar esta expectativa de navegación, conservando las comprobaciones de mochila y compatibilidad de testimonios. |
+| Prueba                                                                               | Archivo y línea                                        | Causa exacta y actualización necesaria                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| student resources show the backpack and investigations                               | tests/adventure-rendering.test.mjs:1147; aserción 1152 | Busca Investigaciones en /student/resources. Esa ruta muestra exclusivamente la mochila; Investigaciones vive en /student/research y /student/investigations. Actualizar esta expectativa de navegación, conservando las comprobaciones de mochila y compatibilidad de testimonios.                                                                                                                                                                                                                                          |
 | resource unlocks follow actual activities and specific cases rather than review mode | tests/adventure-rendering.test.mjs:1162; aserción 1216 | Las aserciones puras de desbloqueo pasan. Las tres comprobaciones finales renderizan /student/resources?tab=community: StudentResourcesView devuelve Navigate, cuyo efecto no se ejecuta en renderToStaticMarkup. No se renderiza la vista de destino. Comprobar el destino en una prueba montada de redirección y el contenido directamente en /student/research. Actualizar el aviso a Las investigaciones se abren al resolver tu primer caso... y la acción a Ver la entrevista; la prueba antigua exige Ver entrevista. |
-| counselor moderation hides interviews in the student community | tests/adventure-rendering.test.mjs:2477; aserción 2480 | La misma ruta antigua produce el contenedor sin entrevistas en SSR. La ausencia de la entrevista oculta pasa por estar vacío; la presencia de Así se investiga la calidad del agua falla. Comprobar ambas condiciones en /student/research o /student/investigations, proporcionando solvedCaseIds: ['forest-fire'] para abrir las investigaciones. La prueba actual de descubrimiento ya verifica esta moderación y pasa. |
+| counselor moderation hides interviews in the student community                       | tests/adventure-rendering.test.mjs:2477; aserción 2480 | La misma ruta antigua produce el contenedor sin entrevistas en SSR. La ausencia de la entrevista oculta pasa por estar vacío; la presencia de Así se investiga la calidad del agua falla. Comprobar ambas condiciones en /student/research o /student/investigations, proporcionando solvedCaseIds: ['forest-fire'] para abrir las investigaciones. La prueba actual de descubrimiento ya verifica esta moderación y pasa.                                                                                                   |
 
 Para el 100 % hace falta actualizar estas tres expectativas al contrato actual, preservando las verificaciones de desbloqueo, redirección y moderación. No hay evidencia de un fallo de esos mecanismos en las pruebas actuales aprobadas.
 
@@ -136,15 +172,15 @@ Prevalece `especificacion-panel-mochila-diario-pasaporte.md` para estas cuatro p
 
 Antes de la fase 1 se ejecutó nuevamente `npm test`: 198 pruebas, 191 aprobadas y 7 fallidas. Build y lint habían aprobado al preparar este plan. Todos los fallos están en `tests/adventure-rendering.test.mjs`:
 
-| Prueba exacta | Línea | Causa |
-| --- | ---: | --- |
-| student resources open with backpack before posts, events and investigations | 1147 | Recursos muestra la mochila, sin Investigaciones, Publicaciones ni Eventos. Falla al buscar Investigaciones. |
-| resource unlocks follow actual activities and specific cases rather than review mode | 1165 | La ruta antigua `tab=community` redirige en SSR y no muestra el texto de Central de Casos. |
-| counselor moderation hides interviews in the student community | 2480 | La ruta antigua redirige en SSR, sin el título de la entrevista esperado. |
-| phase 9 panel has five direct links, a compact next-step action and the real traveler rank | 2878 | Hay seis enlaces, incluido Investigaciones, en lugar de cinco. La nueva especificación autoriza corregir esta expectativa. |
-| resource tabs separate the backpack, publications, events and published investigations | 2969 | Recursos no tiene la pestaña Publicaciones que exige la prueba antigua. |
-| resource tabs support arrow and boundary keys while retaining unrelated query parameters | 2996 | Las pestañas antiguas no existen; acceso a props de undefined. |
-| restored publication and event details keep reading, favorites and attendance in existing data | 3054 | PublicationCard no existe en el componente original de entrevistas; acceso a props de undefined. |
+| Prueba exacta                                                                                  | Línea | Causa                                                                                                                      |
+| ---------------------------------------------------------------------------------------------- | ----: | -------------------------------------------------------------------------------------------------------------------------- |
+| student resources open with backpack before posts, events and investigations                   |  1147 | Recursos muestra la mochila, sin Investigaciones, Publicaciones ni Eventos. Falla al buscar Investigaciones.               |
+| resource unlocks follow actual activities and specific cases rather than review mode           |  1165 | La ruta antigua `tab=community` redirige en SSR y no muestra el texto de Central de Casos.                                 |
+| counselor moderation hides interviews in the student community                                 |  2480 | La ruta antigua redirige en SSR, sin el título de la entrevista esperado.                                                  |
+| phase 9 panel has five direct links, a compact next-step action and the real traveler rank     |  2878 | Hay seis enlaces, incluido Investigaciones, en lugar de cinco. La nueva especificación autoriza corregir esta expectativa. |
+| resource tabs separate the backpack, publications, events and published investigations         |  2969 | Recursos no tiene la pestaña Publicaciones que exige la prueba antigua.                                                    |
+| resource tabs support arrow and boundary keys while retaining unrelated query parameters       |  2996 | Las pestañas antiguas no existen; acceso a props de undefined.                                                             |
+| restored publication and event details keep reading, favorites and attendance in existing data |  3054 | PublicationCard no existe en el componente original de entrevistas; acceso a props de undefined.                           |
 
 Cada fase exige build, lint y todas las pruebas; ninguna regresión ni fallo nuevo. Registrar aserciones actualizadas y verificar cada fallo residual por su causa. Las pruebas de LumiFriendship permanecen intactas. Las expectativas sobre publicaciones/eventos y rutas antiguas quedan fuera de alcance.
 
@@ -190,14 +226,14 @@ El JSX y ResourceContent del visor están intactos; BackpackViewerFrame añade �
 
 Todos están en tests/adventure-rendering.test.mjs; se mantienen las mismas aserciones y causas:
 
-| Prueba exacta | Línea actual | Causa residual |
-| --- | ---: | --- |
-| student resources open with backpack before posts, events and investigations | 1147 | Sigue buscando Investigaciones en Recursos, que muestra la mochila. |
-| resource unlocks follow actual activities and specific cases rather than review mode | 1165 | La ruta antigua tab=community redirige en SSR, sin el texto esperado. |
-| counselor moderation hides interviews in the student community | 2480 | La ruta antigua redirige y no muestra la entrevista buscada. |
-| resource tabs separate the backpack, publications, events and published investigations | 2971 | Espera la pestaña Publicaciones del diseño antiguo. |
-| resource tabs support arrow and boundary keys while retaining unrelated query parameters | 2998 | La pestaña antigua no existe: props de undefined. |
-| restored publication and event details keep reading, favorites and attendance in existing data | 3056 | PublicationCard no existe en el componente original de entrevistas: props de undefined. |
+| Prueba exacta                                                                                  | Línea actual | Causa residual                                                                          |
+| ---------------------------------------------------------------------------------------------- | -----------: | --------------------------------------------------------------------------------------- |
+| student resources open with backpack before posts, events and investigations                   |         1147 | Sigue buscando Investigaciones en Recursos, que muestra la mochila.                     |
+| resource unlocks follow actual activities and specific cases rather than review mode           |         1165 | La ruta antigua tab=community redirige en SSR, sin el texto esperado.                   |
+| counselor moderation hides interviews in the student community                                 |         2480 | La ruta antigua redirige y no muestra la entrevista buscada.                            |
+| resource tabs separate the backpack, publications, events and published investigations         |         2971 | Espera la pestaña Publicaciones del diseño antiguo.                                     |
+| resource tabs support arrow and boundary keys while retaining unrelated query parameters       |         2998 | La pestaña antigua no existe: props de undefined.                                       |
+| restored publication and event details keep reading, favorites and attendance in existing data |         3056 | PublicationCard no existe en el componente original de entrevistas: props de undefined. |
 
 ---
 
@@ -215,15 +251,15 @@ Se mantienen Recursos, sus pruebas, accesos rápidos y componentes originales de
 
 Ejecutado `npm test` el 4 de octubre de 2026: 185 pruebas, 178 aprobadas, 7 fallidas. Todas están en `tests/adventure-rendering.test.mjs`; las líneas son las de la ejecución inicial.
 
-| Nombre exacto | Línea inicial | Causa |
-| --- | ---: | --- |
-| student resources open with backpack before posts, events and investigations | 1145 | No aparece Investigaciones en Recursos: la vista actual muestra la mochila. |
-| resource unlocks follow actual activities and specific cases rather than review mode | 1163 | El render estático de la ruta antigua redirige y no muestra el texto de Central de Casos esperado. |
-| counselor moderation hides interviews in the student community | 2478 | La ruta antigua de Recursos redirige; el render estático no contiene la entrevista no moderada esperada. |
-| phase 9 panel has five direct links, a compact next-step action and the real traveler rank | 2876 | La lista actual incluye el acceso Investigaciones y difiere de los cinco enlaces esperados. |
-| resource tabs separate the backpack, publications, events and published investigations | 2967 | Recursos no contiene la pestaña Publicaciones que espera la prueba. |
-| resource tabs support arrow and boundary keys while retaining unrelated query parameters | 2994 | La pestaña buscada no existe; se intenta leer props de undefined. |
-| restored publication and event details keep reading, favorites and attendance in existing data | 3052 | StudentResourceBoard solo contiene entrevistas; no existe PublicationCard y se lee props de undefined. |
+| Nombre exacto                                                                                  | Línea inicial | Causa                                                                                                    |
+| ---------------------------------------------------------------------------------------------- | ------------: | -------------------------------------------------------------------------------------------------------- |
+| student resources open with backpack before posts, events and investigations                   |          1145 | No aparece Investigaciones en Recursos: la vista actual muestra la mochila.                              |
+| resource unlocks follow actual activities and specific cases rather than review mode           |          1163 | El render estático de la ruta antigua redirige y no muestra el texto de Central de Casos esperado.       |
+| counselor moderation hides interviews in the student community                                 |          2478 | La ruta antigua de Recursos redirige; el render estático no contiene la entrevista no moderada esperada. |
+| phase 9 panel has five direct links, a compact next-step action and the real traveler rank     |          2876 | La lista actual incluye el acceso Investigaciones y difiere de los cinco enlaces esperados.              |
+| resource tabs separate the backpack, publications, events and published investigations         |          2967 | Recursos no contiene la pestaña Publicaciones que espera la prueba.                                      |
+| resource tabs support arrow and boundary keys while retaining unrelated query parameters       |          2994 | La pestaña buscada no existe; se intenta leer props de undefined.                                        |
+| restored publication and event details keep reading, favorites and attendance in existing data |          3052 | StudentResourceBoard solo contiene entrevistas; no existe PublicationCard y se lee props de undefined.   |
 
 ## Criterio de cierre por fase
 
@@ -243,21 +279,25 @@ Ejecutar build, lint y npm test al cerrar cada fase. Build y lint deben aprobars
 Se registra aquí el resultado de cada fase y las aserciones actualizadas.
 
 ### Fase 1
+
 Build y lint aprobados. npm test: 187 pruebas, 180 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Dos pruebas nuevas verifican persistencia/recarga/eventos storage, datos inválidos, fallos de escritura y favoritos separados de la creación explícita. No se modificaron aserciones existentes.
 
 ### Fase 2
+
 Build y lint aprobados. npm test: 189 pruebas, 182 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Pruebas nuevas: capítulos y pasaporte; estados del sello, ocultación, demostración 1 de 14 sin alterar resultados y novedad por página. No se modificaron aserciones existentes.
 
 ### Fase 3
+
 Build y lint aprobados. npm test: 190 pruebas, 183 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Nueva prueba de completitud, orden, límite, archivo e histórico y recreación. En student shell returns to the last visited zone and preserves module navigation, la aserción Secciones de mi perfil de decisiones se reemplazó por Mis planes y Lo que guardaste en el camino, pues la nueva vista no duplica pestañas.
 
 ### Fase 4
+
 Build y lint aprobados. npm test: 192 pruebas, 185 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Nuevas pruebas de estados, acceso real por caso, moderación en la ruta nueva, alias, preguntas sugeridas, publicación validada/idempotente y privacidad de reflexión, y reacciones positivas.
 Aserciones actualizadas: presentation locks pending path missions... y the city and research station... verifican ausencia de estación e inicio de investigación tras resolver un caso; student point calculations... recomienda mara-test y verifica su actividad; phase 8 activities combine zones... retira research del orden de puntos y verifica que publicar un video no recrea la estación. No se cambiaron pruebas de Recursos ni de accesos rápidos. Se añade guideStep al estado de guion para reanudar el paso exacto.
 
 ### Fase 5
-Build y lint aprobados. npm test: 194 pruebas, 187 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Nuevas pruebas verifican cobertura de ocupaciones y carreras, cuatro instituciones ficticias, relaciones simétricas, búsqueda sin tildes, afinidad sellada y páginas de detalle/IDs inexistentes sin diálogos. No se modificaron aserciones existentes.
 
+Build y lint aprobados. npm test: 194 pruebas, 187 aprobadas y únicamente los mismos 7 fallos por las mismas causas. Nuevas pruebas verifican cobertura de ocupaciones y carreras, cuatro instituciones ficticias, relaciones simétricas, búsqueda sin tildes, afinidad sellada y páginas de detalle/IDs inexistentes sin diálogos. No se modificaron aserciones existentes.
 
 ### Fase 6 — cierre
 
@@ -271,11 +311,11 @@ Aserción actualizada en `student overlay queue prioritizes real city arrival, s
 
 Se revisaron perfil, Helena, planes, investigación, guion, alias de investigaciones, las tres listas del catálogo, los tres tipos de detalle y un ID inexistente: 13 rutas en cada tamaño, 39 comprobaciones. En todos los casos el escenario se renderizó, no hubo desbordamiento horizontal ni diálogo automático y los objetivos de las rutas nuevas y su cabecera alcanzaron 44 px.
 
-| Tamaño | Comprobaciones | Resultado |
-| --- | ---: | --- |
-| 1280 × 800 | 13 | Aprobadas |
-| 1440 × 900 | 13 | Aprobadas |
-| 360 × 800 | 13 | Aprobadas |
+| Tamaño     | Comprobaciones | Resultado |
+| ---------- | -------------: | --------- |
+| 1280 × 800 |             13 | Aprobadas |
+| 1440 × 900 |             13 | Aprobadas |
+| 360 × 800  |             13 | Aprobadas |
 
 Interacciones comprobadas: favorito sin navegación accidental y recarga; creación y archivo de plan; Escape y retorno de foco; revelación persistente y novedad por página; Tab/Enter en ayuda con foco visible; Enter al agregar una pregunta; End/Home en pestañas; guion y borrador recuperados tras recarga; publicación con coautor, detalle propio y las dos reacciones en una entrevista ajena sin mostrar conteos ajenos. La vista desbloqueada de investigación se comprobó con una página temporal de aceptación en un origen local separado; esa página se eliminó al terminar.
 
@@ -289,15 +329,15 @@ El diff y `git diff --check` fueron revisados: no cambian portales protegidos, c
 
 Los siguientes siete fallos siguen en `tests/adventure-rendering.test.mjs`, por las mismas causas de la línea base. Las líneas de esta tabla corresponden al cierre; no se reemplazó ninguno por una regresión bajo el mismo nombre.
 
-| Prueba exacta | Línea final | Causa residual |
-| --- | ---: | --- |
-| student resources open with backpack before posts, events and investigations | 1147 | Recursos muestra la mochila; falta el texto Investigaciones esperado. |
-| resource unlocks follow actual activities and specific cases rather than review mode | 1165 | La ruta antigua redirige en SSR y no muestra el texto esperado de Central de Casos. |
-| counselor moderation hides interviews in the student community | 2480 | La ruta antigua redirige en SSR y no contiene la entrevista visible esperada. |
-| phase 9 panel has five direct links, a compact next-step action and the real traveler rank | 2878 | El panel mantiene seis enlaces, incluido Investigaciones, y la prueba espera cinco. |
-| resource tabs separate the backpack, publications, events and published investigations | 2969 | Falta la pestaña Publicaciones en la vista actual de Recursos. |
-| resource tabs support arrow and boundary keys while retaining unrelated query parameters | 2996 | La pestaña buscada no existe; se lee props de undefined. |
-| restored publication and event details keep reading, favorites and attendance in existing data | 3054 | No existe PublicationCard en el componente de entrevistas; se lee props de undefined. |
+| Prueba exacta                                                                                  | Línea final | Causa residual                                                                        |
+| ---------------------------------------------------------------------------------------------- | ----------: | ------------------------------------------------------------------------------------- |
+| student resources open with backpack before posts, events and investigations                   |        1147 | Recursos muestra la mochila; falta el texto Investigaciones esperado.                 |
+| resource unlocks follow actual activities and specific cases rather than review mode           |        1165 | La ruta antigua redirige en SSR y no muestra el texto esperado de Central de Casos.   |
+| counselor moderation hides interviews in the student community                                 |        2480 | La ruta antigua redirige en SSR y no contiene la entrevista visible esperada.         |
+| phase 9 panel has five direct links, a compact next-step action and the real traveler rank     |        2878 | El panel mantiene seis enlaces, incluido Investigaciones, y la prueba espera cinco.   |
+| resource tabs separate the backpack, publications, events and published investigations         |        2969 | Falta la pestaña Publicaciones en la vista actual de Recursos.                        |
+| resource tabs support arrow and boundary keys while retaining unrelated query parameters       |        2996 | La pestaña buscada no existe; se lee props de undefined.                              |
+| restored publication and event details keep reading, favorites and attendance in existing data |        3054 | No existe PublicationCard en el componente de entrevistas; se lee props de undefined. |
 
 ## Ajuste posterior del catálogo — 4 de octubre de 2026
 
@@ -438,13 +478,10 @@ Restaurar el logo local de brújula y “Orientación / Explora” en Camino y C
 Conservar bienvenida → mitos → registro, una pendiente disponible por vez; las demás pendientes cerradas y las completadas revisables. Ciudad mantiene su comportamiento actual. No reiniciar datos automáticamente ni agregar botón. Para probar sin borrar datos, abrir una ventana privada. Para reiniciar el navegador actual, ejecutar en la consola del sitio:
 
 ```js
-[
-  'ov.student-adventure.v1',
-  'ov.missions.v2',
-  'ov.student-ui.v1',
-  'ov.student-followups.v1',
-].forEach(key => localStorage.removeItem(key));
-location.href = '/student/missions';
+;['ov.student-adventure.v1', 'ov.missions.v2', 'ov.student-ui.v1', 'ov.student-followups.v1'].forEach((key) =>
+  localStorage.removeItem(key),
+)
+location.href = '/student/missions'
 ```
 
 Esto elimina progreso, respuestas, diario y conversaciones guardados en esas claves, además de presentación y seguimiento. Los datos de demostración definidos por los stores vuelven a aparecer. No usar localStorage.clear().
@@ -495,7 +532,6 @@ Recursos contiene únicamente Mi mochila. Investigaciones pasa a /student/invest
 
 </details>
 
-
 ## Actividades comunes de estudiante y apoderado — 5 de octubre de 2026
 
 Por solicitud del usuario, `../especificacion-actividades-comunes.md` prevalece para el formato común de actividades y los cambios de esta entrega. Se autorizó expresamente la excepción de AGENTS.md para el portal del apoderado; el portal de orientadores y su prueba protegida permanecen excluidos.
@@ -523,3 +559,27 @@ Por solicitud posterior del usuario, las actividades informativas del apoderado 
 «Anterior» permite recorrer los nodos ya visitados. En actividades pendientes guarda el nodo al que se retrocedió sin borrar intentos ni respuestas; si falla el guardado, mantiene la pantalla actual. En actividades completadas el retroceso y el repaso conservan la finalización y sus recursos. Se verificaron escritorio, móvil, salida con X y retroceso por teclado, además de las pruebas de persistencia y reanudación.
 
 Build y lint aprobados; 215 pruebas permitidas aprobadas tras este ajuste. La prueba de orientadores continúa excluida.
+
+## Piloto del Bloque 1 — 6 de octubre de 2026
+
+Por solicitud directa del usuario, se implementa evaluación y seguimiento primero, después personalización y avisos, y al final misiones adicionales. La especificación y las decisiones aprobadas están documentadas en [implementacion-piloto-bloque1.md](implementacion-piloto-bloque1.md), incluida la correspondencia entre los nueve nodos y los códigos ACT conocidos o pendientes.
+
+Los nodos 1–7 se habilitan secuencialmente; Preparar la mochila y Elegir mi siguiente paso (8–9) quedan visibles con contenido pendiente. Se conserva el avance obligatorio de nueve nodos y los accesos históricos. El antiguo ítem privado de Horizonte conserva sus versiones en el historial y no se reutiliza. ACT-06 solo personaliza tres celdas; el test mantiene su contenido y ninguno recibe esta evaluación.
+
+El piloto conserva los almacenes existentes y agrega respuestas, evaluaciones, preguntas mostradas, eventos y desbloqueos en un almacén independiente. El proveedor es simulado y sustituible; no clasifica por longitud ni palabras clave ni llama a servicios externos. Los portales y la prueba protegida de orientadores permanecen fuera del alcance.
+
+# Alcance de la demostración · 6 de octubre de 2026
+
+Por solicitud del usuario, el Camino activo termina en «Las huellas que traigo». El límite temporal se configura en `StudentDemoScope.ts`: solo las cuatro primeras misiones, con sus requisitos existentes. Ciudad mantiene sus accesos anteriores. Los nodos posteriores se muestran con bloqueo normal, sin referencias a una demostración ni mensajes sobre dónde termina. Se conservan todos los datos y el piloto completo para reactivarlo posteriormente. Véase `implementacion-piloto-bloque1.md`.
+
+Se retira el simulador visible. Los tres registros de Pregones reciben ADECUADA mediante configuración fija del proveedor local; desbloquean Ecos de la plaza y alimentan la pregunta personalizada de Huellas. El aviso de influencia pasa a «Esta pregunta puede influir más adelante en tu camino.», sin mencionar actividades concretas. Las demás misiones adicionales permanecen fuera del alcance activo.
+
+## Pantalla de ingreso común — 6 de octubre de 2026
+
+Por solicitud directa del usuario, se implementa [especificacion-pantalla-ingreso.md](especificacion-pantalla-ingreso.md). El cambio de interfaz se limita a `LoginScreen.tsx` y `access.css`: fondo de degradado con SVG decorativo y velo, marca Explora, presentación neutral para los tres perfiles y tarjeta clara de acceso. Se eliminan las órbitas, los puntos con roles y los textos anteriores. Las píldoras de perfil son informativas.
+
+Se conservan `onEnter`, los tres estados, título del documento, atributos y validación nativa de los campos, y el control accesible de visibilidad de contraseña. El botón atenuado permanece habilitado para activar `required`; al completar ambos campos cambia a azul. No se modifican el acceso de demostración, su puerta de acceso ni las rutas. Se preserva la clase de cierre de sesión usada por el selector de perfiles.
+
+Verificación local: escritorio de 1321 × 833 y 900 × 720, tarjeta de 440 px; móviles de 390 × 844 y 375 × 667 sin desplazamiento ni desbordamiento horizontal. Campos de 52 px, textos de entrada de 16 px y control de contraseña de 44 × 44 px. Se comprueban campos vacíos, envío parcial, contraseña visible/oculta, acceso al selector y foco con Tab. La reducción de altura a 400 px mantiene desplazamiento vertical y oculta la presentación adicional; esta comprobación simula la pérdida de espacio, sin abrir un teclado físico. Se mantiene la variante sin movimiento.
+
+Build y lint del componente aprobados, además de 22 pruebas específicas de recursos y Central de casos. No se ejecuta `npm test` ni la suite de renderizado global, que carga portales protegidos. Se conserva la advertencia existente de Vite sobre tamaño del bundle. Entrega local sin despliegue ni dependencias nuevas; se conservan los cambios previos del repositorio.

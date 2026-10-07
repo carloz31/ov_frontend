@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, ChevronDown, TriangleAlert } from 'lucide-react'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 import { Link, useLocation, useSearchParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
+import { StaffAlertCard, StaffEntityHeader } from '@/components/staff/StaffPatterns'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
@@ -15,7 +15,6 @@ import {
   generalProgress,
   observationCounts,
   priorityProgress,
-  profileAlertLabels,
   profileAlerts,
   relativeAccess,
 } from './selectors'
@@ -42,31 +41,34 @@ function ProfileAlerts({ student, returnTo }: { student: StudentProfile; returnT
     SIN_INTERESES: { section: 'options', label: 'Ver opciones' },
     REGISTRO_REQUIERE_ATENCION: { section: 'records', label: 'Ver registros por revisar' },
   }
-  if (!alerts.length)
-    return <p className="text-sm text-muted-foreground">Este estudiante no tiene alertas.</p>
+  const labels: Record<ProfileAlertCode, string> = {
+    AVANCE_BAJO_PROMEDIO: 'Avance bajo el promedio del salón',
+    FAMILIA_NO_REGISTRADA: 'Familia no registrada',
+    SIN_INTERESES: 'Sin intereses registrados',
+    REGISTRO_REQUIERE_ATENCION: 'Registro que requiere atención',
+  }
+  if (!alerts.length) return null
   return (
-    <Card className="rounded-xl border-border px-4 py-3">
-      <Collapsible open={open} onOpenChange={setOpen}>
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <h2 className="flex items-center gap-2 font-bold">
-            <TriangleAlert className="size-4 text-warning-text" aria-hidden />
-            Alertas ({alerts.length})
-          </h2>
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <StaffAlertCard
+        title={`${alerts.length} ${alerts.length === 1 ? 'alerta' : 'alertas'}`}
+        actions={
           <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="min-h-11 gap-2 px-2">
-              {open ? 'Ocultar detalles' : 'Ver alertas'}
+            <Button variant="outline" className="gap-2" aria-expanded={open}>
+              {open ? 'Ocultar detalles' : 'Ver detalle'}
               <ChevronDown
                 className={`size-4 transition-transform ${open ? 'rotate-180' : ''}`}
                 aria-hidden
               />
             </Button>
           </CollapsibleTrigger>
-        </div>
-        <ul aria-label="Alertas del estudiante" className="flex flex-wrap gap-2">
+        }
+      >
+        <ul aria-label="Alertas del estudiante" className="mt-3 flex flex-wrap gap-2">
           {alerts.map((code) => (
             <li key={code}>
               <Badge variant="aviso" className="whitespace-normal font-medium">
-                {profileAlertLabels[code]}
+                {labels[code]}
               </Badge>
             </li>
           ))}
@@ -79,7 +81,7 @@ function ProfileAlerts({ student, returnTo }: { student: StudentProfile; returnT
                 key={code}
               >
                 <Badge variant="aviso" className="shrink-0 whitespace-normal font-normal">
-                  {profileAlertLabels[code]}
+                  {labels[code]}
                 </Badge>
                 <p className="min-w-0 flex-1 text-sm leading-relaxed">{descriptions[code]}</p>
                 <Button
@@ -103,8 +105,8 @@ function ProfileAlerts({ student, returnTo }: { student: StudentProfile; returnT
             ))}
           </ul>
         </CollapsibleContent>
-      </Collapsible>
-    </Card>
+      </StaffAlertCard>
+    </Collapsible>
   )
 }
 export function StudentProfileView({ student }: { student: StudentProfile }) {
@@ -142,20 +144,23 @@ export function StudentProfileView({ student }: { student: StudentProfile }) {
           Volver a Mis estudiantes
         </Link>
       </Button>
-      <Card className="grid min-w-0 items-center gap-4 rounded-xl p-4 lg:grid-cols-2 lg:gap-6">
-        <header className="min-w-0">
-          <h1 className="text-xl font-bold sm:text-2xl">{fullName(student)}</h1>
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
+      <StaffEntityHeader
+        title={fullName(student)}
+        initials={`${student.nombres[0]}${student.apellidos[0]}`}
+        details={
+          <>
             <p>Salón: {student.salon}</p>
-            <p className="text-muted-foreground">Último acceso: {relativeAccess(student.ultimoIngreso)}</p>
-          </div>
-          <EmailContact email={student.email} />
-        </header>
-        <div className="grid min-w-0 grid-cols-2 gap-4 border-t pt-3 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
-          <ProgressIndicator title="Avance en lo prioritario" {...priority} priority returnTo={returnTo} />
-          <ProgressIndicator title="Avance general" {...general} />
-        </div>
-      </Card>
+            <p>Último acceso: {relativeAccess(student.ultimoIngreso)}</p>
+            <EmailContact email={student.email} />
+          </>
+        }
+        metrics={
+          <>
+            <ProgressIndicator title="Avance en lo prioritario" {...priority} priority returnTo={returnTo} />
+            <ProgressIndicator title="Avance general" {...general} />
+          </>
+        }
+      />
       <ProfileAlerts key={`${student.id}:${section}`} student={student} returnTo={returnTo} />
       <Tabs value={section} onValueChange={setSection}>
         <TabsList

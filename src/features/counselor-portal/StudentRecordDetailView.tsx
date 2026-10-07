@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { StaffEntityHeader, StaffAlertCard } from '@/components/staff/StaffPatterns'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { appPaths } from '@/routes/paths'
 import { getActivity } from './CounselorPortalSelectors'
@@ -53,36 +54,40 @@ function StudentRecordDetailView() {
       <Button className="px-0" onClick={back} variant="link">
         <ArrowLeft /> Volver al progreso
       </Button>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold text-primary">{activity?.code}</p>
-          <h1 className="text-3xl font-bold">{activity?.name}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {student.name} · versión {record.version} · {new Date(record.date).toLocaleString('es-PE')}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {observed ? (
-            <Button onClick={() => setRemoveOpen(true)} variant="outline">
-              <EyeOff /> Quitar observación
-            </Button>
-          ) : (
-            <Button onClick={() => setRedoOpen(true)}>
-              <RotateCcw /> Observar y sugerir rehacer
-            </Button>
-          )}
-        </div>
-      </div>
+      <StaffEntityHeader
+        title={activity?.name ?? 'Registro'}
+        initials={activity?.code.slice(0, 2) ?? 'RE'}
+        details={
+          <>
+            <p>{activity?.code}</p>
+            <p>
+              {student.name} · versión {record.version} · {new Date(record.date).toLocaleString('es-PE')}
+            </p>
+          </>
+        }
+        metrics={
+          <div className="flex flex-wrap gap-2">
+            {observed ? (
+              <Button onClick={() => setRemoveOpen(true)} variant="outline">
+                <EyeOff /> Quitar observación
+              </Button>
+            ) : (
+              <Button onClick={() => setRedoOpen(true)}>
+                <RotateCcw /> Observar y sugerir rehacer
+              </Button>
+            )}
+          </div>
+        }
+      />
       {observed && (
-        <Card className="border-border bg-warning-soft p-5">
+        <StaffAlertCard title="Observación a nivel de registro">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="warning">Observado</Badge>
-            <strong className="text-sm">Observación a nivel de registro</strong>
           </div>
           <p className="mt-2 text-sm leading-6 text-warning-text">
             {record.counselorComment || record.reviewReason || 'Este registro requiere revisión.'}
           </p>
-        </Card>
+        </StaffAlertCard>
       )}
       <div className="space-y-4">
         {record.items.map((item, index) => (

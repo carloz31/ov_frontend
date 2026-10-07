@@ -7,7 +7,7 @@ export function BlockSign({ points, mapSize }: { points: StudentMapPoint[]; mapS
   return (
     <>
       {blocks.map((block) => {
-        const missions = points.filter((point) => point.bloque === block)
+        const missions = points.filter((point) => !point.additional && point.bloque === block)
         const position = mapPosition(missions[0], mapSize)
         const Icon = missions.every((point) => point.status === 'completed') ? Check : Signpost
         return (

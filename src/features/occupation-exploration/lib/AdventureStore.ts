@@ -28,6 +28,8 @@ export function createInitialAdventure(): AdventureState {
     crewInvitations: [],
     reports: [],
     solvedCaseIds: [],
+    caseBestScores: {},
+    forestFireScoringVersion: 2,
     research: { step: 0, careerId: '', invitees: [], answers: ['', '', ''], videoUrl: '', reflection: '' },
     videos: [],
     reactions: [],
@@ -38,6 +40,14 @@ export function createInitialAdventure(): AdventureState {
     visits: [],
     eventAttendance: {},
   }
+}
+export function normalizeCaseScores(value: unknown): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  return Object.fromEntries(
+    Object.entries(value).filter(
+      ([, score]) => typeof score === 'number' && Number.isInteger(score) && score >= 0,
+    ),
+  )
 }
 function readState(): AdventureState {
   try {
@@ -83,6 +93,11 @@ function readState(): AdventureState {
     return {
       ...initial,
       ...parsed,
+      caseBestScores: normalizeCaseScores(parsed.caseBestScores),
+      forestFireScoringVersion: 2,
+      solvedCaseIds: (parsed.solvedCaseIds ?? []).filter(
+        (id: string) => id !== 'forest-fire' || parsed.forestFireScoringVersion === 2,
+      ),
       caminoContentVersion: 2,
       legacyCaminoCompleted:
         parsed.legacyCaminoCompleted === true ||
@@ -116,7 +131,7 @@ let state = readState()
 let storageError = false
 try {
   const saved = JSON.parse(localStorage.getItem(storageKey) || 'null')
-  if (saved?.version === 1 && saved.caminoContentVersion !== 2)
+  if (saved?.version === 1 && (saved.caminoContentVersion !== 2 || saved.forestFireScoringVersion !== 2))
     localStorage.setItem(storageKey, JSON.stringify(state))
 } catch {
   storageError = true
@@ -235,6 +250,20 @@ export function completeCase(id: string) {
   updateAdventure((current) =>
     canAccessCity(current) && cityCases.some((item) => item.id === id)
       ? { ...current, solvedCaseIds: [...new Set([...current.solvedCaseIds, id])] }
+      : current,
+  )
+}
+export function recordCaseScore(id: string, score: number) {
+  if (!Number.isInteger(score) || score < 0) return
+  updateAdventure((current) =>
+    canAccessCity(current) && cityCases.some((item) => item.id === id)
+      ? {
+          ...current,
+          caseBestScores: {
+            ...current.caseBestScores,
+            [id]: Math.max(current.caseBestScores[id] ?? 0, score),
+          },
+        }
       : current,
   )
 }

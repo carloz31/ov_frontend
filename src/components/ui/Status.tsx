@@ -51,6 +51,7 @@ export function AlertBadge({
 export function CardIcon({ icon: Icon, className }: { icon: LucideIcon; className?: string }) {
   return (
     <span
+      data-slot="card-icon"
       className={cn(
         'flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary',
         className,

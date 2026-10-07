@@ -53,7 +53,7 @@ function ParentPortalModule() {
   if (/^\/parent\/activities\/[^/]+\/?$/.test(location.pathname))
     return (
       <ThemeProvider theme="staff">
-        <div className="theme-staff min-h-svh bg-background text-foreground">
+        <div className="theme-staff min-h-svh bg-background text-foreground" data-audience="parent">
           <Outlet context={{ completedActivityIds } satisfies ParentPortalContext} />
         </div>
       </ThemeProvider>
@@ -62,6 +62,7 @@ function ParentPortalModule() {
   return (
     <AppShell
       theme="staff"
+      audience="parent"
       activeItemId={routeState.activeItemId}
       navigationGroups={navigationGroups}
       onLogout={() => navigate(appPaths.home)}

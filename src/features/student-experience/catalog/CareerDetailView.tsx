@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { GraduationCap } from 'lucide-react'
 import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
 import { Parchment } from '../discovery/Parchment'
 import { FavoriteButton } from '../discovery/FavoriteButton'
-import { useDiscovery, updateDiscovery } from '../discovery/discoveryStore'
+import { useDiscovery } from '../discovery/discoveryStore'
+import { CatalogRevisitNotice, UnexpectedPlace } from './UnexpectedPlace'
+import { useCatalogVisit } from './useCatalogVisit'
 import { discoveryPaths } from '../paths'
 import { appPaths } from '@/routes/paths'
 import { createPlanFromCareer, getOrderedPlans } from '../plans/plans'
@@ -51,14 +53,7 @@ export function CareerDetailView() {
     discovery = useDiscovery()
   const career = getCareer(careerId),
     [region, setRegion] = useState<'LIMA' | 'NACIONAL'>('LIMA')
-  useEffect(() => {
-    if (career)
-      updateDiscovery((s) =>
-        s.viewedCareerIds.includes(career.id)
-          ? s
-          : { ...s, viewedCareerIds: [...s.viewedCareerIds, career.id] },
-      )
-  }, [career])
+  useCatalogVisit('career', career?.id)
   if (!career)
     return (
       <DiscoveryStage ambient="atlas">
@@ -80,11 +75,14 @@ export function CareerDetailView() {
   return (
     <DiscoveryStage ambient="atlas">
       <AtlasNavigation section="careers" />
+      <CatalogRevisitNotice />
       <Parchment className="sx-d-dark">
         <div className="sx-d-header">
           <div>
             <p className="sx-d-eyebrow">Carrera</p>
-            <h1 className="sx-d-detail-title">{career.name}</h1>
+            <h1 className="sx-d-detail-title" tabIndex={-1}>
+              {career.name}
+            </h1>
             <p>
               {family.name} · {career.durationYears} años
             </p>
@@ -188,6 +186,7 @@ export function CareerDetailView() {
           </Parchment>
         </aside>
       </div>
+      <UnexpectedPlace kind="career" currentId={career.id} />
     </DiscoveryStage>
   )
 }

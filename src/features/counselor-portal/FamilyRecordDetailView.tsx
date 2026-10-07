@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { StaffEntityHeader } from '@/components/staff/StaffPatterns'
 import { appPaths } from '@/routes/paths'
 import { getActivity } from './CounselorPortalSelectors'
 import { useCounselorPortal } from './CounselorPortalContext'
@@ -36,11 +37,16 @@ function FamilyRecordDetailView() {
       >
         <ArrowLeft /> Volver a Familia
       </Button>
-      <div>
-        <p className="text-sm font-semibold text-primary">{activity?.code}</p>
-        <h1 className="text-3xl font-bold">{activity?.name}</h1>
-        <p className="mt-2 text-sm text-muted-foreground">{student.name} · Registro familiar</p>
-      </div>
+      <StaffEntityHeader
+        title={activity?.name ?? 'Registro familiar'}
+        initials="RF"
+        details={
+          <>
+            <p>{activity?.code}</p>
+            <p>{student.name} · Registro familiar</p>
+          </>
+        }
+      />
       <div className="grid gap-5 lg:grid-cols-2">
         <AnswerCard
           answer={conversation.studentRecord}

@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
+import { StaffEntityHeader } from '@/components/staff/StaffPatterns'
 import { studentProfiles, questionnaires } from '@/features/counselor-portal/profile/data'
 import { displayDate } from '@/features/counselor-portal/profile/selectors'
 import { QuestionnaireDetailContent } from '@/features/counselor-portal/profile/Questionnaires'
@@ -58,11 +59,12 @@ export function ParentQuestionnaireDetailView() {
           Volver
         </Link>
       </Button>
-      <header className="space-y-3">
-        <h1 className="text-2xl font-bold">{definition.name}</h1>
-        <p>{child.name}</p>
-        <Badge variant="success">Completado · {displayDate(application?.completedAt)}</Badge>
-      </header>
+      <StaffEntityHeader
+        title={definition.name}
+        initials={child.initials}
+        details={<p>{child.name}</p>}
+        metrics={<Badge variant="success">Completado · {displayDate(application?.completedAt)}</Badge>}
+      />
       <QuestionnaireDetailContent
         student={student}
         definition={definition}

@@ -21,6 +21,7 @@ export type CareerDetail = {
 }
 export type RiasecDimension = 'R' | 'I' | 'A' | 'S' | 'E' | 'C'
 export type OccupationDetail = {
+  contentStatus?: 'pending'
   id: string
   onetCode: string
   name: string
@@ -153,6 +154,20 @@ const codes: RiasecDimension[][] = [
   ['E', 'C', 'S'],
 ]
 export const occupationDetails: OccupationDetail[] = occupationCatalog.map((o, index) => {
+  if (o.contentStatus === 'pending')
+    return {
+      id: o.id,
+      name: o.name,
+      contentStatus: 'pending',
+      onetCode: '',
+      whatTheyDo: o.typicalWork,
+      knowledge: ['[Conocimientos: por completar desde O*NET]'],
+      skills: o.skills,
+      interestScores: { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 },
+      highPoints: [],
+      careerIds: [],
+    }
+
   const highPoints: RiasecDimension[] = ['psychologist', 'teacher', 'paramedic', 'sociologist'].includes(o.id)
     ? ['S', 'I', 'A']
     : codes[index % codes.length]

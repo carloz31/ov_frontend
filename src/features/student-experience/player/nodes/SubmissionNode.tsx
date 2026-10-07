@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check } from 'lucide-react'
+import { Check, Star } from 'lucide-react'
 import type { Actividad, Entregable, NodoConsigna } from '@/features/missions/model'
 import { applyCompletion, latestSubmission, studentId, validateSubmission } from '@/features/missions/logic'
 import { updateJourney, useJourney } from '@/features/missions/store'
 import { CharacterAvatar } from '../CharacterAvatar'
 import { FollowUp } from '../followup/FollowUp'
 import { getFollowUpRecord, recoverFollowUp, setFollowUpRecord } from '../followup/followUpStore'
+import { criteria, personalizations, reflectionCopy } from '../../reflection/config'
+import { beginResponse } from '../../reflection/evaluation'
+import { getReflections, updateReflections, useReflections } from '../../reflection/store'
+import { prepareQuestion, questionInfluencesLater } from '../../reflection/personalization'
+import { HighlightedQuestion, QuestionMemory } from '../../reflection/QuestionMemory'
+import { LumiMedallion } from '../LumiMedallion'
 
 export function SubmissionNode({
   activity,
   node,
   onSaved,
   onKeep,
-  edit = false,
 }: {
   activity: Actividad
   node: NodoConsigna
@@ -23,6 +28,11 @@ export function SubmissionNode({
   const state = useJourney()
   const existing = latestSubmission(state, activity.id, node.id)
   const draftKey = `${activity.id}/${node.id}`
+  const reflections = useReflections()
+  const shownQuestion = reflections.preguntas[draftKey]
+  const needsQuestion = !!personalizations[draftKey] || !!criteria[draftKey]
+  const influencesLater = questionInfluencesLater(activity.id, node.id)
+  const [intro, setIntro] = useState(false)
   const [text, setText] = useState(
     state.drafts[draftKey] ?? (existing?.contenido.tipo === 'texto' ? existing.contenido.texto : ''),
   )
@@ -31,11 +41,18 @@ export function SubmissionNode({
   )
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
-  const [following, setFollowing] = useState(false)
+  const evaluated = !!criteria[draftKey] && activity.plantilla?.tipo !== 'matriz'
+  const [following, setFollowing] = useState(
+    () =>
+      evaluated &&
+      getReflections().respuestas[draftKey]?.estado === 'EN_SEGUIMIENTO' &&
+      !!getFollowUpRecord(draftKey),
+  )
   const initialRecord = useRef(getFollowUpRecord(draftKey))
   const [recovering, setRecovering] = useState(
     () =>
       activity.tipo === 'registro' &&
+      !evaluated &&
       activity.plantilla?.tipo !== 'matriz' &&
       !!initialRecord.current &&
       !initialRecord.current.versionCondensada &&
@@ -43,8 +60,15 @@ export function SubmissionNode({
   )
   const spec = node.entregable
   useEffect(() => {
+    if (needsQuestion) void prepareQuestion(activity, node).catch((reason: Error) => setError(reason.message))
+    if (influencesLater && (!needsQuestion || shownQuestion) && !getReflections().introVista) {
+      if (updateReflections((s) => ({ ...s, introVista: true }))) setIntro(true)
+    }
+  }, [activity, node, needsQuestion, shownQuestion, influencesLater])
+  useEffect(() => {
     if (
       activity.tipo !== 'registro' ||
+      evaluated ||
       spec.tipo !== 'texto' ||
       activity.plantilla?.tipo === 'matriz' ||
       !initialRecord.current ||
@@ -60,7 +84,7 @@ export function SubmissionNode({
     return () => {
       cancelled = true
     }
-  }, [activity, node, spec.tipo])
+  }, [activity, node, spec.tipo, evaluated])
   useEffect(() => {
     if (spec.tipo === 'archivo' && !node.obligatoria) onSaved()
   }, [spec.tipo, node.obligatoria, onSaved])
@@ -88,28 +112,30 @@ export function SubmissionNode({
         updateJourney((current) => {
           const drafts = { ...current.drafts }
           delete drafts[draftKey]
-          return applyCompletion(activity, {
+          const next = {
             ...current,
             submissions: [...current.submissions, entry],
             drafts,
-          })
+          }
+          return evaluated ? next : applyCompletion(activity, next)
         })
       ) {
-        if (
-          activity.tipo === 'registro' &&
-          !existing &&
-          !edit &&
-          spec.tipo === 'texto' &&
-          activity.plantilla?.tipo !== 'matriz' &&
-          content.tipo === 'texto' &&
-          setFollowUpRecord(draftKey, {
-            textoInicial: content.texto,
-            versionInicial: entry.version,
-            turnos: [],
-          })
-        )
+        if (evaluated && content.tipo === 'texto') {
+          if (
+            !beginResponse(activity, node, entry) ||
+            !setFollowUpRecord(draftKey, {
+              textoInicial: content.texto,
+              versionInicial: entry.version,
+              turnos: [],
+            })
+          ) {
+            setError(
+              'Tu entrega se guardó, pero falta guardar el seguimiento. Libera espacio y vuelve a intentarlo.',
+            )
+            return
+          }
           setFollowing(true)
-        else onSaved()
+        } else onSaved()
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : 'No se pudo guardar la entrega.')
@@ -119,6 +145,14 @@ export function SubmissionNode({
   }
   if (spec.tipo === 'archivo') return <p>Esta entrega no está disponible en la plataforma.</p>
   if (recovering) return <p role="status">Recuperando tu respuesta…</p>
+  if (needsQuestion && !shownQuestion)
+    return (
+      <div role="status" className="sx-question-loading">
+        <LumiMedallion />
+        <p>{reflectionCopy.loading}</p>
+        {error && <p role="alert">{error}</p>}
+      </div>
+    )
   if (following) return <FollowUp activity={activity} node={node} onContinue={onSaved} />
   return (
     <form
@@ -129,9 +163,49 @@ export function SubmissionNode({
       }}
     >
       {node.hablanteId && <CharacterAvatar id={node.hablanteId} size="sm" />}
+      {intro && <p className="sx-submission-help">{reflectionCopy.intro}</p>}
+      {shownQuestion && (
+        <QuestionMemory
+          question={shownQuestion}
+          compact={activity.plantilla?.tipo === 'matriz'}
+          hideNotice={activity.plantilla?.tipo === 'matriz'}
+        />
+      )}
+      {node.id === 'future-aspiracion' &&
+        state.submissions.some((e) => e.nodoId === 'mission-future-entry') && (
+          <details className="sx-question-memory">
+            <summary>Tu historial privado de Mi horizonte</summary>
+            <div>
+              {state.submissions
+                .filter((e) => e.actividadId === activity.id && e.nodoId === 'mission-future-entry')
+                .map((e) => (
+                  <article key={e.id}>
+                    <strong>Versión {e.version} · Solo tú puedes verla</strong>
+                    <p className="sx-memory-full">{e.contenido.tipo === 'texto' ? e.contenido.texto : ''}</p>
+                  </article>
+                ))}
+            </div>
+          </details>
+        )}
+      <p className="sx-submission-visibility">
+        {node.visibilidad === 'solo_estudiante'
+          ? 'Solo tú puedes ver esta entrega.'
+          : node.visibilidad === 'estudiante_orientadora'
+            ? 'Visible para ti y tu orientadora.'
+            : 'Visible para ti, tu orientadora y tu familia.'}{' '}
+        Guardado en este navegador.
+      </p>
       <label className="sx-submission-label">
-        <span className="sx-submission-premise">{node.premisa}</span>
+        <span className="sx-submission-premise">
+          <HighlightedQuestion text={shownQuestion?.texto ?? node.premisa} quote={shownQuestion?.cita} />
+        </span>
         {node.ayuda && <span className="sx-submission-help">{node.ayuda}</span>}
+        {influencesLater && (
+          <span className="sx-use-notice">
+            <Star size={16} aria-hidden="true" />
+            <span>{reflectionCopy.useNotice}</span>
+          </span>
+        )}
         {spec.tipo === 'texto' && (
           <textarea
             className="sx-submission-textarea"
@@ -180,14 +254,6 @@ export function SubmissionNode({
           ))}
         </fieldset>
       )}
-      <p className="sx-submission-visibility">
-        {node.visibilidad === 'solo_estudiante'
-          ? 'Solo tú puedes ver esta entrega.'
-          : node.visibilidad === 'estudiante_orientadora'
-            ? 'Visible para ti y tu orientadora.'
-            : 'Visible para ti, tu orientadora y tu familia.'}{' '}
-        Guardado en este navegador.
-      </p>
       {error && (
         <p role="alert" className="sx-submission-error">
           {error}

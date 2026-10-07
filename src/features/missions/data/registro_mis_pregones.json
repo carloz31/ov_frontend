@@ -6,7 +6,7 @@
   "titulo": "Mis propios pregones",
   "subtitulo": "Revisa una creencia que has escuchado sobre tu futuro",
   "bloque": 1,
-  "orden": 5,
+  "orden": 3,
   "obligatoria": true,
   "requisitos": ["enc-mitos"],
   "ubicacion": "Fuente de la plaza",

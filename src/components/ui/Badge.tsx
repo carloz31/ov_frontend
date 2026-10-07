@@ -1,5 +1,7 @@
 import { cva, type VariantProps } from 'class-variance-authority'
-import type { HTMLAttributes } from 'react'
+import { Children, isValidElement, type HTMLAttributes } from 'react'
+import { Check, Clock3, TriangleAlert } from 'lucide-react'
+import { useAppTheme } from '@/components/ThemeScope'
 import { cn } from '@/lib/Utils'
 
 const badgeVariants = cva(
@@ -23,8 +25,30 @@ const badgeVariants = cva(
 
 type BadgeProps = HTMLAttributes<HTMLSpanElement> & VariantProps<typeof badgeVariants>
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <span data-slot="badge" className={cn(badgeVariants({ variant }), className)} {...props} />
+function Badge({ className, variant = 'default', children, ...props }: BadgeProps) {
+  const staff = useAppTheme() === 'staff'
+  const hasIcon = Children.toArray(children).some(
+    (child) => isValidElement(child) && (typeof child.type !== 'string' || child.type === 'svg'),
+  )
+  const Icon =
+    variant === 'success'
+      ? Check
+      : ['warning', 'aviso', 'attention'].includes(variant ?? '')
+        ? TriangleAlert
+        : variant === 'neutral'
+          ? Clock3
+          : undefined
+  return (
+    <span
+      data-slot="badge"
+      data-variant={variant}
+      className={cn(badgeVariants({ variant }), className)}
+      {...props}
+    >
+      {staff && Icon && !hasIcon && <Icon className="size-3.5 shrink-0" aria-hidden="true" />}
+      {children}
+    </span>
+  )
 }
 
 export { Badge }

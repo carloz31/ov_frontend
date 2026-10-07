@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Eye, LockKeyhole } from 'lucide-react'
 import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { useJourney } from '@/features/missions/store'
 import { updateDiscovery, useDiscovery } from '../discovery/discoveryStore'
 import { useReturnFocus } from '../discovery/useReturnFocus'
 import {
@@ -24,14 +25,18 @@ export function PassportBadgeDialog({
   onClose: () => void
 }) {
   const adventure = useAdventure(),
+    journey = useJourney(),
     discovery = useDiscovery(),
     returnFocus = useReturnFocus()
-  const selected = getProfileBadges(adventure, discovery),
+  const selected = getProfileBadges(adventure, discovery, journey),
     visible = selected.some((b) => b.code === badge?.code)
   const hidden = badge?.hidden && !badge.done
   const destination = badge ? badgeDestinations[badge.code] : undefined
   const Icon = badge ? achievementIcons[badge.icon] : Eye
-  const date = badge ? discovery.badgeFirstSeenAt[badge.code] : undefined
+  const date = badge
+    ? (discovery.badgeFirstSeenAt[badge.code] ??
+      journey.challengeResults?.find((r) => r.logroOculto === badge.code)?.fechaHora)
+    : undefined
   return (
     <Dialog
       open={!!badge}
@@ -89,7 +94,7 @@ export function PassportBadgeDialog({
                 aria-pressed={visible}
                 disabled={!visible && selected.length >= 3}
                 onClick={() =>
-                  updateDiscovery((current) => toggleProfileBadge(current, adventure, badge.code))
+                  updateDiscovery((current) => toggleProfileBadge(current, adventure, badge.code, journey))
                 }
               >
                 <Eye aria-hidden="true" size={18} />

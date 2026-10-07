@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight, PanelLeftOpen } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
@@ -29,6 +29,7 @@ import { ZoneSwitch } from './ZoneSwitch'
 import { ZoneTransition } from './ZoneTransition'
 import { ZoomControls } from './ZoomControls'
 import { initialScale } from './geometry'
+import { AdditionalReveal } from '../reflection/AdditionalReveal'
 
 export function MapScreenLayout({
   zone,
@@ -45,12 +46,15 @@ export function MapScreenLayout({
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const canvas = useRef<MapCanvasHandle>(null)
+  const frameAdditional = useCallback((ids: string[]) => {
+    canvas.current?.framePoints(ids)
+  }, [])
   const returnPoint = useRef<string | undefined>(undefined)
   const mobilePanelButton = useRef<HTMLButtonElement>(null)
   const selectedId = params.get('punto') ?? undefined
   const [scale, setScale] = useState(initialScale)
   const [minimumScale, setMinimumScale] = useState(0)
-  const { openGuide, openCheckIn } = useStudentOverlays()
+  const { openGuide, openCheckIn, announcementBlocked } = useStudentOverlays()
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
   const [mobile, setMobile] = useState(false)
   useEffect(() => {
@@ -157,6 +161,13 @@ export function MapScreenLayout({
           }
         />
         {locked && <CityLocked adventure={adventure} />}
+        {zone === 'missions' && (
+          <AdditionalReveal
+            onFrame={frameAdditional}
+            onSelect={selectPoint}
+            enabled={!announcementBlocked && !selectedId && !mobilePanelOpen}
+          />
+        )}
         <aside
           className="sx-glass sx-adventure-panel"
           data-collapsed={ui.panelCollapsed}

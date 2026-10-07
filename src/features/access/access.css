@@ -1,272 +1,202 @@
 .ov-login {
-  --ov-night: color-mix(in srgb, var(--foreground) 94%, var(--primary));
-  --ov-night-raised: color-mix(in srgb, var(--ov-night) 82%, var(--primary));
-  --ov-night-text: #fff;
-  --ov-night-muted: rgb(255 255 255 / 76%);
-  --ov-gold: color-mix(in srgb, var(--warning) 55%, var(--warning-soft));
-  display: grid;
-  place-items: center;
-  min-height: 100svh;
-  padding: 32px;
-  background: radial-gradient(ellipse at 90% 0, var(--primary-soft), transparent 55%), var(--background);
-  color: var(--foreground);
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(135deg, #2f5e52 0%, #3e7a62 35%, #6e9c6a 60%, #c9a869 85%, #e6c98a 100%);
+  color: #f4f5f8;
+}
+.ov-login-landscape,
+.ov-login::before {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ov-login-landscape {
+  z-index: -2;
+}
+.ov-login::before {
+  content: '';
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    rgb(14 18 26 / 82%) 0%,
+    rgb(14 18 26 / 55%) 45%,
+    rgb(14 18 26 / 15%) 70%,
+    transparent 100%
+  );
 }
 .ov-login-shell {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: min(1180px, 100%);
-  min-height: 704px;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 28px;
-  background: var(--card);
-  box-shadow: 0 24px 80px color-mix(in srgb, var(--foreground) 9%, transparent);
+  grid-template-columns: minmax(0, 600px) 440px;
+  justify-content: space-between;
+  align-items: center;
+  gap: 48px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 56px 96px 56px 80px;
 }
 .ov-login-story {
-  position: relative;
   display: flex;
   flex-direction: column;
-  padding: 40px 48px 32px;
-  overflow: hidden;
-  color: var(--ov-night-text);
-  background:
-    radial-gradient(ellipse at 15% 65%, color-mix(in srgb, var(--primary) 32%, transparent), transparent 66%),
-    radial-gradient(ellipse at 100% 0, color-mix(in srgb, var(--warning) 15%, transparent), transparent 60%),
-    var(--ov-night);
+  justify-content: space-between;
+  align-self: stretch;
+  gap: 40px;
 }
 .ov-login-brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 14px;
-  line-height: 1.4;
-  letter-spacing: 0.01em;
 }
-.ov-login-brand > span {
+.ov-login-brand-mark {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  border: 1px solid rgb(255 255 255 / 25%);
-  border-radius: 14px;
-  color: var(--ov-gold);
-  background: rgb(255 255 255 / 4%);
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #3f51b5;
+  color: #fff;
 }
-.ov-login-brand strong {
-  display: block;
-  font-size: 16px;
+.ov-login-brand-name {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  line-height: 1.15;
+}
+.ov-login-brand-name > span {
+  color: #c9cedc;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.ov-login-brand-name strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+.ov-login-brand-star {
+  color: #ffd666;
+  filter: drop-shadow(0 0 6px rgb(255 214 102 / 45%));
 }
 .ov-login-story-copy {
-  margin-top: 48px;
+  display: grid;
+  gap: 22px;
+  max-width: 540px;
 }
-.ov-login-kicker {
+.ov-login-story h2 {
+  font-size: 44px;
+  line-height: 1.16;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+.ov-login-story-copy p {
+  color: #dde0e8;
+  font-size: 18px;
+  line-height: 1.5;
+}
+.ov-login-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ov-login-roles li {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 18px;
-  color: var(--ov-gold);
-  font-size: 13px;
-  font-weight: 600;
+  padding: 10px 14px;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 999px;
+  background: rgb(16 19 28 / 60%);
+  font-size: 14px;
+  line-height: 1.25;
 }
-.ov-login-story h2 {
-  max-width: 440px;
-  font-size: clamp(32px, 3.2vw, 44px);
-  line-height: 1.15;
-  font-weight: 750;
-  letter-spacing: -0.035em;
-}
-.ov-login-story h2 em {
-  color: var(--ov-gold);
-  font-style: normal;
-}
-.ov-login-story-copy > p:last-child {
-  margin-top: 20px;
-  max-width: 400px;
-  color: var(--ov-night-muted);
-  font-size: 15px;
-  line-height: 1.7;
-}
-.ov-login-compass {
-  position: relative;
-  min-height: 238px;
-  margin: 12px -12px 4px;
-}
-.ov-login-orbit {
-  position: absolute;
-  width: 228px;
-  height: 228px;
-  border: 1px solid rgb(255 255 255 / 9%);
-  border-radius: 50%;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-}
-.ov-login-orbit-inner {
-  width: 184px;
-  height: 184px;
-  border-style: dashed;
-}
-.ov-login-path {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  stroke: var(--ov-gold);
-  stroke-width: 1.5;
-  stroke-dasharray: 4 7;
-  opacity: 0.55;
-}
-.ov-login-central-seal {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  display: grid;
-  place-items: center;
-  width: 118px;
-  height: 118px;
-  border: 2px solid var(--ov-gold);
-  outline: 8px solid rgb(255 255 255 / 3%);
-  border-radius: 50%;
-  color: var(--ov-gold);
-  background: var(--ov-night-raised);
-  box-shadow: 0 0 50px color-mix(in srgb, var(--primary) 25%, transparent);
-}
-.ov-login-waypoint {
-  position: absolute;
-  display: grid;
-  gap: 9px;
-  justify-items: center;
-  font-size: 11px;
-  color: var(--ov-night-muted);
-}
-.ov-login-waypoint span {
-  display: grid;
-  place-items: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
-  border: 1px solid rgb(255 255 255 / 16%);
-  background: var(--ov-night-raised);
-  color: var(--ov-night-text);
-}
-.ov-login-waypoint-student {
-  left: 7%;
-  top: 57%;
-}
-.ov-login-waypoint-student span {
-  color: var(--case-blue);
-}
-.ov-login-waypoint-family {
-  right: 6%;
-  top: 12%;
-}
-.ov-login-waypoint-family span {
-  color: var(--ov-gold);
-}
-.ov-login-waypoint-guide {
-  right: 12%;
-  bottom: 5%;
-}
-.ov-login-waypoint-guide span {
-  color: var(--case-mint);
-}
-.ov-login-story-footer {
-  margin-top: auto;
-  color: var(--ov-night-muted);
-  font-size: 12px;
-  line-height: 1.8;
-}
-.ov-login-story-footer strong {
-  color: var(--ov-night-text);
-  font-weight: 500;
+.ov-login-roles svg {
+  flex-shrink: 0;
+  color: #ffe29a;
 }
 .ov-login-access {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 60px 56px 28px;
+  display: grid;
+  gap: 22px;
+  width: 440px;
+  padding: 36px;
+  border-radius: 24px;
+  background: rgb(250 250 252 / 98%);
+  color: #1f2433;
+  box-shadow: 0 24px 60px rgb(0 0 0 / 30%);
 }
-.ov-login-form-container {
-  margin: auto 0;
-}
-.ov-login-welcome {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 8px;
-  color: var(--primary);
-  background: var(--primary-soft);
-  font-size: 12px;
-  font-weight: 600;
+.ov-login-intro {
+  display: grid;
+  gap: 10px;
 }
 .ov-login-access h1 {
-  margin-top: 18px;
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1.25;
-  font-weight: 750;
-  letter-spacing: -0.03em;
+  font-weight: 800;
+  letter-spacing: -0.025em;
 }
 .ov-login-description {
-  margin: 14px 0 32px;
-  color: var(--muted-foreground);
-  font-size: 15px;
-  line-height: 1.65;
+  color: #4a5068;
+  font-size: 16px;
+  line-height: 1.4;
+}
+.ov-login form {
+  display: grid;
+  gap: 18px;
+}
+.ov-login-input-group {
+  display: grid;
+  gap: 6px;
 }
 .ov-login form label {
-  display: block;
-  margin-bottom: 8px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
+  line-height: 1.3;
 }
 .ov-login-field {
   display: flex;
   align-items: center;
-  min-height: 54px;
-  margin-bottom: 22px;
-  padding-left: 16px;
-  border: 1px solid var(--input);
+  height: 52px;
+  border: 1.5px solid #c9ced9;
   border-radius: 12px;
-  background: var(--card);
+  background: #fff;
 }
 .ov-login-field:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-soft);
+  border: 2px solid #3f51b5;
 }
-.ov-login-field > svg {
-  flex-shrink: 0;
-  color: var(--muted-foreground);
-}
-.ov-login-field input {
+.ov-login .ov-login-field input {
   width: 100%;
   min-width: 0;
-  min-height: 52px;
-  padding: 12px;
+  height: 100%;
+  padding: 0 14px;
   border: 0;
   border-radius: 12px;
   background: transparent;
-  color: var(--foreground);
-  outline: 0;
+  color: #1f2433;
   font-size: 16px;
-}
-.ov-login-field input::placeholder {
-  color: var(--muted-foreground);
-}
-.ov-login .ov-login-field input:focus-visible {
   outline: none;
+}
+.ov-login .ov-login-field input::placeholder {
+  color: #5b6275;
+  opacity: 1;
 }
 .ov-login-visibility {
   display: grid;
   place-items: center;
   flex-shrink: 0;
   width: 44px;
-  min-height: 44px;
-  margin-right: 4px;
+  height: 44px;
+  margin-right: 2px;
   border-radius: 8px;
-  color: var(--muted-foreground);
+  color: #4a5068;
 }
 .ov-login-visibility:hover {
-  color: var(--primary);
-  background: var(--primary-soft);
+  background: #eef0fa;
+  color: #3f51b5;
 }
 .ov-login-submit {
   display: flex;
@@ -274,70 +204,51 @@
   justify-content: center;
   gap: 10px;
   width: 100%;
-  min-height: 54px;
-  margin-top: 8px;
+  height: 54px;
   border-radius: 12px;
-  background: var(--primary);
-  color: var(--primary-foreground);
-  font-size: 15px;
-  font-weight: 650;
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--primary) 18%, transparent);
-  transition: background 0.15s;
+  background: #c5cae0;
+  color: #4a5068;
+  font-size: 16px;
+  font-weight: 600;
 }
-.ov-login-submit:hover {
-  background: var(--primary-hover);
+.ov-login-submit[data-ready='true'] {
+  background: #3f51b5;
+  color: #fff;
+}
+.ov-login-submit[data-ready='true']:hover {
+  background: #35459b;
 }
 .ov-login-demo {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  margin-top: 22px;
-  padding: 14px;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #f1d48a;
   border-radius: 12px;
-  background: var(--muted);
-  color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 1.7;
+  background: #fff8e6;
+  color: #5a3b00;
+  font-size: 14px;
+  line-height: 1.4;
 }
-.ov-login-demo > span {
+.ov-login-demo > svg {
   flex-shrink: 0;
-  width: 6px;
-  height: 6px;
-  margin-top: 7px;
-  border-radius: 50%;
-  background: var(--primary);
+  margin-top: 1px;
 }
 .ov-login-demo strong {
-  display: block;
-  color: var(--foreground);
-  font-weight: 600;
-}
-.ov-login-shared {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 26px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 1.65;
-}
-.ov-login-shared > span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  color: var(--primary);
+  font-weight: 700;
 }
 .ov-login-footer {
-  margin-top: 38px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-  color: var(--muted-foreground);
-  font-size: 11px;
+  color: #5b6275;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.4;
 }
-.ov-login :is(button, input):focus-visible {
-  outline: 3px solid var(--primary);
+.ov-login.theme-staff button:focus-visible {
+  outline: 3px solid #3f51b5;
   outline-offset: 3px;
+}
+.ov-login.theme-staff .ov-login-field input:focus-visible {
+  outline: none;
 }
 .ov-access-sign-out {
   position: absolute;
@@ -359,67 +270,112 @@
   outline: 3px solid var(--ring);
   outline-offset: 3px;
 }
-@media (max-width: 960px) {
-  .ov-login {
-    padding: 24px;
-  }
-  .ov-login-story {
+@media (900px <= width <= 1200px) {
+  .ov-login-shell {
+    grid-template-columns: minmax(0, 1fr) 440px;
+    gap: 32px;
     padding: 36px 32px;
   }
-  .ov-login-access {
-    padding: 40px 32px 24px;
-  }
   .ov-login-story h2 {
-    font-size: 34px;
+    font-size: 36px;
   }
 }
-@media (max-width: 700px) {
+@media (width < 900px) {
   .ov-login {
-    padding: 0;
-    background: var(--card);
-    align-items: start;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+  }
+  .ov-login::before {
+    background: linear-gradient(
+      180deg,
+      rgb(14 18 26 / 70%) 0%,
+      rgb(14 18 26 / 35%) 40%,
+      rgb(14 18 26 / 10%) 100%
+    );
   }
   .ov-login-shell {
-    grid-template-columns: 1fr;
-    min-height: 100svh;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-height: 100%;
+    padding: 0;
   }
   .ov-login-story {
-    padding: 24px 24px 28px;
+    flex-shrink: 0;
+    gap: 10px;
+    padding: 22px 20px 12px;
+  }
+  .ov-login-brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+  .ov-login-brand-name strong {
+    font-size: 18px;
+  }
+  .ov-login-brand-star {
+    width: 16px;
+    height: 16px;
   }
   .ov-login-story-copy {
-    margin-top: 22px;
-  }
-  .ov-login-kicker {
-    display: none;
+    gap: 10px;
   }
   .ov-login-story h2 {
-    max-width: 380px;
-    font-size: 28px;
+    font-size: 21px;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
   }
-  .ov-login-story-copy > p:last-child {
-    display: none;
+  .ov-login-story-copy p {
+    font-size: 14px;
+    line-height: 1.4;
   }
-  .ov-login-compass,
-  .ov-login-story-footer {
+  .ov-login-roles {
+    gap: 6px;
+  }
+  .ov-login-roles li {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .ov-login-roles svg {
     display: none;
   }
   .ov-login-access {
-    padding: 32px 24px 20px;
+    flex-shrink: 0;
+    gap: 14px;
+    width: auto;
+    margin: auto 14px 16px;
+    padding: 22px 18px 18px;
   }
   .ov-login-access h1 {
-    font-size: 26px;
+    font-size: 22px;
   }
-  .ov-login-description {
-    margin-bottom: 24px;
+  .ov-login-intro {
+    gap: 6px;
   }
-  .ov-login-shared {
-    margin-top: 20px;
+  .ov-login form {
+    gap: 12px;
   }
+  .ov-login-submit {
+    height: 52px;
+  }
+  .ov-login-demo,
   .ov-login-footer {
-    margin-top: 28px;
+    font-size: 13px;
+  }
+  .ov-login-demo {
+    padding: 8px 10px;
+  }
+}
+@media (width < 900px) and (height < 700px) {
+  .ov-login-story-copy p,
+  .ov-login-roles {
+    display: none;
+  }
+}
+@media (width < 900px) and (height < 580px) {
+  .ov-login-story-copy {
+    display: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

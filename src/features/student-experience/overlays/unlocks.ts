@@ -2,7 +2,7 @@ import { getLumiBond } from '../journal/lumiBond'
 import { lumiMemories } from '../journal/lumiMemories'
 import { catalog } from '@/features/missions/content'
 import type { JourneyState } from '@/features/missions/logic'
-import { getAchievementGroups } from '@/features/occupation-exploration/lib/AdventureAchievements'
+import { getStudentAchievementGroups } from '../profile/passport'
 import { isCityUnlocked, isFamilyUnlocked } from '@/features/occupation-exploration/lib/AdventureStore'
 import {
   getTravelResources,
@@ -21,8 +21,8 @@ export type UnlockItem = {
   href: string
 }
 
-export function getEarnedBadges(adventure: AdventureState) {
-  return getAchievementGroups(adventure)
+export function getEarnedBadges(adventure: AdventureState, journey?: JourneyState) {
+  return getStudentAchievementGroups(adventure, journey)
     .flatMap((group) => group.items)
     .filter((badge) => badge.done)
 }
@@ -49,7 +49,7 @@ export function getUnlocks(
       description: `Página de ${id} descifrada. Un nuevo descubrimiento puede abrir otra ruta.`,
       href: appPaths.student.decisions,
     })),
-    ...getEarnedBadges(adventure).map((badge): UnlockItem => ({
+    ...getEarnedBadges(adventure, journey).map((badge): UnlockItem => ({
       id: `badge:${badge.code}`,
       kind: 'badge',
       title: badge.title,
@@ -120,7 +120,10 @@ export function seedStudentUnlocks(
       ]),
     ],
     announcedBadgeCodes: [
-      ...new Set([...ui.announcedBadgeCodes, ...getEarnedBadges(adventure).map((badge) => badge.code)]),
+      ...new Set([
+        ...ui.announcedBadgeCodes,
+        ...getEarnedBadges(adventure, journey).map((badge) => badge.code),
+      ]),
     ],
   }
 }
@@ -147,7 +150,8 @@ export function getNextBadge(
   ui: StudentUiState,
   activityOpen: boolean,
   overlayOpen: boolean,
+  journey?: JourneyState,
 ) {
   if (!ui.initialized || activityOpen || overlayOpen) return undefined
-  return getEarnedBadges(adventure).find((badge) => !ui.announcedBadgeCodes.includes(badge.code))
+  return getEarnedBadges(adventure, journey).find((badge) => !ui.announcedBadgeCodes.includes(badge.code))
 }

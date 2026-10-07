@@ -8,6 +8,7 @@ import type {
 const forestFireProfessionals: ForestFireProfessional[] = [
   {
     id: 'firefighter',
+    occupationId: 'firefighter',
     name: 'Bombero',
     personName: 'Mateo Salazar',
     description:
@@ -16,6 +17,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'meteorologist',
+    occupationId: 'meteorologist',
     name: 'Meteoróloga',
     personName: 'Valentina Rojas',
     description:
@@ -24,6 +26,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'municipal-police',
+    occupationId: 'municipal-police',
     name: 'Policía municipal',
     personName: 'Diego Navarro',
     description:
@@ -32,6 +35,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'paramedic',
+    occupationId: 'paramedic',
     name: 'Paramédica',
     personName: 'Camila Torres',
     description:
@@ -40,6 +44,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'medical-specialist',
+    occupationId: 'medical-specialist',
     name: 'Médico especialista',
     personName: 'Andrés Paredes',
     description:
@@ -48,6 +53,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'veterinarian',
+    occupationId: 'veterinarian',
     name: 'Veterinaria',
     personName: 'Lucía Benavides',
     description:
@@ -56,6 +62,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'biologist',
+    occupationId: 'biologist',
     name: 'Biólogo',
     personName: 'Martín Quiroz',
     description:
@@ -64,6 +71,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'environmental-engineer',
+    occupationId: 'environmental-engineer',
     name: 'Ingeniera medioambiental',
     personName: 'Elena Cárdenas',
     description:
@@ -72,6 +80,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'civil-engineer',
+    occupationId: 'civil-engineer',
     name: 'Ingeniero civil',
     personName: 'Javier Ramos',
     description:
@@ -80,6 +89,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'machinery-operator',
+    occupationId: 'machinery-operator',
     name: 'Operadora de maquinaria',
     personName: 'Rosa Mendoza',
     description: 'Opera maquinaria pesada para remover escombros, tierra o materiales, y preparar terrenos.',
@@ -87,6 +97,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'social-worker',
+    occupationId: 'social-worker',
     name: 'Trabajadora social',
     personName: 'Daniela Flores',
     description:
@@ -95,6 +106,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'photographer',
+    occupationId: 'photographer',
     name: 'Fotógrafa',
     personName: 'Mariana Soto',
     description:
@@ -103,6 +115,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'psychologist',
+    occupationId: 'psychologist',
     name: 'Psicólogo',
     personName: 'Sebastián León',
     description:
@@ -111,6 +124,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'logistics-coordinator',
+    occupationId: 'logistics-coordinator',
     name: 'Coordinadora logística',
     personName: 'Andrea Campos',
     description:
@@ -119,6 +133,7 @@ const forestFireProfessionals: ForestFireProfessional[] = [
   },
   {
     id: 'journalist',
+    occupationId: 'journalist',
     name: 'Periodista',
     personName: 'Nicolás Vega',
     description:
@@ -130,6 +145,10 @@ const forestFireProfessionals: ForestFireProfessional[] = [
 const forestFirePhases: ForestFirePhase[] = [
   {
     id: 'emergency',
+    listenPrompt:
+      'Hay personas pidiendo ayuda en la escena. Arrastra la imagen para encontrarlas y toca cada punto para escucharlas. Necesitamos escuchar a todas antes de armar el equipo.',
+    listenPromptMobile:
+      'Hay personas pidiendo ayuda en la escena. Arrastra la imagen para encontrarlas y toca cada punto para escucharlas. Necesitamos escuchar a todas antes de armar el equipo.',
     number: 1,
     name: 'Emergencia',
     subtitle: 'El fuego avanza y la localidad necesita una respuesta inmediata.',
@@ -138,6 +157,8 @@ const forestFirePhases: ForestFirePhase[] = [
     messages: [
       {
         id: 'changing-fire',
+        position: { x: 44, y: 30 },
+        summary: 'el fuego cambia de dirección',
         speaker: 'Vecino',
         context: 'Mirando el humo a lo lejos',
         message:
@@ -145,6 +166,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'traffic-chaos',
+        position: { x: 78, y: 56 },
+        summary: 'caos en la salida del pueblo',
         speaker: 'Persona evacuando',
         context: 'Desde su auto',
         message:
@@ -152,6 +175,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'grandmother-at-risk',
+        position: { x: 52, y: 70 },
+        summary: 'una abuela no puede salir sola',
         speaker: 'Familiar angustiado',
         context: 'Pidiendo ayuda urgente',
         message:
@@ -159,6 +184,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'outside-support',
+        position: { x: 24, y: 76 },
+        summary: 'afuera nadie sabe lo que pasa',
         speaker: 'Vecino',
         context: 'Con una radio portátil',
         message: 'Afuera del pueblo nadie sabe todavía lo que está pasando acá, ni que necesitamos ayuda.',
@@ -215,6 +242,10 @@ const forestFirePhases: ForestFirePhase[] = [
   },
   {
     id: 'stabilization',
+    listenPrompt:
+      'El peligro inmediato está contenido. Arrastra la imagen para encontrar a las personas y escucha qué necesitan ellas y los animales antes de armar el equipo.',
+    listenPromptMobile:
+      'Arrastra la imagen y escucha a todas las personas. Sus necesidades nos ayudarán a estabilizar la comunidad.',
     number: 2,
     name: 'Estabilización',
     subtitle: 'El frente inmediato está contenido, pero las personas y los animales necesitan atención.',
@@ -223,6 +254,8 @@ const forestFirePhases: ForestFirePhase[] = [
     messages: [
       {
         id: 'minor-injuries',
+        position: { x: 50, y: 68 },
+        summary: 'Personas con heridas leves y tos',
         speaker: 'Voluntario',
         context: 'En el punto de encuentro',
         message:
@@ -230,6 +263,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'serious-burn',
+        position: { x: 72, y: 70 },
+        summary: 'Una quemadura necesita atención especializada',
         speaker: 'Familiar de un herido',
         context: 'Desde el centro de atención',
         message:
@@ -237,6 +272,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'lost-home-and-dog',
+        position: { x: 82, y: 79 },
+        summary: 'Una familia sin casa y perro herido',
         speaker: 'Vecina afectada',
         context: 'En el refugio temporal',
         message:
@@ -244,6 +281,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'missing-donations',
+        position: { x: 38, y: 55 },
+        summary: 'Falta comunicar las necesidades de ayuda',
         speaker: 'Voluntario',
         context: 'Organizando donaciones',
         message:
@@ -296,6 +335,10 @@ const forestFirePhases: ForestFirePhase[] = [
   },
   {
     id: 'recovery',
+    listenPrompt:
+      'La comunidad y el bosque necesitan recuperarse. Arrastra la imagen para encontrar a las personas y escucha qué quedó por atender antes de armar el equipo.',
+    listenPromptMobile:
+      'Arrastra la imagen y escucha a todas las personas para saber cómo ayudar a la comunidad y al bosque a recuperarse.',
     number: 3,
     name: 'Recuperación',
     subtitle: 'La emergencia terminó, pero la localidad y el bosque necesitan recuperarse.',
@@ -304,6 +347,8 @@ const forestFirePhases: ForestFirePhase[] = [
     messages: [
       {
         id: 'damaged-ecosystem',
+        position: { x: 73, y: 72 },
+        summary: 'El bosque y sus animales necesitan seguimiento',
         speaker: 'Vecino',
         context: 'Después de caminar por el bosque',
         message:
@@ -311,6 +356,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'unstable-soil',
+        position: { x: 63, y: 39 },
+        summary: 'La ladera podría deslizarse con las lluvias',
         speaker: 'Agricultor de la zona',
         context: 'Observando la ladera',
         message:
@@ -318,6 +365,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'damaged-bridge',
+        position: { x: 51, y: 66 },
+        summary: 'El puente y los caminos están dañados',
         speaker: 'Vecino',
         context: 'Intentando volver a su casa',
         message:
@@ -325,6 +374,8 @@ const forestFirePhases: ForestFirePhase[] = [
       },
       {
         id: 'forgotten-story',
+        position: { x: 87, y: 57 },
+        summary: 'Fuera del pueblo olvidaron el incendio',
         speaker: 'Vecino',
         context: 'Viendo las noticias',
         message:

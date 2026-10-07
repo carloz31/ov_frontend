@@ -5,9 +5,9 @@
   "titulo": "Mi mapa de ruta",
   "subtitulo": "Línea de tiempo y metas tentativas",
   "bloque": 1,
-  "orden": 3,
+  "orden": 7,
   "obligatoria": true,
-  "requisitos": ["act-05"],
+  "requisitos": ["mission-compass"],
   "duracionEstimadaMin": 20,
   "personajeIds": ["companero"],
   "plantilla": {
@@ -326,6 +326,5 @@
     "afinidad": 1,
     "mensajeFin": "Mapa de ruta guardado · Afinidad con la aldea +1"
   },
-  "siguienteSugerida": "enc-mitos",
   "promptDiario": "¿Qué sentiste al imaginarte dentro de cinco años?"
 }

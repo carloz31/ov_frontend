@@ -1,4 +1,6 @@
 import { useSearchParams } from 'react-router'
+import { challenges } from '../challenges/data'
+import { ChallengePlayer } from '../challenges/ChallengePlayer'
 import { activityById } from '@/features/missions/content'
 import { StudentActivityPlayer } from '../player/StudentActivityPlayer'
 import { useJourney } from '@/features/missions/store'
@@ -11,6 +13,9 @@ export function CiudadScreen() {
   const adventure = useAdventure()
   const journey = useJourney()
   const [params, setParams] = useSearchParams()
+  const challenge = challenges.find((c) => c.id === params.get('actividad'))
+  if (canAccessCity(adventure) && challenge)
+    return <ChallengePlayer key={challenge.id} challenge={challenge} onClose={() => setParams({})} />
   const activity = activityById('act-tip-01')
   if (canAccessCity(adventure) && activity && params.get('actividad') === activity.id)
     return (
@@ -20,7 +25,6 @@ export function CiudadScreen() {
           imageUrl="/images/background/afueras.png"
           direct={params.get('modo') === 'directa'}
           onClose={() => setParams({})}
-          onNext={() => setParams({})}
         />
       </div>
     )

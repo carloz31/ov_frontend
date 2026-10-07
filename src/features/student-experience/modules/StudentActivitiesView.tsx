@@ -8,10 +8,12 @@ import { Parchment } from '../discovery/Parchment'
 import { getCaminoPoints, getCiudadPoints, getPointDetails } from '../map/mapPoints'
 import { getListedActivities, getPointMapHref } from '../map/navigation'
 import './history.css'
+import { useReflections } from '../reflection/store'
 
 export function StudentActivitiesView() {
   const adventure = useAdventure()
   const journey = useJourney()
+  useReflections()
   const [completed, setCompleted] = useState(false)
   const points = getListedActivities(
     [...getCaminoPoints(adventure, journey), ...getCiudadPoints(adventure, journey)],

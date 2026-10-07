@@ -1,6 +1,5 @@
 import type { LucideIcon } from 'lucide-react'
-import { Card } from '@/components/ui/Card'
-import { CardIcon } from '@/components/ui/Status'
+import { StaffMetric } from '@/components/staff/StaffPatterns'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
 import type { interestTop } from './selectors'
 
@@ -96,36 +95,27 @@ export function ClassroomMetric({
   value,
   note,
   percent,
+  primary = false,
 }: {
   icon: LucideIcon
   label: string
   value: string
   note?: string
   percent: number | null
+  primary?: boolean
 }) {
   const bounded = Math.min(100, Math.max(0, percent ?? 0))
   return (
-    <Card className="flex min-h-28 min-w-0 items-center gap-3 rounded-xl p-4">
-      <CardIcon icon={icon} className="size-9 [&_svg]:size-4" />
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="text-xl font-bold leading-7">{value}</p>
-        {note && <p className="text-xs text-muted-foreground">{note}</p>}
-      </div>
-      <svg viewBox="0 0 40 40" className="size-10 shrink-0 -rotate-90" aria-hidden="true">
-        <circle cx="20" cy="20" r="16" fill="none" stroke="var(--neutral-soft)" strokeWidth="4" />
-        <circle
-          cx="20"
-          cy="20"
-          r="16"
-          fill="none"
-          stroke="var(--data-primary)"
-          strokeWidth="4"
-          strokeDasharray={`${bounded * 1.0053} 100.53`}
-          strokeLinecap="round"
-        />
-      </svg>
-    </Card>
+    <div className="staff-classroom-metric">
+      <StaffMetric
+        icon={icon}
+        label={label}
+        value={value}
+        percent={percent === null ? undefined : bounded}
+        detail={note}
+        primary={primary}
+      />
+    </div>
   )
 }
 export function InterestTable({

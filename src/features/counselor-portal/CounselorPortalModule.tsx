@@ -58,6 +58,7 @@ function CounselorPortalModule() {
     <CounselorPortalProvider>
       <AppShell
         theme="staff"
+        audience="counselor"
         activeItemId={view}
         navigationGroups={navigationGroups}
         onLogout={() => navigate(appPaths.home)}

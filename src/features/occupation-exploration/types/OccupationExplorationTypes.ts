@@ -1,5 +1,6 @@
 type Occupation = {
   id: string
+  contentStatus?: 'pending'
   name: string
   shortDescription: string
   contextualDescription: string

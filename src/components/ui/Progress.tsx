@@ -33,9 +33,7 @@ function Progress({
             theme === 'staff'
               ? intent === 'data'
                 ? `var(--data-${dataTone})`
-                : normalizedValue === 100
-                  ? 'var(--success)'
-                  : 'var(--primary)'
+                : 'var(--primary)'
               : undefined,
         }}
       />

@@ -7,6 +7,7 @@ import type { AppNavigationGroup } from './navigation'
 
 type AppShellProps = {
   theme?: AppTheme
+  audience?: 'parent' | 'counselor'
   activeItemId: string
   children: ReactNode
   navigationGroups: AppNavigationGroup[]
@@ -19,6 +20,7 @@ type AppShellProps = {
 
 function AppShell({
   theme = 'student',
+  audience,
   activeItemId,
   children,
   navigationGroups,
@@ -35,6 +37,7 @@ function AppShell({
   return (
     <ThemeProvider theme={theme}>
       <SidebarProvider
+        data-audience={audience}
         className={`theme-${theme} h-svh min-h-0 overflow-hidden bg-background text-foreground`}
       >
         <AppSidebar

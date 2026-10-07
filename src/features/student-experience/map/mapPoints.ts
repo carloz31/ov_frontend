@@ -1,6 +1,9 @@
 import type { JourneyState } from '@/features/missions/logic'
 import { activityById } from '@/features/missions/content'
-import { BookOpen, Building2, ClipboardList, Feather, KeyRound, type LucideIcon } from 'lucide-react'
+import { BookOpen, Building2, ClipboardList, Feather, KeyRound, Swords, type LucideIcon } from 'lucide-react'
+import { getForestFireCaseStatus } from '@/features/occupation-exploration/lib/ForestFireCaseLogic'
+import { challenges } from '../challenges/data'
+import { canStartChallenge, challengeRequirements } from '../challenges/logic'
 import {
   cityCases,
   fieldMissions,
@@ -12,6 +15,9 @@ import { getActivityPrompt } from '@/features/occupation-exploration/data/Journa
 import { getExplorationImagePath } from '@/features/occupation-exploration/lib/ExplorationAssets'
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import { appPaths } from '@/routes/paths'
+import { additionalMissions, baseRoute, pendingContent } from '../reflection/config'
+import { getReflections } from '../reflection/store'
+import { isWithinStudentDemo } from '@/features/occupation-exploration/lib/StudentDemoScope'
 
 export type StudentMapPoint = {
   id: string
@@ -25,21 +31,16 @@ export type StudentMapPoint = {
   specActivityId?: string
   bloque?: number
   actionEnabled: boolean
+  additional?: boolean
+  originId?: string
+  revealing?: boolean
+  revealQueued?: boolean
 }
 
 export type StudentZone = 'missions' | 'central'
 
-export const specActivityByMission: Partial<Record<FieldMission['id'], string>> = {
-  welcome: 'mission-welcome',
-  story: 'mission-story',
-  future: 'mission-future',
-  beliefs: 'enc-mitos',
-  pregones: 'act-07',
-  compass: 'mission-compass',
-  plan: 'act-06',
-  expectations: 'mission-expectations',
-  'next-step': 'mission-next-step',
-}
+export const specActivityByMission: Partial<Record<FieldMission['id'], string>> =
+  Object.fromEntries(baseRoute)
 
 export function getMissionsToSync(
   adventure: Pick<AdventureState, 'completedMissionIds'>,
@@ -82,7 +83,7 @@ export function getMissionIcon(mission: FieldMission): LucideIcon {
   return type === 'Informativa' ? BookOpen : type === 'Test' ? ClipboardList : Feather
 }
 
-export const caminoSequence = ['welcome', 'beliefs', 'pregones', 'story'] as const
+export const caminoSequence = baseRoute.map(([id]) => id)
 
 const orderedMissions = [
   ...caminoSequence.map((id) => fieldMissions.find((mission) => mission.id === id)!),
@@ -90,7 +91,9 @@ const orderedMissions = [
 ]
 
 export function getNextCaminoActivity(points: StudentMapPoint[]) {
-  const next = points.find((point) => point.id !== 'city' && point.status === 'available')
+  const next = points.find(
+    (point) => !point.additional && point.id !== 'city' && point.status === 'available',
+  )
   return activityById(next?.specActivityId ?? '') ?? null
 }
 
@@ -99,21 +102,51 @@ export function getCaminoPoints(adventure: AdventureState, journey: JourneyState
     ...orderedMissions.map((mission, index): StudentMapPoint => ({
       id: mission.id,
       title: mission.title,
-      x: fieldMissions[index].x,
-      y: fieldMissions[index].y,
-      subtitle: `${getActivityType(mission)} · ${getMissionMeta(mission)}`,
+      x: mission.x,
+      y: mission.y,
+      subtitle: !isWithinStudentDemo(specActivityByMission[mission.id] ?? '')
+        ? 'No disponible'
+        : pendingContent.has(specActivityByMission[mission.id] ?? '') &&
+            !missionComplete(mission, adventure, journey)
+          ? 'Contenido pendiente'
+          : `${getActivityType(mission)} · ${getMissionMeta(mission)}`,
       icon: getMissionIcon(mission),
       zone: 'camino',
       specActivityId: specActivityByMission[mission.id],
       bloque: activityById(specActivityByMission[mission.id] ?? '')?.bloque,
-      status: missionComplete(mission, adventure, journey)
-        ? 'completed'
-        : index < caminoSequence.length &&
-            (index === 0 || missionComplete(orderedMissions[index - 1], adventure, journey))
-          ? 'available'
-          : 'locked',
+      status: !isWithinStudentDemo(specActivityByMission[mission.id] ?? '')
+        ? 'locked'
+        : missionComplete(mission, adventure, journey)
+          ? 'completed'
+          : !pendingContent.has(specActivityByMission[mission.id] ?? '') &&
+              (index === 0 || missionComplete(orderedMissions[index - 1], adventure, journey))
+            ? 'available'
+            : 'locked',
       actionEnabled: true,
     })),
+    ...additionalMissions
+      .filter(
+        (m) => isWithinStudentDemo(m.id) && getReflections().desbloqueos.some((d) => d.actividadId === m.id),
+      )
+      .map((m): StudentMapPoint => ({
+        id: m.id,
+        title: m.titulo,
+        subtitle: 'Registro · Misión adicional',
+        ...m.posicionMapa,
+        icon: Feather,
+        zone: 'camino',
+        specActivityId: m.id,
+        bloque: 1,
+        status: journey.progress[m.id]?.estado === 'completada' ? 'completed' : 'available',
+        actionEnabled: true,
+        additional: true,
+        originId: m.puntoOrigen,
+        revealing: !getReflections().desbloqueos.find((d) => d.actividadId === m.id)?.visto,
+        revealQueued:
+          !getReflections().desbloqueos.find((d) => d.actividadId === m.id)?.visto &&
+          getReflections().desbloqueos.find((d) => !d.visto && isWithinStudentDemo(d.actividadId))
+            ?.actividadId !== m.id,
+      })),
     {
       id: 'city',
       title: 'La llave de la ciudad',
@@ -130,7 +163,7 @@ export function getCaminoPoints(adventure: AdventureState, journey: JourneyState
 
 export function getCiudadPoints(adventure: AdventureState, journey: JourneyState): StudentMapPoint[] {
   const testCompleted = journey.progress['act-tip-01']?.estado === 'completada'
-  return [
+  const points: StudentMapPoint[] = [
     ...cityCases.map((item): StudentMapPoint => ({
       id: item.id,
       title: item.title,
@@ -160,7 +193,26 @@ export function getCiudadPoints(adventure: AdventureState, journey: JourneyState
       specActivityId: 'act-tip-01',
       actionEnabled: true,
     },
+    ...challenges.map((c, i): StudentMapPoint => ({
+      id: c.id,
+      title: c.titulo,
+      subtitle: `Desafío · ${c.nombre}`,
+      x: 710 + i * 90,
+      y: 365,
+      zone: 'ciudad',
+      icon: Swords,
+      specActivityId: c.id,
+      bloque: c.bloque,
+      status:
+        journey.progress[c.id]?.estado === 'completada'
+          ? 'completed'
+          : canStartChallenge(c, journey)
+            ? 'available'
+            : 'locked',
+      actionEnabled: true,
+    })),
   ]
+  return points
 }
 
 export function getZoneProgress(zone: StudentZone, adventure: AdventureState, journey: JourneyState) {
@@ -184,7 +236,7 @@ export function getZoneProgress(zone: StudentZone, adventure: AdventureState, jo
 export function getRecommendedPoint(points: StudentMapPoint[]) {
   if (points[0]?.zone === 'camino')
     return (
-      points.find((point) => point.id !== 'city' && point.status === 'available') ??
+      points.find((point) => !point.additional && point.id !== 'city' && point.status === 'available') ??
       points.find((point) => point.id === 'city' && point.status === 'available')
     )
   return points.find((point) => point.status === 'available' && point.actionEnabled)
@@ -202,6 +254,7 @@ export function getReturnGreeting(adventure: AdventureState, point?: StudentMapP
 }
 
 export type PointDetails = {
+  caseProgress?: boolean
   title: string
   region: string
   badge: string
@@ -223,6 +276,38 @@ export function getPointDetails(
   adventure: AdventureState,
   journey: JourneyState,
 ): PointDetails {
+  const challenge = challenges.find((c) => c.id === point.id)
+  const extra = additionalMissions.find((m) => m.id === point.id)
+  if (extra)
+    return {
+      title: point.title,
+      region: 'Un sendero del Camino',
+      badge: point.status === 'completed' ? 'Completada · Adicional' : 'MISIÓN ADICIONAL · OPCIONAL',
+      meta: `${activityById(extra.id)?.duracionEstimadaMin ?? 4} min`,
+      type: 'Registro opcional',
+      description: extra.descripcion,
+      actionLabel: point.status === 'completed' ? 'Ver o modificar mis respuestas' : 'Emprender',
+      disabled: false,
+      activityId: extra.id,
+      revision: point.status === 'completed',
+    }
+  if (challenge)
+    return {
+      title: point.title,
+      region: challenge.ubicacion ?? 'Ciudad',
+      badge:
+        point.status === 'completed' ? 'Completada' : point.status === 'locked' ? 'Bloqueada' : 'Disponible',
+      meta: 'A tu ritmo',
+      type: 'Desafío',
+      description: challenge.presentacionEnemigo,
+      requirement: challengeRequirements(challenge, journey)
+        .map((r) => `${r.completed ? '✓' : 'Pendiente:'} ${r.titulo}`)
+        .join(' · '),
+      actionLabel: point.status === 'completed' ? 'Practicar de nuevo' : 'Enfrentar al enemigo',
+      disabled: point.status === 'locked',
+      activityId: challenge.id,
+      imageUrl: challenge.ilustracion,
+    }
   const mission = fieldMissions.find((item) => item.id === point.id)
   const activity = activityById(point.specActivityId ?? '')
   const inProgress = journey.progress[point.specActivityId ?? '']?.estado === 'en_curso'
@@ -244,23 +329,31 @@ export function getPointDetails(
   })
   if (mission) {
     const index = orderedMissions.findIndex((item) => item.id === mission.id)
-    const previous = index > 0 && index < caminoSequence.length ? orderedMissions[index - 1] : undefined
+    const previous = index > 0 ? orderedMissions[index - 1] : undefined
+    const outsideScope = !isWithinStudentDemo(point.specActivityId ?? '')
+    const pending = pendingContent.has(point.specActivityId ?? '') && point.status !== 'completed'
     return {
       title: point.title,
       region: mission.region,
-      badge,
+      badge: pending ? 'Contenido pendiente' : badge,
       meta: getMissionMeta(mission),
       type: getActivityType(mission),
       description: mission.description,
       requirement:
         point.status === 'locked'
-          ? previous
-            ? `Requisito: completa la actividad “${previous.title}”.`
-            : 'Esta actividad aún no está disponible.'
+          ? outsideScope
+            ? 'Esta actividad aún no está disponible.'
+            : pending
+              ? 'Contenido pendiente de preparación.'
+              : previous
+                ? `Requisito: completa la actividad “${previous.title}”.`
+                : 'Esta actividad aún no está disponible.'
           : undefined,
       actionLabel:
         point.status === 'locked'
-          ? 'Actividad bloqueada'
+          ? pending
+            ? 'Contenido pendiente'
+            : 'Actividad bloqueada'
           : point.status === 'completed'
             ? getActivityType(mission) === 'Informativa'
               ? 'Volver a realizar esta misión'
@@ -306,14 +399,15 @@ export function getPointDetails(
   return {
     title: point.title,
     region: 'Llamado de la ciudad',
-    badge,
+    badge: point.id === 'forest-fire' ? getForestFireCaseStatus(adventure).badge : badge,
     meta: 'Caso vocacional',
     type: 'Central de casos',
+    caseProgress: point.id === 'forest-fire',
     description: cityCase?.description ?? '',
     imageUrl: getExplorationImagePath(
       point.id === 'forest-fire' ? 'forest-fire-case-background.png' : 'exploration-case-background.png',
     ),
-    actionLabel: 'Iniciar',
+    actionLabel: point.id === 'forest-fire' ? getForestFireCaseStatus(adventure).actionLabel : 'Iniciar',
     disabled: !point.actionEnabled,
     href: appPaths.student.case(point.id),
   }

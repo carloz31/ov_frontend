@@ -1,4 +1,4 @@
-import { Check, CircleHelp } from 'lucide-react'
+import { Check, CircleHelp, Star } from 'lucide-react'
 import { mapPosition, type MapSize } from './geometry'
 import type { StudentMapPoint } from './mapPoints'
 
@@ -37,17 +37,22 @@ export function MapNode({
   return (
     <button
       type="button"
-      className={`sx-map-node sx-node-${point.zone} sx-node-${point.status}`}
+      className={`sx-map-node sx-node-${point.zone} sx-node-${point.status}${point.additional ? ' sx-node-additional' : ''}${point.revealing ? ' sx-extra-reveal' : ''}`}
       data-recommended={recommended || undefined}
       data-selected={selected || undefined}
       data-point-id={point.id}
       style={{ left: position.x, top: position.y }}
       onClick={() => onSelect(point.id)}
       onFocus={() => onFocus(point.id)}
-      aria-label={`${point.title}${point.status === 'locked' ? ', bloqueado' : point.status === 'completed' ? ', completado' : ''}`}
+      aria-label={`${point.title}${point.additional ? ', misión adicional' : ''}${point.status === 'locked' ? ', bloqueado' : point.status === 'completed' ? ', completado' : ''}`}
     >
       <span className="sx-node-circle">
         <Icon size={56} aria-hidden="true" />
+        {point.additional && (
+          <span className="sx-extra-star">
+            <Star size={15} fill="currentColor" />
+          </span>
+        )}
         {point.status === 'completed' && (
           <span className="sx-node-badge">
             <Check size={20} />
@@ -60,6 +65,7 @@ export function MapNode({
             <span key={line}>{line}</span>
           ))}
         </strong>
+        {point.additional && <small>Misión adicional</small>}
       </span>
     </button>
   )

@@ -8,7 +8,7 @@ type AppTopBarProps = { title: string }
 
 function AppTopBar({ title }: AppTopBarProps) {
   return (
-    <header className="relative z-20 grid h-16 shrink-0 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center border-b bg-white/95 px-4 backdrop-blur transition-[height] duration-200 ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-6">
+    <header className="app-topbar relative z-20 grid h-16 shrink-0 min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center border-b bg-white/95 px-4 backdrop-blur transition-[height] duration-200 ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 md:px-6">
       <div className="flex min-w-0 items-center">
         <SidebarTrigger className="-ml-1 shrink-0 text-muted-foreground hover:bg-muted" />
         <Separator className="mx-3 h-4" orientation="vertical" />

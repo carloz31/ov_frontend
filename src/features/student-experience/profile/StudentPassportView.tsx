@@ -1,25 +1,26 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import { ArrowLeft, Award, Check, Eye, LockKeyhole, Target } from 'lucide-react'
-import { getAchievementGroups } from '@/features/occupation-exploration/lib/AdventureAchievements'
+import { useJourney } from '@/features/missions/store'
 import { getTravelerLevel, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 import { appPaths } from '@/routes/paths'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
 import { Parchment } from '../discovery/Parchment'
 import { useDiscovery } from '../discovery/discoveryStore'
 import { PassportBadgeDialog } from './PassportBadgeDialog'
-import { achievementIcons, getProfileBadges, travelerTitles } from './passport'
+import { achievementIcons, getProfileBadges, getStudentAchievementGroups, travelerTitles } from './passport'
 import './passport.css'
 
 export function StudentPassportView() {
   const adventure = useAdventure(),
     discovery = useDiscovery(),
-    groups = getAchievementGroups(adventure),
+    journey = useJourney(),
+    groups = getStudentAchievementGroups(adventure, journey),
     level = getTravelerLevel(adventure)
   const [selectedCode, setSelectedCode] = useState<string>()
   const all = groups.flatMap((g) => g.items),
     earned = all.filter((b) => b.done),
-    visible = getProfileBadges(adventure, discovery)
+    visible = getProfileBadges(adventure, discovery, journey)
   const groupIndex = groups.findIndex((g) => g.items.some((b) => b.code === selectedCode)),
     group = groups[groupIndex],
     selected = group?.items.find((b) => b.code === selectedCode)

@@ -1,4 +1,5 @@
 import type { SetStateAction } from 'react'
+import { forestFireProfessionals } from '@/features/occupation-exploration/data/ForestFireCaseData'
 import { mockOccupationProfiles } from '@/features/occupation-exploration/data/OccupationExplorationData'
 import type { OccupationProfile } from '@/features/occupation-exploration/types/OccupationExplorationTypes'
 import type { DecisionSheet } from '@/features/occupation-exploration/types/StudentDecisionTypes'
@@ -6,6 +7,7 @@ import { isIso, isRecord, isStrings, persistentStore } from './persistentStore'
 
 export type StudentExplorationState = {
   version: 1
+  forestFireIconsVersion?: 2
   profiles: OccupationProfile[]
   careerInterestIds: string[]
   institutionInterestIds: string[]
@@ -13,7 +15,13 @@ export type StudentExplorationState = {
 }
 export const initialExplorationState = (): StudentExplorationState => ({
   version: 1,
-  profiles: mockOccupationProfiles.map((p) => ({ ...p })),
+  forestFireIconsVersion: 2,
+  profiles: mockOccupationProfiles.map((p) => ({
+    ...p,
+    discoveryState: forestFireProfessionals.some((f) => f.occupationId === p.occupationId)
+      ? 'unused'
+      : p.discoveryState,
+  })),
   careerInterestIds: [],
   institutionInterestIds: [],
   decisionSheets: [],
@@ -104,7 +112,53 @@ export function validExplorationState(v: unknown): v is StudentExplorationState 
     })
   )
 }
-const store = persistentStore('ov.student-exploration.v1', initialExplorationState, validExplorationState)
+export function normalizeForestFireIcons(value: unknown): unknown {
+  if (!isRecord(value) || value.forestFireIconsVersion === 2 || !Array.isArray(value.profiles)) return value
+  return {
+    ...value,
+    forestFireIconsVersion: 2,
+    profiles: value.profiles.map((p) =>
+      isRecord(p) && forestFireProfessionals.some((f) => f.occupationId === p.occupationId)
+        ? { ...p, discoveryState: 'unused' }
+        : p,
+    ),
+  }
+}
+const store = persistentStore(
+  'ov.student-exploration.v1',
+  initialExplorationState,
+  validExplorationState,
+  normalizeForestFireIcons,
+)
+// Persist the one-time migration even before the student makes another change.
+try {
+  const saved = JSON.parse(localStorage.getItem('ov.student-exploration.v1') ?? 'null')
+  if (saved?.version === 1 && saved.forestFireIconsVersion !== 2) store.update((s) => ({ ...s }))
+} catch {
+  /* The store keeps an in-memory state if storage is unavailable. */
+}
+export function unlockCaseOccupations(ids: string[]) {
+  const uniqueIds = [
+    ...new Set(ids.filter((id) => forestFireProfessionals.some((p) => p.occupationId === id))),
+  ]
+  const current = store.getSnapshot()
+  const newIds = uniqueIds.filter(
+    (id) => !current.profiles.some((p) => p.occupationId === id && p.discoveryState !== 'unused'),
+  )
+  if (newIds.length)
+    store.update((s) => ({
+      ...s,
+      profiles: [
+        ...s.profiles.map((p) =>
+          newIds.includes(p.occupationId) ? { ...p, discoveryState: 'unlocked' as const } : p,
+        ),
+        ...newIds
+          .filter((id) => !s.profiles.some((p) => p.occupationId === id))
+          .map((occupationId) => ({ occupationId, discoveryState: 'unlocked' as const, interested: false })),
+      ],
+    }))
+  return newIds
+}
 export const useExploration = store.useState
 export const useExplorationError = store.useError
 export const updateExploration = store.update

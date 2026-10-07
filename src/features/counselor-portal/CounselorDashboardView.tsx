@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { AlertBadge } from '@/components/ui/Status'
+import { StaffAlertCard, StaffEntityHeader } from '@/components/staff/StaffPatterns'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { blocks, profileCatalog, studentProfiles } from './profile/data'
@@ -22,6 +23,13 @@ import {
 } from './classroom/ClassroomShared'
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
+  if (title === 'Alertas') {
+    return (
+      <StaffAlertCard title={title} className="flex min-w-0 flex-col gap-4 p-5 sm:p-6">
+        {children}
+      </StaffAlertCard>
+    )
+  }
   return (
     <Card className="flex min-w-0 flex-col gap-5 rounded-xl p-5 sm:p-6">
       <h2 className="text-base font-bold">{title}</h2>
@@ -64,32 +72,42 @@ function CounselorDashboardView() {
   const descent = summary.security.trends.find((row) => row.label === 'En descenso')!.count
   return (
     <main className="min-w-0 space-y-6 p-4 sm:p-6 lg:p-7">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-baseline gap-3">
-          <h1 className="text-2xl font-bold">Inicio</h1>
-          <span className="text-sm text-muted-foreground">{summary.total} estudiantes</span>
-        </div>
-        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-          <Select value={salon} onValueChange={setSalon}>
-            <SelectTrigger aria-label="Filtrar por salón" className="min-h-11 w-full bg-card sm:w-48">
-              <SelectValue>{salon === 'all' ? 'Todos mis salones' : `Salón: ${salon}`}</SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos mis salones</SelectItem>
-              {salons.map((value) => (
-                <SelectItem key={value} value={value}>
-                  {value}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button asChild variant="outline" className="min-h-11 whitespace-normal">
-            <Link to={listUrl}>Ver estudiantes del salón</Link>
-          </Button>
-        </div>
-      </header>
+      <StaffEntityHeader
+        title="Inicio"
+        initials={salon === 'all' ? 'MS' : salon}
+        details={
+          <>
+            <span>{salon === 'all' ? 'Todos mis salones' : `Salón: ${salon}`}</span>
+            <span>{summary.total} estudiantes</span>
+          </>
+        }
+        metrics={
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+            <Select value={salon} onValueChange={setSalon}>
+              <SelectTrigger aria-label="Filtrar por salón" className="min-h-11 w-full bg-card sm:w-48">
+                <SelectValue>{salon === 'all' ? 'Todos mis salones' : `Salón: ${salon}`}</SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos mis salones</SelectItem>
+                {salons.map((value) => (
+                  <SelectItem key={value} value={value}>
+                    {value}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button asChild variant="outline" className="min-h-11 whitespace-normal">
+              <Link to={listUrl}>Ver estudiantes del salón</Link>
+            </Button>
+          </div>
+        }
+      />
       <Tabs value={section} onValueChange={setSection} className="space-y-6">
-        <TabsList aria-label="Vista del inicio" className="flex w-full items-stretch sm:w-fit">
+        <TabsList
+          appearance="navigation"
+          aria-label="Vista del inicio"
+          className="flex w-full items-stretch sm:w-fit"
+        >
           <TabsTrigger value="tracking" className="min-w-0 flex-1 text-sm whitespace-normal sm:flex-none">
             Seguimiento
           </TabsTrigger>
@@ -97,9 +115,10 @@ function CounselorDashboardView() {
             Intereses vocacionales
           </TabsTrigger>
         </TabsList>
-        <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid min-w-0 gap-4 sm:grid-cols-2 2xl:grid-cols-4">
           <ClassroomMetric
             icon={Gauge}
+            primary
             label="Avance prioritario promedio"
             value={
               summary.average === null
@@ -116,7 +135,7 @@ function CounselorDashboardView() {
             value={
               summary.questionnaireComplete === null
                 ? 'Sin prioritarios'
-                : `${summary.questionnaireComplete} de ${summary.total} estudiantes`
+                : `${summary.questionnaireComplete} de ${summary.total}`
             }
             note="Todos los prioritarios"
             percent={summary.questionnaireComplete === null ? null : ratio(summary.questionnaireComplete)}
@@ -138,43 +157,45 @@ function CounselorDashboardView() {
         </div>
         <TabsContent value="tracking">
           <div className="grid min-w-0 items-stretch gap-6 lg:grid-cols-2">
-            <Section title="Alertas">
-              <p className="text-sm">
-                <strong>
-                  {summary.withAlerts} de {summary.total}
-                </strong>{' '}
-                con al menos una alerta
-              </p>
-              <div className="space-y-5">
-                {summary.alerts.map((row) => (
-                  <div
-                    key={row.code}
-                    className="relative flex min-h-10 items-center justify-between gap-3 rounded-md px-2 text-sm"
-                  >
-                    <span
-                      className="absolute inset-y-1 left-0 rounded bg-primary-soft"
-                      style={{ width: `${ratio(row.count)}%` }}
-                      aria-hidden
-                    />
-                    <AlertBadge className="relative text-xs">{profileAlertLabels[row.code]}</AlertBadge>
-                    <span className="relative shrink-0">
-                      {row.count} · {Math.round(ratio(row.count))} %
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {!summary.alerts.length && (
-                <p className="text-sm text-muted-foreground">
-                  {summary.total
-                    ? 'Ningún estudiante del salón tiene alertas.'
-                    : 'Todavía no hay estudiantes en este salón.'}
+            {summary.withAlerts > 0 && (
+              <Section title="Alertas">
+                <p className="text-sm">
+                  <strong>
+                    {summary.withAlerts} de {summary.total}
+                  </strong>{' '}
+                  con al menos una alerta
                 </p>
-              )}
-              <p className="text-xs text-muted-foreground">Un estudiante puede presentar varias alertas.</p>
-              <Button asChild variant="outline" className="mt-auto min-h-11 self-start whitespace-normal">
-                <Link to={`${listUrl}&alertas=with`}>Ver estudiantes con alertas</Link>
-              </Button>
-            </Section>
+                <div className="space-y-5">
+                  {summary.alerts.map((row) => (
+                    <div
+                      key={row.code}
+                      className="relative flex min-h-10 items-center justify-between gap-3 rounded-md px-2 text-sm"
+                    >
+                      <span
+                        className="absolute inset-y-1 left-0 rounded bg-primary-soft"
+                        style={{ width: `${ratio(row.count)}%` }}
+                        aria-hidden
+                      />
+                      <AlertBadge className="relative text-xs">{profileAlertLabels[row.code]}</AlertBadge>
+                      <span className="relative shrink-0">
+                        {row.count} · {Math.round(ratio(row.count))} %
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {!summary.alerts.length && (
+                  <p className="text-sm text-muted-foreground">
+                    {summary.total
+                      ? 'Ningún estudiante del salón tiene alertas.'
+                      : 'Todavía no hay estudiantes en este salón.'}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground">Un estudiante puede presentar varias alertas.</p>
+                <Button asChild variant="outline" className="mt-auto min-h-11 self-start whitespace-normal">
+                  <Link to={`${listUrl}&alertas=with`}>Ver estudiantes con alertas</Link>
+                </Button>
+              </Section>
+            )}
             <Section title="Cuestionarios">
               {questionRows.length ? (
                 <>

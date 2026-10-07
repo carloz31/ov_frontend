@@ -123,7 +123,7 @@ test('staff themes distinguish completion from scores and preserve student progr
   for (const value of [0, 52, 100]) {
     const markup = themed('staff', React.createElement(Progress, { value }))
     assert.match(markup, new RegExp(`aria-valuenow="${value}"`))
-    assert.ok(markup.includes(`background-color:var(--${value === 100 ? 'success' : 'primary'})`))
+    assert.ok(markup.includes('background-color:var(--primary)'))
     const score = themed('staff', React.createElement(Progress, { value, intent: 'data' }))
     assert.match(score, /background-color:var\(--data-primary\)/)
     assert.doesNotMatch(score, /background-color:var\(--success\)/)
@@ -1700,8 +1700,9 @@ test('immersive finish shows saved sheets, narrative rewards and the prompted jo
   const activity = journeyContent.activities.find(activity => activity.id === 'enc-mitos')
   const { FinishScreen } = load(path.resolve('src/features/student-experience/player/FinishScreen.tsx'))
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'], progress: { [activity.id]: { estado: 'completada' } } }))
-  const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(FinishScreen, { activity, onClose() {}, onNext() {} })))
-  for (const text of ['Este hallazgo viaja contigo.', activity.recompensa.mensajeFin, 'Lo que llevas contigo', 'En tu mochila', 'Escribir en mi diario', 'Revisar mis propias creencias', 'Volver al mapa']) assert.ok(html.includes(text))
+  const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(FinishScreen, { activity, onClose() {} })))
+  for (const text of ['Este hallazgo viaja contigo.', activity.recompensa.mensajeFin, 'Lo que llevas contigo', 'En tu mochila', 'Escribir en mi diario', 'Continuar']) assert.ok(html.includes(text))
+  assert.doesNotMatch(html, /Revisar mis propias creencias|Seguir hacia|Volver al mapa/)
   assert.doesNotMatch(html, /\bpuntos\b|\bpts\b|Nueva insignia/)
   const { ResultNode } = load(path.resolve('src/features/student-experience/player/nodes/ResultNode.tsx'))
   const result = renderToStaticMarkup(React.createElement(ResultNode, { activity: journeyContent.finalActivity, instrumentId: 'tip' }))
@@ -2559,8 +2560,8 @@ test('classroom dashboard aggregates current profiles without student names or p
   assert.match(interests,/>12 estudiantes</)
   assert.match(html,/alertas=with/)
   assert.match(html,/>12 estudiantes</)
-  assert.equal((html.match(/<h2/g) ?? []).length, 4)
-  assert.equal((interests.match(/<h2/g) ?? []).length, 2)
+  assert.equal((html.match(/<h2/g) ?? []).length, 8)
+  assert.equal((interests.match(/<h2/g) ?? []).length, 6)
   assert.equal((html.match(/role="tab"/g) ?? []).length, 2)
   assert.match(html,/aria-selected="true"[^>]*>Seguimiento</)
   assert.match(interests,/aria-selected="true"[^>]*>Intereses vocacionales</)
@@ -2679,7 +2680,7 @@ test('phase 8 direct links open blocked details instead of starting unavailable 
   guard.dispose()
 })
 
-test('phase 8 finish overrides follow the selected path and omit closed legacy suggestions', () => {
+test('phase 8 finish returns to the map with one continue action at every point of the path', () => {
   const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
   const { FinishScreen } = load(path.resolve('src/features/student-experience/player/FinishScreen.tsx'))
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
@@ -2688,22 +2689,20 @@ test('phase 8 finish overrides follow the selected path and omit closed legacy s
     const next = logic.getNextCaminoActivity(logic.getCaminoPoints(adventure, journey))
     assert.equal(next?.id, expected)
     const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(FinishScreen, {
-      activity: journeyContent.activityById('enc-mitos'), nextActivity: next ?? undefined,
-      allowLegacySuggestion: false, onClose() {}, onNext() {},
+      activity: journeyContent.activityById('enc-mitos'), onClose() {},
     })))
-    assert.doesNotMatch(html, /Revisar mis propias creencias/)
-    if (!expected) assert.doesNotMatch(html, /Seguir hacia/)
+    assert.doesNotMatch(html, /Revisar mis propias creencias|Seguir hacia|Volver al mapa/)
+    assert.equal((html.match(/>Continuar</g) ?? []).length, 1)
   }
   const player = immersivePlayerHarness('StudentActivityPlayer')
   const activity = journeyContent.activityById('mission-welcome')
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { [activity.id]: { estado: 'completada', nodoActualId: '$fin' } } }))
-  let tree = player.draw({ activity, nextActivityOverride: null, onClose() {}, onNext() {} })
-  let finish = player.find(tree, element => element.type?.name === 'FinishScreen')
-  assert.equal(finish.props.nextActivity, undefined); assert.equal(finish.props.allowLegacySuggestion, false)
-  tree = player.draw({ activity, onClose() {}, onNext() {} })
-  finish = player.find(tree, element => element.type?.name === 'FinishScreen')
-  assert.equal(finish.props.allowLegacySuggestion, true)
-  assert.equal(finish.props.nextActivity?.id, activity.siguienteSugerida)
+  const onClose = () => {}
+  const tree = player.draw({ activity, onClose })
+  const finish = player.find(tree, element => element.type?.name === 'FinishScreen')
+  assert.equal(finish.props.onClose, onClose)
+  assert.equal(finish.props.onNext, undefined)
+  assert.equal(finish.props.nextActivity, undefined)
   player.dispose(); journeyStore.updateJourney(() => journeyLogic.initialJourney())
 })
 

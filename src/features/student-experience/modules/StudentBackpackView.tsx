@@ -23,17 +23,19 @@ import { Button } from '@/components/ui/Button'
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { BackpackViewerFrame as DialogContent } from '../backpack/BackpackViewerFrame'
 import { ResourceText } from '@/features/missions/JourneyContent'
-import { useJourney } from '@/features/missions/store'
+import { updateJourney, useJourney } from '@/features/missions/store'
 import { activities } from '@/features/missions/content'
 import { updateAdventure, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 import {
-  getTravelResources,
   isTravelResourceUnlocked,
   resourceFileUrl,
-  resourceRequirement,
   youtubeEmbedUrl,
   type TravelResource,
 } from '@/features/occupation-exploration/lib/TravelerResources'
+import {
+  getStudentTravelResources as getTravelResources,
+  studentResourceRequirement as resourceRequirement,
+} from '../backpack/challengeResources'
 import { cityCases } from '@/features/occupation-exploration/data/AdventureData'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
 import { Parchment } from '../discovery/Parchment'
@@ -298,6 +300,25 @@ function StudentBackpackView() {
             </DialogHeader>
             <div className="p-6 sm:p-7">
               <ResourceContent resource={selected} />
+              {selected.kind === 'sheet' && selected.content && (
+                <Button
+                  variant="outline"
+                  disabled={(journey.readResourceIds ?? journey.resources).includes(selected.id)}
+                  onClick={() =>
+                    updateJourney((current) => ({
+                      ...current,
+                      readResourceIds: [
+                        ...new Set([...(current.readResourceIds ?? current.resources), selected.id]),
+                      ],
+                    }))
+                  }
+                >
+                  <Check size={18} />
+                  {(journey.readResourceIds ?? journey.resources).includes(selected.id)
+                    ? 'Ficha leída'
+                    : 'Leí la ficha'}
+                </Button>
+              )}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#e4e0cb] bg-[#f4f3e8] px-6 py-4">
               <Button

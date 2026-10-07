@@ -93,6 +93,7 @@ export type BloqueContenido =
 export interface NodoBase {
   id: ID
   transicion?: string
+  nuevoMomento?: boolean
 }
 
 export interface NodoDialogo extends NodoBase {
@@ -135,6 +136,8 @@ export interface NodoPregunta extends NodoBase {
     texto: string
     correcta: boolean
     retroalimentacion: string // por qué esta opción es / no es
+    explicacion?: string
+    tambienEra?: string
   }[]
   explicacion: string // se muestra al acertar (refuerza el contenido)
   bloqueante: boolean

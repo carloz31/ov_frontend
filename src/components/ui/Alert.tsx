@@ -2,7 +2,12 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/lib/Utils'
 function Alert({ className, ...props }: ComponentProps<'div'>) {
   return (
-    <div role="note" className={cn('rounded-xl border bg-card p-4 text-foreground', className)} {...props} />
+    <div
+      data-slot="alert"
+      role="note"
+      className={cn('rounded-xl border bg-card p-4 text-foreground', className)}
+      {...props}
+    />
   )
 }
 function AlertTitle({ className, ...props }: ComponentProps<'h3'>) {

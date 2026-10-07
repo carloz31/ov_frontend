@@ -1,27 +1,28 @@
-import { ArrowRight, BookOpen, KeyRound } from 'lucide-react'
+import { ArrowRight, BookOpen } from 'lucide-react'
 import { useNavigate } from 'react-router'
 import { catalog } from '@/features/missions/content'
 import type { Actividad } from '@/features/missions/model'
 import { useJourney } from '@/features/missions/store'
 import { appPaths } from '@/routes/paths'
-import { CharacterAvatar } from './CharacterAvatar'
+import { LumiMedallion } from './LumiMedallion'
+import { RewardCard } from './RewardCard'
+import { additionalMissions } from '../reflection/config'
 
 export function FinishScreen({
   activity,
-  nextActivity,
-  allowLegacySuggestion = true,
   onClose,
-  onNext,
+  onResources,
 }: {
   activity: Actividad
-  nextActivity?: Actividad
-  allowLegacySuggestion?: boolean
   onClose: () => void
-  onNext: (id: string) => void
+  onResources?: (ids: string[]) => void
 }) {
   const state = useJourney()
   const navigate = useNavigate()
   const piece = catalog.piezasLlave.find((piece) => piece.id === activity.recompensa?.piezaLlave)
+  const badge =
+    state.progress[activity.id]?.estado === 'completada' &&
+    additionalMissions.find((m) => m.id === activity.id)?.insignia
   const ids = [
     ...new Set([
       ...activity.nodos.flatMap((node) => (node.tipo === 'diapositiva' ? (node.recursoIds ?? []) : [])),
@@ -36,36 +37,56 @@ export function FinishScreen({
     <div className="sx-card-stage">
       <section className="sx-glass sx-player-card sx-finish-card case-scrollbar">
         <div className="sx-finish-avatar">
-          <CharacterAvatar id="companero" size="lg" />
+          <LumiMedallion celebration />
+          <small>Lumi</small>
         </div>
         <h2>
           {state.progress[activity.id]?.estado === 'completada'
             ? 'Este hallazgo viaja contigo.'
             : 'Tu avance queda guardado.'}
         </h2>
-        <p>{activity.recompensa?.mensajeFin}</p>
-        {(piece || sheets.length > 0) && (
+        {!activity.recompensa?.mensajeFin?.startsWith('Obtuviste:') && (
+          <p>{activity.recompensa?.mensajeFin}</p>
+        )}
+        {(piece || badge || sheets.length > 0) && (
           <section className="sx-finish-section">
             <h3>Lo que llevas contigo</h3>
-            {piece && (
-              <p className="sx-finish-reward">
-                <KeyRound size={22} />
-                {piece.nombre}
-              </p>
+            {badge && (
+              <RewardCard
+                kind="badge"
+                title={badge.nombre}
+                onOpen={() => navigate(appPaths.student.passport)}
+              />
             )}
-            {sheets.map((resource) => (
-              <div className="sx-finish-reward" key={resource.id}>
-                <BookOpen size={22} />
-                <span>
-                  {resource.titulo}
-                  <small>En tu mochila</small>
-                </span>
-              </div>
+            {piece && (
+              <RewardCard
+                kind="object"
+                title={piece.nombre}
+                progress={{
+                  obtained: catalog.piezasLlave.filter((p) => state.pieces.includes(p.id)).length,
+                  needed: catalog.piezasLlave.length,
+                  place: 'la ciudad',
+                }}
+              />
+            )}
+            {sheets.map((resource, index) => (
+              <RewardCard
+                kind="sheet"
+                key={resource.id}
+                title={resource.titulo}
+                index={index + (piece ? 1 : 0)}
+                onOpen={() =>
+                  onResources
+                    ? onResources([resource.id])
+                    : navigate(`${appPaths.student.resources}?ficha=${encodeURIComponent(resource.id)}`)
+                }
+              />
             ))}
           </section>
         )}
         {activity.promptDiario && (
           <section className="sx-finish-section">
+            <h3>Nueva pregunta en tu diario</h3>
             <blockquote>{activity.promptDiario}</blockquote>
             <button
               type="button"
@@ -82,22 +103,10 @@ export function FinishScreen({
           </section>
         )}
         <section className="sx-finish-section">
-          <h3>Lo que viene</h3>
           <div className="sx-player-actions">
-            {nextActivity && (
-              <button type="button" className="sx-primary-button" onClick={() => onNext(nextActivity.id)}>
-                Seguir hacia {nextActivity.ubicacion ?? nextActivity.titulo}
-                <ArrowRight size={18} />
-              </button>
-            )}
-            {allowLegacySuggestion && !nextActivity && activity.siguienteSugerida === 'act-07' && (
-              <button type="button" className="sx-primary-button" onClick={() => onNext('act-07')}>
-                Revisar mis propias creencias
-                <ArrowRight size={18} />
-              </button>
-            )}
-            <button type="button" className="sx-secondary-button" onClick={onClose}>
-              Volver al mapa
+            <button type="button" className="sx-primary-button" onClick={onClose}>
+              Continuar
+              <ArrowRight size={18} />
             </button>
           </div>
         </section>

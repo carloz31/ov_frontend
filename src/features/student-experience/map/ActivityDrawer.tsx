@@ -1,3 +1,5 @@
+import { ForestFireCaseProgress } from '@/features/occupation-exploration/components/ForestFireCaseProgress'
+import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 import { useRef } from 'react'
 import { Clock, LockKeyhole, Play, X } from 'lucide-react'
 import { Drawer as DrawerPrimitive } from 'vaul'
@@ -29,6 +31,7 @@ export function ActivityDrawer({
   onJournal: (details: PointDetails) => void
   onFallbackFocus?: () => void
 }) {
+  const adventure = useAdventure()
   const theme = useThemeClass()
   const closeButton = useRef<HTMLButtonElement>(null)
   const returnFocus = useRef<HTMLElement | null>(null)
@@ -112,6 +115,7 @@ export function ActivityDrawer({
                     {details.requirement}
                   </p>
                 )}
+                {details.caseProgress && <ForestFireCaseProgress adventure={adventure} />}
                 {details.journal && (
                   <JournalEntryCard
                     completed={details.journal.completed}
@@ -128,6 +132,11 @@ export function ActivityDrawer({
                   <Play size={18} />
                   {details.actionLabel}
                 </button>
+                {point.additional && (
+                  <button type="button" className="sx-secondary-button" onClick={onClose}>
+                    Más tarde
+                  </button>
+                )}
               </div>
             </>
           )}

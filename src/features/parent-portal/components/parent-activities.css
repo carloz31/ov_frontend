@@ -4,10 +4,10 @@
   --primario-oscuro: #283593;
   --primario-suave: #e8ecfa;
   --pista-barra: #5c6bc0;
-  --fondo: #f5f7fb;
+  --fondo: var(--background);
   --borde: #d5dae6;
-  --texto: #1f2433;
-  --texto-secundario: #4a5068;
+  --texto: var(--card-foreground);
+  --texto-secundario: var(--neutral-text);
   --correcto: #15803d;
   --correcto-fondo: #ecfdf3;
   --correcto-texto: #166534;

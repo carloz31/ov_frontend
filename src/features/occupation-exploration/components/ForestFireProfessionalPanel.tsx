@@ -1,309 +1,283 @@
-import { useState } from 'react'
-import {
-  BookOpen,
-  BriefcaseBusiness,
-  ChevronLeft,
-  ChevronRight,
-  CloudSun,
-  Construction,
-  ContactRound,
-  Cross,
-  HeartHandshake,
-  Leaf,
-  Newspaper,
-  PawPrint,
-  PhoneCall,
-  ShieldCheck,
-  Stethoscope,
-  Trees,
-  Truck,
-  type LucideIcon,
-} from 'lucide-react'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/Dialog'
-import { cn } from '@/lib/Utils'
+import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { ArrowLeft, Check, GripVertical, Plus } from 'lucide-react'
+import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/Dialog'
 import { forestFireProfessionals } from '../data/ForestFireCaseData'
+import type { ForestFireProfessional } from '../types/ForestFireCaseTypes'
+import { getOccupation } from '@/features/student-experience/catalog/catalogSelectors'
+import { discoveryPaths } from '@/features/student-experience/paths'
 
-const professionalIcons: Record<string, LucideIcon> = {
-  firefighter: ShieldCheck,
-  meteorologist: CloudSun,
-  'municipal-police': ShieldCheck,
-  paramedic: Cross,
-  'medical-specialist': Stethoscope,
-  veterinarian: PawPrint,
-  biologist: Trees,
-  'environmental-engineer': Leaf,
-  'civil-engineer': Construction,
-  'machinery-operator': Truck,
-  'social-worker': HeartHandshake,
-  journalist: Newspaper,
+export function ProfessionalResume({ professional }: { professional: ForestFireProfessional }) {
+  const occupation = getOccupation(professional.occupationId)
+  return (
+    <article className="ff-resume">
+      <p className="ff-eyebrow">Hoja de vida · Contacto</p>
+      <div className="ff-contact-heading">
+        <span className="ff-initial">{professional.personName.charAt(0)}</span>
+        <div>
+          <h2>{professional.personName}</h2>
+          <p>{occupation?.name ?? professional.name}</p>
+        </div>
+      </div>
+      {occupation ? (
+        <>
+          {occupation.contentStatus === 'pending' && <p className="ff-preparing">Ficha en preparación</p>}
+          <h3>Qué hacen</h3>
+          <p>{occupation.whatTheyDo}</p>
+          <h3>Conocimientos que usan</h3>
+          <ul className="ff-tags">
+            {occupation.knowledge.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <h3>Habilidades que necesitan</h3>
+          <ul className="ff-tags">
+            {occupation.skills.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <footer>
+            <p>Datos del catálogo de ocupaciones</p>
+            <p>{occupation.onetCode ? `O*NET ${occupation.onetCode}` : 'O*NET por completar'}</p>
+            <a href={discoveryPaths.occupation(occupation.id)} target="_blank" rel="noopener noreferrer">
+              Ver la ficha completa<span className="sr-only"> (abre otra pestaña)</span>
+            </a>
+          </footer>
+        </>
+      ) : (
+        <p className="ff-preparing">Ficha en preparación</p>
+      )}
+    </article>
+  )
 }
 
-type ProfessionalAssignmentContext = {
-  problemTitle: string
-  selectedIds: string[]
-  onToggle: (professionalId: string) => void
-}
-
-type ForestFireProfessionalPanelProps = {
-  assignmentContext?: ProfessionalAssignmentContext
-  compact?: boolean
+export function ForestFireProfessionalPanel({
+  initialProfessionalId,
+  triggerLabel = 'Ver ficha',
+}: {
   initialProfessionalId?: string
   triggerLabel?: string
-}
-
-function ForestFireProfessionalPanel({
-  assignmentContext,
-  compact = false,
-  initialProfessionalId,
-  triggerLabel = 'Abrir directorio',
-}: ForestFireProfessionalPanelProps) {
-  const initialIndex = forestFireProfessionals.findIndex(
-    (professional) => professional.id === initialProfessionalId,
-  )
-  const [currentIndex, setCurrentIndex] = useState(initialIndex >= 0 ? initialIndex : 0)
-  const currentProfessional = forestFireProfessionals[currentIndex]
-  const CurrentIcon = professionalIcons[currentProfessional.id] ?? BriefcaseBusiness
-  const isAssigned = assignmentContext?.selectedIds.includes(currentProfessional.id) ?? false
-
-  function showPreviousProfile() {
-    setCurrentIndex(
-      (current) => (current - 1 + forestFireProfessionals.length) % forestFireProfessionals.length,
-    )
-  }
-
-  function showNextProfile() {
-    setCurrentIndex((current) => (current + 1) % forestFireProfessionals.length)
-  }
-
+}) {
+  const professional =
+    forestFireProfessionals.find((p) => p.id === initialProfessionalId) ?? forestFireProfessionals[0]
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          aria-label={
-            initialProfessionalId
-              ? `Ampliar ficha de ${currentProfessional.name}`
-              : 'Abrir directorio de profesionales'
-          }
-          className={cn(!compact && 'border-white/20 bg-white/10 text-white hover:bg-white/18')}
-          size={compact ? 'icon' : 'default'}
-          variant="outline"
-        >
-          <BookOpen />
-          <span className={compact ? 'sr-only' : ''}>
-            {compact ? 'Directorio profesional' : triggerLabel}
-          </span>
-        </Button>
+        <button className="ff-secondary">{triggerLabel}</button>
       </DialogTrigger>
-      <DialogContent className="max-w-[1080px] overflow-hidden border-[#4a4863] bg-[#12131e] p-3 text-white [&>button]:text-white/65 [&>button:hover]:bg-white/10 [&>button:hover]:text-white md:p-4">
-        <div className="overflow-hidden rounded-[22px] border border-white/10 bg-[#232237] shadow-[inset_0_0_0_1px_rgb(255_255_255/3%)]">
-          <div className="flex items-center justify-between border-b border-white/10 bg-[#1a1928] px-5 py-3 pr-14">
-            <div className="flex items-center gap-3">
-              <span className="grid size-9 place-items-center rounded-xl bg-[#ff8c66] text-white">
-                <ContactRound className="size-4.5" />
-              </span>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/45">
-                  Terminal de contactos
-                </p>
-                <p className="text-sm font-bold">Directorio de respuesta</p>
-              </div>
-            </div>
-            <span className="hidden items-center gap-2 text-xs text-emerald-300 sm:flex">
-              <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_12px_rgb(52_211_153/85%)]" /> En
-              línea
-            </span>
-          </div>
-
-          <DialogHeader className="sr-only">
-            <DialogTitle>Directorio de profesionales</DialogTitle>
-            <DialogDescription>
-              Consulta hojas de vida y selecciona profesionales para responder a la emergencia.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="grid min-h-[560px] lg:grid-cols-[280px_minmax(0,1fr)]">
-            <aside className="hidden border-r border-white/10 bg-[#1b1a2b] p-3 lg:block">
-              <div className="mb-3 flex items-center justify-between px-2 pt-1">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/45">
-                  Guía de contactos
-                </p>
-                <Badge className="bg-white/8 text-white/60" variant="secondary">
-                  {forestFireProfessionals.length}
-                </Badge>
-              </div>
-              <div className="max-h-[500px] space-y-1 overflow-y-auto pr-1">
-                {forestFireProfessionals.map((professional, index) => {
-                  const Icon = professionalIcons[professional.id] ?? BriefcaseBusiness
-                  const selected = assignmentContext?.selectedIds.includes(professional.id) ?? false
-                  return (
-                    <button
-                      aria-current={index === currentIndex ? 'page' : undefined}
-                      className={cn(
-                        'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9d96ff]',
-                        index === currentIndex
-                          ? 'bg-[#655bd8] text-white'
-                          : 'text-white/68 hover:bg-white/7 hover:text-white',
-                      )}
-                      key={professional.id}
-                      onClick={() => setCurrentIndex(index)}
-                      type="button"
-                    >
-                      <span
-                        className={cn(
-                          'grid size-8 shrink-0 place-items-center rounded-lg',
-                          index === currentIndex ? 'bg-white/16' : 'bg-white/7',
-                        )}
-                      >
-                        <Icon className="size-4" />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold">{professional.personName}</span>
-                        <span
-                          className={cn(
-                            'block truncate text-[11px]',
-                            index === currentIndex ? 'text-white/65' : 'text-white/38',
-                          )}
-                        >
-                          {professional.name}
-                        </span>
-                      </span>
-                      {selected && (
-                        <span aria-label="Asignado" className="size-2 rounded-full bg-emerald-400" />
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
-            </aside>
-
-            <div className="flex min-w-0 flex-col bg-[#d9d4c8] p-3 sm:p-5 md:p-7">
-              <div className="mb-3 flex items-center justify-between text-[#686374] lg:hidden">
-                <p className="text-xs font-bold uppercase tracking-[0.14em]">
-                  Ficha {currentIndex + 1} de {forestFireProfessionals.length}
-                </p>
-                <div className="flex gap-1">
-                  <Button
-                    aria-label="Ficha anterior"
-                    className="border-[#bdb7ab] bg-[#eeeae0]"
-                    onClick={showPreviousProfile}
-                    size="icon"
-                    variant="outline"
-                  >
-                    <ChevronLeft />
-                  </Button>
-                  <Button
-                    aria-label="Ficha siguiente"
-                    className="border-[#bdb7ab] bg-[#eeeae0]"
-                    onClick={showNextProfile}
-                    size="icon"
-                    variant="outline"
-                  >
-                    <ChevronRight />
-                  </Button>
-                </div>
-              </div>
-
-              <article className="relative flex flex-1 flex-col overflow-hidden rounded-2xl border border-[#c5bfb2] bg-[#fbf8ef] p-5 text-[#29283a] shadow-[0_18px_45px_rgb(48_43_36/18%)] sm:p-7 md:p-9">
-                <div aria-hidden="true" className="absolute inset-y-0 left-0 w-1.5 bg-[#ff8c66]" />
-                <div className="flex flex-col gap-5 border-b border-dashed border-[#ccc6b9] pb-6 sm:flex-row sm:items-center">
-                  <span className="grid size-20 shrink-0 place-items-center rounded-2xl bg-[#e8e5ff] text-[#5c52ce] shadow-sm">
-                    <CurrentIcon className="size-9" />
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#8a8390]">
-                      Hoja de vida · Contacto {String(currentIndex + 1).padStart(2, '0')}
-                    </p>
-                    <h2 className="mt-1 text-3xl font-black tracking-[-0.035em]">
-                      {currentProfessional.personName}
-                    </h2>
-                    <p className="mt-1 flex items-center gap-2 font-bold text-[#6258d1]">
-                      <BriefcaseBusiness className="size-4" /> {currentProfessional.name}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid flex-1 gap-7 py-6 md:grid-cols-[minmax(0,1.2fr)_minmax(220px,0.8fr)]">
-                  <section>
-                    <p className="text-xs font-black uppercase tracking-[0.15em] text-[#8a8390]">
-                      Perfil profesional
-                    </p>
-                    <p className="mt-3 text-[15px] leading-7 text-[#555160]">
-                      {currentProfessional.description}
-                    </p>
-                  </section>
-                  <section>
-                    <p className="text-xs font-black uppercase tracking-[0.15em] text-[#8a8390]">
-                      Habilidades destacadas
-                    </p>
-                    <ul className="mt-3 space-y-2">
-                      {currentProfessional.skills.map((skill) => (
-                        <li
-                          className="flex items-center gap-2 rounded-xl border border-[#d9d3c8] bg-white/70 px-3 py-2 text-sm font-semibold"
-                          key={skill}
-                        >
-                          <span className="size-1.5 rounded-full bg-[#ff8c66]" /> {skill}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                </div>
-
-                <footer className="flex flex-col-reverse justify-between gap-3 border-t border-dashed border-[#ccc6b9] pt-5 sm:flex-row sm:items-center">
-                  <div className="hidden items-center gap-2 text-xs font-semibold text-[#77717e] lg:flex">
-                    <Button
-                      aria-label="Ficha anterior"
-                      className="border-[#cbc5b8] bg-transparent"
-                      onClick={showPreviousProfile}
-                      size="icon"
-                      variant="outline"
-                    >
-                      <ChevronLeft />
-                    </Button>
-                    <span>
-                      {currentIndex + 1} / {forestFireProfessionals.length}
-                    </span>
-                    <Button
-                      aria-label="Ficha siguiente"
-                      className="border-[#cbc5b8] bg-transparent"
-                      onClick={showNextProfile}
-                      size="icon"
-                      variant="outline"
-                    >
-                      <ChevronRight />
-                    </Button>
-                  </div>
-                  {assignmentContext ? (
-                    <Button
-                      className={cn(isAssigned && 'bg-[#324f47] hover:bg-[#29443d]')}
-                      onClick={() => assignmentContext.onToggle(currentProfessional.id)}
-                    >
-                      <PhoneCall />{' '}
-                      {isAssigned
-                        ? `Quitar de ${assignmentContext.problemTitle}`
-                        : `Llamar para ${assignmentContext.problemTitle}`}
-                    </Button>
-                  ) : (
-                    <p className="text-xs leading-5 text-[#77717e]">
-                      Consulta el perfil; podrás llamar al contacto desde cada problema.
-                    </p>
-                  )}
-                </footer>
-              </article>
-            </div>
-          </div>
-        </div>
+      <DialogContent className="ff-modal ff-responsive-modal">
+        <DialogTitle className="sr-only">Hoja de vida de {professional.personName}</DialogTitle>
+        <DialogDescription className="sr-only">Datos del catálogo de ocupaciones.</DialogDescription>
+        <ProfessionalResume professional={professional} />
       </DialogContent>
     </Dialog>
   )
 }
 
-export { ForestFireProfessionalPanel }
+export function ProfessionalDirectory({
+  selectedIds,
+  budgetRemaining,
+  problemTitle,
+  onCall,
+  onDragContact,
+}: {
+  selectedIds: string[]
+  budgetRemaining: number
+  problemTitle: string
+  onCall: (id: string) => void
+  onDragContact: (id?: string, overTeam?: boolean) => void
+}) {
+  const [resumeId, setResumeId] = useState<string>()
+  const [desktop, setDesktop] = useState(
+    () => typeof window !== 'undefined' && (window.matchMedia?.('(min-width: 1024px)').matches ?? false),
+  )
+  const resumeOpener = useRef<HTMLButtonElement | null>(null)
+  const backButton = useRef<HTMLButtonElement>(null)
+  const drag = useRef<{ id: string; pointerId: number; x: number; y: number; moved: boolean } | undefined>(
+    undefined,
+  )
+  const suppressClick = useRef(false)
+  const [dragGhost, setDragGhost] = useState<{ id: string; x: number; y: number }>()
+  const professional = forestFireProfessionals.find((p) => p.id === resumeId)
+  const called = !!resumeId && selectedIds.includes(resumeId)
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 1024px)')
+    const update = () => setDesktop(media.matches)
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+  useEffect(() => {
+    if (desktop && resumeId) backButton.current?.focus()
+    else if (desktop && !resumeId) resumeOpener.current?.focus()
+  }, [desktop, resumeId])
+  function overTeam(x: number, y: number) {
+    return !!document.elementFromPoint(x, y)?.closest('.ff-team-zone')
+  }
+  function startDrag(event: PointerEvent<HTMLElement>, id: string) {
+    if (
+      !desktop ||
+      event.button !== 0 ||
+      selectedIds.includes(id) ||
+      budgetRemaining === 0 ||
+      (event.target as HTMLElement).closest('button,a')
+    )
+      return
+    event.preventDefault()
+    drag.current = { id, pointerId: event.pointerId, x: event.clientX, y: event.clientY, moved: false }
+    event.currentTarget.setPointerCapture(event.pointerId)
+  }
+  function moveDrag(event: PointerEvent<HTMLElement>) {
+    const origin = drag.current
+    if (!origin || origin.pointerId !== event.pointerId) return
+    origin.moved ||= Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > 6
+    if (origin.moved) {
+      setDragGhost({ id: origin.id, x: event.clientX, y: event.clientY })
+      onDragContact(origin.id, overTeam(event.clientX, event.clientY))
+    }
+  }
+  function finishDrag(event: PointerEvent<HTMLElement>, cancelled = false) {
+    const origin = drag.current
+    if (!origin || origin.pointerId !== event.pointerId) return
+    drag.current = undefined
+    suppressClick.current = origin.moved
+    if (!cancelled && origin.moved && budgetRemaining > 0 && overTeam(event.clientX, event.clientY))
+      onCall(origin.id)
+    setDragGhost(undefined)
+    onDragContact(undefined)
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId)
+  }
+  const addButton = professional && (
+    <button
+      className="ff-primary ff-resume-add"
+      disabled={called || budgetRemaining === 0}
+      onClick={() => {
+        onCall(professional.id)
+        setResumeId(undefined)
+      }}
+    >
+      {called ? 'Ya está en tu equipo' : `Agregar al equipo de «${problemTitle}»`}
+    </button>
+  )
+  return (
+    <aside className="ff-directory" aria-label="Contactos disponibles">
+      <div className="ff-directory-heading">
+        <div>
+          <h2>
+            <span className="ff-desktop-copy">Contactos disponibles</span>
+            <span className="ff-mobile-copy">Contactos</span>
+          </h2>
+          <p className="ff-desktop-copy">Cada llamada usa 1 punto de presupuesto.</p>
+          <p className="ff-mobile-copy">1 llamada = 1 punto</p>
+        </div>
+        <span className="ff-contact-count">{forestFireProfessionals.length}</span>
+      </div>
+      <div className="ff-directory-list" hidden={desktop && !!professional}>
+        {forestFireProfessionals.map((p) => (
+          <article
+            key={p.id}
+            className={`ff-contact ${selectedIds.includes(p.id) ? 'is-called' : ''}`}
+            data-draggable={(desktop && !selectedIds.includes(p.id) && budgetRemaining > 0) || undefined}
+            draggable={false}
+            onPointerDown={(event) => startDrag(event, p.id)}
+            onPointerMove={moveDrag}
+            onPointerUp={(event) => finishDrag(event)}
+            onPointerCancel={(event) => finishDrag(event, true)}
+            onLostPointerCapture={() => {
+              drag.current = undefined
+              setDragGhost(undefined)
+              onDragContact(undefined)
+            }}
+            onClickCapture={(event) => {
+              if (suppressClick.current) {
+                event.preventDefault()
+                event.stopPropagation()
+                suppressClick.current = false
+              }
+            }}
+          >
+            <GripVertical className="ff-contact-grip" size={18} aria-hidden="true" />
+            <span className="ff-initial">{p.personName.charAt(0)}</span>
+            <div className="ff-contact-name">
+              <strong>{p.personName}</strong>
+              <small>{getOccupation(p.occupationId)?.name ?? p.name}</small>
+            </div>
+            <button
+              className="ff-resume-link"
+              onClick={(event) => {
+                resumeOpener.current = event.currentTarget
+                setResumeId(p.id)
+              }}
+            >
+              Hoja de vida<span className="sr-only"> de {p.personName}</span>
+            </button>
+            <button
+              className="ff-contact-add"
+              disabled={selectedIds.includes(p.id) || budgetRemaining === 0}
+              aria-label={
+                selectedIds.includes(p.id)
+                  ? `${p.personName} ya está en tu equipo`
+                  : `Agregar a ${p.personName} al equipo`
+              }
+              onClick={() => onCall(p.id)}
+            >
+              {selectedIds.includes(p.id) ? (
+                <Check size={18} aria-hidden="true" />
+              ) : (
+                <Plus size={18} aria-hidden="true" />
+              )}
+            </button>
+          </article>
+        ))}
+      </div>
+      {desktop && professional && (
+        <div
+          className="ff-directory-resume"
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') setResumeId(undefined)
+          }}
+        >
+          <button ref={backButton} className="ff-resume-back" onClick={() => setResumeId(undefined)}>
+            <ArrowLeft size={18} />
+            Contactos
+          </button>
+          <div className="ff-resume-scroll">
+            <ProfessionalResume professional={professional} />
+          </div>
+          {addButton}
+        </div>
+      )}
+      <Dialog
+        open={!desktop && !!professional}
+        onOpenChange={(open) => {
+          if (!open) setResumeId(undefined)
+        }}
+      >
+        <DialogContent
+          className="ff-modal ff-bottom-sheet ff-resume-sheet"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault()
+            resumeOpener.current?.focus()
+          }}
+        >
+          <DialogTitle className="sr-only">Hoja de vida de {professional?.personName}</DialogTitle>
+          <DialogDescription className="sr-only">Datos del catálogo de ocupaciones.</DialogDescription>
+          {professional && (
+            <div className="ff-resume-scroll">
+              <ProfessionalResume professional={professional} />
+            </div>
+          )}
+          {addButton}
+        </DialogContent>
+      </Dialog>
+      {dragGhost && (
+        <div
+          className="ff-contact-ghost"
+          aria-hidden="true"
+          style={{ left: dragGhost.x + 12, top: dragGhost.y + 12 }}
+        >
+          {forestFireProfessionals.find((p) => p.id === dragGhost.id)?.personName}
+        </div>
+      )}
+    </aside>
+  )
+}

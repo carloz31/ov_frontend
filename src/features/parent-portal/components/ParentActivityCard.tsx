@@ -29,7 +29,7 @@ function ParentActivityCard({
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-bold">{activity.titulo}</h3>
+          <h3 className="staff-list-heading font-bold">{activity.titulo}</h3>
           <Badge variant={completed ? 'success' : 'neutral'}>
             {completed ? 'Completada' : locked ? 'Bloqueada' : inProgress ? 'En curso' : 'Disponible'}
           </Badge>

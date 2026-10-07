@@ -46,8 +46,7 @@ export function AlertChips({ alerts, compact = false }: { alerts: AlertCode[]; c
     <div className="flex flex-wrap gap-1">
       {alerts.map((alert) => (
         <Badge key={alert} title={alertLabels[alert]} variant="aviso">
-          {alert}
-          {!compact && ` · ${alertLabels[alert]}`}
+          {compact ? alert : alertLabels[alert]}
         </Badge>
       ))}
     </div>

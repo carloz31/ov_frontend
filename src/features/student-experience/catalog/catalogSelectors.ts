@@ -23,7 +23,9 @@ const demoAffinity: Record<string, 'Gran ajuste' | 'Buen ajuste'> = {
   photographer: 'Buen ajuste',
 }
 export const isAffine = (id: string, revealedPages: InstrumentPageId[]) =>
-  revealedPages.includes('intereses') ? demoAffinity[id] : undefined
+  revealedPages.includes('intereses') && getOccupation(id)?.contentStatus !== 'pending'
+    ? demoAffinity[id]
+    : undefined
 export function matchesName(name: string, query: string) {
   const normalizedQuery = normalizeSearchText(query.trim())
   return normalizedQuery.length === 0 || normalizeSearchText(name).includes(normalizedQuery)

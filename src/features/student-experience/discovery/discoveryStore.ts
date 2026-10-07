@@ -18,6 +18,11 @@ export type ResearchInProgress = {
   publishedVideoId?: string
 }
 export type InterviewReaction = { learned?: { text: string; createdAt: string }; liked?: string }
+export type CatalogVisit = {
+  tipo: 'VISTA_CARRERA' | 'VISTA_OCUPACION'
+  referencia: string
+  fechaHora: string
+}
 export type StudentDiscoveryState = {
   version: 1
   revealedPages: InstrumentPageId[]
@@ -35,6 +40,7 @@ export type StudentDiscoveryState = {
   profileBadgesConfigured: boolean
   badgeFirstSeenAt: Record<string, string>
   viewedCareerIds: string[]
+  catalogVisits: CatalogVisit[]
 }
 export const initialDiscoveryState = (): StudentDiscoveryState => ({
   version: 1,
@@ -46,6 +52,7 @@ export const initialDiscoveryState = (): StudentDiscoveryState => ({
   profileBadgesConfigured: false,
   badgeFirstSeenAt: {},
   viewedCareerIds: [],
+  catalogVisits: [],
 })
 const text = (v: unknown) => typeof v === 'string'
 const optionalIso = (v: unknown) => v === undefined || isIso(v)
@@ -64,6 +71,14 @@ export function validDiscoveryState(v: unknown): v is StudentDiscoveryState {
     !v.revealedPages.every((id) => ['intereses', 'inteligencias', 'habilidades'].includes(id)) ||
     !isStrings(v.planOrder) ||
     !isStrings(v.viewedCareerIds) ||
+    !Array.isArray(v.catalogVisits) ||
+    !v.catalogVisits.every(
+      (e) =>
+        isRecord(e) &&
+        ['VISTA_CARRERA', 'VISTA_OCUPACION'].includes(String(e.tipo)) &&
+        text(e.referencia) &&
+        isIso(e.fechaHora),
+    ) ||
     !Array.isArray(v.publishedResearch) ||
     !isRecord(v.reactions) ||
     !isStrings(v.profileBadges) ||
@@ -116,6 +131,15 @@ export function normalizeDiscoveryState(value: unknown): unknown {
     : []
   return {
     ...value,
+    catalogVisits:
+      value.catalogVisits ??
+      (isStrings(value.viewedCareerIds)
+        ? value.viewedCareerIds.map((referencia) => ({
+            tipo: 'VISTA_CARRERA',
+            referencia,
+            fechaHora: '1970-01-01T00:00:00.000Z',
+          }))
+        : []),
     profileBadges,
     profileBadgesConfigured:
       typeof value.profileBadgesConfigured === 'boolean'

@@ -1,4 +1,5 @@
-import { Compass } from 'lucide-react'
+import { Compass, Star } from 'lucide-react'
+import { useAppTheme } from '@/components/ThemeScope'
 import {
   Sidebar,
   SidebarContent,
@@ -25,21 +26,26 @@ type AppSidebarProps = {
 
 function AppSidebar({ activeItemId, groups, onLogout, onOpenProfile, userName, userRole }: AppSidebarProps) {
   const { state } = useSidebar()
+  const staff = useAppTheme() === 'staff'
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton className="h-12 rounded-xl" size="lg">
+            <SidebarMenuButton className="app-brand h-12 rounded-xl" size="lg">
               <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-                <Compass className="size-5" />
+                {staff ? (
+                  <Star className="size-3.5 fill-current text-brand-gold" />
+                ) : (
+                  <Compass className="size-5" />
+                )}
               </div>
               <div className="grid flex-1 text-left leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                   Orientación
                 </span>
-                <span className="truncate text-base font-bold text-foreground">Explora</span>
+                <span className="app-brand-name truncate text-base font-bold text-foreground">Explora</span>
               </div>
               <span className="sr-only">{state === 'collapsed' ? 'Explora' : 'Aplicación Explora'}</span>
             </SidebarMenuButton>

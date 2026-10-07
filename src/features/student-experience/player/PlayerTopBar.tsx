@@ -1,8 +1,8 @@
 import { useRef, useState } from 'react'
-import { ShieldCheck, Volume2, VolumeX, X } from 'lucide-react'
+import { ShieldCheck, Star, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
 import type { Actividad } from '@/features/missions/model'
-import { updateStudentUi, useStudentUi } from '../ui-state'
+import { PlayerSoundButton } from './PlayerSoundButton'
 
 export function PlayerTopBar({
   activity,
@@ -10,6 +10,7 @@ export function PlayerTopBar({
   index,
   total,
   progress,
+  nuevoMomento = false,
   onClose,
 }: {
   activity: Actividad
@@ -17,9 +18,9 @@ export function PlayerTopBar({
   index: number
   total: number
   progress: number
+  nuevoMomento?: boolean
   onClose: () => void
 }) {
-  const ui = useStudentUi()
   const [exitOpen, setExitOpen] = useState(false)
   const exitButton = useRef<HTMLButtonElement>(null)
   return (
@@ -29,7 +30,7 @@ export function PlayerTopBar({
           ref={exitButton}
           type="button"
           className="sx-icon-button"
-          aria-label="Salir de la actividad"
+          aria-label="Salir de la misión"
           onClick={() => setExitOpen(true)}
         >
           <X size={20} />
@@ -45,29 +46,36 @@ export function PlayerTopBar({
           </span>
           <strong>{finished ? 'Actividad completada' : activity.titulo}</strong>
         </div>
-        <div className="sx-player-progress">
+        <div className="sx-player-step">
           <span>
             Paso {Math.min(index + 1, total)} de {total}
           </span>
-          <div
-            role="progressbar"
-            aria-label="Avance de la actividad"
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={progress}
-          >
-            <span style={{ width: `${progress}%` }} />
-          </div>
         </div>
-        <button
-          type="button"
-          className="sx-icon-button"
-          aria-label={ui.soundOn ? 'Silenciar' : 'Activar sonido'}
-          aria-pressed={ui.soundOn}
-          onClick={() => updateStudentUi((current) => ({ ...current, soundOn: !current.soundOn }))}
+        <PlayerSoundButton />
+        <div
+          className="sx-lumi-progress"
+          role="progressbar"
+          aria-label="Avance de la misión"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progress}
+          aria-valuetext={`Paso ${Math.min(index + 1, total)} de ${total}`}
         >
-          {ui.soundOn ? <Volume2 size={20} /> : <VolumeX size={20} />}
-        </button>
+          <span className="sx-progress-track">
+            <span className="barra-pista" style={{ width: `${100 - progress}%` }} />
+          </span>
+          <span
+            className="barra-estrella"
+            style={{
+              left: `${progress}%`,
+              filter: `drop-shadow(0 0 ${3 + (9 * progress) / 100}px rgba(255,214,102,.95))`,
+            }}
+            aria-hidden="true"
+          >
+            <Star size={20} fill="currentColor" />
+            {(nuevoMomento || progress === 100) && <i key={`${index}-${progress}`} className="anim-spark" />}
+          </span>
+        </div>
       </header>
       <Dialog open={exitOpen} onOpenChange={setExitOpen}>
         <DialogContent

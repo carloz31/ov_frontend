@@ -70,7 +70,12 @@ function MapPointDrawer({
             {(badge || meta) && (
               <div className="mb-1 flex flex-wrap items-center gap-2 text-xs">
                 {badge && (
-                  <span className="rounded-full bg-[#82c495] px-3 py-1 font-bold text-white">{badge}</span>
+                  <span
+                    className="ff-map-badge rounded-full bg-[#82c495] px-3 py-1 font-bold text-white"
+                    data-status={badge}
+                  >
+                    {badge}
+                  </span>
                 )}
                 {meta && <span className="text-[#677d87]">{meta}</span>}
               </div>

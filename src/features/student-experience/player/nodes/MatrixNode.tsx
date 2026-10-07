@@ -5,9 +5,12 @@ import type { Actividad, NodoConsigna } from '@/features/missions/model'
 import { latestSubmission } from '@/features/missions/logic'
 import { useJourney } from '@/features/missions/store'
 import { SubmissionNode } from './SubmissionNode'
+import { useReflections } from '../../reflection/store'
+import { QuestionMemory } from '../../reflection/QuestionMemory'
 
 export function MatrixNode({ activity, onContinue }: { activity: Actividad; onContinue: () => void }) {
   const state = useJourney()
+  const reflections = useReflections()
   const [activeId, setActiveId] = useState<string>()
   const [column, setColumn] = useState(0)
   const returnFocus = useRef<HTMLElement | null>(null)
@@ -20,31 +23,42 @@ export function MatrixNode({ activity, onContinue }: { activity: Actividad; onCo
   const done = required.filter((node) => latestSubmission(state, activity.id, node.id)).length
   function cell(node: NodoConsigna, label: string) {
     const entry = latestSubmission(state, activity.id, node.id)
+    const question = reflections.preguntas[`${activity.id}/${node.id}`]
+    const firstNotice =
+      question?.respuestaOrigen &&
+      tasks.find(
+        (task) =>
+          reflections.preguntas[`${activity.id}/${task.id}`]?.respuestaOrigen?.respuestaId ===
+          question.respuestaOrigen?.respuestaId,
+      )?.id
     return (
-      <button
-        type="button"
-        key={node.id}
-        className={`sx-matrix-cell ${entry ? 'is-filled' : ''}`}
-        onClick={(event) => {
-          returnFocus.current = event.currentTarget
-          setActiveId(node.id)
-        }}
-      >
-        <span className="sx-cell-label">
-          {label}
-          {entry ? <Check size={15} /> : <Pencil size={14} />}
-        </span>
-        <span className="sx-cell-text">
-          {entry?.contenido.tipo === 'texto' ? entry.contenido.texto : 'Escribe una posibilidad…'}
-        </span>
-        <small>
-          {entry
-            ? `Guardado · versión ${entry.version}`
-            : node.obligatoria
-              ? 'Necesario para continuar'
-              : 'Opcional'}
-        </small>
-      </button>
+      <div key={node.id}>
+        <button
+          type="button"
+          key={node.id}
+          className={`sx-matrix-cell ${entry ? 'is-filled' : ''}`}
+          onClick={(event) => {
+            returnFocus.current = event.currentTarget
+            setActiveId(node.id)
+          }}
+        >
+          <span className="sx-cell-label">
+            {label}
+            {entry ? <Check size={15} /> : <Pencil size={14} />}
+          </span>
+          <span className="sx-cell-text">
+            {entry?.contenido.tipo === 'texto' ? entry.contenido.texto : 'Escribe una posibilidad…'}
+          </span>
+          <small>
+            {entry
+              ? `Guardado · versión ${entry.version}`
+              : node.obligatoria
+                ? 'Necesario para continuar'
+                : 'Opcional'}
+          </small>
+        </button>
+        {question && <QuestionMemory question={question} compact hideNotice={firstNotice !== node.id} />}
+      </div>
     )
   }
   return (

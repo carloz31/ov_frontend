@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, BookOpen } from 'lucide-react'
 import { catalog } from '@/features/missions/content'
-import { evaluateQuestion, studentId } from '@/features/missions/logic'
+import { studentId } from '@/features/missions/logic'
 import type { Actividad, NodoPregunta } from '@/features/missions/model'
 import { updateJourney, useJourney } from '@/features/missions/store'
 import { DialogueBox } from '../DialogueBox'
-import { InlineDialogue } from '../InlineDialogue'
+import { CheckOption, type CheckOptionState } from '../CheckOption'
+import { evaluateStudentCheck } from '../checks'
+import { LumiMedallion } from '../LumiMedallion'
 
 export function QuestionNode({
   activity,
@@ -21,139 +23,148 @@ export function QuestionNode({
   onResources: (ids: string[]) => void
 }) {
   const state = useJourney()
-  const prior = state.attempts.filter(
-    (attempt) => attempt.actividadId === activity.id && attempt.nodoId === node.id,
+  const review = fresh || state.progress[activity.id]?.estado === 'completada'
+  const prior = review
+    ? []
+    : state.attempts.filter((a) => a.actividadId === activity.id && a.nodoId === node.id)
+  const [attempts, setAttempts] = useState(prior)
+  const last = attempts.at(-1)
+  const [selected, setSelected] = useState(
+    last?.opcionIds.filter((id) => node.opciones.find((o) => o.id === id)?.correcta) ?? [],
   )
-  const last = fresh ? undefined : prior.at(-1)
-  const [selected, setSelected] = useState<string[]>(last?.opcionIds ?? [])
-  const [feedback, setFeedback] = useState(
-    last ? evaluateQuestion(node, last.opcionIds, prior.length - 1) : undefined,
+  const feedback = last ? evaluateStudentCheck(node, last.opcionIds, attempts.length - 1) : undefined
+  const blocked = new Set(
+    attempts.flatMap((a) => a.opcionIds.filter((id) => !node.opciones.find((o) => o.id === id)?.correcta)),
   )
-  function answer(ids: string[]) {
-    const outcome = evaluateQuestion(node, ids, prior.filter((attempt) => !attempt.correcta).length)
-    if (
-      updateJourney((current) => ({
-        ...current,
-        attempts: [
-          ...current.attempts,
-          {
-            estudianteId: studentId,
-            actividadId: activity.id,
-            nodoId: node.id,
-            opcionIds: ids,
-            correcta: outcome.correct,
-            revelada: outcome.revealed,
-            numeroIntento: prior.length + 1,
-            respondidaEn: new Date().toISOString(),
-          },
-        ],
-      }))
-    ) {
-      setSelected(ids)
-      setFeedback(outcome)
+  const titleRef = useRef<HTMLHeadingElement>(null)
+  const hasFeedback = !!last
+  useEffect(() => {
+    if (hasFeedback) titleRef.current?.focus()
+  }, [attempts.length, hasFeedback])
+  const multiple = node.formato === 'opcion_multiple'
+  const sheets = [
+    ...new Set([
+      ...activity.nodos.flatMap((n) => (n.tipo === 'diapositiva' ? (n.recursoIds ?? []) : [])),
+      ...(activity.recompensa?.recursoIds ?? []),
+    ]),
+  ].filter((id) => catalog.recursos.some((r) => r.id === id && r.tipo === 'ficha'))
+  function answer() {
+    if (!selected.length || feedback?.final) return
+    const outcome = evaluateStudentCheck(node, selected, attempts.length)
+    const attempt = {
+      estudianteId: studentId,
+      actividadId: activity.id,
+      nodoId: node.id,
+      opcionIds: [...selected],
+      correcta: outcome.correct,
+      revelada: outcome.final && !outcome.correct,
+      numeroIntento: attempts.length + 1,
+      respondidaEn: new Date().toISOString(),
+    }
+    if (review || updateJourney((current) => ({ ...current, attempts: [...current.attempts, attempt] }))) {
+      setAttempts([...attempts, attempt])
+      if (!outcome.final) setSelected(selected.filter((id) => !outcome.wrongIds.includes(id)))
     }
   }
-  const sheets = [
-    ...new Set(
-      activity.nodos.flatMap((node) => (node.tipo === 'diapositiva' ? (node.recursoIds ?? []) : [])),
-    ),
-  ].filter((id) => catalog.recursos.some((resource) => resource.id === id && resource.tipo === 'ficha'))
-  const grid = node.opciones.length > 2 && node.opciones.every((option) => option.texto.length < 60)
   return (
     <div className="sx-player-scene">
       <div className="sx-scene-space">
-        <section
-          className={`sx-glass-dark sx-scene-panel ${feedback ? `sx-question-feedback ${feedback.correct ? 'is-correct' : 'is-incorrect'}` : ''}`}
-        >
+        <section className="sx-scene-panel sx-check-panel">
           <h2>{node.enunciado}</h2>
-          {!feedback && (
-            <p className="sx-player-response-instruction">
-              {node.formato === 'opcion_multiple'
-                ? 'Selecciona una o más respuestas.'
-                : 'Selecciona una respuesta.'}
-            </p>
-          )}
-          {!feedback ? (
-            <>
-              <div className={`sx-player-options sx-question-options ${grid ? 'sx-question-grid' : ''}`}>
-                {node.opciones.map((option) => (
-                  <button
-                    type="button"
-                    key={option.id}
-                    className={`sx-player-option ${selected.includes(option.id) ? 'is-selected' : ''}`}
-                    aria-pressed={selected.includes(option.id)}
-                    onClick={() =>
-                      node.formato === 'opcion_multiple'
-                        ? setSelected(
-                            selected.includes(option.id)
-                              ? selected.filter((id) => id !== option.id)
-                              : [...selected, option.id],
-                          )
-                        : answer([option.id])
-                    }
-                  >
-                    <span className="sx-option-marker" aria-hidden="true">
-                      {selected.includes(option.id) ? '●' : '○'}
-                    </span>
-                    <span className="sx-question-option-text">{option.texto}</span>
-                  </button>
-                ))}
-              </div>
-              {node.formato === 'opcion_multiple' && (
-                <button
-                  type="button"
-                  className="sx-primary-button"
-                  disabled={!selected.length}
-                  onClick={() => answer(selected)}
-                >
-                  Confirmar selección
-                </button>
-              )}
-            </>
-          ) : (
-            <div role="status">
-              {node.opciones
-                .filter((option) => selected.includes(option.id))
-                .map((option) => (
-                  <p key={option.id}>
-                    <span className="sx-option-marker" aria-hidden="true">
-                      {feedback.correct ? '✓' : '×'}
-                    </span>
-                    {option.retroalimentacion}
-                  </p>
-                ))}
-              {feedback.revealed &&
-                node.opciones
-                  .filter((option) => option.correcta)
-                  .map((option) => (
-                    <p className="sx-player-option is-revealed" key={option.id}>
-                      ✓ {option.texto}
-                    </p>
-                  ))}
-              {feedback.canContinue && <p className="sx-question-explanation">{node.explicacion}</p>}
-              {feedback.hint && (
-                <InlineDialogue speakerId={feedback.hint.hablanteId} text={feedback.hint.texto} />
-              )}
-              <div className="sx-player-actions">
-                {!feedback.correct && sheets.length > 0 && (
-                  <button type="button" className="sx-secondary-button" onClick={() => onResources(sheets)}>
-                    <BookOpen size={18} />
-                    Ver ficha
-                  </button>
-                )}
-                <button
-                  type="button"
-                  className="sx-primary-button"
-                  onClick={() =>
-                    feedback.canContinue ? onContinue() : (setFeedback(undefined), setSelected([]))
+          <p className="sx-player-response-instruction">
+            {multiple ? 'Marca todas las que correspondan.' : 'Selecciona una respuesta.'}
+          </p>
+          <div className="sx-player-options sx-question-options">
+            {node.opciones.map((option) => {
+              const chosen = feedback?.final
+                ? last?.opcionIds.includes(option.id)
+                : selected.includes(option.id)
+              let optionState: CheckOptionState = blocked.has(option.id)
+                ? 'incorrect'
+                : chosen
+                  ? 'selected'
+                  : 'idle'
+              if (feedback?.final)
+                optionState = option.correcta
+                  ? multiple && !chosen
+                    ? 'missing'
+                    : 'correct'
+                  : chosen || blocked.has(option.id)
+                    ? 'incorrect'
+                    : 'muted'
+              const label =
+                optionState === 'correct'
+                  ? chosen
+                    ? 'Tu respuesta · Correcta'
+                    : 'Respuesta correcta'
+                  : optionState === 'incorrect'
+                    ? 'Tu respuesta'
+                    : optionState === 'missing'
+                      ? `También era ${option.tambienEra ?? 'una respuesta correcta'}`
+                      : undefined
+              return (
+                <CheckOption
+                  key={option.id}
+                  text={option.texto}
+                  state={optionState}
+                  multiple={multiple}
+                  label={label}
+                  explanation={
+                    feedback?.final || (multiple && blocked.has(option.id))
+                      ? (option.explicacion ?? option.retroalimentacion)
+                      : undefined
                   }
-                >
-                  {feedback.canContinue ? 'Continuar el camino' : 'Volver a intentarlo'}
-                  <ArrowRight size={18} />
-                </button>
+                  disabled={feedback?.final || blocked.has(option.id)}
+                  onClick={() =>
+                    setSelected(
+                      multiple
+                        ? selected.includes(option.id)
+                          ? selected.filter((id) => id !== option.id)
+                          : [...selected, option.id]
+                        : [option.id],
+                    )
+                  }
+                />
+              )
+            })}
+          </div>
+          {feedback && (
+            <div
+              className={`sx-check-result ${feedback.correct ? 'is-success' : 'is-hint'}`}
+              aria-live="polite"
+            >
+              <LumiMedallion />
+              <div>
+                <h3 ref={titleRef} tabIndex={-1}>
+                  {feedback.title}
+                </h3>
+                <p>{feedback.explanation}</p>
               </div>
             </div>
           )}
+          <div className="sx-player-actions">
+            {sheets.length > 0 && (
+              <button type="button" className="sx-secondary-button" onClick={() => onResources(sheets)}>
+                <BookOpen size={18} />
+                Ver ficha
+              </button>
+            )}
+            {feedback?.final ? (
+              <button type="button" className="sx-primary-button" onClick={onContinue}>
+                Continuar el camino
+                <ArrowRight size={18} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="sx-primary-button"
+                disabled={!selected.length}
+                onClick={answer}
+              >
+                {attempts.length ? 'Comprobar de nuevo' : 'Comprobar'}
+              </button>
+            )}
+          </div>
         </section>
       </div>
       <DialogueBox speakerId={node.hablanteId} text={node.enunciado} />

@@ -5,8 +5,8 @@ import {
   Eye,
   EyeOff,
   GraduationCap,
-  LockKeyhole,
-  Sparkles,
+  Info,
+  Star,
   UserRound,
   UsersRound,
 } from 'lucide-react'
@@ -26,99 +26,93 @@ export function LoginScreen({ onEnter }: { onEnter: () => void }) {
   }, [])
   return (
     <main className="ov-login theme-staff">
+      <svg
+        className="ov-login-landscape"
+        aria-hidden="true"
+        focusable="false"
+        preserveAspectRatio="xMidYMid slice"
+        viewBox="0 0 1440 900"
+        fill="none"
+      >
+        <circle cx="1180" cy="180" r="260" fill="#F2C66D" opacity=".18" />
+        <circle cx="260" cy="820" r="320" fill="#1E3F38" opacity=".35" />
+        <path
+          d="M120 760C320 700 360 560 560 540S860 640 1040 520 1260 300 1380 260"
+          stroke="#FFF4C8"
+          strokeWidth="3"
+          strokeDasharray="2 14"
+          strokeLinecap="round"
+          opacity=".55"
+        />
+        <g fill="#FFE29A">
+          <circle cx="560" cy="540" r="6" />
+          <circle cx="1040" cy="520" r="6" />
+          <circle cx="1380" cy="260" r="6" />
+        </g>
+      </svg>
       <div className="ov-login-shell">
         <section className="ov-login-story" aria-label="Orientación vocacional">
           <div className="ov-login-brand">
-            <span>
+            <span className="ov-login-brand-mark">
               <Compass size={25} aria-hidden="true" />
             </span>
-            <div>
-              Orientación<strong>Vocacional</strong>
+            <div className="ov-login-brand-name">
+              <span>Orientación</span>
+              <strong>Explora</strong>
             </div>
+            <Star className="ov-login-brand-star" size={18} fill="currentColor" aria-hidden="true" />
           </div>
           <div className="ov-login-story-copy">
-            <p className="ov-login-kicker">
-              <Sparkles size={15} aria-hidden="true" /> Cada paso cuenta
-            </p>
-            <h2>
-              Tu futuro se construye <em>en compañía.</em>
-            </h2>
-            <p>
-              Un camino para descubrir lo que te mueve, compartir tus preguntas y encontrar nuevas
-              posibilidades.
-            </p>
+            <h2>Orientación vocacional para estudiantes, familias y orientadores.</h2>
+            <p>Cada uno tiene su propio espacio para acompañar el mismo camino.</p>
           </div>
-          <div className="ov-login-compass" aria-hidden="true">
-            <div className="ov-login-orbit" />
-            <div className="ov-login-orbit ov-login-orbit-inner" />
-            <svg className="ov-login-path" viewBox="0 0 440 250" fill="none">
-              <path d="M68 174C105 218 146 211 211 126S315 26 377 76" />
-              <path d="M211 126C267 187 302 191 346 198" />
-            </svg>
-            <span className="ov-login-central-seal">
-              <Compass size={66} strokeWidth={1.25} />
-            </span>
-            <div className="ov-login-waypoint ov-login-waypoint-student">
-              <span>
-                <UserRound size={23} />
-              </span>
-              <strong>Descubre</strong>
-            </div>
-            <div className="ov-login-waypoint ov-login-waypoint-family">
-              <span>
-                <UsersRound size={23} />
-              </span>
-              <strong>Acompaña</strong>
-            </div>
-            <div className="ov-login-waypoint ov-login-waypoint-guide">
-              <span>
-                <GraduationCap size={23} />
-              </span>
-              <strong>Orienta</strong>
-            </div>
-          </div>
-          <p className="ov-login-story-footer">
-            Estudiantes, familias y orientadores.
-            <br />
-            <strong>Distintos roles, un mismo horizonte.</strong>
-          </p>
+          <ul className="ov-login-roles" aria-label="Para los tres perfiles">
+            <li>
+              <UserRound size={18} aria-hidden="true" /> Estudiantes
+            </li>
+            <li>
+              <UsersRound size={18} aria-hidden="true" /> Familias
+            </li>
+            <li>
+              <GraduationCap size={18} aria-hidden="true" /> Orientadores
+            </li>
+          </ul>
         </section>
         <section className="ov-login-access" aria-labelledby="ov-login-title">
-          <div className="ov-login-form-container">
-            <span className="ov-login-welcome">Tu próximo paso empieza aquí</span>
+          <div className="ov-login-intro">
             <h1 id="ov-login-title">Ingresa a la plataforma</h1>
-            <p className="ov-login-description">
-              Qué bueno tenerte aquí. Ingresa y elige el perfil que quieres explorar.
-            </p>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault()
-                if (username && password) onEnter()
-              }}
-            >
+            <p className="ov-login-description">Ingresa con el usuario y la contraseña de tu cuenta.</p>
+          </div>
+          <form
+            onSubmit={(event) => {
+              event.preventDefault()
+              if (username && password) onEnter()
+            }}
+          >
+            <div className="ov-login-input-group">
               <label htmlFor="ov-login-username">Usuario</label>
               <div className="ov-login-field">
-                <UserRound size={19} aria-hidden="true" />
                 <input
                   id="ov-login-username"
                   name="username"
                   type="text"
                   autoComplete="username"
-                  placeholder="Ingresa tu usuario"
+                  placeholder="Tu usuario"
                   required
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
                 />
               </div>
+            </div>
+            <div className="ov-login-input-group">
               <label htmlFor="ov-login-password">Contraseña</label>
               <div className="ov-login-field">
-                <LockKeyhole size={19} aria-hidden="true" />
                 <input
                   id="ov-login-password"
                   name="password"
                   type={visible ? 'text' : 'password'}
                   autoComplete="current-password"
-                  placeholder="Ingresa tu contraseña"
+                  placeholder="Tu contraseña"
                   required
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -134,26 +128,18 @@ export function LoginScreen({ onEnter }: { onEnter: () => void }) {
                   {visible ? <EyeOff size={20} aria-hidden="true" /> : <Eye size={20} aria-hidden="true" />}
                 </button>
               </div>
-              <button type="submit" className="ov-login-submit">
-                Ingresar <ArrowRight size={20} aria-hidden="true" />
-              </button>
-            </form>
-            <div className="ov-login-demo">
-              <span aria-hidden="true" />
-              <p>
-                <strong>Acceso de demostración</strong>Puedes usar cualquier usuario y contraseña.
-              </p>
             </div>
-            <p className="ov-login-shared">
-              <span aria-hidden="true">
-                <UserRound size={16} />
-                <UsersRound size={16} />
-                <GraduationCap size={16} />
-              </span>
-              Un mismo acceso para descubrir, acompañar y orientar.
+            <button type="submit" className="ov-login-submit" data-ready={Boolean(username && password)}>
+              Ingresar <ArrowRight size={20} aria-hidden="true" />
+            </button>
+          </form>
+          <div className="ov-login-demo">
+            <Info size={18} aria-hidden="true" />
+            <p>
+              <strong>Acceso de demostración.</strong> Puedes usar cualquier usuario y contraseña.
             </p>
           </div>
-          <p className="ov-login-footer">Orientación vocacional · Un futuro con posibilidades</p>
+          <p className="ov-login-footer">¿No tienes tu usuario o lo olvidaste? Comunícate con tu colegio.</p>
         </section>
       </div>
     </main>

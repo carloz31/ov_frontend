@@ -1,7 +1,6 @@
 import { Link, useSearchParams } from 'react-router'
 import { Eye, Heart, Sparkles } from 'lucide-react'
 import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
-import { getAchievementGroups } from '@/features/occupation-exploration/lib/AdventureAchievements'
 import {
   getTravelerLevel,
   canAccessCity,
@@ -18,7 +17,7 @@ import { Seal } from '../discovery/Seal'
 import { TrailBar } from '../discovery/TrailBar'
 import { CollectionSlot } from '../discovery/CollectionSlot'
 import { StudentPassportView } from './StudentPassportView'
-import { achievementIcons, getProfileBadges } from './passport'
+import { achievementIcons, getProfileBadges, getStudentAchievementGroups } from './passport'
 import { getHelenaPages } from './helenaPages'
 import { getOrderedPlans, getPlanCompleteness } from '../plans/plans'
 
@@ -32,10 +31,10 @@ export function StudentProfileView() {
     discovery = useDiscovery()
   const context = useOccupationExplorationContext()
   const level = getTravelerLevel(adventure)
-  const badges = getAchievementGroups(adventure).flatMap((g, index) =>
+  const badges = getStudentAchievementGroups(adventure, journey).flatMap((g, index) =>
     g.items.filter((b) => b.done).map((b) => ({ ...b, group: index })),
   )
-  const visibleBadges = getProfileBadges(adventure, discovery)
+  const visibleBadges = getProfileBadges(adventure, discovery, journey)
   const pages = getHelenaPages(journey, discovery)
   const plans = getOrderedPlans(context.decisionSheets, discovery.planOrder)
   const extraFavorites = context.careerInterestIds.filter(

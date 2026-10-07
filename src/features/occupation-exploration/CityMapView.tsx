@@ -1,3 +1,5 @@
+import { getForestFireCaseStatus } from './lib/ForestFireCaseLogic'
+import { ForestFireCaseProgress } from './components/ForestFireCaseProgress'
 import { useState } from 'react'
 import { Building2, ClipboardList, Flame, KeyRound, Play, Search, UsersRound } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router'
@@ -131,9 +133,11 @@ function CityMapView() {
             ? testCompleted
               ? 'Completada'
               : 'Test'
-            : selected && state.solvedCaseIds.includes(selected.id)
-              ? 'Caso resuelto'
-              : 'Disponible'
+            : selected?.id === 'forest-fire'
+              ? getForestFireCaseStatus(state).badge
+              : selected && state.solvedCaseIds.includes(selected.id)
+                ? 'Superado'
+                : 'Disponible'
         }
         meta={
           researchSelected
@@ -200,14 +204,18 @@ function CityMapView() {
               </Button>
             </div>
           ) : selected ? (
-            <Button
-              className="w-full"
-              size="lg"
-              disabled={selected.id !== 'forest-fire'}
-              onClick={() => navigate(appPaths.student.case(selected.id))}
-            >
-              <Play /> Iniciar
-            </Button>
+            <div>
+              {selected.id === 'forest-fire' && <ForestFireCaseProgress adventure={state} />}
+              <Button
+                className="w-full"
+                size="lg"
+                disabled={selected.id !== 'forest-fire'}
+                onClick={() => navigate(appPaths.student.case(selected.id))}
+              >
+                <Play />{' '}
+                {selected.id === 'forest-fire' ? getForestFireCaseStatus(state).actionLabel : 'Iniciar'}
+              </Button>
+            </div>
           ) : undefined
         }
       />

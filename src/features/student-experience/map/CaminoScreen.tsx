@@ -4,13 +4,15 @@ import { activityById } from '@/features/missions/content'
 import { StudentActivityPlayer } from '../player/StudentActivityPlayer'
 import { useJourney } from '@/features/missions/store'
 import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { getCaminoPoints, getNextCaminoActivity } from './mapPoints'
+import { getCaminoPoints } from './mapPoints'
 import { MapScreenLayout } from './MapScreenLayout'
 import '@/features/missions/journey.css'
+import { useReflections } from '../reflection/store'
 
 export function CaminoScreen() {
   const adventure = useAdventure()
   const journey = useJourney()
+  useReflections()
   const [params, setParams] = useSearchParams()
   const points = getCaminoPoints(adventure, journey)
   const activity = activityById(params.get('actividad') ?? '')
@@ -31,21 +33,8 @@ export function CaminoScreen() {
           key={activity.id}
           activity={activity}
           imageUrl="/images/background/forest.png"
-          nextActivityOverride={
-            activity.siguienteSugerida &&
-            points.some(
-              (point) => point.specActivityId === activity.siguienteSugerida && point.status !== 'locked',
-            )
-              ? activityById(activity.siguienteSugerida)
-              : getNextCaminoActivity(points)
-          }
           edit={params.get('revision') === '1'}
           onClose={() => setParams({})}
-          onNext={(id) => {
-            if (points.some((point) => point.specActivityId === id && point.status !== 'locked'))
-              setParams({ actividad: id })
-            else setParams({})
-          }}
         />
       </div>
     )

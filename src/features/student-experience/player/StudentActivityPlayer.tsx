@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { activities, catalog } from '@/features/missions/content'
+import { catalog } from '@/features/missions/content'
 import {
   applyCompletion,
   nextPendingNode,
@@ -21,6 +21,7 @@ import { ItemNode } from './nodes/ItemNode'
 import { SubmissionNode } from './nodes/SubmissionNode'
 import { MatrixNode } from './nodes/MatrixNode'
 import { ResultNode } from './nodes/ResultNode'
+import { prepareActivity } from '../reflection/personalization'
 
 export function StudentActivityPlayer({
   activity,
@@ -28,18 +29,17 @@ export function StudentActivityPlayer({
   direct = false,
   edit = false,
   onClose,
-  onNext,
-  nextActivityOverride,
 }: {
   activity: Actividad
   imageUrl?: string
-  nextActivityOverride?: Actividad | null
   direct?: boolean
   edit?: boolean
   onClose: () => void
-  onNext: (id: string) => void
 }) {
   const state = useJourney()
+  useEffect(() => {
+    void prepareActivity(activity)
+  }, [activity])
   const storageError = useJourneyError()
   const nodes = useMemo(() => visibleNodes(activity, direct), [activity, direct])
   const pageRef = useRef<HTMLDivElement>(null)
@@ -118,6 +118,14 @@ export function StudentActivityPlayer({
       node?.tipo === 'diapositiva'
         ? {
             ...current,
+            readResourceIds: [
+              ...new Set([
+                ...(current.readResourceIds ?? current.resources),
+                ...(node.recursoIds ?? []).filter((id) =>
+                  catalog.recursos.some((r) => r.id === id && r.tipo === 'ficha'),
+                ),
+              ]),
+            ],
             resources: [
               ...new Set([
                 ...current.resources,
@@ -188,10 +196,6 @@ export function StudentActivityPlayer({
         : item?.formato.tipo === 'opcion_unica'
           ? item.formato.opciones.map((option) => ({ value: option.valor, text: option.texto }))
           : []
-  const nextActivity =
-    nextActivityOverride === undefined
-      ? activities.find((next) => next.id === activity.siguienteSugerida)
-      : (nextActivityOverride ?? undefined)
   const progress = node ? ((index + 1) / nodes.length) * 100 : 100
   function openResources(ids: string[]) {
     setResourceIds(ids)
@@ -212,6 +216,7 @@ export function StudentActivityPlayer({
         index={index}
         total={nodes.length}
         progress={progress}
+        nuevoMomento={node?.nuevoMomento}
         onClose={onClose}
       />
       {storageError && (
@@ -232,13 +237,7 @@ export function StudentActivityPlayer({
             />
           </div>
         ) : !node ? (
-          <FinishScreen
-            allowLegacySuggestion={nextActivityOverride === undefined}
-            activity={activity}
-            nextActivity={nextActivity}
-            onClose={onClose}
-            onNext={onNext}
-          />
+          <FinishScreen activity={activity} onClose={onClose} onResources={openResources} />
         ) : matrix ? (
           <MatrixNode
             activity={activity}

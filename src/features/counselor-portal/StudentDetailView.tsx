@@ -11,11 +11,12 @@ import {
   Minus,
   MoreHorizontal,
 } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
+import { StaffAlertCard, StaffEntityHeader, StaffMetric } from '@/components/staff/StaffPatterns'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/Sheet'
 import {
@@ -112,76 +113,73 @@ function StudentDetailView() {
       <Button className="px-0" onClick={() => navigate(appPaths.counselor.students)} variant="link">
         <ArrowLeft /> Volver a estudiantes
       </Button>
-      <Card className="overflow-hidden shadow-[var(--shadow-card)]">
-        <div className="p-5 sm:p-6">
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-[minmax(18rem,1.7fr)_minmax(9rem,.75fr)_minmax(10rem,.8fr)_minmax(9rem,.75fr)] lg:items-start">
-            <div className="flex min-w-0 gap-4">
-              <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-[var(--primary-soft)] text-lg font-bold text-primary">
-                {student.name
-                  .split(' ')
-                  .filter(Boolean)
-                  .map((part) => part[0])
-                  .filter((_, index, initials) => index === 0 || index === initials.length - 1)
-                  .join('')}
-              </div>
-              <div className="min-w-0">
-                <h1 className="truncate text-2xl font-bold">{student.name}</h1>
-                <p className="mt-1 text-sm text-muted-foreground">{classroom?.name}</p>
-                <p className="mt-1 text-xs font-medium text-muted-foreground">{student.code}</p>
-              </div>
-            </div>
-            <HeaderDatum label="Estado">
-              <span className="inline-flex items-center gap-2 font-medium">
-                <span className="size-2 rounded-full bg-primary" />
-                Cuenta activa
-              </span>
-            </HeaderDatum>
-            <HeaderDatum label="Progreso">
-              <div className="flex items-center gap-3">
-                <div className="h-2 w-full max-w-36 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${totalPercent}%`,
-                      backgroundColor: totalPercent === 100 ? 'var(--success)' : 'var(--primary)',
-                    }}
-                  />
-                </div>
-                <strong className={progressPercentColor(totalPercent)}>{totalPercent}%</strong>
-              </div>
-            </HeaderDatum>
-            <HeaderDatum label="Último acceso">
-              <span className="font-medium">
-                {daysSinceAccess === 0
-                  ? 'Hoy'
-                  : `Hace ${daysSinceAccess} ${daysSinceAccess === 1 ? 'día' : 'días'}`}
-              </span>
-            </HeaderDatum>
-          </div>
-          <div className="mt-5 flex flex-wrap items-center gap-3 border-t pt-4">
-            <TrafficBadge status={traffic} />
-            <AlertChips alerts={alerts} compact />
-            <span className="ml-auto inline-flex items-center gap-2 text-sm font-medium">
-              <WatchIcon active={watched} /> {watched ? 'En observación' : 'Sin observación'}
-            </span>
-            <Button onClick={toggleObservation} variant={watched ? 'outline' : 'default'}>
-              {watched ? 'Quitar de observados' : 'Agregar a observados'}
-            </Button>
-          </div>
+      <StaffEntityHeader
+        title={student.name}
+        initials={student.name
+          .split(' ')
+          .filter(Boolean)
+          .map((part) => part[0])
+          .filter((_, index, initials) => index === 0 || index === initials.length - 1)
+          .join('')}
+        details={
+          <>
+            <p>{classroom?.name}</p>
+            <p>{student.code}</p>
+            <p>Cuenta activa</p>
+            <p>
+              Último acceso:{' '}
+              {daysSinceAccess === 0
+                ? 'Hoy'
+                : `Hace ${daysSinceAccess} ${daysSinceAccess === 1 ? 'día' : 'días'}`}
+            </p>
+          </>
+        }
+        metrics={
+          <StaffMetric
+            primary
+            label="Avance general"
+            value={`${totalPercent} %`}
+            percent={totalPercent}
+            detail={`${totalCompleted} de ${allStudentActivities.length} actividades`}
+          />
+        }
+      >
+        <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+          <TrafficBadge status={traffic} />
+          <span className="ml-auto inline-flex items-center gap-2 text-sm font-medium">
+            <WatchIcon active={watched} /> {watched ? 'En observación' : 'Sin observación'}
+          </span>
+          <Button onClick={toggleObservation} variant={watched ? 'outline' : 'default'}>
+            {watched ? 'Quitar de observados' : 'Agregar a observados'}
+          </Button>
         </div>
-        <div className="flex overflow-x-auto border-t px-2">
-          {sections.map(([id, label]) => (
-            <button
-              className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold ${section === id ? 'border-primary text-primary' : 'border-transparent text-muted-foreground'}`}
-              key={id}
-              onClick={() => setParams({ section: id })}
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </Card>
+      </StaffEntityHeader>
+      {!!alerts.length && (
+        <StaffAlertCard title={`${alerts.length} ${alerts.length === 1 ? 'alerta' : 'alertas'}`}>
+          <div className="mt-3">
+            <AlertChips alerts={alerts} />
+          </div>
+        </StaffAlertCard>
+      )}
+      <nav
+        data-slot="tabs-list"
+        data-appearance="navigation"
+        aria-label="Secciones del perfil"
+        className="staff-local-nav flex overflow-x-auto"
+      >
+        {sections.map(([id, label]) => (
+          <button
+            className="whitespace-nowrap px-4 text-sm font-semibold"
+            data-state={section === id ? 'active' : 'inactive'}
+            aria-current={section === id ? 'page' : undefined}
+            key={id}
+            onClick={() => setParams({ section: id })}
+            type="button"
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
       {section === 'summary' && <Summary stateStudent={student} />}
       {section === 'progress' && <ProgressSection student={student} />}
       {section === 'instruments' && <InstrumentsSection student={student} />}
@@ -246,19 +244,6 @@ function StudentDetailView() {
       </Dialog>
     </div>
   )
-}
-
-function HeaderDatum({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="text-sm">
-      <p className="mb-2 text-xs font-semibold text-muted-foreground">{label}</p>
-      {children}
-    </div>
-  )
-}
-
-function progressPercentColor(_percent: number) {
-  return 'text-base text-foreground'
 }
 
 function Summary({ stateStudent: student }: { stateStudent: Student }) {

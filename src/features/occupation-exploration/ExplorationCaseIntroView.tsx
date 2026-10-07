@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Flame, Radio } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/Utils'
-import { ForestFireCaseTopBar } from './components/ForestFireCaseTopBar'
+import { ForestFireCaseHeader } from './components/ForestFireCaseHeader'
+import './forest-fire.css'
 import { getExplorationImagePath } from './lib/ExplorationAssets'
 
 const situationNarrative =
@@ -19,6 +20,12 @@ function ExplorationCaseIntroView({ onClose, onStart }: { onClose: () => void; o
   const phaseTransitionTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setImageVisible(true)
+      setPanelVisible(true)
+      setVisibleCharacterCount(fullNarrative.length)
+      return
+    }
     const imageFrame = requestAnimationFrame(() => setImageVisible(true))
     const panelTimer = setTimeout(() => setPanelVisible(true), 650)
     const typingTimer = setTimeout(() => setTypingStarted(true), 1050)
@@ -58,10 +65,13 @@ function ExplorationCaseIntroView({ onClose, onStart }: { onClose: () => void; o
     if (!narrativeComplete || phase !== 'briefing') return
 
     setPanelVisible(false)
-    phaseTransitionTimer.current = setTimeout(() => {
-      setPhase('active-emergency')
-      setPanelVisible(true)
-    }, 500)
+    phaseTransitionTimer.current = setTimeout(
+      () => {
+        setPhase('active-emergency')
+        setPanelVisible(true)
+      },
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 500,
+    )
   }
 
   const visibleSituation = fullNarrative.slice(0, Math.min(visibleCharacterCount, situationNarrative.length))
@@ -71,8 +81,13 @@ function ExplorationCaseIntroView({ onClose, onStart }: { onClose: () => void; o
   const narrativeComplete = visibleCharacterCount >= fullNarrative.length
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#171522] text-foreground">
-      <ForestFireCaseTopBar label="Fase 1 de 3 · Emergencia" onClose={onClose} progress={100 / 3} />
+    <div className="sx-root ff-case ff-case-briefing min-h-screen overflow-hidden">
+      <ForestFireCaseHeader
+        label="Fase 1 de 3 · Emergencia"
+        onClose={onClose}
+        progress={100 / 3}
+        budgetRemaining={16}
+      />
 
       <main className="relative h-[calc(100vh-5rem)] min-h-[620px] overflow-hidden">
         <img

@@ -4,7 +4,13 @@ import type { ComponentProps } from 'react'
 import { cn } from '@/lib/Utils'
 const Accordion = AccordionPrimitive.Root
 function AccordionItem({ className, ...props }: ComponentProps<typeof AccordionPrimitive.Item>) {
-  return <AccordionPrimitive.Item className={cn('min-w-0 rounded-xl border bg-card', className)} {...props} />
+  return (
+    <AccordionPrimitive.Item
+      data-slot="accordion-item"
+      className={cn('min-w-0 rounded-xl border bg-card', className)}
+      {...props}
+    />
+  )
 }
 function AccordionTrigger({
   className,
@@ -14,6 +20,7 @@ function AccordionTrigger({
   return (
     <AccordionPrimitive.Header>
       <AccordionPrimitive.Trigger
+        data-slot="accordion-trigger"
         className={cn(
           'flex min-h-11 w-full items-center justify-between gap-3 rounded-xl p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring [&[data-state=open]>svg]:rotate-180',
           className,

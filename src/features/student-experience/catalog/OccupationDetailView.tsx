@@ -15,12 +15,15 @@ import { dimensionNames, type RiasecDimension } from './catalogDetails'
 import { AtlasNavigation, MissingAtlasPage } from './AtlasNavigation'
 import { getClassroomInterviews } from '../research/research'
 import { demoOccupationByVideo } from '../research/researchData'
+import { CatalogRevisitNotice, UnexpectedPlace } from './UnexpectedPlace'
+import { useCatalogVisit } from './useCatalogVisit'
 export function OccupationDetailView() {
   const { occupationId = '' } = useParams(),
     context = useOccupationExplorationContext(),
     discovery = useDiscovery(),
     adventure = useAdventure()
   const occupation = getOccupation(occupationId)
+  useCatalogVisit('occupation', occupation?.id)
   if (!occupation)
     return (
       <DiscoveryStage ambient="atlas">
@@ -38,13 +41,16 @@ export function OccupationDetailView() {
   return (
     <DiscoveryStage ambient="atlas">
       <AtlasNavigation section="professions" />
+      <CatalogRevisitNotice />
       <Parchment className="sx-d-dark">
         <div className="sx-d-header">
           <div>
             <p className="sx-d-eyebrow">
               Ocupación · {occupation.onetCode ? `O*NET ${occupation.onetCode}` : 'O*NET por incorporar'}
             </p>
-            <h1 className="sx-d-detail-title">{occupation.name}</h1>
+            <h1 className="sx-d-detail-title" tabIndex={-1}>
+              {occupation.name}
+            </h1>
             <p>{occupation.highPoints.map((d) => dimensionNames[d]).join(' · ')}</p>
             {profile && profile.discoveryState !== 'unused' && (
               <span className="sx-d-tag">Ícono obtenido en la Central de Casos</span>
@@ -62,7 +68,7 @@ export function OccupationDetailView() {
             <p>{occupation.whatTheyDo}</p>
           </Parchment>
           <Parchment title="Conocimientos que usan">
-            <p>Ordenados por importancia.</p>
+            {occupation.contentStatus !== 'pending' && <p>Ordenados por importancia.</p>}
             <div className="sx-d-tags">
               {occupation.knowledge.map((s) => (
                 <span className="sx-d-tag" key={s}>
@@ -70,7 +76,11 @@ export function OccupationDetailView() {
                 </span>
               ))}
             </div>
-            <small>Selección de conocimientos de demostración.</small>
+            <small>
+              {occupation.contentStatus === 'pending'
+                ? 'Ficha en preparación desde O*NET.'
+                : 'Selección de conocimientos de demostración.'}
+            </small>
           </Parchment>
           <Parchment title="Habilidades que necesitan">
             <div className="sx-d-tags">
@@ -82,26 +92,32 @@ export function OccupationDetailView() {
             </div>
           </Parchment>
           <Parchment title="A qué tipo de persona le suele atraer">
-            <p className="sx-d-demo">Perfil RIASEC de demostración · No es una ficha O*NET validada.</p>
-            <div className="sx-d-seal-row">
-              {occupation.highPoints.map((d) => (
-                <Seal key={d} state="revealed">
-                  {d}
-                </Seal>
-              ))}
-            </div>
-            <p>
-              Su código de interés es {occupation.highPoints.map((d) => dimensionNames[d]).join(' · ')}: los
-              tres intereses que más pesan en esta ocupación.
-            </p>
-            {(Object.keys(dimensionNames) as RiasecDimension[]).map((d) => (
-              <TrailBar
-                key={d}
-                label={dimensionNames[d]}
-                value={occupation.interestScores[d]}
-                muted={!occupation.highPoints.includes(d)}
-              />
-            ))}
+            {occupation.contentStatus === 'pending' ? (
+              <p>[Perfil de intereses: por completar desde O*NET]</p>
+            ) : (
+              <>
+                <p className="sx-d-demo">Perfil RIASEC de demostración · No es una ficha O*NET validada.</p>
+                <div className="sx-d-seal-row">
+                  {occupation.highPoints.map((d) => (
+                    <Seal key={d} state="revealed">
+                      {d}
+                    </Seal>
+                  ))}
+                </div>
+                <p>
+                  Su código de interés es {occupation.highPoints.map((d) => dimensionNames[d]).join(' · ')}:
+                  los tres intereses que más pesan en esta ocupación.
+                </p>
+                {(Object.keys(dimensionNames) as RiasecDimension[]).map((d) => (
+                  <TrailBar
+                    key={d}
+                    label={dimensionNames[d]}
+                    value={occupation.interestScores[d]}
+                    muted={!occupation.highPoints.includes(d)}
+                  />
+                ))}
+              </>
+            )}
           </Parchment>
         </main>
         <aside className="sx-d-stack">
@@ -157,6 +173,7 @@ export function OccupationDetailView() {
           </Parchment>
         </aside>
       </div>
+      <UnexpectedPlace kind="occupation" currentId={occupation.id} />
     </DiscoveryStage>
   )
 }

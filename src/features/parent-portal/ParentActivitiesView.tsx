@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { PageHeader } from '@/components/PageHeader'
-import { Progress } from '@/components/ui/Progress'
+import { StaffEntityHeader, StaffMetric } from '@/components/staff/StaffPatterns'
 import { appPaths } from '@/routes/paths'
 import { ParentActivityCard } from './components/ParentActivityCard'
 import { ParentResourceDialog } from './components/ParentResourceDialog'
@@ -20,18 +19,18 @@ function ParentActivitiesView() {
   const percentage = Math.round(route.percent)
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6 lg:p-8">
-      <PageHeader
-        actions={
-          <div className="min-w-52 rounded-2xl border bg-card p-4">
-            <div className="flex justify-between text-xs">
-              <span>Progreso general</span>
-              <strong>{percentage}%</strong>
-            </div>
-            <Progress className="mt-2" value={percentage} />
-          </div>
+      <StaffEntityHeader
+        initials="AF"
+        details={<p>Información para acompañar y conversar en casa.</p>}
+        metrics={
+          <StaffMetric
+            primary
+            label="Progreso general"
+            value={`${percentage} %`}
+            percent={percentage}
+            detail={`${route.completed} de ${route.total} actividades`}
+          />
         }
-        description="Información para acompañar y conversar en casa."
-        eyebrow="Acompañamiento activo"
         title="Actividades para familias"
       />
       <section className="space-y-3" aria-label="Ruta de actividades">

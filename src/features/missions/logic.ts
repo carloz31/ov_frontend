@@ -10,6 +10,7 @@ import type {
   RespuestaItem,
   ResultadoInstrumento,
 } from './model'
+import type { ChallengeResult } from '@/features/student-experience/challenges/model'
 
 export interface JourneyState {
   version: 2
@@ -23,6 +24,8 @@ export interface JourneyState {
   pieces: string[]
   resources: string[]
   drafts: Record<string, string>
+  challengeResults?: ChallengeResult[]
+  readResourceIds?: string[]
 }
 export const studentId = 'est-prototipo'
 export function initialJourney(): JourneyState {

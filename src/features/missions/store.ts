@@ -2,12 +2,19 @@ import { useSyncExternalStore } from 'react'
 import { initialJourney, type JourneyState } from './logic'
 
 const key = 'ov.missions.v2'
+// Keep initialJourney unchanged for other roles that reuse its legacy schema.
+const initialStudentJourney = (): JourneyState => ({
+  ...initialJourney(),
+  readResourceIds: [],
+  challengeResults: [],
+})
 function read(): JourneyState {
   try {
     const value = JSON.parse(localStorage.getItem(key) ?? 'null')
-    const empty = initialJourney()
+    const empty = initialStudentJourney()
     if (value?.version !== 2) return empty
     for (const name of Object.keys(empty)) {
+      if ((name === 'readResourceIds' || name === 'challengeResults') && value[name] === undefined) continue
       if (Array.isArray(empty[name as keyof JourneyState]) && !Array.isArray(value[name])) return empty
     }
     if (
@@ -17,9 +24,14 @@ function read(): JourneyState {
       typeof value.drafts !== 'object'
     )
       return empty
-    return { ...empty, ...value }
+    return {
+      ...empty,
+      ...value,
+      readResourceIds: value.readResourceIds ?? value.resources,
+      challengeResults: value.challengeResults ?? [],
+    }
   } catch {
-    return initialJourney()
+    return initialStudentJourney()
   }
 }
 let state = read()
@@ -44,6 +56,7 @@ export function updateJourney(update: (current: JourneyState) => JourneyState) {
   return !storageError
 }
 export const useJourney = () => useSyncExternalStore(subscribe, () => state)
+export const getJourneySnapshot = () => state
 export const useJourneyError = () => useSyncExternalStore(subscribe, () => storageError)
 window.addEventListener('storage', (event: StorageEvent) => {
   if (event.key === key || event.key === null) {

@@ -17,6 +17,7 @@ import { updateStudentUi } from './ui-state'
 import { getStudentView } from './views'
 import '@/features/occupation-exploration/adventure.css'
 import './student-experience.css'
+import './reflection/reflection.css'
 
 export function StudentShell() {
   const location = useLocation()
@@ -50,8 +51,8 @@ export function StudentShell() {
   }, [view, location.search])
 
   useEffect(() => {
-    updateDiscovery((current) => recordBadgeFirstSeenAt(current, adventure))
-  }, [adventure])
+    updateDiscovery((current) => recordBadgeFirstSeenAt(current, adventure, undefined, journey))
+  }, [adventure, journey])
 
   const outlet = <Outlet context={context} />
   return (

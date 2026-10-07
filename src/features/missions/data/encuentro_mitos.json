@@ -5,9 +5,9 @@
   "titulo": "La plaza de los rumores",
   "subtitulo": "Mitos y realidades del futuro profesional",
   "bloque": 1,
-  "orden": 4,
+  "orden": 2,
   "obligatoria": true,
-  "requisitos": ["act-06"],
+  "requisitos": ["mission-welcome"],
   "ubicacion": "Plaza de los rumores",
   "duracionEstimadaMin": 15,
   "personajeIds": ["aurelio", "companero"],
@@ -72,6 +72,7 @@
     },
     {
       "id": "e06",
+      "nuevoMomento": true,
       "tipo": "diapositiva",
       "presentadorId": "companero",
       "titulo": "¿Qué es un mito vocacional?",
@@ -178,6 +179,7 @@
     },
     {
       "id": "e10",
+      "nuevoMomento": true,
       "tipo": "diapositiva",
       "presentadorId": "aurelio",
       "titulo": "Pregón 1: \"Si no vas a la universidad, no llegas a nada\"",
@@ -256,6 +258,7 @@
     },
     {
       "id": "e13",
+      "nuevoMomento": true,
       "tipo": "diapositiva",
       "presentadorId": "aurelio",
       "titulo": "Pregón 2: \"Hay trabajos de hombres y trabajos de mujeres\"",
@@ -299,6 +302,7 @@
     },
     {
       "id": "e15",
+      "nuevoMomento": true,
       "tipo": "diapositiva",
       "presentadorId": "aurelio",
       "titulo": "Pregón 3: \"Si estudias lo que te gusta, no vas a ganar bien\"",
@@ -382,6 +386,7 @@
     },
     {
       "id": "e18",
+      "nuevoMomento": true,
       "tipo": "diapositiva",
       "presentadorId": "aurelio",
       "titulo": "Pregón 4: \"La carrera que elijas definirá toda tu vida\"",
@@ -428,7 +433,8 @@
           "id": "a",
           "texto": "\"La enfermería no es una carrera para hombres.\"",
           "correcta": true,
-          "retroalimentacion": "Es un mito: ninguna profesión exige un sexo."
+          "retroalimentacion": "Es un mito: ninguna profesión exige un sexo.",
+          "tambienEra": "un mito"
         },
         {
           "id": "b",
@@ -440,13 +446,15 @@
           "id": "c",
           "texto": "\"Si te equivocas de carrera, tu vida está arruinada.\"",
           "correcta": true,
-          "retroalimentacion": "Es un mito: las trayectorias cambian."
+          "retroalimentacion": "Es un mito: las trayectorias cambian.",
+          "tambienEra": "un mito"
         },
         {
           "id": "d",
           "texto": "\"Lo técnico es para los que no pueden ir a la universidad.\"",
           "correcta": true,
-          "retroalimentacion": "Es un mito: son rutas distintas, no de primera y segunda."
+          "retroalimentacion": "Es un mito: son rutas distintas, no de primera y segunda.",
+          "tambienEra": "un mito"
         }
       ],
       "explicacion": "Tres de las cuatro eran mitos. La frase sobre los ingresos es información que puedes verificar y usar para decidir.",

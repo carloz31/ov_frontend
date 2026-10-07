@@ -355,33 +355,39 @@ export function RecordsSection({
             const observations = observationCounts(student, activity.id)
             return (
               <AccordionItem key={activity.id} value={activity.id}>
-                <AccordionTrigger className="flex-wrap sm:flex-nowrap">
-                  <span className="min-w-0 flex-1 basis-full space-y-2 sm:basis-auto">
-                    <span className="block font-semibold">{activity.title}</span>
-                    <span className="block text-sm text-muted-foreground">
-                      {blocks.find((b) => b.id === activity.blockId)?.name}
-                    </span>
-                    <ActivityStatus
-                      state={entry.state}
-                      label={
-                        entry.state === 'completed'
-                          ? 'Completada'
-                          : entry.state === 'in-progress'
-                            ? 'En progreso'
-                            : 'No iniciada'
-                      }
-                    />
-                    {entry.state !== 'not-started' && (
+                <AccordionTrigger
+                  aria-label={`Ver respuesta de ${activity.title}`}
+                  className="flex-wrap sm:flex-nowrap"
+                >
+                  <span className="flex min-w-0 flex-1 items-start gap-3">
+                    <CardIcon icon={ClipboardList} />
+                    <span className="min-w-0 space-y-2">
+                      <span className="staff-list-heading block font-semibold">{activity.title}</span>
                       <span className="block text-sm text-muted-foreground">
-                        {entry.state === 'completed' ? 'Completada' : 'Última modificación'}:{' '}
-                        {displayDate(entry.completedAt ?? entry.updatedAt)}
+                        {blocks.find((b) => b.id === activity.blockId)?.name}
                       </span>
-                    )}
-                    {observations.underdeveloped || observations.attention ? (
-                      <Observations {...observations} counts />
-                    ) : (
-                      <span className="block text-sm text-muted-foreground">Sin observaciones</span>
-                    )}
+                      <ActivityStatus
+                        state={entry.state}
+                        label={
+                          entry.state === 'completed'
+                            ? 'Completada'
+                            : entry.state === 'in-progress'
+                              ? 'En progreso'
+                              : 'No iniciada'
+                        }
+                      />
+                      {entry.state !== 'not-started' && (
+                        <span className="block text-sm text-muted-foreground">
+                          {entry.state === 'completed' ? 'Completada' : 'Última modificación'}:{' '}
+                          {displayDate(entry.completedAt ?? entry.updatedAt)}
+                        </span>
+                      )}
+                      {observations.underdeveloped || observations.attention ? (
+                        <Observations {...observations} counts />
+                      ) : (
+                        <span className="block text-sm text-muted-foreground">Sin observaciones</span>
+                      )}
+                    </span>
                   </span>
                   <span className="shrink-0 text-sm font-medium text-primary">
                     {open.includes(activity.id) ? 'Ocultar respuesta' : 'Ver respuesta'}

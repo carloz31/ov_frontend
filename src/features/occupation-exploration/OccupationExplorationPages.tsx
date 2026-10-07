@@ -8,7 +8,7 @@ import { FieldMissionsView } from './FieldMissionsView'
 import { ForestFireCaseView } from './ForestFireCaseView'
 import { useOccupationExplorationContext } from './OccupationExplorationContext'
 import { AdventureResourcesView } from './AdventureResourcesView'
-import { canAccessCity, completeCase, useAdventure } from './lib/AdventureStore'
+import { canAccessCity, useAdventure } from './lib/AdventureStore'
 
 function ExplorationHomePage() {
   return <CityMapView />
@@ -98,7 +98,6 @@ function ForestFireCasePage() {
     <ForestFireCaseView
       onClose={() => navigate(appPaths.student.exploration)}
       onComplete={() => {
-        completeCase('forest-fire')
         navigate(appPaths.student.exploration)
       }}
     />

@@ -1,6 +1,8 @@
 import { dimensionIcon } from './presentation'
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, BookOpenCheck } from 'lucide-react'
+import { StaffEntityHeader } from '@/components/staff/StaffPatterns'
+import { CardIcon } from '@/components/ui/Status'
 import { Link, useParams, useSearchParams } from 'react-router'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/Accordion'
 import { Alert, AlertDescription } from '@/components/ui/Alert'
@@ -147,10 +149,13 @@ export function QuestionnairesSection({ student, returnTo }: { student: StudentP
             const application = student.questionnaires.find((q) => q.questionnaireId === definition.id)!
             return (
               <AccordionItem value={definition.id} key={definition.id}>
-                <AccordionTrigger>
-                  <span className="min-w-0 space-y-1">
-                    <span className="block font-semibold">{definition.name}</span>
-                    <QuestionnaireStatus application={application} />
+                <AccordionTrigger aria-label={`Ver resultados de ${definition.name}`}>
+                  <span className="flex min-w-0 flex-1 items-center gap-3">
+                    <CardIcon icon={BookOpenCheck} />
+                    <span className="min-w-0 space-y-1">
+                      <span className="staff-list-heading block font-semibold">{definition.name}</span>
+                      <QuestionnaireStatus application={application} />
+                    </span>
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -308,10 +313,12 @@ export function QuestionnaireDetailView() {
           Volver al perfil
         </Link>
       </Button>
-      <header className="space-y-2">
-        <h1 className="text-2xl font-bold">{definition.name}</h1>
-        <p>{fullName(student)}</p>
-        <QuestionnaireStatus application={application} />
+      <StaffEntityHeader
+        title={definition.name}
+        initials="CT"
+        details={<p>{fullName(student)}</p>}
+        metrics={<QuestionnaireStatus application={application} />}
+      >
         {result?.kind === 'comparison' ? (
           <>
             <p className="text-muted-foreground">Entrada: {displayDate(result.entryDate)}</p>
@@ -320,7 +327,7 @@ export function QuestionnaireDetailView() {
             </p>
           </>
         ) : null}
-      </header>
+      </StaffEntityHeader>
       <QuestionnaireDetailContent student={student} definition={definition} result={result} />
     </main>
   )

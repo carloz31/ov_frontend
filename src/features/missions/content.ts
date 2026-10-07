@@ -8,6 +8,7 @@ import parentInfo from './data/pad_02_informacion.json'
 import { validateActivity } from './validation'
 import type { Actividad, Instrumento, Personaje, Recurso } from './model'
 import { compassInstrument, standardActivities } from './standardActivities'
+import { configureStudentActivities } from '@/features/student-experience/reflection/config'
 
 export const catalog = rawCatalog as {
   personajes: Personaje[]
@@ -26,9 +27,10 @@ const allActivities = [
   parentInfo,
 ] as Actividad[]
 for (const activity of allActivities) validateActivity(activity)
-export const activities = allActivities.filter(
-  (activity) => (activity.audiencia ?? 'estudiante') === 'estudiante',
+export const activities = configureStudentActivities(
+  allActivities.filter((activity) => (activity.audiencia ?? 'estudiante') === 'estudiante'),
 )
+for (const activity of activities) validateActivity(activity)
 export const parentActivities = allActivities
   .filter((activity) => activity.audiencia === 'apoderado')
   .sort((a, b) => a.orden - b.orden)

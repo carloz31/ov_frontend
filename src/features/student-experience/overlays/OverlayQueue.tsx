@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { useJourney } from '@/features/missions/store'
 import { appPaths } from '@/routes/paths'
 import { cityArrivalSteps, guideSteps } from '../guide-texts'
 import { updateStudentUi, useStudentUi } from '../ui-state'
@@ -10,6 +11,8 @@ import { getTodayCheckIn, localDateKey, saveTodayCheckIn, useCheckInDay } from '
 import { LumiOverlay } from './LumiOverlay'
 import { BadgeToast } from './BadgeToast'
 import { getNextBadge, markBadgeAnnounced } from './unlocks'
+import { useReflections } from '../reflection/store'
+import { isWithinStudentDemo } from '@/features/occupation-exploration/lib/StudentDemoScope'
 import {
   getNextOverlay,
   StudentOverlayContext,
@@ -27,7 +30,9 @@ export function OverlayQueue({
   children: ReactNode
 }) {
   const adventure = useAdventure()
+  const journey = useJourney()
   const ui = useStudentUi()
+  const reflections = useReflections()
   const navigate = useNavigate()
   const today = useCheckInDay()
   const [arrivalDismissed, setArrivalDismissed] = useState(false)
@@ -44,15 +49,21 @@ export function OverlayQueue({
     // Opening only after mounting keeps static route rendering free of dialogs.
     setAutomatic(getNextOverlay({ adventure, ui, view, activityOpen, arrivalDismissed }))
   }, [adventure, ui, view, activityOpen, arrivalDismissed, today, nextKey])
+  const active = activityOpen ? null : (manual ?? automatic)
+  const announcementBlocked = activityOpen || !!active || !!next
   const context = useMemo(
     () => ({
+      announcementBlocked,
       openGuide: (steps: string[]) => setManual({ kind: 'guide', steps }),
       openCheckIn: (onReturnFocus?: () => void) => setManual({ kind: 'signal', onReturnFocus }),
     }),
-    [],
+    [announcementBlocked],
   )
-  const active = activityOpen ? null : (manual ?? automatic)
-  const badge = getNextBadge(adventure, ui, activityOpen, !!active || !!next)
+  const additionalPending =
+    view === 'missions' &&
+    (reflections.desbloqueos.some((d) => !d.visto && isWithinStudentDemo(d.actividadId)) ||
+      (!!reflections.anuncioAdicional && isWithinStudentDemo(reflections.anuncioAdicional.actividadId)))
+  const badge = getNextBadge(adventure, ui, activityOpen, announcementBlocked || additionalPending, journey)
   const guide =
     active?.kind === 'guide'
       ? active.steps

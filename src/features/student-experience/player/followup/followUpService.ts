@@ -1,3 +1,7 @@
+import { criteria } from '../../reflection/config'
+import { bounded, getReflectionProvider } from '../../reflection/provider'
+import { studentId } from '@/features/missions/logic'
+
 export type FollowUpTurn = {
   orden: 1 | 2
   pregunta: string
@@ -23,21 +27,25 @@ export interface FollowUpService {
 
 export const mockFollowUpService: FollowUpService = {
   async evaluate(input) {
-    await new Promise<void>((resolve) => setTimeout(resolve, 700))
-    if (input.turnosPrevios.length === 0)
-      return input.texto.length < Math.max(80, (input.minCaracteres ?? 0) * 2)
-        ? {
-            pregunta:
-              '¿Podrías contarme un poco más? Por ejemplo, un momento concreto o la razón detrás de lo que escribiste.',
-          }
-        : {}
-    const first = input.turnosPrevios[0]
-    return input.turnosPrevios.length === 1 &&
-      !first.omitida &&
-      first.respuesta !== undefined &&
-      first.respuesta.length < 40
-      ? { pregunta: '¿Hay algo más que te gustaría agregar antes de seguir?' }
-      : {}
+    const key = `${input.activityId}/${input.nodeId}`
+    if (!criteria[key]) return {}
+    const result = await bounded(
+      (signal) =>
+        getReflectionProvider().evaluateResponse(
+          {
+            estudianteId: studentId,
+            respuestaId: key,
+            clave: key,
+            enunciado: input.premisa,
+            criterios: criteria[key],
+            texto: input.texto,
+            intento: input.turnosPrevios.filter((t) => !t.omitida && t.respuesta !== undefined).length,
+          },
+          signal,
+        ),
+      10_000,
+    )
+    return result.clasificacion === 'INSUFICIENTE' ? { pregunta: result.preguntaSeguimiento } : {}
   },
 }
 

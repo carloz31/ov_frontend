@@ -20,6 +20,7 @@ import {
   clampTransform,
   zoomTransform,
   focusTransform,
+  mapPosition,
   type MapTransform,
   type MapSize,
 } from './geometry'
@@ -30,6 +31,7 @@ export type MapCanvasHandle = {
   setScale: (scale: number) => void
   focusPoint: (id: string) => void
   focusNode: (id?: string) => void
+  framePoints: (ids: string[]) => void
 }
 type Props = {
   points: StudentMapPoint[]
@@ -124,6 +126,25 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
       centerMap,
       setScale,
       zoom: (factor) => setScale(transformRef.current.scale * factor),
+      framePoints: (ids) => {
+        const positions = points.filter((p) => ids.includes(p.id)).map((p) => mapPosition(p, mapSize))
+        const bounds = viewport.current?.getBoundingClientRect()
+        if (!bounds || !positions.length) return
+        const minX = Math.min(...positions.map((p) => p.x)),
+          maxX = Math.max(...positions.map((p) => p.x))
+        const minY = Math.min(...positions.map((p) => p.y)),
+          maxY = Math.max(...positions.map((p) => p.y))
+        const center = visibleCenter(bounds, panelOpen, panelInset)
+        const scale = Math.min(
+          transformRef.current.scale,
+          (bounds.width - panelInset - 64) / (maxX - minX + 240),
+          (bounds.height - 140) / (maxY - minY + 220),
+        )
+        apply(
+          { scale, x: center.x - ((minX + maxX) / 2) * scale, y: center.y - ((minY + maxY) / 2) * scale },
+          !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+        )
+      },
       focusNode: (id) => {
         const nodes = viewport.current?.querySelectorAll<HTMLButtonElement>('[data-point-id]')
         Array.from(nodes ?? [])
@@ -236,25 +257,27 @@ export const MapCanvas = forwardRef<MapCanvasHandle, Props>(function MapCanvas(
                 <BlockSign points={points} mapSize={mapSize} />
               </>
             )}
-            {points.map((point) => (
-              <MapNode
-                key={point.id}
-                point={point}
-                mapSize={mapSize}
-                recommended={recommendedId === point.id}
-                selected={selectedId === point.id}
-                onSelect={onSelect}
-                onFocus={(id) => {
-                  const point = points.find((item) => item.id === id)
-                  const bounds = viewport.current?.getBoundingClientRect()
-                  if (point && bounds)
-                    apply(
-                      focusTransform(transformRef.current, point, bounds, panelOpen, mapSize, panelInset),
-                      true,
-                    )
-                }}
-              />
-            ))}
+            {points
+              .filter((p) => !p.revealQueued)
+              .map((point) => (
+                <MapNode
+                  key={point.id}
+                  point={point}
+                  mapSize={mapSize}
+                  recommended={recommendedId === point.id}
+                  selected={selectedId === point.id}
+                  onSelect={onSelect}
+                  onFocus={(id) => {
+                    const point = points.find((item) => item.id === id)
+                    const bounds = viewport.current?.getBoundingClientRect()
+                    if (point && bounds)
+                      apply(
+                        focusTransform(transformRef.current, point, bounds, panelOpen, mapSize, panelInset),
+                        true,
+                      )
+                  }}
+                />
+              ))}
           </>
         )}
       </div>

@@ -25,6 +25,7 @@ export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: stri
         side="right"
         className="sx-root sx-resource-sheet case-scrollbar"
         aria-label="Fichas de la actividad"
+        closeButtonLabel="Cerrar fichas"
         onOpenAutoFocus={() => {
           returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
         }}
@@ -67,6 +68,27 @@ export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: stri
                     )
                   )}
                   {resource.fuente && <p className="sx-resource-source">{resource.fuente}</p>}
+                  {resource.tipo === 'ficha' && resource.contenido && (
+                    <button
+                      type="button"
+                      className="sx-secondary-button"
+                      disabled={(state.readResourceIds ?? state.resources).includes(resource.id)}
+                      onClick={() =>
+                        updateJourney((current) => ({
+                          ...current,
+                          resources: [...new Set([...current.resources, resource.id])],
+                          readResourceIds: [
+                            ...new Set([...(current.readResourceIds ?? current.resources), resource.id]),
+                          ],
+                        }))
+                      }
+                    >
+                      <Check size={18} />
+                      {(state.readResourceIds ?? state.resources).includes(resource.id)
+                        ? 'Ficha leída'
+                        : 'Leí la ficha'}
+                    </button>
+                  )}
                   {!resource.url && !resource.contenido && (
                     <p>Este material estará disponible cuando lo prepare orientación.</p>
                   )}

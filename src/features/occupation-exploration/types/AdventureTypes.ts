@@ -80,6 +80,8 @@ export type AdventureState = {
     createdAt: string
   }[]
   solvedCaseIds: string[]
+  caseBestScores: Record<string, number>
+  forestFireScoringVersion?: 2
   research: ResearchDraft
   videos: { id: string; title: string; alias: string; url: string; reflection: string; createdAt: string }[]
   interviewModeration: Record<string, { hidden: boolean; featured: boolean }>

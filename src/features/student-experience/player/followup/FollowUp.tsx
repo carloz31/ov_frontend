@@ -3,9 +3,10 @@ import { ArrowRight } from 'lucide-react'
 import type { Actividad, NodoConsigna } from '@/features/missions/model'
 import { InlineDialogue } from '../InlineDialogue'
 import { useTypewriter } from '../../overlays/useTypewriter'
-import { evaluateFollowUp, mockFollowUpService } from './followUpService'
+import { evaluateResponse, finalizeResponse } from '../../reflection/evaluation'
+import { getReflections } from '../../reflection/store'
 import { getFollowUpRecord, saveFollowUpResponse, setFollowUpRecord, useFollowUps } from './followUpStore'
-import { answeredTurns, buildCondensedResponse, responseCapacity } from './responseCondenser'
+import { answeredTurns, responseCapacity } from './responseCondenser'
 
 function TypedQuestion({ text }: { text: string }) {
   const { visible } = useTypewriter(text)
@@ -33,10 +34,10 @@ export function FollowUp({
   const [phase, setPhase] = useState<'waiting' | 'question' | 'finishing' | 'done'>('waiting')
   const [response, setResponse] = useState('')
   const [condensed, setCondensed] = useState(false)
+  const [error, setError] = useState('')
+  const [retry, setRetry] = useState(0)
   const finishing = useRef(false)
   const mounted = useRef(false)
-  const continueRef = useRef(onContinue)
-  continueRef.current = onContinue
   const textarea = useRef<HTMLTextAreaElement>(null)
   const continueButton = useRef<HTMLButtonElement>(null)
   const end = useRef<HTMLDivElement>(null)
@@ -63,6 +64,17 @@ export function FollowUp({
       finishing.current = true
       setPhase('finishing')
       const result = await saveFollowUpResponse(activity, node)
+      if (
+        (answeredTurns(record!.turnos).length &&
+          !result.saved &&
+          !getFollowUpRecord(key)?.versionCondensada) ||
+        !finalizeResponse(activity, node)
+      ) {
+        finishing.current = false
+        if (mounted.current)
+          setError('No se pudo guardar todo el seguimiento. Libera espacio y vuelve a intentarlo.')
+        return
+      }
       if (!mounted.current) return
       setCondensed(result.saved)
       setPhase('done')
@@ -71,27 +83,21 @@ export function FollowUp({
       setPhase('question')
       return
     }
-    if (record.turnos.length >= 2) {
+    if (last?.omitida || getReflections().respuestas[key]?.estado === 'FINAL') {
       void finish()
       return
     }
     setPhase('waiting')
     void (async () => {
-      const result = await evaluateFollowUp(mockFollowUpService, {
-        activityId: activity.id,
-        nodeId: node.id,
-        premisa: node.premisa,
-        ayuda: node.ayuda,
-        texto: buildCondensedResponse({
-          textoInicial: record.textoInicial,
-          turnos: record.turnos,
-          premisa: node.premisa,
-        }),
-        minCaracteres: node.entregable.tipo === 'texto' ? node.entregable.minCaracteres : undefined,
-        turnosPrevios: record.turnos,
-      })
+      const result = await evaluateResponse(
+        activity,
+        node,
+        [record.textoInicial, ...answeredTurns(record.turnos).map((turn) => turn.respuesta)].join('\n\n'),
+        answeredTurns(record.turnos).length,
+      )
       if (cancelled || !mounted.current) return
-      const limit = result.pregunta
+      const pregunta = result?.clasificacion === 'INSUFICIENTE' ? result.preguntaSeguimiento : undefined
+      const limit = pregunta
         ? responseCapacity(
             {
               textoInicial: record.textoInicial,
@@ -99,15 +105,10 @@ export function FollowUp({
               premisa: node.premisa,
               maxCaracteres: node.entregable.tipo === 'texto' ? node.entregable.maxCaracteres : undefined,
             },
-            result.pregunta,
+            pregunta,
           )
         : 0
-      if (!result.pregunta || limit < 40) {
-        if (!record.turnos.length) {
-          finishing.current = true
-          continueRef.current()
-          return
-        }
+      if (!pregunta || limit < 1 || record.turnos.length >= 2) {
         await finish()
         return
       }
@@ -117,21 +118,20 @@ export function FollowUp({
           ...record.turnos,
           {
             orden: record.turnos.length ? 2 : 1,
-            pregunta: result.pregunta,
+            pregunta,
             omitida: false,
             creadaEn: new Date().toISOString(),
           },
         ],
       })
       if (!saved) {
-        finishing.current = true
-        continueRef.current()
+        setError('No se pudo guardar la pregunta de seguimiento. Vuelve a intentarlo.')
       }
     })()
     return () => {
       cancelled = true
     }
-  }, [activity, node, record, last, key])
+  }, [activity, node, record, last, key, retry])
   useEffect(() => {
     end.current?.scrollIntoView({ block: 'nearest' })
     if (phase === 'question') textarea.current?.focus({ preventScroll: true })
@@ -160,13 +160,27 @@ export function FollowUp({
     })
     setResponse('')
     if (!saved) {
-      finishing.current = true
-      continueRef.current()
+      setError('No se pudo guardar la ampliación. Vuelve a intentarlo.')
     }
   }
 
   return (
     <section className="sx-followup" aria-label="Seguimiento de Lumi">
+      {error && (
+        <div role="alert">
+          <p>{error}</p>
+          <button
+            type="button"
+            className="sx-secondary-button"
+            onClick={() => {
+              setError('')
+              setRetry((value) => value + 1)
+            }}
+          >
+            Reintentar guardado
+          </button>
+        </div>
+      )}
       <h3>Tu respuesta</h3>
       <blockquote className="sx-followup-original">{record?.textoInicial}</blockquote>
       <div className="sx-followup-thread">
