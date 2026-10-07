@@ -30,6 +30,7 @@ import { useReturnFocus } from '../discovery/useReturnFocus'
 import { useStudentUi } from '../ui-state'
 import { getLumiBond, type LumiBond } from '../journal/lumiBond'
 import { LumiBondPanel } from '../journal/LumiBondPanel'
+import { DailyQuestionCard, type DailyQuestionEditorContext } from '../journal/DailyQuestionCard'
 import '../journal/journal.css'
 
 type JournalScreen = 'home' | 'write' | 'detail'
@@ -37,7 +38,8 @@ type JournalGrouping = 'timeline' | 'topics'
 
 function StudentJournalView() {
   const state = useAdventure()
-  const bond = getLumiBond(state.lumiRegistrations, useLumiNow())
+  const now = useLumiNow()
+  const bond = getLumiBond(state.lumiRegistrations, now)
   const [searchParams] = useSearchParams()
   const conversationTopic = getFamilyConversationTopic(searchParams.get('conversation') ?? '')
   const eventTitle = searchParams.get('event')
@@ -103,6 +105,24 @@ function StudentJournalView() {
   })
   const selected = state.journal.find((entry) => entry.id === selectedId)
   const usedTags = [...new Set(entries.flatMap((entry) => entry.topicTags))].sort()
+
+  function openEditor({
+    prompt,
+    linkedActivityId,
+    title,
+    lockedTags: initialTags,
+  }: DailyQuestionEditorContext) {
+    setSaveNotice('')
+    setEditingId(undefined)
+    setBody('')
+    setTags(initialTags)
+    setLockedTags(initialTags)
+    setTagDraft('')
+    setPromptShown(prompt)
+    setLinkedActivityId(linkedActivityId)
+    setEntryTitle(title)
+    setScreen('write')
+  }
 
   function startBlankEntry() {
     setSaveNotice('')
@@ -209,17 +229,10 @@ function StudentJournalView() {
           grouping={grouping}
           onChangeGrouping={setGrouping}
           onSuggested={({ prompt, tags: defaultTags, activityId, title }) => {
-            setSaveNotice('')
-            setEditingId(undefined)
-            setBody('')
-            setTags(defaultTags)
-            setLockedTags(defaultTags)
-            setTagDraft('')
-            setPromptShown(prompt)
-            setLinkedActivityId(activityId)
-            setEntryTitle(title)
-            setScreen('write')
+            openEditor({ prompt, linkedActivityId: activityId, title, lockedTags: defaultTags })
           }}
+          now={now}
+          onDailyQuestion={openEditor}
           onNew={startBlankEntry}
           onOpen={(entry) => {
             setSelectedId(entry.id)
@@ -301,6 +314,8 @@ function JournalHome({
   bond,
   onboarding,
   onBegin,
+  now,
+  onDailyQuestion,
 }: {
   entries: JournalEntry[]
   grouping: JournalGrouping
@@ -313,6 +328,8 @@ function JournalHome({
   bond: LumiBond
   onboarding: boolean
   onBegin: () => void
+  now: Date
+  onDailyQuestion: (context: DailyQuestionEditorContext) => void
 }) {
   const adventure = useAdventure(),
     journey = useJourney(),
@@ -362,6 +379,7 @@ function JournalHome({
               </button>
             </Parchment>
           )}
+          {!onboarding && <DailyQuestionCard now={now} onRespond={onDailyQuestion} onOpenAnswer={onOpen} />}
           {unread && (
             <div className="sx-j-memory-notice" role="status">
               <span className="sx-j-lumi">
@@ -486,15 +504,18 @@ function JournalTags({ tags }: { tags: string[] }) {
   )
 }
 function JournalCard({ entry, onOpen }: { entry: JournalEntry; onOpen: () => void }) {
+  const daily = entry.linkedActivityId?.startsWith('daily-prompt-')
   return (
-    <article className="sx-j-entry" data-kind={entry.kind}>
+    <article className="sx-j-entry" data-kind={daily ? 'daily' : entry.kind}>
       <time>
         {new Date(entry.createdAt).toLocaleDateString('es-PE', {
           dateStyle: 'long',
           timeZone: 'America/Lima',
         })}
       </time>
-      <span className="sx-j-origin">{entry.kind === 'open' ? 'Libre' : 'Carta de Lumi'}</span>
+      <span className="sx-j-origin">
+        {daily ? 'Pregunta del día' : entry.kind === 'open' ? 'Libre' : 'Carta de Lumi'}
+      </span>
       <h3>{entry.title}</h3>
       {entry.promptShown && <p className="sx-j-question">Lumi: “{entry.promptShown}”</p>}
       <p className="sx-d-clamp-two">{entry.body}</p>
@@ -674,7 +695,7 @@ function JournalDetail({
           })}
         </time>
         <p className="sx-j-origin">{entry.kind === 'open' ? 'Libre' : 'Carta de Lumi'}</p>
-        <h1>{entry.title}</h1>
+        <h1 id={`journal-entry-${entry.id}`}>{entry.title}</h1>
         {entry.promptShown && <p className="sx-j-question sx-j-prompt">Lumi: “{entry.promptShown}”</p>}
         <p className="sx-j-full-text">{entry.body}</p>
         <JournalTags tags={entry.topicTags} />

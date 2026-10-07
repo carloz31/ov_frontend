@@ -150,7 +150,8 @@
   margin-top: 16px;
   padding: 18px;
 }
-.sx-j-memory-text p {
+.sx-j-bond .sx-j-memory-text p {
+  color: var(--sx-parchment-ink);
   font-style: italic;
 }
 .sx-j-memory-text h2 {
@@ -174,6 +175,111 @@
 }
 .sx-j-blank h2 {
   font-size: 24px;
+}
+.sx-j-daily {
+  --sx-j-daily-blue: color-mix(in srgb, var(--case-blue) 55%, white);
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  min-width: 0;
+  padding: 22px 24px;
+  border: 2px solid var(--sx-j-daily-blue);
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      ellipse at 100% 0%,
+      color-mix(in srgb, var(--case-blue) 35%, transparent),
+      transparent 65%
+    ),
+    linear-gradient(
+      135deg,
+      var(--sx-night-raised),
+      color-mix(in srgb, var(--sx-night-raised) 80%, var(--case-blue))
+    );
+  color: var(--sx-night-text);
+  overflow-wrap: anywhere;
+}
+.sx-j-daily[data-state='answered'] {
+  border-color: color-mix(in srgb, white 14%, transparent);
+}
+.sx-j-daily-seal .sx-d-seal {
+  width: 72px;
+  height: 72px;
+  border: 3px solid var(--sx-parchment);
+  background: var(--sx-j-daily-blue);
+  color: var(--sx-parchment-ink);
+}
+.sx-j-daily-seal svg {
+  width: 32px;
+  height: 32px;
+}
+.sx-j-daily[data-state='sealed'] .sx-d-seal {
+  animation: sx-j-daily-breathe 3s ease-in-out infinite;
+}
+.sx-j-daily[data-state='answered'] .sx-d-seal {
+  background: var(--success);
+  color: white;
+}
+.sx-j-daily-label {
+  margin-bottom: 8px;
+  color: var(--sx-j-daily-blue);
+  font-size: 13px;
+  font-weight: 700;
+}
+.sx-j-daily h2 {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+.sx-j-daily[data-state='answered'] h2 {
+  font-size: 18px;
+}
+.sx-j-daily-help {
+  margin-top: 8px;
+  color: var(--sx-night-muted);
+  font-size: 14px;
+}
+.sx-j-daily-question {
+  animation: sx-j-daily-reveal 300ms ease-out;
+}
+.sx-j-daily-question h2 {
+  font-style: italic;
+}
+.sx-j-daily-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.sx-j-daily-tags > span {
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--case-blue) 18%, transparent);
+  font-size: 12px;
+}
+.sx-j-daily-action {
+  margin-top: 0;
+  background: var(--sx-j-daily-blue);
+  color: var(--sx-parchment-ink);
+  border-color: var(--sx-j-daily-blue);
+  box-shadow: 0 4px 0 var(--case-blue);
+}
+.sx-j-daily[data-state='opened'] .sx-j-daily-action {
+  background: var(--sx-gold);
+  border-color: var(--sx-gold);
+  box-shadow: 0 4px 0 var(--sx-gold-deep);
+}
+.sx-j-daily-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 0;
+  color: var(--sx-night-text);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 .sx-j-memory-notice {
   display: flex;
@@ -365,6 +471,9 @@
 .sx-j-thread .sx-j-entry[data-kind='open']::before {
   background: var(--accent);
 }
+.sx-j-thread .sx-j-entry[data-kind='daily']::before {
+  background: var(--case-blue);
+}
 .sx-j-entry time {
   font-size: 12px;
   color: var(--sx-parchment-muted);
@@ -534,6 +643,22 @@
     transform: scale(1.04);
   }
 }
+@keyframes sx-j-daily-breathe {
+  50% {
+    box-shadow: 0 0 24px color-mix(in srgb, var(--case-blue) 35%, transparent);
+    transform: scale(1.04);
+  }
+}
+@keyframes sx-j-daily-reveal {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 @media (max-width: 1023px) {
   .sx-j-layout {
     grid-template-columns: minmax(0, 1fr);
@@ -551,6 +676,15 @@
   }
 }
 @media (max-width: 639px) {
+  .sx-j-daily {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 16px;
+  }
+  .sx-j-daily-action,
+  .sx-j-daily-link {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
   .sx-discovery[data-ambient='journal'] {
     padding: 20px;
   }
@@ -589,7 +723,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sx-j-lumi {
+  .sx-j-lumi,
+  .sx-j-daily[data-state='sealed'] .sx-d-seal,
+  .sx-j-daily-question {
     animation: none;
   }
 }

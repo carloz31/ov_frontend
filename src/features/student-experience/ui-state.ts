@@ -10,6 +10,7 @@ export type StudentUiState = {
   cityArrivalSeen: boolean
   checkInPromptDismissedOn?: string
   seenLumiMemories: number[]
+  dailyQuestionOpenedOn: string | null
   seenUnlockIds: string[]
   announcedBadgeCodes: string[]
   initialized: boolean
@@ -26,6 +27,7 @@ export function initialStudentUiState(): StudentUiState {
     introsSeen: {},
     cityArrivalSeen: false,
     seenLumiMemories: [],
+    dailyQuestionOpenedOn: null,
     seenUnlockIds: [],
     announcedBadgeCodes: [],
     initialized: false,
@@ -51,6 +53,11 @@ function parseState(raw: string | null): StudentUiState {
         studentViews.filter((view) => value.introsSeen?.[view] === true).map((view) => [view, true]),
       ),
       cityArrivalSeen: value.cityArrivalSeen === true,
+      dailyQuestionOpenedOn:
+        typeof value.dailyQuestionOpenedOn === 'string' &&
+        /^\d{4}-\d{2}-\d{2}$/.test(value.dailyQuestionOpenedOn)
+          ? value.dailyQuestionOpenedOn
+          : null,
       checkInPromptDismissedOn:
         typeof value.checkInPromptDismissedOn === 'string' &&
         /^\d{4}-\d{2}-\d{2}$/.test(value.checkInPromptDismissedOn)

@@ -30,6 +30,7 @@ export const guideSteps: Record<StudentView, string[]> = {
   journal: [
     'Este es nuestro cuaderno. Solo tú puedes leerlo: ni tu orientadora ni tu familia ven lo que escribes.',
     'Puedes contarme algo cuando quieras, o responder las cartas que te dejo después de cada actividad.',
+    'Cada día te dejo también una pregunta nueva. Ábrela cuando quieras; si un día no la respondes, no pasa nada.',
     'Cada conversación hace crecer nuestra amistad, hasta tres por día. La amistad nunca se pierde, aunque pasen días sin escribir.',
     'Cuando nuestra amistad crece, recupero un recuerdo de mi viaje y te lo cuento.',
   ],

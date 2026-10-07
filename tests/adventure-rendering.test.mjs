@@ -3710,3 +3710,176 @@ test('shared access gate requires login before profiles and all three portals', 
     }
   } finally { gate.dispose() }
 })
+
+test('daily journal question hides its prompt until opened, recognizes today and labels legacy answers', () => {
+  const ui = load(path.resolve('src/features/student-experience/ui-state.ts'))
+  const { getDailyJournalPrompt } = load(path.resolve('src/features/occupation-exploration/data/JournalData.ts'))
+  const { lumiDayKey } = load(path.resolve('src/features/occupation-exploration/lib/LumiFriendship.ts'))
+  const now = new Date(), day = lumiDayKey(now), daily = getDailyJournalPrompt(now)
+  const beforeUi = ui.useStudentUi(), beforeAdventure = store.useAdventure()
+  const card = html => html.match(/<section aria-label="La pregunta de hoy"[\s\S]*?<\/section>/)?.[0]
+  try {
+    ui.updateStudentUi(() => ui.initialStudentUiState())
+    const closed = render('/student/journal', { journalOnboardingSeen: true, journal: [] })
+    assert.match(card(closed), /Lumi dejó una pregunta nueva para ti/)
+    assert.match(card(closed), /Abrir la pregunta/)
+    assert.ok(!closed.includes(daily.prompt))
+    assert.ok(closed.indexOf('Lumi, hoy quiero contarte') < closed.indexOf('La pregunta de hoy'))
+    assert.ok(closed.indexOf('La pregunta de hoy') < closed.indexOf('Lumi recordó algo nuevo'))
+    assert.doesNotMatch(card(closed).toLowerCase(), /racha|pierdes|se pierde/)
+    ui.updateStudentUi(current => ({ ...current, dailyQuestionOpenedOn: day }))
+    const opened = card(render('/student/journal', { journalOnboardingSeen: true, journal: [] }))
+    assert.ok(opened.includes(daily.prompt))
+    assert.match(opened, />Responder<\/button>/)
+    for (const tag of daily.tags) assert.ok(opened.includes(`#${tag}`))
+    const answer = { ...beforeAdventure.journal[0], id: 'answer-today', linkedActivityId: `daily-prompt-${day}` }
+    const answered = card(render('/student/journal', { journalOnboardingSeen: true, journal: [answer] }))
+    assert.match(answered, /Ya respondiste la pregunta de hoy/)
+    assert.match(answered, /Ver mi respuesta/)
+    assert.doesNotMatch(answered, /Responder/)
+    assert.doesNotMatch(answered.toLowerCase(), /racha|pierdes|se pierde/)
+    const yesterday = lumiDayKey(new Date(now.getTime() - 86400000))
+    ui.updateStudentUi(current => ({ ...current, dailyQuestionOpenedOn: yesterday }))
+    const newDay = card(render('/student/journal', {
+      journalOnboardingSeen: true, journal: [{ ...answer, linkedActivityId: `daily-prompt-${yesterday}` }],
+    }))
+    assert.match(newDay, /Abrir la pregunta/)
+    assert.ok(!newDay.includes(daily.prompt))
+    assert.equal(card(render('/student/journal', { journalOnboardingSeen: false })), undefined)
+    const legacy = render('/student/journal', { journalOnboardingSeen: true })
+    assert.match(legacy, /<article class="sx-j-entry" data-kind="daily">[\s\S]*?Pregunta del día<\/span><h3>Tema del día/)
+    assert.match(legacy, /data-kind="open"/)
+    assert.match(legacy, /Carta de Lumi/)
+  } finally {
+    ui.updateStudentUi(() => beforeUi)
+    store.updateAdventure(() => beforeAdventure)
+  }
+})
+
+test('daily question opening persists the Lima date, focuses Respond and passes direct editor context', () => {
+  const { initialStudentUiState } = load(path.resolve('src/features/student-experience/ui-state.ts'))
+  const { getDailyJournalPrompt } = load(path.resolve('src/features/occupation-exploration/data/JournalData.ts'))
+  let ui = initialStudentUiState(), adventure = { journal: [] }, response, read, focused = 0
+  const now = new Date('2026-10-08T04:59:00Z'), daily = getDailyJournalPrompt(now)
+  const page = immersivePlayerHarness('../journal/DailyQuestionCard', {
+    '../ui-state': { useStudentUi: () => ui, updateStudentUi: update => { ui = update(ui) } },
+    '@/features/occupation-exploration/lib/AdventureStore': { useAdventure: () => adventure },
+  })
+  const props = { now, onRespond: context => { response = context }, onOpenAnswer: entry => { read = entry } }
+  const mount = tree => {
+    const button = page.button(tree, 'Responder')
+    if (button) button.props.ref.current = { focus() { focused++ } }
+  }
+  try {
+    let tree = page.draw(props, mount)
+    assert.ok(!page.text(tree).includes(daily.prompt))
+    page.button(tree, 'Abrir la pregunta').props.onClick()
+    assert.equal(ui.dailyQuestionOpenedOn, '2026-10-07')
+    tree = page.draw(props, mount)
+    assert.equal(focused, 1)
+    assert.ok(page.text(tree).includes(daily.prompt))
+    page.draw(props, mount); assert.equal(focused, 1)
+    page.button(tree, 'Responder').props.onClick()
+    assert.equal(response.title, 'Tema del día')
+    assert.equal(response.prompt, daily.prompt)
+    assert.equal(response.linkedActivityId, 'daily-prompt-2026-10-07')
+    assert.equal(JSON.stringify(response.lockedTags), JSON.stringify(daily.tags))
+    tree = page.draw({ ...props, now: new Date('2026-10-08T05:00:00Z') }, mount)
+    assert.ok(page.button(tree, 'Abrir la pregunta'))
+    assert.equal(focused, 1)
+    adventure = { journal: [{ id: 'today-answer', linkedActivityId: 'daily-prompt-2026-10-08' }] }
+    tree = page.draw({ ...props, now: new Date('2026-10-08T05:00:00Z') }, mount)
+    assert.equal(page.button(tree, 'Responder'), undefined)
+    page.find(tree, element => element.type === 'a').props.onClick({ preventDefault() {} })
+    assert.equal(read.id, 'today-answer')
+  } finally { page.dispose() }
+})
+
+test('daily question answers use the current journal editor, fixed tags and ordinary conversation saving', () => {
+  const { getDailyJournalPrompt } = load(path.resolve('src/features/occupation-exploration/data/JournalData.ts'))
+  const { lumiDayKey } = load(path.resolve('src/features/occupation-exploration/lib/LumiFriendship.ts'))
+  const { getLumiBond } = load(path.resolve('src/features/student-experience/journal/lumiBond.ts'))
+  const now = new Date(), daily = getDailyJournalPrompt(now), linkedActivityId = `daily-prompt-${lumiDayKey(now)}`
+  const before = store.useAdventure()
+  const page = immersivePlayerHarness('../modules/StudentJournalView', {
+    'react-router': { useSearchParams: () => [new URLSearchParams()] },
+    '@/features/occupation-exploration/lib/useLumiNow': { useLumiNow: () => now },
+    '../discovery/useReturnFocus': { useReturnFocus: () => ({}) },
+  })
+  try {
+    store.updateAdventure(() => ({ ...store.createInitialAdventure(), journalOnboardingSeen: true }))
+    const signals = JSON.stringify(store.useAdventure().readinessCheckIns)
+    const counted = getLumiBond(store.useAdventure().lumiRegistrations, now).todayCounted
+    let tree = page.draw({})
+    const start = () => page.find(tree, element => element.type?.name === 'JournalHome').props.onDailyQuestion({
+      prompt: daily.prompt, linkedActivityId, title: 'Tema del día', lockedTags: daily.tags,
+    })
+    start(); tree = page.draw({})
+    let editor = page.find(tree, element => element.type?.name === 'JournalEditor')
+    assert.equal(editor.props.title, 'Tema del día')
+    assert.equal(editor.props.prompt, daily.prompt)
+    assert.equal(JSON.stringify(editor.props.tags), JSON.stringify(daily.tags))
+    assert.equal(JSON.stringify(editor.props.lockedTags), JSON.stringify(daily.tags))
+    editor.props.onRemoveTag(daily.tags[0]); tree = page.draw({})
+    editor = page.find(tree, element => element.type?.name === 'JournalEditor')
+    assert.equal(JSON.stringify(editor.props.tags), JSON.stringify(daily.tags))
+    const size = store.useAdventure().journal.length
+    editor.props.onBack(); tree = page.draw({})
+    assert.ok(page.find(tree, element => element.type?.name === 'JournalHome'))
+    assert.equal(store.useAdventure().journal.length, size)
+    start(); tree = page.draw({})
+    editor = page.find(tree, element => element.type?.name === 'JournalEditor')
+    editor.props.onBodyChange('Una reflexión sobre la pregunta de hoy.')
+    editor.props.onTitleChange('Mi tema de hoy')
+    tree = page.draw({}); page.find(tree, element => element.type?.name === 'JournalEditor').props.onSave()
+    const saved = store.useAdventure().journal.find(entry => entry.title === 'Mi tema de hoy')
+    assert.equal(saved.linkedActivityId, linkedActivityId)
+    assert.equal(saved.kind, 'prompted')
+    assert.equal(saved.promptShown, daily.prompt)
+    assert.equal(JSON.stringify(saved.topicTags), JSON.stringify(daily.tags))
+    assert.equal(JSON.stringify(saved.lockedTopicTags), JSON.stringify(daily.tags))
+    assert.ok(store.useAdventure().lumiRegistrations.some(entry => entry.entryId === saved.id))
+    assert.equal(getLumiBond(store.useAdventure().lumiRegistrations).todayCounted, Math.min(3, counted + 1))
+    assert.equal(JSON.stringify(store.useAdventure().readinessCheckIns), signals)
+    tree = page.draw({}); page.find(tree, element => element.type?.name === 'JournalHome').props.onOpen(saved)
+    tree = page.draw({}); assert.equal(page.find(tree, element => element.type?.name === 'JournalDetail').props.entry.id, saved.id)
+  } finally { page.dispose(); store.updateAdventure(() => before) }
+})
+
+test('daily question is omitted when its source throws or returns an empty prompt', () => {
+  for (const getDailyJournalPrompt of [() => { throw Error('unavailable') }, () => ({ prompt: '  ', tags: [] })]) {
+    const page = immersivePlayerHarness('../journal/DailyQuestionCard', {
+      '@/features/occupation-exploration/data/JournalData': { getDailyJournalPrompt },
+    })
+    try { assert.equal(page.draw({ now: new Date(), onRespond() {}, onOpenAnswer() {} }), null) }
+    finally { page.dispose() }
+  }
+})
+
+test('daily question presentation state migrates, validates dates and survives reload and tab synchronization', () => {
+  const file = path.resolve('src/features/student-experience/ui-state.ts')
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+  const views = load(path.resolve('src/features/student-experience/views.ts'))
+  let raw = JSON.stringify({ version: 1, panelCollapsed: true }), listener
+  const create = () => {
+    const sandbox = vm.createContext({
+      localStorage: { getItem: () => raw, setItem: (_, value) => { raw = value } },
+      window: { addEventListener: (_, callback) => { listener = callback } },
+    })
+    const exports = {}
+    vm.runInContext(`(function(require,exports){${js}\n})`, sandbox)(name => name === 'react' ? { useSyncExternalStore: (_, snapshot) => snapshot() } : views, exports)
+    return exports
+  }
+  const ui = create()
+  assert.equal(ui.initialStudentUiState().dailyQuestionOpenedOn, null)
+  assert.equal(ui.useStudentUi().dailyQuestionOpenedOn, null)
+  assert.equal(ui.useStudentUi().panelCollapsed, true)
+  for (const invalid of [null, 'yesterday', '', '2026-10-7', '2026-10-07T12:00:00Z', 20261007, {}, true]) {
+    raw = JSON.stringify({ version: 1, dailyQuestionOpenedOn: invalid, panelCollapsed: true })
+    listener({ key: 'ov.student-ui.v1' })
+    assert.equal(ui.useStudentUi().dailyQuestionOpenedOn, null)
+    assert.equal(ui.useStudentUi().panelCollapsed, true)
+  }
+  ui.updateStudentUi(current => ({ ...current, dailyQuestionOpenedOn: '2026-10-07' }))
+  assert.equal(create().useStudentUi().dailyQuestionOpenedOn, '2026-10-07')
+})
