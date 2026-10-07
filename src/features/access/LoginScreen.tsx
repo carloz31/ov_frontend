@@ -12,7 +12,7 @@ import {
 } from 'lucide-react'
 import './access.css'
 
-export function LoginScreen({ onEnter }: { onEnter: () => void }) {
+export function LoginScreen({ onEnter }: { onEnter: (usuario: string) => void }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [visible, setVisible] = useState(false)
@@ -86,7 +86,7 @@ export function LoginScreen({ onEnter }: { onEnter: () => void }) {
           <form
             onSubmit={(event) => {
               event.preventDefault()
-              if (username && password) onEnter()
+              if (username && password) onEnter(username)
             }}
           >
             <div className="ov-login-input-group">

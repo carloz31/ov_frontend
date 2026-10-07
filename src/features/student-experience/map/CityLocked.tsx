@@ -1,4 +1,7 @@
 import { KeyRound } from 'lucide-react'
+import { modoApi } from '@/features/servidor/config'
+import { useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { progresoCamino } from '@/features/servidor/adaptadores'
 import { Link } from 'react-router'
 import { Progress } from '@/components/ui/Progress'
 import { fieldMissions } from '@/features/occupation-exploration/data/AdventureData'
@@ -6,6 +9,7 @@ import type { AdventureState } from '@/features/occupation-exploration/types/Adv
 import { appPaths } from '@/routes/paths'
 
 export function CityLocked({ adventure }: { adventure: AdventureState }) {
+  const servidor = useEstadoServidor()
   return (
     <div className="sx-city-mist">
       <section className="sx-glass sx-city-locked">
@@ -19,9 +23,11 @@ export function CityLocked({ adventure }: { adventure: AdventureState }) {
         <Progress
           aria-label="Camino hacia la ciudad"
           value={
-            (fieldMissions.filter((item) => adventure.completedMissionIds.includes(item.id)).length /
-              fieldMissions.length) *
-            100
+            modoApi
+              ? progresoCamino(servidor.estado).porcentaje
+              : (fieldMissions.filter((item) => adventure.completedMissionIds.includes(item.id)).length /
+                  fieldMissions.length) *
+                100
           }
         />
         <Link className="sx-primary-button" to={appPaths.student.missions}>

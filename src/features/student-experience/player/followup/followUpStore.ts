@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import type { Actividad, Entregable, NodoConsigna } from '@/features/missions/model'
 import { applyCompletion, latestSubmission, studentId, validateSubmission } from '@/features/missions/logic'
-import { updateJourney } from '@/features/missions/store'
+import { journeyEnServidor, updateJourney } from '@/features/missions/store'
 import type { FollowUpTurn } from './followUpService'
 import { answeredTurns, templateCondenser, type ResponseCondenser } from './responseCondenser'
 
@@ -139,7 +139,8 @@ export function saveFollowUpResponse(
         version = entry.version
         const drafts = { ...current.drafts }
         delete drafts[key]
-        return applyCompletion(activity, { ...current, submissions: [...current.submissions, entry], drafts })
+        const next = { ...current, submissions: [...current.submissions, entry], drafts }
+        return journeyEnServidor() ? next : applyCompletion(activity, next)
       })
       if (!saved || version === undefined) return { saved: false }
       setFollowUpRecord(key, {

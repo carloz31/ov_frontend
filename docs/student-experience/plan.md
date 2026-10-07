@@ -593,3 +593,37 @@ La apertura conserva `dailyQuestionOpenedOn` en `ov.student-ui.v1`, sin cambiar 
 Verificación: build y lint aprobados, con la advertencia previa de Vite sobre tamaño del bundle. Línea base inmediata: 287 pruebas, 271 aprobadas y 16 fallidas. Resultado: 292 pruebas, 276 aprobadas y los mismos 16 fallos; los bloques completos de fallos son idénticos al quitar las duraciones, incluidos nombres, aserciones y trazas. Las cinco pruebas nuevas del estudiante aprueban; ninguna aserción existente se modifica. También aprueban las pruebas anteriores del diario sobre edición, contexto por URL y datos privados.
 
 Navegador local a 1280 × 800 y 360 × 800: ubicación y tres estados, foco al revelar, etiquetas fijas, cancelación, título editable, guardado y detalle comprobados. La apertura persiste al recargar; las entradas nueva y de demostración tienen origen y punto azul. En móvil, la acción ocupa toda la fila y el ancho del contenido permanece en 360 px. La regla cargada de movimiento reducido elimina las animaciones de respiración y revelado. El flujo de escritura se prueba en un origen local separado de la pestaña del usuario. No se modifican bibliotecas, tipos o datos de `occupation-exploration`, portales ni pruebas protegidas.
+
+## Iteración 1 · F4: camino y mochila con el servidor — 7 de octubre de 2026
+
+Se implementan §§5.1–5.7 y 5.11 de la especificación vigente. El modo `local` conserva sus claves y comportamiento. `main.tsx` proporciona la configuración de Vite al módulo `servidor`; las importaciones de las pruebas mantienen valores locales predeterminados. `.env.example` incluye `VITE_DATOS=local` y `VITE_API_URL=/api`, y el proxy de desarrollo quita `/api` y apunta a `http://127.0.0.1:8000`. No se agregan dependencias.
+
+En API, el mapa, las recomendaciones, Mis actividades, el progreso y las fichas usan el estado de la cuenta del servidor. Los límites del prototipo, la demostración y el contenido pendiente no intervienen. Ciudad depende del bloque CIUDAD. Adicionales, casos y desafíos quedan fuera de este recorrido, también por URL. Mara abre su detalle y consulta los ítems de la primera interacción pendiente; su reproductor se incorpora en F5.
+
+El ingreso conserva el selector de perfiles de demostración y resuelve únicamente cuentas ESTUDIANTE; si el usuario no coincide, usa `est-ana`. Persiste la selección en `sessionStorage`, deduplica el montaje y descarta ingresos anteriores que llegan tarde tras cambiar de cuenta. Las copias `ov.missions.v2.api` y `ov.student-adventure.v1.api` contienen entradas separadas por cuenta. La hidratación corrige proyecciones obsoletas y conserva nodos, textos, borradores, brújula, comprobaciones y versiones locales, incluso cuando falla el guardado de la copia en el navegador.
+
+La única llamada que informa una finalización está en `StudentActivityPlayer.tsx`, dentro de `move`, al llegar a `$fin`, incluida la repetición de informativas. Entregas, seguimiento, hidratación, `StudentShell` y `FinishScreen` no envían finalizaciones. El reproductor impide solicitudes simultáneas, espera el resultado y muestra requisitos ante 409 o un reintento ante desconexión. Si el POST ya fue confirmado, conserva la respuesta y reintenta únicamente las consultas. Recuperar un cierre confirmado no registra otro evento.
+
+El cierre API usa exclusivamente `nuevos_desbloqueos`: actividad, fichas, insignias, nivel y ciudad. Según la delimitación aprobada, esta pantalla valida los pasos 3 y 6; la cola de avisos, el pasaporte, la vista de nivel y el marcado como vistos quedan en F6. Se omiten sus cálculos locales en API. Se conserva la guía de presentación de Lumi y las acciones locales del diario.
+
+Las fichas mantienen el contenido y la lectura del front, pero leerlas o guardarlas no las convierte en obtenidas. La mochila consulta requisitos al solicitarlos. Los detalles bloqueados del camino y de Mara consultan su progreso; el resto de §5.10 queda en F6. El menú ofrece reinicio con confirmación únicamente en desarrollo y API; tras éxito elimina las dos claves API y recarga.
+
+### Validación de F4
+
+Recorrido manual con `SEMILLA=plataforma`, `EVALUADOR=falso`, una base SQLite temporal y el frontend en API. El puerto 8000 estaba ocupado, por lo que la comprobación utilizó backend 8001 y frontend 5175 con un proxy temporal; el proxy versionado conserva 8000. Los datos escritos se identificaron como DATO DE PRUEBA F4.
+
+| Paso | Resultado observado |
+|---|---|
+| 1 | Reinicio confirmado desde el menú; Ana ingresa con la primera actividad recomendada y las demás bloqueadas. |
+| 2 | El detalle bloqueado de la segunda informativa muestra «Requisito: completa “El inicio del viaje”». |
+| 3 | El cierre de la bienvenida muestra La plaza de los rumores, Tres pistas para comenzar el viaje e I1, sin avisos automáticos de logros. |
+| 4 | Tras completar La plaza de los rumores y recargar, la mochila muestra cuatro fichas obtenidas: la primera y las tres nuevas. |
+| 5 | Repetir los 24 nodos confirma otra finalización y muestra «No hay nuevos desbloqueos en esta repetición»; la actividad sigue completada. |
+| 6 | act-07 conserva sus tres entregas; Las huellas que traigo muestra I2 y el nivel Recolector de pistas en su cierre. |
+| 7 | Se completan las cinco misiones restantes, incluidas las siete entregas de la matriz. El cierre final muestra ciudad, I3 y Cartógrafo de posibilidades. Ciudad abre; Mara muestra interacción 1 de 14 y cinco ítems, con el reproductor desactivado. |
+
+Las pruebas `servidor-adaptadores`, `servidor-flujo` y `servidor-local` contienen 20 casos que pasan. Cubren fixtures, estados y recomendaciones, cuenta y respaldo, aislamiento, conservación de borradores, hidratación sin espacio, finalización, repetición, doble clic, 409, red, consulta sin duplicar POST, cierre recuperado, lectura sin adquisición, URL y reinicio restringido. Los adaptadores solo importan tipos y las pruebas locales fallan si se intenta usarlos o consultar la API.
+
+Build y lint pasan; se conserva el aviso previo de Vite sobre el tamaño del bundle. Suite completa: 312 pruebas, 296 aprobadas y las mismas 16 fallas documentadas en F3, todas en `adventure-rendering.test.mjs`; coinciden sus nombres y líneas. No se modifican pruebas anteriores, contratos ni los ocho fixtures. El backend pasa 1006 pruebas con evaluador falso y dos advertencias previas de deprecación.
+
+F4 completa con la delimitación anterior. F5–F7 y el diagnóstico de las fallas previas quedan pendientes. Se registra la decisión compartida en `ov_backend/docs/iteraciones/decisiones-iteracion-1.md`; un commit de F4 por repo en `iteracion-1`, sin push ni acceso a áreas protegidas.

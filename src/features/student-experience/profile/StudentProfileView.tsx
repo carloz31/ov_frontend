@@ -1,4 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
+import { modoApi } from '@/features/servidor/config'
+import { useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { progresoCamino } from '@/features/servidor/adaptadores'
 import { Eye, Heart, Sparkles } from 'lucide-react'
 import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
 import {
@@ -23,6 +26,17 @@ import { getOrderedPlans, getPlanCompleteness } from '../plans/plans'
 
 export function ProfileRoute() {
   const [params] = useSearchParams()
+  if (modoApi && params.get('section') === 'passport')
+    return (
+      <DiscoveryStage ambient="profile">
+        <Parchment title="Pasaporte vocacional">
+          <p>Los sellos y el nivel estarán listos pronto.</p>
+          <Link className="sx-d-action" to={appPaths.student.profile}>
+            Volver a mi perfil
+          </Link>
+        </Parchment>
+      </DiscoveryStage>
+    )
   return params.get('section') === 'passport' ? <StudentPassportView /> : <StudentProfileView />
 }
 export function StudentProfileView() {
@@ -30,6 +44,25 @@ export function StudentProfileView() {
     journey = useJourney(),
     discovery = useDiscovery()
   const context = useOccupationExplorationContext()
+  const servidor = useEstadoServidor()
+  if (modoApi)
+    return (
+      <DiscoveryStage ambient="profile">
+        <Parchment title={servidor.estado?.cuenta.nombre ?? 'Mi perfil'}>
+          <TrailBar label="Recorrido" value={progresoCamino(servidor.estado).porcentaje} />
+          <p>
+            Tus fichas ya están en la mochila. El libro de Helena, los sellos y el nivel estarán listos
+            pronto.
+          </p>
+          <Link className="sx-d-action" to={appPaths.student.resources}>
+            Abrir mi mochila
+          </Link>
+          <Link className="sx-d-action" to={appPaths.student.decisions}>
+            Ver mis planes y favoritos
+          </Link>
+        </Parchment>
+      </DiscoveryStage>
+    )
   const level = getTravelerLevel(adventure)
   const badges = getStudentAchievementGroups(adventure, journey).flatMap((g, index) =>
     g.items.filter((b) => b.done).map((b) => ({ ...b, group: index })),

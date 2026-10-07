@@ -1,4 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { modoApi } from '@/features/servidor/config'
+import {
+  consultarItems,
+  consultarProgreso,
+  mensajeErrorServidor,
+  useEstadoServidor,
+} from '@/features/servidor/estadoServidor'
+import { textoRequisito } from '@/features/servidor/adaptadores'
 import { ChevronLeft, ChevronRight, PanelLeftOpen } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
@@ -42,6 +50,12 @@ export function MapScreenLayout({
   adventure: AdventureState
   journey: JourneyState
 }) {
+  const servidor = useEstadoServidor()
+  const [detalleServidor, setDetalleServidor] = useState<{
+    clave: string
+    requirement?: string
+    description?: string
+  }>()
   const ui = useStudentUi()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -72,8 +86,56 @@ export function MapScreenLayout({
   const recommended = getRecommendedPoint(points)
   const progress = getZoneProgress(zone, adventure, journey)
   const selected = points.find((point) => point.id === selectedId)
-  const details = selected ? getPointDetails(selected, adventure, journey) : undefined
+  const baseDetails = selected ? getPointDetails(selected, adventure, journey) : undefined
+  const claveDetalle = `${selected?.id}/${selected?.specActivityId}/${selected?.status}`
+  const details =
+    baseDetails && detalleServidor?.clave === claveDetalle
+      ? { ...baseDetails, ...detalleServidor }
+      : baseDetails
   const selectedPointId = selected?.id
+  const selectedActivityId = selected?.specActivityId
+  const selectedStatus = selected?.status
+  const selectedZone = selected?.zone
+  useEffect(() => {
+    if (!modoApi || !selectedPointId) return
+    let vigente = true
+    void (async () => {
+      const [requirement, items] = await Promise.all([
+        selectedStatus === 'locked' && (selectedZone === 'camino' || selectedPointId === 'mara-test')
+          ? consultarProgreso(
+              selectedPointId === 'city' ? 'BLOQUE' : 'ACTIVIDAD',
+              selectedPointId === 'city' ? 'CIUDAD' : (selectedActivityId ?? ''),
+            )
+          : undefined,
+        selectedPointId === 'mara-test' && selectedActivityId
+          ? consultarItems(selectedActivityId)
+          : undefined,
+      ])
+      if (!vigente) return
+      setDetalleServidor({
+        clave: claveDetalle,
+        ...(requirement
+          ? {
+              requirement:
+                requirement.tipo === 'ok'
+                  ? textoRequisito(requirement.datos, servidor.estado)
+                  : mensajeErrorServidor(requirement),
+            }
+          : {}),
+        ...(items
+          ? {
+              description:
+                items.tipo === 'ok'
+                  ? `Conversa con Mara y responde ${items.datos.length} ítems en esta interacción. No hay respuestas correctas o incorrectas.`
+                  : mensajeErrorServidor(items),
+            }
+          : {}),
+      })
+    })()
+    return () => {
+      vigente = false
+    }
+  }, [claveDetalle, servidor.estado, selectedPointId, selectedActivityId, selectedStatus, selectedZone])
   useEffect(() => {
     if (selectedPointId) {
       returnPoint.current = selectedPointId
@@ -102,7 +164,7 @@ export function MapScreenLayout({
     })
   }
   function action(detail: PointDetails) {
-    if (detail.disabled) return
+    if (detail.disabled || (modoApi && servidor.error)) return
     if (detail.href) navigate(detail.href)
     else if (detail.activityId)
       setParams({ actividad: detail.activityId, ...(detail.revision ? { revision: '1' } : {}) })
@@ -161,7 +223,7 @@ export function MapScreenLayout({
           }
         />
         {locked && <CityLocked adventure={adventure} />}
-        {zone === 'missions' && (
+        {zone === 'missions' && !modoApi && (
           <AdditionalReveal
             onFrame={frameAdditional}
             onSelect={selectPoint}

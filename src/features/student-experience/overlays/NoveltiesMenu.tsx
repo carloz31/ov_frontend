@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { modoApi } from '@/features/servidor/config'
 import { Award, Bell, BookOpen, Building2, HeartHandshake, UserRound, X } from 'lucide-react'
 import { useDiscovery } from '../discovery/discoveryStore'
 import { Link } from 'react-router'
@@ -15,11 +16,15 @@ import { getUnlocks, markUnlocksSeen, orderUnlocks } from './unlocks'
 
 export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
   const ui = useStudentUi()
-  const items = getUnlocks(useAdventure(), useJourney(), useDiscovery())
+  const adventure = useAdventure(),
+    journey = useJourney(),
+    discovery = useDiscovery()
+  const items = modoApi ? [] : getUnlocks(adventure, journey, discovery)
   const ordered = ui.initialized
     ? orderUnlocks(items, ui).filter((item) => !ui.seenUnlockIds.includes(item.id))
     : []
   const [open, setOpen] = useState(false)
+  if (modoApi) return null // Los avisos del servidor y su marcado se conectan en F6.
   const unread = ordered.length
   const titles = {
     badge: 'Nueva insignia disponible',

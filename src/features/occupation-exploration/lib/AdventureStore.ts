@@ -4,7 +4,9 @@ import { journalDemoEntries, readinessDemoCheckIns } from '../data/JournalData'
 import type { AdventureState } from '../types/AdventureTypes'
 import { normalizeLumiRegistrations, trackLumiEntries } from './LumiFriendship'
 
-const storageKey = 'ov.student-adventure.v1'
+let storageKey = 'ov.student-adventure.v1'
+let cuentaServidor: string | null = null
+let consultarCiudadServidor: (() => boolean) | null = null
 // Temporary prototype review mode: every section is reachable while progress remains truthful.
 export const prototypeAllUnlocked = true
 export function createInitialAdventure(): AdventureState {
@@ -51,7 +53,8 @@ export function normalizeCaseScores(value: unknown): Record<string, number> {
 }
 function readState(): AdventureState {
   try {
-    const parsed = JSON.parse(localStorage.getItem(storageKey) || 'null')
+    const almacen = JSON.parse(localStorage.getItem(storageKey) || 'null')
+    const parsed = cuentaServidor ? almacen?.por_cuenta?.[cuentaServidor] : almacen
     if (parsed?.version !== 1) return createInitialAdventure()
     const initial = createInitialAdventure()
     for (const key of Object.keys(initial) as (keyof AdventureState)[]) {
@@ -156,7 +159,13 @@ export function updateAdventure(update: (current: AdventureState) => AdventureSt
     lumiRegistrations: trackLumiEntries(state.lumiRegistrations, state.journal, next.journal),
   }
   try {
-    localStorage.setItem(storageKey, JSON.stringify(state))
+    if (cuentaServidor) {
+      const almacen = JSON.parse(localStorage.getItem(storageKey) || 'null')
+      localStorage.setItem(
+        storageKey,
+        JSON.stringify({ por_cuenta: { ...almacen?.por_cuenta, [cuentaServidor]: state } }),
+      )
+    } else localStorage.setItem(storageKey, JSON.stringify(state))
     storageError = false
   } catch {
     storageError = true
@@ -166,22 +175,38 @@ export function updateAdventure(update: (current: AdventureState) => AdventureSt
 export function useAdventure() {
   return useSyncExternalStore(subscribe, () => state)
 }
+export function configurarAdventureServidor(cuenta: string, consultarCiudad: () => boolean) {
+  consultarCiudadServidor = consultarCiudad
+  if (cuentaServidor === cuenta) return
+  storageKey = 'ov.student-adventure.v1.api'
+  cuentaServidor = cuenta
+  state = readState()
+  storageError = false
+  listeners.forEach((listener) => listener())
+}
+export function hidratarAdventureServidor(ids: string[]) {
+  updateAdventure((current) => ({ ...current, completedMissionIds: ids, legacyCaminoCompleted: false }))
+}
 export function useAdventureStorageError() {
   return useSyncExternalStore(subscribe, () => storageError)
 }
 export function isCityUnlocked(value: AdventureState) {
+  if (consultarCiudadServidor) return consultarCiudadServidor()
   return (
     value.legacyCaminoCompleted === true ||
     fieldMissions.every((mission) => value.completedMissionIds.includes(mission.id))
   )
 }
 export function isFamilyUnlocked(value: AdventureState) {
+  if (cuentaServidor) return false // Conversaciones: iteración 4.
   return isCityUnlocked(value)
 }
 export function canAccessCity(value: AdventureState) {
+  if (consultarCiudadServidor) return consultarCiudadServidor()
   return prototypeAllUnlocked || isCityUnlocked(value)
 }
 export function canAccessFamilyConversations(value: AdventureState) {
+  if (cuentaServidor) return false
   return prototypeAllUnlocked || isFamilyUnlocked(value)
 }
 export function getTravelerLevel(value: AdventureState) {
@@ -235,6 +260,7 @@ export function getTravelerLevel(value: AdventureState) {
   return levels[0]
 }
 export function completeMission(id: string) {
+  if (cuentaServidor) return
   updateAdventure((current) => {
     const index = fieldMissions.findIndex((mission) => mission.id === id)
     if (

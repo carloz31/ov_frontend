@@ -1,6 +1,6 @@
 import type { Actividad, Entregable, NodoConsigna } from '@/features/missions/model'
 import { latestSubmission, studentId, applyCompletion } from '@/features/missions/logic'
-import { getJourneySnapshot, updateJourney } from '@/features/missions/store'
+import { getJourneySnapshot, journeyEnServidor, updateJourney } from '@/features/missions/store'
 import { criteria } from './config'
 import { closeResponse, currentEvaluation, getReflections, updateReflections } from './store'
 import { bounded, getReflectionProvider, metadata, type EvaluationResult } from './provider'
@@ -158,5 +158,5 @@ export function finalizeResponse(activity: Actividad, node: NodoConsigna) {
   )
     return false
   if (!closeResponse(key)) return false
-  return updateJourney((s) => applyCompletion(activity, s))
+  return journeyEnServidor() || updateJourney((s) => applyCompletion(activity, s))
 }

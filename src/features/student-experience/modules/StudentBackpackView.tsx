@@ -1,4 +1,12 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { modoApi } from '@/features/servidor/config'
+import { appPaths } from '@/routes/paths'
+import {
+  consultarProgreso,
+  mensajeErrorServidor,
+  useEstadoServidor,
+} from '@/features/servidor/estadoServidor'
+import { textoRequisito } from '@/features/servidor/adaptadores'
 import {
   Backpack,
   BookOpen,
@@ -64,6 +72,7 @@ const kinds = [
 ] as const
 
 function StudentBackpackView() {
+  const servidor = useEstadoServidor()
   const adventure = useAdventure(),
     journey = useJourney(),
     navigate = useNavigate()
@@ -73,7 +82,28 @@ function StudentBackpackView() {
   const tabs = useRef<(HTMLButtonElement | null)[]>([])
   const [query, setQuery] = useState(''),
     [favoritesOnly, setFavoritesOnly] = useState(false),
-    [selectedId, setSelectedId] = useState<string | null>(null)
+    [selectedId, setSelectedId] = useState<string | null>(modoApi ? params.get('ficha') : null)
+  const [requisitoId, setRequisitoId] = useState<string | null>(null)
+  const [requisito, setRequisito] = useState('')
+  const [requisitoPendiente, setRequisitoPendiente] = useState(false)
+  useEffect(() => {
+    if (!modoApi || !requisitoId) return
+    let vigente = true
+    setRequisitoPendiente(true)
+    setRequisito('Consultando el requisito en el servidor…')
+    void consultarProgreso('FICHA', requisitoId).then((respuesta) => {
+      if (!vigente) return
+      setRequisito(
+        respuesta.tipo === 'ok'
+          ? textoRequisito(respuesta.datos, servidor.estado)
+          : mensajeErrorServidor(respuesta),
+      )
+      setRequisitoPendiente(false)
+    })
+    return () => {
+      vigente = false
+    }
+  }, [requisitoId, servidor.estado])
   const resources = getTravelResources(),
     selected = resources.find((r) => r.id === selectedId)
   const isUnlocked = (r: TravelResource) => isTravelResourceUnlocked(r, journey, adventure)
@@ -244,7 +274,9 @@ function StudentBackpackView() {
                         }
                         onOpen={() => openResource(resource)}
                         onFavorite={() => toggleFavorite(resource.id)}
-                        onRequirement={() => navigate(resourceRequirement(resource).url)}
+                        onRequirement={() =>
+                          modoApi ? setRequisitoId(resource.id) : navigate(resourceRequirement(resource).url)
+                        }
                       />
                     ))}
                     {type === 'testimonial' && !favoritesOnly && !query.trim() && (
@@ -339,6 +371,33 @@ function StudentBackpackView() {
           </DialogContent>
         )}
       </Dialog>
+      {modoApi && (
+        <Dialog
+          open={!!requisitoId}
+          onOpenChange={(open) => {
+            if (!open) setRequisitoId(null)
+          }}
+        >
+          <DialogContent className="resource-dialog max-w-xl">
+            <DialogHeader>
+              <DialogTitle>Cómo obtener esta ficha</DialogTitle>
+              <DialogDescription>{requisito}</DialogDescription>
+            </DialogHeader>
+            {!requisitoPendiente && (
+              <button
+                type="button"
+                className="sx-primary-button"
+                onClick={() => {
+                  setRequisitoId(null)
+                  navigate(appPaths.student.missions)
+                }}
+              >
+                Volver al camino
+              </button>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </DiscoveryStage>
   )
 }

@@ -1,4 +1,7 @@
 import { activities, catalog } from '../../missions/content'
+import { modoApi } from '@/features/servidor/config'
+import { obtenerEstadoServidor } from '@/features/servidor/estadoServidor'
+import { fichaDisponible } from '@/features/servidor/adaptadores'
 import type { JourneyState } from '../../missions/logic'
 import type { Recurso } from '../../missions/model'
 import { appPaths } from '@/routes/paths'
@@ -83,7 +86,7 @@ export function getTravelResources(): TravelResource[] {
         },
       ]
     })
-  return [
+  const resources: TravelResource[] = [
     {
       id: 'first-steps',
       title: 'Tres pistas para comenzar el viaje',
@@ -109,6 +112,13 @@ export function getTravelResources(): TravelResource[] {
       author: `${item.personName} · ${item.currentRole} · ${item.yearsExperience} años de experiencia`,
     })),
   ]
+  return modoApi
+    ? resources.filter(
+        (resource) =>
+          resource.kind === 'sheet' &&
+          obtenerEstadoServidor().estado?.fichas.some((f) => f.codigo === resource.id),
+      )
+    : resources
 }
 
 export function isTravelResourceUnlocked(
@@ -116,6 +126,8 @@ export function isTravelResourceUnlocked(
   journey: JourneyState,
   adventure: AdventureState,
 ) {
+  if (modoApi)
+    return resource.kind === 'sheet' && fichaDisponible(obtenerEstadoServidor().estado, resource.id)
   if ('activityId' in resource.requirement)
     return journey.progress[resource.requirement.activityId]?.estado === 'completada'
   if ('caseId' in resource.requirement) return adventure.solvedCaseIds.includes(resource.requirement.caseId)
@@ -123,6 +135,12 @@ export function isTravelResourceUnlocked(
 }
 
 export function resourceRequirement(resource: TravelResource) {
+  if (modoApi)
+    return {
+      text: 'Consulta el requisito de esta ficha.',
+      url: `${appPaths.student.resources}?requisito=${encodeURIComponent(resource.id)}`,
+      label: 'Ver requisito',
+    }
   const requirement = resource.requirement
   if ('activityId' in requirement) {
     const activity = activities.find((item) => item.id === requirement.activityId)

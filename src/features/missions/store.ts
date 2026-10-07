@@ -1,7 +1,9 @@
 import { useSyncExternalStore } from 'react'
 import { initialJourney, type JourneyState } from './logic'
 
-const key = 'ov.missions.v2'
+let key = 'ov.missions.v2'
+let cuentaServidor: string | null = null
+export const journeyEnServidor = () => cuentaServidor !== null
 // Keep initialJourney unchanged for other roles that reuse its legacy schema.
 const initialStudentJourney = (): JourneyState => ({
   ...initialJourney(),
@@ -10,7 +12,8 @@ const initialStudentJourney = (): JourneyState => ({
 })
 function read(): JourneyState {
   try {
-    const value = JSON.parse(localStorage.getItem(key) ?? 'null')
+    const almacen = JSON.parse(localStorage.getItem(key) ?? 'null')
+    const value = cuentaServidor ? almacen?.por_cuenta?.[cuentaServidor] : almacen
     const empty = initialStudentJourney()
     if (value?.version !== 2) return empty
     for (const name of Object.keys(empty)) {
@@ -46,7 +49,13 @@ const subscribe = (listener: () => void) => {
 export function updateJourney(update: (current: JourneyState) => JourneyState) {
   const next = update(state)
   try {
-    localStorage.setItem(key, JSON.stringify(next))
+    if (cuentaServidor) {
+      const almacen = JSON.parse(localStorage.getItem(key) ?? 'null')
+      localStorage.setItem(
+        key,
+        JSON.stringify({ por_cuenta: { ...almacen?.por_cuenta, [cuentaServidor]: next } }),
+      )
+    } else localStorage.setItem(key, JSON.stringify(next))
     state = next
     storageError = ''
   } catch {
@@ -54,6 +63,24 @@ export function updateJourney(update: (current: JourneyState) => JourneyState) {
   }
   listeners.forEach((listener) => listener())
   return !storageError
+}
+// Sin red ni configuración de Vite: el módulo de servidor configura y proyecta.
+export function configurarJourneyServidor(cuenta: string) {
+  if (cuentaServidor === cuenta) return
+  key = 'ov.missions.v2.api'
+  cuentaServidor = cuenta
+  state = read()
+  storageError = ''
+  listeners.forEach((listener) => listener())
+}
+export function hidratarJourneyServidor(proyectar: (actual: JourneyState) => JourneyState) {
+  const siguiente = proyectar(state)
+  // La copia en memoria refleja la BD aunque el navegador no permita persistirla.
+  const guardado = updateJourney(() => siguiente)
+  if (!guardado) {
+    state = siguiente
+    listeners.forEach((listener) => listener())
+  }
 }
 export const useJourney = () => useSyncExternalStore(subscribe, () => state)
 export const getJourneySnapshot = () => state

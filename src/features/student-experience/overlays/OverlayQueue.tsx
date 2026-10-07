@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { modoApi } from '@/features/servidor/config'
 import { useNavigate } from 'react-router'
 import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 import { useJourney } from '@/features/missions/store'
@@ -60,10 +61,13 @@ export function OverlayQueue({
     [announcementBlocked],
   )
   const additionalPending =
+    !modoApi &&
     view === 'missions' &&
     (reflections.desbloqueos.some((d) => !d.visto && isWithinStudentDemo(d.actividadId)) ||
       (!!reflections.anuncioAdicional && isWithinStudentDemo(reflections.anuncioAdicional.actividadId)))
-  const badge = getNextBadge(adventure, ui, activityOpen, announcementBlocked || additionalPending, journey)
+  const badge = modoApi
+    ? undefined
+    : getNextBadge(adventure, ui, activityOpen, announcementBlocked || additionalPending, journey)
   const guide =
     active?.kind === 'guide'
       ? active.steps

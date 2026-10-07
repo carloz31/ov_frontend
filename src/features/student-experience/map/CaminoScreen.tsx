@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useEstadoServidor } from '@/features/servidor/estadoServidor'
 import { useSearchParams } from 'react-router'
 import { activityById } from '@/features/missions/content'
 import { StudentActivityPlayer } from '../player/StudentActivityPlayer'
@@ -10,6 +11,7 @@ import '@/features/missions/journey.css'
 import { useReflections } from '../reflection/store'
 
 export function CaminoScreen() {
+  useEstadoServidor()
   const adventure = useAdventure()
   const journey = useJourney()
   useReflections()

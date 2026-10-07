@@ -1,4 +1,13 @@
 import type { JourneyState } from '@/features/missions/logic'
+import { modoApi } from '@/features/servidor/config'
+import { obtenerEstadoServidor } from '@/features/servidor/estadoServidor'
+import {
+  actividadServidor,
+  ciudadDisponible,
+  estadoPunto,
+  interaccionMara,
+  progresoCamino,
+} from '@/features/servidor/adaptadores'
 import { activityById } from '@/features/missions/content'
 import { BookOpen, Building2, ClipboardList, Feather, KeyRound, Swords, type LucideIcon } from 'lucide-react'
 import { getForestFireCaseStatus } from '@/features/occupation-exploration/lib/ForestFireCaseLogic'
@@ -98,6 +107,37 @@ export function getNextCaminoActivity(points: StudentMapPoint[]) {
 }
 
 export function getCaminoPoints(adventure: AdventureState, journey: JourneyState): StudentMapPoint[] {
+  if (modoApi) {
+    const estado = obtenerEstadoServidor().estado
+    return [
+      ...orderedMissions
+        .filter((m) => specActivityByMission[m.id])
+        .map((mission): StudentMapPoint => ({
+          id: mission.id,
+          title: mission.title,
+          x: mission.x,
+          y: mission.y,
+          subtitle: `${getActivityType(mission)} · ${getMissionMeta(mission)}`,
+          icon: getMissionIcon(mission),
+          zone: 'camino',
+          bloque: 1,
+          specActivityId: specActivityByMission[mission.id],
+          status: estadoPunto(actividadServidor(estado, specActivityByMission[mission.id]!)),
+          actionEnabled: true,
+        })),
+      {
+        id: 'city',
+        title: 'La llave de la ciudad',
+        subtitle: ciudadDisponible(estado) ? 'Entrar a la ciudad' : 'Destino al completar el camino',
+        x: 950,
+        y: 480,
+        icon: KeyRound,
+        zone: 'camino',
+        status: ciudadDisponible(estado) ? 'available' : 'locked',
+        actionEnabled: true,
+      },
+    ]
+  }
   return [
     ...orderedMissions.map((mission, index): StudentMapPoint => ({
       id: mission.id,
@@ -162,6 +202,45 @@ export function getCaminoPoints(adventure: AdventureState, journey: JourneyState
 }
 
 export function getCiudadPoints(adventure: AdventureState, journey: JourneyState): StudentMapPoint[] {
+  if (modoApi) {
+    const mara = interaccionMara(obtenerEstadoServidor().estado)
+    return [
+      ...cityCases.map((c): StudentMapPoint => ({
+        id: c.id,
+        title: c.title,
+        x: c.x,
+        y: c.y,
+        zone: 'ciudad',
+        subtitle: 'Disponible en una próxima iteración',
+        icon: Building2,
+        status: 'locked',
+        actionEnabled: false,
+      })),
+      {
+        id: 'mara-test',
+        title: mara.actividad?.titulo ?? 'Una vuelta por el molino',
+        subtitle: `Test · Interacción ${mara.numero} de 14`,
+        x: 875,
+        y: 530,
+        zone: 'ciudad',
+        icon: ClipboardList,
+        specActivityId: mara.actividad?.codigo,
+        status: estadoPunto(mara.actividad),
+        actionEnabled: true, // Permite abrir el detalle; el reproductor se incorpora en F5.
+      },
+      ...challenges.map((c, i): StudentMapPoint => ({
+        id: c.id,
+        title: c.titulo,
+        subtitle: 'Disponible en una próxima iteración',
+        x: 710 + i * 90,
+        y: 365,
+        zone: 'ciudad',
+        icon: Swords,
+        status: 'locked',
+        actionEnabled: false,
+      })),
+    ]
+  }
   const testCompleted = journey.progress['act-tip-01']?.estado === 'completada'
   const points: StudentMapPoint[] = [
     ...cityCases.map((item): StudentMapPoint => ({
@@ -216,6 +295,18 @@ export function getCiudadPoints(adventure: AdventureState, journey: JourneyState
 }
 
 export function getZoneProgress(zone: StudentZone, adventure: AdventureState, journey: JourneyState) {
+  if (modoApi) {
+    const estado = obtenerEstadoServidor().estado
+    const ciudad = estado?.bloques.find((b) => b.codigo === 'CIUDAD')?.actividades ?? []
+    return zone === 'missions'
+      ? { label: 'Nivel de recorrido', value: progresoCamino(estado).porcentaje }
+      : {
+          label: 'Recorrido por la ciudad',
+          value: ciudad.length
+            ? (ciudad.filter((a) => a.estado === 'COMPLETADA').length / ciudad.length) * 100
+            : 0,
+        }
+  }
   return zone === 'missions'
     ? {
         label: 'Nivel de recorrido',
@@ -239,7 +330,9 @@ export function getRecommendedPoint(points: StudentMapPoint[]) {
       points.find((point) => !point.additional && point.id !== 'city' && point.status === 'available') ??
       points.find((point) => point.id === 'city' && point.status === 'available')
     )
-  return points.find((point) => point.status === 'available' && point.actionEnabled)
+  return points.find(
+    (point) => point.status === 'available' && (point.actionEnabled || (modoApi && point.id === 'mara-test')),
+  )
 }
 
 export function getReturnGreeting(adventure: AdventureState, point?: StudentMapPoint, now = new Date()) {
@@ -276,6 +369,80 @@ export function getPointDetails(
   adventure: AdventureState,
   journey: JourneyState,
 ): PointDetails {
+  if (modoApi) {
+    const actividad = actividadServidor(obtenerEstadoServidor().estado, point.specActivityId ?? '')
+    const enCurso = actividad?.estado === 'EN_CURSO'
+    const badge =
+      point.status === 'completed'
+        ? 'Completada'
+        : point.status === 'locked'
+          ? 'Bloqueada'
+          : enCurso
+            ? 'En progreso'
+            : 'Disponible'
+    const mission = fieldMissions.find((m) => m.id === point.id)
+    if (mission)
+      return {
+        title: point.title,
+        region: mission.region,
+        badge,
+        meta: getMissionMeta(mission),
+        type: getActivityType(mission),
+        description: mission.description,
+        requirement: point.status === 'locked' ? 'Consultando el requisito en el servidor…' : undefined,
+        actionLabel:
+          point.status === 'locked'
+            ? 'Actividad bloqueada'
+            : point.status === 'completed'
+              ? getActivityType(mission) === 'Informativa'
+                ? 'Volver a realizar esta misión'
+                : 'Ver o modificar mis respuestas'
+              : enCurso
+                ? 'Continuar actividad'
+                : 'Iniciar actividad',
+        disabled: point.status === 'locked',
+        activityId: point.specActivityId,
+        revision: point.status === 'completed',
+      }
+    if (point.id === 'city')
+      return {
+        title: point.title,
+        region: 'Meta del recorrido',
+        badge,
+        meta: 'Ciudad',
+        type: 'Ciudad',
+        description: 'La ciudad te espera al final del camino.',
+        requirement: point.status === 'locked' ? 'Consultando el requisito en el servidor…' : undefined,
+        actionLabel: 'Ir a la ciudad',
+        disabled: point.status === 'locked',
+        href: appPaths.student.exploration,
+      }
+    if (point.id === 'mara-test') {
+      const mara = interaccionMara(obtenerEstadoServidor().estado)
+      return {
+        title: point.title,
+        region: 'Molino de la ciudad',
+        badge,
+        meta: `Interacción ${mara.numero} de 14`,
+        type: 'Test',
+        description: 'Conversa con Mara. No hay respuestas correctas o incorrectas.',
+        requirement: point.status === 'locked' ? 'Consultando el requisito en el servidor…' : undefined,
+        actionLabel: 'El encuentro estará listo pronto',
+        disabled: true,
+      }
+    }
+    return {
+      title: point.title,
+      region: 'Ciudad',
+      badge: 'Bloqueada',
+      meta: 'Próximamente',
+      type: challenges.some((c) => c.id === point.id) ? 'Desafío' : 'Central de casos',
+      description: 'Disponible en una próxima iteración',
+      requirement: 'Disponible en una próxima iteración',
+      actionLabel: 'No disponible',
+      disabled: true,
+    }
+  }
   const challenge = challenges.find((c) => c.id === point.id)
   const extra = additionalMissions.find((m) => m.id === point.id)
   if (extra)

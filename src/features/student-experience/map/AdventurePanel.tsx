@@ -1,4 +1,6 @@
 import { Link } from 'react-router'
+import { modoApi } from '@/features/servidor/config'
+import { useEstadoServidor } from '@/features/servidor/estadoServidor'
 import {
   Backpack,
   Building2,
@@ -40,12 +42,15 @@ export function AdventurePanel({
   onSelect: (id: string) => void
   onCheckIn: () => void
 }) {
-  const level = getTravelerLevel(adventure)
+  const servidor = useEstadoServidor()
+  const level = modoApi ? undefined : getTravelerLevel(adventure)
   const visible = getListedActivities(points, false).slice(0, 4)
   const greeting = getReturnGreeting(adventure, recommended)
   useCheckInDay()
   const signal = getTodayCheckIn(adventure)
   const percentage = Math.min(100, Math.max(0, progress.value))
+  const zonaCiudad =
+    progress.label === 'Afinidad con la ciudad' || progress.label === 'Recorrido por la ciudad'
   const circumference = 2 * Math.PI * 40
   return (
     <div className="sx-panel-content">
@@ -56,20 +61,22 @@ export function AdventurePanel({
           </span>
           <div>
             <span>¡Qué bueno verte!</span>
-            <strong>Alex</strong>
+            <strong>{modoApi ? servidor.estado?.cuenta.nombre : 'Alex'}</strong>
           </div>
           <ChevronRight aria-hidden="true" size={18} />
         </div>
-        <div className="sx-panel-level" aria-label={`Nivel ${level.number}: ${level.label}`}>
-          <span className="sx-level-medallion" aria-hidden="true">
-            <span>NIVEL</span>
-            <strong>{String(level.number).padStart(2, '0')}</strong>
-          </span>
-          <span className="sx-level-rank">
-            <strong>{level.label}</strong>
-            <small>Tu título de viajero</small>
-          </span>
-        </div>
+        {level && (
+          <div className="sx-panel-level" aria-label={`Nivel ${level.number}: ${level.label}`}>
+            <span className="sx-level-medallion" aria-hidden="true">
+              <span>NIVEL</span>
+              <strong>{String(level.number).padStart(2, '0')}</strong>
+            </span>
+            <span className="sx-level-rank">
+              <strong>{level.label}</strong>
+              <small>Tu título de viajero</small>
+            </span>
+          </div>
+        )}
       </Link>
       <section className="sx-panel-progress">
         <span
@@ -98,17 +105,21 @@ export function AdventurePanel({
         </span>
         <div>
           <span className="sx-panel-zone">
-            {progress.label === 'Afinidad con la ciudad' ? (
+            {zonaCiudad ? (
               <Building2 size={16} aria-hidden="true" />
             ) : (
               <MapPinned size={16} aria-hidden="true" />
             )}
-            {progress.label === 'Afinidad con la ciudad' ? 'Ciudad' : 'Camino'}
+            {zonaCiudad ? 'Ciudad' : 'Camino'}
           </span>
           <h2>{progress.label}</h2>
           <p>
             Crece con cada{' '}
-            {progress.label === 'Afinidad con la ciudad' ? 'llamado que atiendes.' : 'misión del camino.'}
+            {zonaCiudad
+              ? modoApi
+                ? 'interacción que completas.'
+                : 'llamado que atiendes.'
+              : 'misión del camino.'}
           </p>
         </div>
       </section>

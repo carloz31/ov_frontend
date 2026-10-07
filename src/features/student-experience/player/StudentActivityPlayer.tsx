@@ -1,14 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { modoApi } from '@/features/servidor/config'
+import { completarActividad } from '@/features/servidor/acciones'
+import { actividadServidor, textoBloqueo } from '@/features/servidor/adaptadores'
+import { mensajeErrorServidor, obtenerEstadoServidor } from '@/features/servidor/estadoServidor'
+import type { RespuestaCompletarActividad } from '@/features/servidor/tipos'
 import { catalog } from '@/features/missions/content'
 import {
   applyCompletion,
+  isActivityComplete,
   nextPendingNode,
   studentId,
   visibleNodes,
   type JourneyState,
 } from '@/features/missions/logic'
 import type { Actividad, Nodo, NodoDialogo } from '@/features/missions/model'
-import { updateJourney, useJourney, useJourneyError } from '@/features/missions/store'
+import { getJourneySnapshot, updateJourney, useJourney, useJourneyError } from '@/features/missions/store'
 import { DialogueBox } from './DialogueBox'
 import { PlayerAmbient } from './PlayerAmbient'
 import { PlayerTopBar } from './PlayerTopBar'
@@ -43,9 +49,24 @@ export function StudentActivityPlayer({
   const storageError = useJourneyError()
   const nodes = useMemo(() => visibleNodes(activity, direct), [activity, direct])
   const pageRef = useRef<HTMLDivElement>(null)
-  const [nodeId, setNodeId] = useState(() =>
-    edit ? nodes[0]?.id : nextPendingNode(activity, state, direct)?.id,
-  )
+  const [nodeId, setNodeId] = useState(() => {
+    if (edit) return nodes[0]?.id
+    if (modoApi && actividadServidor(obtenerEstadoServidor().estado, activity.id)?.estado === 'COMPLETADA')
+      return undefined
+    return nextPendingNode(activity, state, direct)?.id ?? (modoApi ? nodes.at(-1)?.id : undefined)
+  })
+  const enviando = useRef(false)
+  const montado = useRef(true)
+  const confirmacion = useRef<RespuestaCompletarActividad | undefined>(undefined)
+  const [guardando, setGuardando] = useState(false)
+  const [errorServidor, setErrorServidor] = useState('')
+  const [cierreServidor, setCierreServidor] = useState<RespuestaCompletarActividad>()
+  useEffect(() => {
+    montado.current = true
+    return () => {
+      montado.current = false
+    }
+  }, [])
   const [reactions, setReactions] = useState<NodoDialogo[]>([])
   const [resourceOpen, setResourceOpen] = useState(false)
   const [resourceIds, setResourceIds] = useState<string[]>([])
@@ -64,7 +85,7 @@ export function StudentActivityPlayer({
               [activity.id]: {
                 estudianteId: studentId,
                 actividadId: activity.id,
-                estado: 'en_curso',
+                estado: modoApi ? 'no_iniciada' : 'en_curso',
                 iniciadaEn: new Date().toISOString(),
                 nodoActualId: nodes[0]?.id,
               },
@@ -77,7 +98,7 @@ export function StudentActivityPlayer({
     setResourceOpen(false)
   }, [nodeId])
   useEffect(() => {
-    if (node?.tipo !== 'diapositiva') return
+    if (modoApi || node?.tipo !== 'diapositiva') return
     const sheets = (node.recursoIds ?? []).filter((id) =>
       catalog.recursos.some(
         (resource) => resource.id === id && resource.tipo === 'ficha' && resource.guardableEnRecursos,
@@ -92,9 +113,10 @@ export function StudentActivityPlayer({
     transform: (current: JourneyState) => JourneyState = (current) => current,
     response: NodoDialogo[] = [],
   ) {
+    if (enviando.current) return
     const saved = updateJourney((current) => {
       const changed = transform(current)
-      return applyCompletion(activity, {
+      const nextState: JourneyState = {
         ...changed,
         progress: {
           ...changed.progress,
@@ -102,12 +124,67 @@ export function StudentActivityPlayer({
             ...changed.progress[activity.id],
             estudianteId: studentId,
             actividadId: activity.id,
-            estado: changed.progress[activity.id]?.estado ?? 'en_curso',
-            nodoActualId: next?.id ?? '$fin',
+            estado: changed.progress[activity.id]?.estado ?? (modoApi ? 'no_iniciada' : 'en_curso'),
+            nodoActualId: next?.id ?? (modoApi ? nodeId : '$fin'),
           },
         },
-      })
+      }
+      return modoApi ? nextState : applyCompletion(activity, nextState)
     })
+    if (saved && modoApi && !next) {
+      const actual = getJourneySnapshot()
+      const candidato = {
+        ...actual,
+        progress: {
+          ...actual.progress,
+          [activity.id]: { ...actual.progress[activity.id], nodoActualId: '$fin' },
+        },
+      }
+      if (!confirmacion.current && !isActivityComplete(activity, candidato)) {
+        setErrorServidor('Completa las respuestas y comprobaciones pendientes antes de cerrar la actividad.')
+        return
+      }
+      // Único punto que informa $fin, tanto la primera vez como al repetir.
+      enviando.current = true
+      setGuardando(true)
+      setErrorServidor('')
+      void (async () => {
+        try {
+          const respuesta = await completarActividad(activity.id, confirmacion.current)
+          if (respuesta.tipo === 'guardado_sin_refrescar') confirmacion.current = respuesta.datos
+          if (!montado.current) return
+          if (respuesta.tipo === 'ok') {
+            setCierreServidor(respuesta.datos)
+            updateJourney((current) => ({
+              ...current,
+              progress: {
+                ...current.progress,
+                [activity.id]: { ...current.progress[activity.id], nodoActualId: '$fin' },
+              },
+            }))
+            setNodeId(undefined)
+            setReactions(response)
+          } else if (respuesta.tipo === 'bloqueado')
+            setErrorServidor(textoBloqueo(respuesta.detalle, obtenerEstadoServidor().estado))
+          else if (respuesta.tipo === 'guardado_sin_refrescar')
+            setErrorServidor(
+              'La actividad se guardó, pero no se pudo actualizar el camino. Reintenta la consulta.',
+            )
+          else
+            setErrorServidor(
+              respuesta.tipo === 'sin_conexion'
+                ? 'No se pudo guardar en el servidor'
+                : mensajeErrorServidor(respuesta),
+            )
+        } catch {
+          if (montado.current) setErrorServidor('No se pudo guardar en el servidor')
+        } finally {
+          enviando.current = false
+          if (montado.current) setGuardando(false)
+        }
+      })()
+      return
+    }
     if (saved) {
       setNodeId(next?.id)
       setReactions(response)
@@ -126,17 +203,19 @@ export function StudentActivityPlayer({
                 ),
               ]),
             ],
-            resources: [
-              ...new Set([
-                ...current.resources,
-                ...(node.recursoIds ?? []).filter((id) =>
-                  catalog.recursos.some(
-                    (resource) =>
-                      resource.id === id && resource.tipo === 'ficha' && resource.guardableEnRecursos,
-                  ),
-                ),
-              ]),
-            ],
+            resources: modoApi
+              ? current.resources
+              : [
+                  ...new Set([
+                    ...current.resources,
+                    ...(node.recursoIds ?? []).filter((id) =>
+                      catalog.recursos.some(
+                        (resource) =>
+                          resource.id === id && resource.tipo === 'ficha' && resource.guardableEnRecursos,
+                      ),
+                    ),
+                  ]),
+                ],
           }
         : current,
     )
@@ -217,12 +296,32 @@ export function StudentActivityPlayer({
         total={nodes.length}
         progress={progress}
         nuevoMomento={node?.nuevoMomento}
-        onClose={onClose}
+        onClose={() => {
+          if (!enviando.current) onClose()
+        }}
       />
       {storageError && (
         <p className="sx-player-error" role="alert">
           {storageError}
         </p>
+      )}
+      {guardando && (
+        <p className="sx-player-error" role="status">
+          Guardando la actividad en el servidor…
+        </p>
+      )}
+      {errorServidor && (
+        <div className="sx-player-error" role="alert">
+          <p>{errorServidor}</p>
+          <button
+            type="button"
+            className="sx-primary-button"
+            disabled={guardando}
+            onClick={() => move(undefined)}
+          >
+            Reintentar{confirmacion.current ? ' consulta' : ''}
+          </button>
+        </div>
       )}
       <main className="sx-player-stage">
         {reaction ? (
@@ -237,7 +336,12 @@ export function StudentActivityPlayer({
             />
           </div>
         ) : !node ? (
-          <FinishScreen activity={activity} onClose={onClose} onResources={openResources} />
+          <FinishScreen
+            activity={activity}
+            onClose={onClose}
+            onResources={openResources}
+            desbloqueosServidor={cierreServidor?.nuevos_desbloqueos}
+          />
         ) : matrix ? (
           <MatrixNode
             activity={activity}

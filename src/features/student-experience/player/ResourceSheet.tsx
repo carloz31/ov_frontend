@@ -1,4 +1,7 @@
 import { useRef } from 'react'
+import { modoApi } from '@/features/servidor/config'
+import { fichaDisponible } from '@/features/servidor/adaptadores'
+import { useEstadoServidor } from '@/features/servidor/estadoServidor'
 import { BookOpen, Check, ExternalLink, FileText, Headphones, Link2, Play } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
@@ -9,6 +12,7 @@ import { ResourceText } from './ContentBlocks'
 
 export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: string[]; onClose: () => void }) {
   const state = useJourney()
+  const servidor = useEstadoServidor()
   const returnFocus = useRef<HTMLElement | null>(null)
   const resources = [...new Set(ids)].flatMap(
     (id) => catalog.recursos.find((resource) => resource.id === id) ?? [],
@@ -76,7 +80,9 @@ export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: stri
                       onClick={() =>
                         updateJourney((current) => ({
                           ...current,
-                          resources: [...new Set([...current.resources, resource.id])],
+                          resources: modoApi
+                            ? current.resources
+                            : [...new Set([...current.resources, resource.id])],
                           readResourceIds: [
                             ...new Set([...(current.readResourceIds ?? current.resources), resource.id]),
                           ],
@@ -92,7 +98,14 @@ export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: stri
                   {!resource.url && !resource.contenido && (
                     <p>Este material estará disponible cuando lo prepare orientación.</p>
                   )}
-                  {resource.guardableEnRecursos && (resource.url || resource.contenido) && (
+                  {modoApi && resource.guardableEnRecursos && (
+                    <p>
+                      {fichaDisponible(servidor.estado, resource.id)
+                        ? 'En tu mochila'
+                        : 'La ficha se obtiene al completar la actividad.'}
+                    </p>
+                  )}
+                  {!modoApi && resource.guardableEnRecursos && (resource.url || resource.contenido) && (
                     <button
                       type="button"
                       className="sx-secondary-button"

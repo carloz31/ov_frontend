@@ -47,6 +47,9 @@ import { StudentSignalsView } from '@/features/student-experience/modules/Studen
 import { CommunityView } from '@/features/occupation-exploration/CommunityView'
 import { StudentResourcesView } from '@/features/student-experience/modules/StudentResourcesView'
 import { FamilyConversationsView } from '@/features/family-conversations/FamilyConversationsView'
+import { modoApi } from '@/features/servidor/config'
+import { guardarUsuarioIngreso } from '@/features/servidor/cuenta'
+import { prepararIngreso } from '@/features/servidor/acciones'
 
 const roleHomePaths: Record<PlatformRole, string> = {
   student: appPaths.student.missions,
@@ -74,11 +77,25 @@ function LoginRoute() {
   if (active) return <Navigate replace to={appPaths.roleSelection} />
   return (
     <LoginScreen
-      onEnter={() => {
+      onEnter={(usuario) => {
+        if (modoApi) {
+          guardarUsuarioIngreso(usuario)
+          prepararIngreso()
+        }
         startDemoAccess()
         navigate(appPaths.roleSelection, { replace: true })
       }}
     />
+  )
+}
+
+function SoloLocal({ children }: { children: React.ReactNode }) {
+  return modoApi ? (
+    <section className="sx-glass sx-player-card">
+      <p>Disponible en una próxima iteración.</p>
+    </section>
+  ) : (
+    children
   )
 }
 
@@ -101,15 +118,50 @@ function AppRoutes() {
           <Route element={<CiudadScreen />} path="exploration" />
           <Route element={<CaminoScreen />} path="missions" />
           <Route element={<StudentActivitiesView />} path="activities" />
-          <Route element={<ResearchRoute />} path="research" />
-          <Route element={<ResearchGuideView />} path="research/guion" />
+          <Route
+            element={
+              <SoloLocal>
+                <ResearchRoute />
+              </SoloLocal>
+            }
+            path="research"
+          />
+          <Route
+            element={
+              <SoloLocal>
+                <ResearchGuideView />
+              </SoloLocal>
+            }
+            path="research/guion"
+          />
           <Route element={<StudentJournalView />} path="journal" />
           <Route element={<StudentSignalsView />} path="journal/signal" />
-          <Route element={<CommunityView />} path="community" />
+          <Route
+            element={
+              <SoloLocal>
+                <CommunityView />
+              </SoloLocal>
+            }
+            path="community"
+          />
           <Route element={<StudentResourcesView />} path="resources" />
-          <Route element={<ResearchRoute />} path="investigations" />
+          <Route
+            element={
+              <SoloLocal>
+                <ResearchRoute />
+              </SoloLocal>
+            }
+            path="investigations"
+          />
           <Route element={<Navigate replace to={appPaths.student.passport} />} path="achievements" />
-          <Route element={<StudentFamilyConversationsView />} path="conversations" />
+          <Route
+            element={
+              <SoloLocal>
+                <StudentFamilyConversationsView />
+              </SoloLocal>
+            }
+            path="conversations"
+          />
           <Route element={<StudentCatalogView section="professions" />} path="catalog/professions" />
           <Route element={<StudentCatalogView section="careers" />} path="catalog/careers" />
           <Route element={<StudentCatalogView section="institutions" />} path="catalog/institutions" />
@@ -118,12 +170,37 @@ function AppRoutes() {
           <Route element={<OccupationDetailView />} path="catalog/professions/:occupationId" />
           <Route element={<InstitutionDetailView />} path="catalog/institutions/:institutionId" />
           <Route element={<ProfileRoute />} path="profile" />
-          <Route element={<HelenaBookView />} path="profile/helena" />
+          <Route
+            element={
+              modoApi ? (
+                <section className="sx-glass sx-player-card">
+                  <p>El libro de Helena estará listo pronto.</p>
+                </section>
+              ) : (
+                <HelenaBookView />
+              )
+            }
+            path="profile/helena"
+          />
           <Route element={<StudentPlansView />} path="profile/decisions" />
           <Route element={<Navigate replace to={appPaths.student.exploration} />} path="*" />
         </Route>
-        <Route element={<ExplorationCaseIntroPage />} path="cases/:caseId" />
-        <Route element={<ForestFireCasePage />} path="cases/:caseId/play" />
+        <Route
+          element={
+            <SoloLocal>
+              <ExplorationCaseIntroPage />
+            </SoloLocal>
+          }
+          path="cases/:caseId"
+        />
+        <Route
+          element={
+            <SoloLocal>
+              <ForestFireCasePage />
+            </SoloLocal>
+          }
+          path="cases/:caseId/play"
+        />
       </Route>
 
       <Route element={<ParentPortalModule />} path="/parent">

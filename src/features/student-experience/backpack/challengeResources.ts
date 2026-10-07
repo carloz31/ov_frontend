@@ -3,9 +3,11 @@ import {
   resourceRequirement,
   type TravelResource,
 } from '@/features/occupation-exploration/lib/TravelerResources'
+import { modoApi } from '@/features/servidor/config'
 import { challenges, challengeRewards } from '../challenges/data'
 
 export function getStudentTravelResources(): TravelResource[] {
+  if (modoApi) return getTravelResources()
   return [
     ...getTravelResources(),
     ...challengeRewards.flatMap((r): TravelResource[] => {
@@ -29,6 +31,7 @@ export function getStudentTravelResources(): TravelResource[] {
   ]
 }
 export function studentResourceRequirement(resource: TravelResource) {
+  if (modoApi) return resourceRequirement(resource)
   const activityId = 'activityId' in resource.requirement ? resource.requirement.activityId : undefined
   const challenge = challenges.find((c) => c.id === activityId)
   return challenge

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useEstadoServidor } from '@/features/servidor/estadoServidor'
 import { CheckCheck, Compass, Footprints, MapPin } from 'lucide-react'
 import { Link } from 'react-router'
 import { useJourney } from '@/features/missions/store'
@@ -11,6 +12,7 @@ import './history.css'
 import { useReflections } from '../reflection/store'
 
 export function StudentActivitiesView() {
+  useEstadoServidor()
   const adventure = useAdventure()
   const journey = useJourney()
   useReflections()

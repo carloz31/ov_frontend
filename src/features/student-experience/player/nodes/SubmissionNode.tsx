@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Check, Star } from 'lucide-react'
 import type { Actividad, Entregable, NodoConsigna } from '@/features/missions/model'
 import { applyCompletion, latestSubmission, studentId, validateSubmission } from '@/features/missions/logic'
-import { updateJourney, useJourney } from '@/features/missions/store'
+import { journeyEnServidor, updateJourney, useJourney } from '@/features/missions/store'
 import { CharacterAvatar } from '../CharacterAvatar'
 import { FollowUp } from '../followup/FollowUp'
 import { getFollowUpRecord, recoverFollowUp, setFollowUpRecord } from '../followup/followUpStore'
@@ -117,7 +117,7 @@ export function SubmissionNode({
             submissions: [...current.submissions, entry],
             drafts,
           }
-          return evaluated ? next : applyCompletion(activity, next)
+          return evaluated || journeyEnServidor() ? next : applyCompletion(activity, next)
         })
       ) {
         if (evaluated && content.tipo === 'texto') {
