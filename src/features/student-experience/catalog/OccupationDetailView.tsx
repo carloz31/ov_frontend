@@ -8,6 +8,10 @@ import { FavoriteButton } from '../discovery/FavoriteButton'
 import { Seal } from '../discovery/Seal'
 import { TrailBar } from '../discovery/TrailBar'
 import { useDiscovery } from '../discovery/discoveryStore'
+import { paginasReveladasApi } from '../discovery/discoveryStore'
+import { modoApi } from '@/features/servidor/config'
+import { useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { coincidenciasRiasec } from '@/features/servidor/adaptadores'
 import { discoveryPaths } from '../paths'
 import { appPaths } from '@/routes/paths'
 import { getOccupation, careersOfOccupation, getFamily, isAffine } from './catalogSelectors'
@@ -22,6 +26,14 @@ export function OccupationDetailView() {
     context = useOccupationExplorationContext(),
     discovery = useDiscovery(),
     adventure = useAdventure()
+  const servidor = useEstadoServidor()
+  const revelado =
+    modoApi &&
+    paginasReveladasApi(
+      discovery,
+      servidor.estado?.cuenta.codigo,
+      servidor.resultadoRiasec?.calculado_en,
+    ).includes('intereses')
   const occupation = getOccupation(occupationId)
   useCatalogVisit('occupation', occupation?.id)
   if (!occupation)
@@ -31,7 +43,15 @@ export function OccupationDetailView() {
       </DiscoveryStage>
     )
   const profile = context.profiles.find((p) => p.occupationId === occupation.id),
-    affinity = isAffine(occupation.id, discovery.revealedPages)
+    affinity = isAffine(
+      occupation.id,
+      discovery.revealedPages,
+      modoApi ? { resultado: servidor.resultadoRiasec, revelado } : undefined,
+    )
+  const coincidencia =
+    modoApi && revelado
+      ? coincidenciasRiasec(servidor.resultadoRiasec).find((c) => c.codigo === occupation.id)
+      : undefined
   const careers = careersOfOccupation(occupation.id)
   const videos = getClassroomInterviews(adventure).filter(
     (v) =>
@@ -126,7 +146,13 @@ export function OccupationDetailView() {
               <Sparkles aria-hidden="true" />
               <h3>{affinity}</h3>
               <p>Según lo que Helena descifró de tus intereses</p>
-              <small>Afinidad de demostración. No se calculó a partir de tus respuestas.</small>
+              {coincidencia ? (
+                <small>
+                  Posición {coincidencia.posicion} · correlación {coincidencia.correlacion}
+                </small>
+              ) : (
+                <small>Afinidad de demostración. No se calculó a partir de tus respuestas.</small>
+              )}
             </Parchment>
           )}
           {careers.length > 0 && (

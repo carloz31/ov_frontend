@@ -170,18 +170,7 @@ function AppRoutes() {
           <Route element={<OccupationDetailView />} path="catalog/professions/:occupationId" />
           <Route element={<InstitutionDetailView />} path="catalog/institutions/:institutionId" />
           <Route element={<ProfileRoute />} path="profile" />
-          <Route
-            element={
-              modoApi ? (
-                <section className="sx-glass sx-player-card">
-                  <p>El libro de Helena estará listo pronto.</p>
-                </section>
-              ) : (
-                <HelenaBookView />
-              )
-            }
-            path="profile/helena"
-          />
+          <Route element={<HelenaBookView />} path="profile/helena" />
           <Route element={<StudentPlansView />} path="profile/decisions" />
           <Route element={<Navigate replace to={appPaths.student.exploration} />} path="*" />
         </Route>

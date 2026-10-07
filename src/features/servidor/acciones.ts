@@ -6,6 +6,7 @@ import {
   limpiarEstadoServidor,
   prepararAlmacenesApi,
   refrescar,
+  sesionServidor,
 } from './estadoServidor'
 import type {
   CuentaResumen,
@@ -13,6 +14,8 @@ import type {
   RespuestaAccion,
   RespuestaCompletarActividad,
   RespuestaServidor,
+  RespuestaItemEntrada,
+  RespuestaItemsGuardados,
 } from './tipos'
 
 let inicio: Promise<RespuestaServidor<RespuestaAccion>> | null = null
@@ -73,11 +76,37 @@ export async function completarActividad(
   confirmada?: RespuestaCompletarActividad,
 ): Promise<Finalizacion> {
   const cuenta = cuentaActiva()
+  const sesion = sesionServidor()
   if (!modoApi || !cuenta)
     return { tipo: 'http', estado: 400, detalle: 'No hay una cuenta de servidor activa.' }
   const respuesta: RespuestaServidor<RespuestaCompletarActividad> = confirmada
     ? { tipo: 'ok', datos: confirmada }
     : await pedir('/acciones/completar-actividad', { cuenta, actividad })
+  if (respuesta.tipo !== 'ok') return respuesta
+  if (cuenta !== cuentaActiva() || sesion !== sesionServidor())
+    return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la acción.' }
+  const estado = await refrescar()
+  return estado.tipo === 'ok'
+    ? respuesta
+    : { tipo: 'guardado_sin_refrescar', datos: respuesta.datos, error: estado }
+}
+export type GuardadoItems =
+  | RespuestaServidor<RespuestaItemsGuardados>
+  | { tipo: 'guardado_sin_refrescar'; datos: RespuestaItemsGuardados; error: ErrorServidor }
+export async function responderItems(
+  actividad: string,
+  respuestas: RespuestaItemEntrada[],
+  confirmada?: RespuestaItemsGuardados,
+): Promise<GuardadoItems> {
+  const cuenta = cuentaActiva(),
+    sesion = sesionServidor()
+  if (!modoApi || !cuenta)
+    return { tipo: 'http', estado: 400, detalle: 'No hay una cuenta de servidor activa.' }
+  const respuesta: RespuestaServidor<RespuestaItemsGuardados> = confirmada
+    ? { tipo: 'ok', datos: confirmada }
+    : await pedir('/acciones/responder-items', { cuenta, actividad, respuestas })
+  if (cuenta !== cuentaActiva() || sesion !== sesionServidor())
+    return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la acción.' }
   if (respuesta.tipo !== 'ok') return respuesta
   const estado = await refrescar()
   return estado.tipo === 'ok'

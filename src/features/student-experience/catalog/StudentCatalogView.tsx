@@ -6,6 +6,14 @@ import { DiscoveryStage } from '../discovery/DiscoveryStage'
 import { FavoriteButton } from '../discovery/FavoriteButton'
 import { Seal } from '../discovery/Seal'
 import { useDiscovery } from '../discovery/discoveryStore'
+import { paginasReveladasApi } from '../discovery/discoveryStore'
+import { modoApi } from '@/features/servidor/config'
+import {
+  cargarResultadoRiasec,
+  mensajeErrorServidor,
+  useEstadoServidor,
+} from '@/features/servidor/estadoServidor'
+import { coincidenciasRiasec, textoAjuste } from '@/features/servidor/adaptadores'
 import { discoveryPaths } from '../paths'
 import {
   careerDetails,
@@ -37,17 +45,39 @@ export function StudentCatalogView({ section }: { section: 'professions' | 'care
     discovery = useDiscovery(),
     [params] = useSearchParams()
   const [query, setQuery] = useState('')
+  const servidor = useEstadoServidor()
+  const revelado =
+    modoApi &&
+    paginasReveladasApi(
+      discovery,
+      servidor.estado?.cuenta.codigo,
+      servidor.resultadoRiasec?.calculado_en,
+    ).includes('intereses')
+  const afinidadApi = modoApi ? { resultado: servidor.resultadoRiasec, revelado } : undefined
+  const coincidencias = modoApi && revelado ? coincidenciasRiasec(servidor.resultadoRiasec) : []
   const copy = sectionCopy[section]
   const obtained = (id: string) =>
     context.profiles.some((p) => p.occupationId === id && p.discoveryState !== 'unused')
   const obtainedCount = occupationDetails.filter((o) => obtained(o.id)).length
-  const occupations = occupationDetails
-    .filter((o) => matchesName(o.name, query))
+  const occupations = [
+    ...occupationDetails.map((occupation) => ({
+      occupation,
+      match: coincidencias.find((c) => c.codigo === occupation.id),
+    })),
+    ...(modoApi && params.get('afines') === '1'
+      ? coincidencias
+          .filter((c) => !occupationDetails.some((o) => o.id === c.codigo))
+          .map((match) => ({ occupation: undefined, match }))
+      : []),
+  ]
+    .filter(({ occupation, match }) => matchesName(occupation?.name ?? match?.titulo ?? '', query))
     .sort((a, b) =>
-      params.get('afines') === '1'
-        ? Number(!!isAffine(b.id, discovery.revealedPages)) -
-          Number(!!isAffine(a.id, discovery.revealedPages))
-        : 0,
+      params.get('afines') !== '1'
+        ? 0
+        : modoApi
+          ? (a.match?.posicion ?? Infinity) - (b.match?.posicion ?? Infinity)
+          : Number(!!isAffine(b.occupation!.id, discovery.revealedPages)) -
+            Number(!!isAffine(a.occupation!.id, discovery.revealedPages)),
     )
   const careers = careerDetails.filter((c) => matchesName(c.name, query)),
     institutions = institutionDetails.filter((i) => matchesName(i.name, query))
@@ -85,6 +115,24 @@ export function StudentCatalogView({ section }: { section: 'professions' | 'care
         />
       </label>
       <div className="sx-d-columns">
+        {modoApi && params.get('afines') === '1' && servidor.errorResultado && (
+          <section role="alert">
+            <p>{mensajeErrorServidor(servidor.errorResultado)}</p>
+            <button className="sx-d-action" onClick={() => void cargarResultadoRiasec()}>
+              Reintentar consulta
+            </button>
+          </section>
+        )}
+        {modoApi && params.get('afines') === '1' && servidor.resultadoRiasec?.perfil_plano && (
+          <p>
+            Tus respuestas todavía no distinguen un interés. No hay ocupaciones afines para este resultado.
+          </p>
+        )}
+        {modoApi && params.get('afines') === '1' && !revelado && !servidor.errorResultado && (
+          <Link className="sx-d-action" to="/student/profile/helena">
+            Revela tu página de intereses para consultar las afinidades.
+          </Link>
+        )}
         {section === 'careers' &&
           careers.map((c) => (
             <article className="sx-d-parchment sx-d-atlas-card" key={c.id}>
@@ -103,36 +151,51 @@ export function StudentCatalogView({ section }: { section: 'professions' | 'care
             </article>
           ))}
         {section === 'professions' &&
-          occupations.map((o) => (
-            <article className="sx-d-parchment sx-d-atlas-card" key={o.id}>
-              <FavoriteButton
-                compact
-                selected={context.profiles.some((p) => p.occupationId === o.id && p.interested)}
-                onToggle={() => context.toggleOccupationInterest(o.id)}
-              />
-              <Link to={discoveryPaths.occupation(o.id)} className="sx-d-card-link">
-                <BriefcaseBusiness aria-hidden="true" />
-                <h2>{o.name}</h2>
-                <div className="sx-d-seal-row">
-                  {o.highPoints.map((d) => (
-                    <span key={d} title={dimensionNames[d]}>
-                      <Seal state="revealed">{d}</Seal>
-                    </span>
-                  ))}
-                </div>
-                <p className="sx-d-clamp-two">{o.whatTheyDo}</p>
-                {obtained(o.id) && <span className="sx-d-tag">Ícono obtenido</span>}
-                {params.get('afines') === '1' && isAffine(o.id, discovery.revealedPages) && (
-                  <p>Afín a tu perfil · Demostración</p>
-                )}
-                <small>
-                  {o.contentStatus === 'pending'
-                    ? 'Ficha en preparación desde O*NET'
-                    : 'Perfil de intereses de demostración'}
-                </small>
-              </Link>
-            </article>
-          ))}
+          occupations.map(({ occupation: o, match }) =>
+            o ? (
+              <article className="sx-d-parchment sx-d-atlas-card" key={o.id}>
+                <FavoriteButton
+                  compact
+                  selected={context.profiles.some((p) => p.occupationId === o.id && p.interested)}
+                  onToggle={() => context.toggleOccupationInterest(o.id)}
+                />
+                <Link to={discoveryPaths.occupation(o.id)} className="sx-d-card-link">
+                  <BriefcaseBusiness aria-hidden="true" />
+                  <h2>{o.name}</h2>
+                  <div className="sx-d-seal-row">
+                    {o.highPoints.map((d) => (
+                      <span key={d} title={dimensionNames[d]}>
+                        <Seal state="revealed">{d}</Seal>
+                      </span>
+                    ))}
+                  </div>
+                  <p className="sx-d-clamp-two">{o.whatTheyDo}</p>
+                  {obtained(o.id) && <span className="sx-d-tag">Ícono obtenido</span>}
+                  {params.get('afines') === '1' && isAffine(o.id, discovery.revealedPages, afinidadApi) && (
+                    <p>
+                      {modoApi && match
+                        ? `Afín a tu perfil · ${textoAjuste(match.ajuste)} · posición ${match.posicion} · correlación ${match.correlacion}`
+                        : 'Afín a tu perfil · Demostración'}
+                    </p>
+                  )}
+                  <small>
+                    {o.contentStatus === 'pending'
+                      ? 'Ficha en preparación desde O*NET'
+                      : 'Perfil de intereses de demostración'}
+                  </small>
+                </Link>
+              </article>
+            ) : (
+              <article className="sx-d-parchment sx-d-atlas-card" key={match!.codigo_onet}>
+                <h2>{match!.titulo}</h2>
+                <p>
+                  Afín a tu perfil · {textoAjuste(match!.ajuste)} · posición {match!.posicion} · correlación{' '}
+                  {match!.correlacion}
+                </p>
+                <small>Detalle aún no disponible en el catálogo.</small>
+              </article>
+            ),
+          )}
         {section === 'institutions' &&
           institutions.map((i) => (
             <article className="sx-d-parchment sx-d-atlas-card" key={i.id}>

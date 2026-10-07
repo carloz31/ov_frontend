@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router'
 import { modoApi } from '@/features/servidor/config'
 import { useEstadoServidor } from '@/features/servidor/estadoServidor'
-import { progresoCamino } from '@/features/servidor/adaptadores'
+import { progresoCamino, paginaInteresesServidor } from '@/features/servidor/adaptadores'
 import { Eye, Heart, Sparkles } from 'lucide-react'
 import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
 import {
@@ -50,9 +50,19 @@ export function StudentProfileView() {
       <DiscoveryStage ambient="profile">
         <Parchment title={servidor.estado?.cuenta.nombre ?? 'Mi perfil'}>
           <TrailBar label="Recorrido" value={progresoCamino(servidor.estado).porcentaje} />
+          <p>Tus fichas ya están en la mochila. Los sellos del pasaporte y el nivel estarán listos pronto.</p>
+          <Link className="sx-d-action" to="/student/profile/helena">
+            Abrir el libro de Helena
+          </Link>
           <p>
-            Tus fichas ya están en la mochila. El libro de Helena, los sellos y el nivel estarán listos
-            pronto.
+            {paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery).state === 'ready'
+              ? 'Tu página de intereses está lista para revelar.'
+              : paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery).state ===
+                  'revealed'
+                ? 'Tu página de intereses está descifrada.'
+                : servidor.errorResultado
+                  ? 'No se pudo consultar tu resultado.'
+                  : 'Conversa con Mara para reunir las pistas de tus intereses.'}
           </p>
           <Link className="sx-d-action" to={appPaths.student.resources}>
             Abrir mi mochila

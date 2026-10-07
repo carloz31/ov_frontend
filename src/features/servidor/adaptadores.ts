@@ -1,4 +1,7 @@
 import type { JourneyState } from '../missions/logic'
+import type { Actividad } from '../missions/model'
+import type { HelenaPage } from '../student-experience/profile/helenaPages'
+import type { StudentDiscoveryState } from '../student-experience/discovery/discoveryStore'
 import type {
   ActividadEstado,
   DesbloqueoNuevo,
@@ -6,6 +9,10 @@ import type {
   EstadoCuenta,
   ProgresoObjetivo,
   TipoObjetivo,
+  ItemPublico,
+  RespuestaPublica,
+  ResultadoPublico,
+  CoincidenciaPublica,
 } from './tipos'
 
 export const actividadServidor = (estado: EstadoCuenta | null, codigo: string): ActividadEstado | undefined =>
@@ -112,4 +119,120 @@ export function textosDesbloqueos(desbloqueos: DesbloqueoNuevo[]) {
         return []
     }
   })
+}
+
+// DATO DE PRUEBA: saludos para los encuentros 02–14, mientras se prepara su narrativa.
+const saludosMara = [
+  '¡Qué bueno verte otra vez! Acompáñame un rato y conversemos sobre lo que te gusta hacer.',
+  '¡Hola de nuevo! Hoy tengo otras ideas para conocerte un poco más.',
+  '¡Llegaste! Sigamos descubriendo qué actividades despiertan tu curiosidad.',
+]
+export function construirInteraccionMara(
+  actividad: ActividadEstado,
+  items: ItemPublico[],
+  saludoInicial: string,
+): Actividad {
+  const numero = Number(actividad.codigo.slice(-2))
+  return {
+    id: actividad.codigo,
+    tipo: 'instrumento',
+    titulo: actividad.titulo,
+    subtitulo: `Interacción ${numero} de 14 · Test de intereses`,
+    bloque: 2,
+    orden: numero,
+    obligatoria: true,
+    requisitos: [],
+    duracionEstimadaMin: 4,
+    personajeIds: ['mara'],
+    nodos: [
+      {
+        id: `${actividad.codigo}-saludo`,
+        tipo: 'dialogo',
+        hablanteId: 'mara',
+        texto: numero === 1 ? saludoInicial : saludosMara[(numero - 2) % 3],
+      },
+      ...[...items]
+        .sort((a, b) => a.orden - b.orden)
+        .map((item) => ({
+          id: `${actividad.codigo}-${item.codigo}`,
+          tipo: 'item' as const,
+          instrumentoId: item.instrumento,
+          itemId: item.codigo,
+          hablanteId: 'mara',
+          etiqueta: 'Para conocerte mejor:',
+        })),
+      // DATO DE PRUEBA: despedida común de las interacciones RIASEC.
+      {
+        id: `${actividad.codigo}-despedida`,
+        tipo: 'dialogo',
+        hablanteId: 'mara',
+        texto:
+          'Gracias por compartir estas pistas conmigo. Seguiremos conversando en nuestro próximo encuentro.',
+      },
+    ],
+  }
+}
+export function inicioInteraccionMara(
+  actividad: Actividad,
+  respuestas: RespuestaPublica[],
+  revision = false,
+) {
+  const items = actividad.nodos.filter((n) => n.tipo === 'item')
+  if (revision) return items[0]?.id ?? actividad.nodos[0]?.id
+  if (!respuestas.length) return actividad.nodos[0]?.id
+  return items.find((n) => !respuestas.some((r) => r.item === n.itemId))?.id ?? actividad.nodos.at(-1)?.id
+}
+export function areasRiasec(resultado: ResultadoPublico | null) {
+  if (!resultado || resultado.perfil_plano) return []
+  return [...(resultado.codigo_interes?.codigo ?? '')].slice(0, 3).flatMap((codigo) => {
+    const dimension = resultado.dimensiones.find((d) => d.codigo === codigo)
+    return dimension ? [dimension] : []
+  })
+}
+export function coincidenciasRiasec(resultado: ResultadoPublico | null) {
+  return !resultado || resultado.perfil_plano
+    ? []
+    : [...(resultado.coincidencias ?? [])].sort((a, b) => a.posicion - b.posicion)
+}
+export const textoAjuste = (ajuste: CoincidenciaPublica['ajuste']) =>
+  ({ BEST_FIT: 'Mejor ajuste', GREAT_FIT: 'Gran ajuste', GOOD_FIT: 'Buen ajuste' })[ajuste]
+export function paginaInteresesServidor(
+  estado: EstadoCuenta | null,
+  resultado: ResultadoPublico | null,
+  discovery: StudentDiscoveryState,
+): HelenaPage {
+  const revelado =
+    !!estado &&
+    !!resultado &&
+    discovery.revealedPagesApi?.[estado.cuenta.codigo]?.[resultado.calculado_en]?.includes('intereses')
+  return {
+    id: 'intereses',
+    numeral: 'I',
+    title: 'Lo que te atrae hacer',
+    subtitle: 'Tus intereses',
+    required: true,
+    state: !resultado ? 'sealed' : revelado ? 'revealed' : 'ready',
+    missions: {
+      done:
+        estado?.bloques
+          .flatMap((b) => b.actividades)
+          .filter((a) => /^act-tip-\d{2}$/.test(a.codigo) && a.estado === 'COMPLETADA').length ?? 0,
+      total: 14,
+    },
+    demo: false,
+    teaser: 'Esta página aún guarda pistas sobre lo que te atrae hacer.',
+    activityHref: `/student/exploration?actividad=${interaccionMara(estado).actividad?.codigo ?? 'act-tip-01'}`,
+    perfilPlano: resultado?.perfil_plano,
+    result: revelado
+      ? {
+          source: 'real',
+          areas: areasRiasec(resultado).map((d) => ({
+            code: d.codigo,
+            name: d.nombre,
+            score: d.porcentaje,
+            description: `Te atraen actividades vinculadas con ${d.nombre.toLocaleLowerCase()}.`,
+          })),
+        }
+      : undefined,
+  }
 }

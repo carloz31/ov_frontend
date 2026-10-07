@@ -6,17 +6,92 @@ import { LockKeyhole, Eye, BookOpen, Brain, Users } from 'lucide-react'
 import { Sheet, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/Sheet'
 import { useJourney } from '@/features/missions/store'
 import { appPaths } from '@/routes/paths'
-import { useDiscovery, updateDiscovery } from '../discovery/discoveryStore'
+import {
+  useDiscovery,
+  updateDiscovery,
+  revelarPaginaApi,
+  paginasReveladasApi,
+} from '../discovery/discoveryStore'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
 import { Parchment } from '../discovery/Parchment'
 import { Seal } from '../discovery/Seal'
 import { TrailBar } from '../discovery/TrailBar'
 import type { InstrumentPageId } from '../discovery/discoveryStore'
-import { getHelenaPages } from './helenaPages'
+import { getHelenaPages, getHelenaPagesApi } from './helenaPages'
+import { modoApi } from '@/features/servidor/config'
+import {
+  cargarResultadoRiasec,
+  consultarAvanceInstrumentos,
+  consultarProgreso,
+  mensajeErrorServidor,
+  useEstadoServidor,
+} from '@/features/servidor/estadoServidor'
+import { ciudadDisponible, textoRequisito, paginaInteresesServidor } from '@/features/servidor/adaptadores'
+import { discoveryPaths } from '../paths'
+import { occupationDetails } from '../catalog/catalogDetails'
 
 export function HelenaBookView() {
   const focus = useReturnFocus()
-  const pages = getHelenaPages(useJourney(), useDiscovery())
+  const journey = useJourney(),
+    discovery = useDiscovery(),
+    servidor = useEstadoServidor()
+  const pages = modoApi
+    ? getHelenaPagesApi(
+        paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery),
+        paginasReveladasApi(
+          discovery,
+          servidor.estado?.cuenta.codigo,
+          servidor.resultadoRiasec?.calculado_en,
+        ),
+      )
+    : getHelenaPages(journey, discovery)
+  const [requisito, setRequisito] = useState('Consultando el avance de tus encuentros…')
+  const [errorConsulta, setErrorConsulta] = useState('')
+  const [intento, setIntento] = useState(0)
+  useEffect(() => {
+    if (!modoApi) return
+    let vigente = true
+    void (async () => {
+      const resultado = await cargarResultadoRiasec()
+      if (!vigente) return
+      if (resultado.tipo !== 'ok') {
+        setErrorConsulta(mensajeErrorServidor(resultado))
+        return
+      }
+      if (resultado.datos) {
+        setErrorConsulta('')
+        return
+      }
+      if (!ciudadDisponible(servidor.estado)) {
+        const progreso = await consultarProgreso('BLOQUE', 'CIUDAD')
+        if (!vigente) return
+        if (progreso.tipo === 'ok') {
+          setRequisito(textoRequisito(progreso.datos, servidor.estado))
+          setErrorConsulta('')
+        } else setErrorConsulta(mensajeErrorServidor(progreso))
+      } else {
+        const avance = await consultarAvanceInstrumentos()
+        if (!vigente) return
+        if (avance.tipo !== 'ok') {
+          setErrorConsulta(mensajeErrorServidor(avance))
+          return
+        }
+        const aplicacion = avance.datos
+          .find((i) => i.instrumento === 'TEST-RIASEC')
+          ?.aplicaciones.find((a) => a.aplicacion === 'APL-RIASEC')
+        const primera = aplicacion?.actividades.faltantes[0]
+        setRequisito(
+          primera
+            ? `Conversa con Mara: interacción ${Number(primera.slice(-2))} de 14.`
+            : 'Elena está preparando tu resultado.',
+        )
+        setErrorConsulta('')
+      }
+    })()
+    return () => {
+      vigente = false
+    }
+  }, [servidor.estado, intento])
   const [meaning, setMeaning] = useState(false)
   const [opening, setOpening] = useState<InstrumentPageId>()
   useEffect(() => {
@@ -60,7 +135,7 @@ export function HelenaBookView() {
             <p>{p.subtitle}</p>
             {p.demo && (
               <p className="sx-d-demo">
-                Demostración ·{' '}
+                {modoApi ? 'Disponible en una próxima iteración · ' : 'Demostración · '}
                 {p.id === 'intereses'
                   ? 'Este ejemplo no es tu resultado personal.'
                   : 'Este instrumento aún no está disponible.'}
@@ -79,6 +154,26 @@ export function HelenaBookView() {
                 <p>
                   <em>{p.teaser}</em>
                 </p>
+                {modoApi && p.id === 'intereses' && (
+                  <>
+                    {errorConsulta || servidor.errorResultado ? (
+                      <>
+                        <p role="alert">{errorConsulta || mensajeErrorServidor(servidor.errorResultado)}</p>
+                        <button
+                          className="sx-d-action"
+                          onClick={() => {
+                            setErrorConsulta('')
+                            setIntento((i) => i + 1)
+                          }}
+                        >
+                          Reintentar consulta
+                        </button>
+                      </>
+                    ) : (
+                      <p>{requisito}</p>
+                    )}
+                  </>
+                )}
                 <TrailBar
                   label={`Misiones de Helena · ${p.missions.done} de ${p.missions.total}`}
                   value={(p.missions.done / p.missions.total) * 100}
@@ -107,7 +202,18 @@ export function HelenaBookView() {
                 <button
                   type="button"
                   className="sx-d-action sx-d-action-gold sx-d-full"
+                  disabled={modoApi && !servidor.resultadoRiasec}
                   onClick={() => {
+                    if (modoApi) {
+                      if (!servidor.resultadoRiasec || !servidor.estado) return
+                      revelarPaginaApi(
+                        servidor.estado.cuenta.codigo,
+                        servidor.resultadoRiasec.calculado_en,
+                        p.id,
+                      )
+                      setOpening(p.id)
+                      return
+                    }
                     setOpening(p.id)
                     updateDiscovery((s) =>
                       s.revealedPages.includes(p.id)
@@ -134,13 +240,23 @@ export function HelenaBookView() {
                         <div key={a.code}>
                           <Seal state="revealed">{a.code}</Seal>
                           <strong>{a.name}</strong>
+                          {modoApi && <span>{a.score}%</span>}
                         </div>
                       ))}
                     </div>
                     <p>{p.result?.areas[0]?.description}</p>
-                    <Link className="sx-d-action" to={`${appPaths.student.catalog.professions}?afines=1`}>
-                      Ocupaciones afines
-                    </Link>
+                    {p.perfilPlano ? (
+                      <>
+                        <p>Tus respuestas todavía no distinguen un interés.</p>
+                        <Link className="sx-d-action" to="/student/exploration?punto=mara-test">
+                          Revisar mis encuentros con Mara
+                        </Link>
+                      </>
+                    ) : (
+                      <Link className="sx-d-action" to={`${appPaths.student.catalog.professions}?afines=1`}>
+                        Ocupaciones afines
+                      </Link>
+                    )}
                     {p.demo ? (
                       <button
                         type="button"
@@ -152,11 +268,46 @@ export function HelenaBookView() {
                     ) : (
                       <Link
                         className="sx-d-action sx-d-action-ghost"
-                        to="/student/exploration?actividad=act-tip-01&modo=directa"
+                        to={
+                          modoApi
+                            ? '/student/exploration?actividad=act-tip-final&revision=1'
+                            : '/student/exploration?actividad=act-tip-01&modo=directa'
+                        }
                       >
                         Qué significa
                       </Link>
                     )}
+                    {modoApi &&
+                      !p.perfilPlano &&
+                      !!servidor.resultadoRiasec?.carreras_recomendadas?.length && (
+                        <section>
+                          <h3>Carreras que conducen a ellas</h3>
+                          <ul>
+                            {servidor.resultadoRiasec.carreras_recomendadas.map((c) => (
+                              <li key={c.codigo}>
+                                <Link className="sx-d-action" to={discoveryPaths.career(c.codigo)}>
+                                  {c.nombre}
+                                </Link>
+                                <p>
+                                  Por estas ocupaciones:{' '}
+                                  {c.via.map((o, indice) => (
+                                    <span key={o.codigo ?? o.titulo}>
+                                      {indice > 0 && ', '}
+                                      {o.codigo &&
+                                      occupationDetails.some((detalle) => detalle.id === o.codigo) ? (
+                                        <Link to={discoveryPaths.occupation(o.codigo)}>{o.titulo}</Link>
+                                      ) : (
+                                        o.titulo
+                                      )}
+                                    </span>
+                                  ))}
+                                  .
+                                </p>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )}
                   </>
                 ) : (
                   <>

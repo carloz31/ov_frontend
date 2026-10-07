@@ -57,3 +57,32 @@ test('local mantiene claves, finalización y recomendaciones sin consultar al se
   assert.equal(app.requests.length, 0)
   player.unmount()
 })
+test('Mara, resultado, libro y afinidad locales conservan sus fuentes sin ejecutar adaptadores API', () => {
+  const app = fixtureServidor({ api: false })
+  const adaptadores = app.load('src/features/servidor/adaptadores.ts')
+  for (const key of Object.keys(adaptadores))
+    adaptadores[key] = () => {
+      throw Error('Se usó un adaptador API en local')
+    }
+  const content = app.load('src/features/missions/content.ts'),
+    journey = app.load('src/features/missions/store.ts'),
+    d = app.load('src/features/student-experience/discovery/discoveryStore.ts')
+  assert.ok(content.activityById('act-tip-01').nodos.some((n) => n.itemId === 'tip-001'))
+  app
+    .load('src/features/student-experience/player/nodes/ResultNode.tsx')
+    .ResultNode({ activity: content.finalActivity, instrumentId: 'tip' })
+  const pages = app
+    .load('src/features/student-experience/profile/helenaPages.ts')
+    .getHelenaPages(journey.getJourneySnapshot(), d.getDiscovery())
+  assert.equal(pages[0].demo, true)
+  // El catálogo local conserva su exclusión actual de contenido pendiente.
+  assert.equal(
+    app
+      .load('src/features/student-experience/catalog/catalogSelectors.ts')
+      .isAffine('psychologist', ['intereses']),
+    undefined,
+  )
+  app.load('src/features/student-experience/profile/HelenaBookView.tsx').HelenaBookView()
+  assert.equal(app.requests.length, 0)
+  assert.equal(d.getDiscovery().revealedPagesApi, undefined)
+})

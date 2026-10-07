@@ -226,7 +226,20 @@ export function getCiudadPoints(adventure: AdventureState, journey: JourneyState
         icon: ClipboardList,
         specActivityId: mara.actividad?.codigo,
         status: estadoPunto(mara.actividad),
-        actionEnabled: true, // Permite abrir el detalle; el reproductor se incorpora en F5.
+        actionEnabled: true,
+      },
+      {
+        id: 'elena-result',
+        title: 'Las pistas que hablan de ti',
+        subtitle: 'Encuentro con Elena',
+        x: 1030,
+        y: 610,
+        zone: 'ciudad',
+        icon: BookOpen,
+        specActivityId: 'act-tip-final',
+        status: estadoPunto(actividadServidor(obtenerEstadoServidor().estado, 'act-tip-final')),
+        actionEnabled:
+          estadoPunto(actividadServidor(obtenerEstadoServidor().estado, 'act-tip-final')) !== 'locked',
       },
       ...challenges.map((c, i): StudentMapPoint => ({
         id: c.id,
@@ -347,6 +360,7 @@ export function getReturnGreeting(adventure: AdventureState, point?: StudentMapP
 }
 
 export type PointDetails = {
+  reviewActivities?: { codigo: string; titulo: string }[]
   caseProgress?: boolean
   title: string
   region: string
@@ -427,10 +441,38 @@ export function getPointDetails(
         type: 'Test',
         description: 'Conversa con Mara. No hay respuestas correctas o incorrectas.',
         requirement: point.status === 'locked' ? 'Consultando el requisito en el servidor…' : undefined,
-        actionLabel: 'El encuentro estará listo pronto',
-        disabled: true,
+        actionLabel:
+          point.status === 'locked'
+            ? 'Encuentro bloqueado'
+            : point.status === 'completed'
+              ? 'Revisar encuentro'
+              : 'Conversar con Mara',
+        disabled: point.status === 'locked',
+        activityId: mara.actividad?.codigo,
+        revision: point.status === 'completed',
+        reviewActivities: obtenerEstadoServidor()
+          .estado?.bloques.flatMap((b) => b.actividades)
+          .filter((a) => /^act-tip-\d{2}$/.test(a.codigo) && a.estado === 'COMPLETADA')
+          .map((a) => ({
+            codigo: a.codigo,
+            titulo: `Interacción ${Number(a.codigo.slice(-2))} · ${a.titulo}`,
+          })),
       }
     }
+    if (point.id === 'elena-result')
+      return {
+        title: point.title,
+        region: 'Río de la ciudad',
+        badge,
+        meta: 'Tus intereses',
+        type: 'Resultado',
+        description: 'Elena reúne las pistas de tus encuentros con Mara.',
+        requirement: point.status === 'locked' ? 'Completa los 14 encuentros con Mara.' : undefined,
+        actionLabel: point.status === 'completed' ? 'Revisar resultado' : 'Conversar con Elena',
+        disabled: point.status === 'locked',
+        activityId: 'act-tip-final',
+        revision: point.status === 'completed',
+      }
     return {
       title: point.title,
       region: 'Ciudad',

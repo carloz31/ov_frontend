@@ -19,6 +19,36 @@ export type HelenaPage = {
   activityHref?: string
   result?: HelenaResult
   demo: boolean
+  perfilPlano?: boolean
+}
+export function getHelenaPagesApi(intereses: HelenaPage, reveladas: InstrumentPageId[]): HelenaPage[] {
+  // Se conservan los ejemplos de los otros instrumentos; sus misiones aún no existen en la API.
+  const ejemplos: HelenaPage[] = [
+    {
+      id: 'inteligencias',
+      numeral: 'II',
+      title: 'Tus formas de ser inteligente',
+      subtitle: 'Tus inteligencias',
+      required: false,
+      state: getHelenaPageState(true, reveladas.includes('inteligencias')),
+      missions: { done: 1, total: 1 },
+      teaser: 'Esta página guarda formas de aprender y resolver.',
+      demo: true,
+      result: reveladas.includes('inteligencias') ? demoIntelligences : undefined,
+    },
+    {
+      id: 'habilidades',
+      numeral: 'III',
+      title: 'Cómo te relacionas',
+      subtitle: 'Tus habilidades sociales',
+      required: true,
+      state: 'sealed',
+      missions: { done: 2, total: 4 },
+      teaser: 'Esta página aún guarda algo sobre cómo te relacionas con los demás.',
+      demo: true,
+    },
+  ]
+  return [intereses, ...ejemplos]
 }
 export function getHelenaPageState(complete: boolean, revealed: boolean): HelenaPageState {
   return !complete ? 'sealed' : revealed ? 'revealed' : 'ready'

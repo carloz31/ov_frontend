@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { modoApi } from '@/features/servidor/config'
-import { completarActividad } from '@/features/servidor/acciones'
+import { completarActividad, responderItems } from '@/features/servidor/acciones'
 import { actividadServidor, textoBloqueo } from '@/features/servidor/adaptadores'
-import { mensajeErrorServidor, obtenerEstadoServidor } from '@/features/servidor/estadoServidor'
-import type { RespuestaCompletarActividad } from '@/features/servidor/tipos'
+import {
+  mensajeErrorServidor,
+  obtenerEstadoServidor,
+  consultarRespuestas,
+  cargarResultadoRiasec,
+} from '@/features/servidor/estadoServidor'
+import type { RespuestaCompletarActividad, RespuestaItemsGuardados } from '@/features/servidor/tipos'
+import type { InstrumentoServidor } from './MaraInteractionPlayer'
 import { catalog } from '@/features/missions/content'
 import {
   applyCompletion,
@@ -34,12 +40,14 @@ export function StudentActivityPlayer({
   imageUrl,
   direct = false,
   edit = false,
+  instrumentoServidor,
   onClose,
 }: {
   activity: Actividad
   imageUrl?: string
   direct?: boolean
   edit?: boolean
+  instrumentoServidor?: InstrumentoServidor
   onClose: () => void
 }) {
   const state = useJourney()
@@ -50,6 +58,7 @@ export function StudentActivityPlayer({
   const nodes = useMemo(() => visibleNodes(activity, direct), [activity, direct])
   const pageRef = useRef<HTMLDivElement>(null)
   const [nodeId, setNodeId] = useState(() => {
+    if (modoApi && instrumentoServidor) return instrumentoServidor.nodoInicialId
     if (edit) return nodes[0]?.id
     if (modoApi && actividadServidor(obtenerEstadoServidor().estado, activity.id)?.estado === 'COMPLETADA')
       return undefined
@@ -61,6 +70,15 @@ export function StudentActivityPlayer({
   const [guardando, setGuardando] = useState(false)
   const [errorServidor, setErrorServidor] = useState('')
   const [cierreServidor, setCierreServidor] = useState<RespuestaCompletarActividad>()
+  const respuestasConfirmadas = useRef(
+    Object.fromEntries((instrumentoServidor?.respuestas ?? []).map((r) => [r.item, r.opcion.orden])),
+  )
+  const [respuestasApi, setRespuestasApi] = useState(respuestasConfirmadas.current)
+  const [soloLectura, setSoloLectura] = useState(instrumentoServidor?.soloLectura ?? false)
+  const [revisionInstrumento, setRevisionInstrumento] = useState(instrumentoServidor?.revision ?? false)
+  const respuestaPendiente = useRef<
+    { item: string; valor: number; confirmada?: RespuestaItemsGuardados } | undefined
+  >(undefined)
   useEffect(() => {
     montado.current = true
     return () => {
@@ -114,6 +132,10 @@ export function StudentActivityPlayer({
     response: NodoDialogo[] = [],
   ) {
     if (enviando.current) return
+    if (modoApi && revisionInstrumento && !next) {
+      onClose()
+      return
+    }
     const saved = updateJourney((current) => {
       const changed = transform(current)
       const nextState: JourneyState = {
@@ -140,7 +162,10 @@ export function StudentActivityPlayer({
           [activity.id]: { ...actual.progress[activity.id], nodoActualId: '$fin' },
         },
       }
-      if (!confirmacion.current && !isActivityComplete(activity, candidato)) {
+      const completa = instrumentoServidor
+        ? instrumentoServidor.items.every((item) => respuestasConfirmadas.current[item.codigo] !== undefined)
+        : isActivityComplete(activity, candidato)
+      if (!confirmacion.current && !completa) {
         setErrorServidor('Completa las respuestas y comprobaciones pendientes antes de cerrar la actividad.')
         return
       }
@@ -222,6 +247,75 @@ export function StudentActivityPlayer({
   }
   function itemResponse(value: string | number) {
     if (node?.tipo !== 'item') return
+    if (modoApi && instrumentoServidor) {
+      if (enviando.current || soloLectura) return
+      const itemId = node.itemId,
+        valor = Number(value)
+      if (
+        !instrumentoServidor.items
+          .find((i) => i.codigo === itemId)
+          ?.escala.opciones.some((o) => o.orden === valor)
+      )
+        return
+      const pendiente = respuestaPendiente.current ?? { item: itemId, valor }
+      respuestaPendiente.current = pendiente
+      enviando.current = true
+      setGuardando(true)
+      setErrorServidor('')
+      void (async () => {
+        try {
+          const respuesta = await responderItems(
+            activity.id,
+            [{ item: pendiente.item, opcion: pendiente.valor }],
+            pendiente.confirmada,
+          )
+          if (!montado.current) return
+          if (respuesta.tipo === 'ok' || respuesta.tipo === 'guardado_sin_refrescar') {
+            for (const r of respuesta.datos.respuestas_guardadas)
+              respuestasConfirmadas.current[r.item] = r.opcion
+            setRespuestasApi({ ...respuestasConfirmadas.current })
+            if (respuesta.tipo === 'guardado_sin_refrescar') {
+              pendiente.confirmada = respuesta.datos
+              setErrorServidor(
+                'La respuesta se guardó, pero no se pudo actualizar el camino. Reintenta la consulta.',
+              )
+            } else {
+              respuestaPendiente.current = undefined
+              enviando.current = false
+              move(nodes[index + 1])
+            }
+          } else if (respuesta.tipo === 'bloqueado') {
+            if (respuesta.detalle.mensaje?.includes('resultado vigente')) {
+              setSoloLectura(true)
+              setRevisionInstrumento(true)
+              respuestaPendiente.current = undefined
+              const respuestas = await consultarRespuestas(activity.id)
+              if (!montado.current) return
+              if (respuestas.tipo === 'ok') {
+                respuestasConfirmadas.current = Object.fromEntries(
+                  respuestas.datos.respuestas.map((r) => [r.item, r.opcion.orden]),
+                )
+                setRespuestasApi({ ...respuestasConfirmadas.current })
+              }
+              await cargarResultadoRiasec()
+              if (!montado.current) return
+            }
+            setErrorServidor(textoBloqueo(respuesta.detalle, obtenerEstadoServidor().estado))
+          } else
+            setErrorServidor(
+              respuesta.tipo === 'sin_conexion'
+                ? 'No se pudo guardar en el servidor'
+                : mensajeErrorServidor(respuesta),
+            )
+        } catch {
+          if (montado.current) setErrorServidor('No se pudo guardar en el servidor')
+        } finally {
+          enviando.current = false
+          if (montado.current) setGuardando(false)
+        }
+      })()
+      return
+    }
     move(
       nodes[index + 1],
       (current) => ({
@@ -255,6 +349,9 @@ export function StudentActivityPlayer({
           .find((instrument) => instrument.id === node.instrumentoId)
           ?.items.find((item) => item.id === node.itemId)
       : undefined
+  const itemServidor =
+    node?.tipo === 'item' ? instrumentoServidor?.items.find((i) => i.codigo === node.itemId) : undefined
+  const valorServidor = node?.tipo === 'item' ? respuestasApi[node.itemId] : undefined
   const existingItemAnswer =
     node?.tipo === 'item'
       ? state.items.find(
@@ -307,7 +404,9 @@ export function StudentActivityPlayer({
       )}
       {guardando && (
         <p className="sx-player-error" role="status">
-          Guardando la actividad en el servidor…
+          {respuestaPendiente.current
+            ? 'Guardando la respuesta en el servidor…'
+            : 'Guardando la actividad en el servidor…'}
         </p>
       )}
       {errorServidor && (
@@ -317,9 +416,17 @@ export function StudentActivityPlayer({
             type="button"
             className="sx-primary-button"
             disabled={guardando}
-            onClick={() => move(undefined)}
+            onClick={() =>
+              respuestaPendiente.current
+                ? itemResponse(respuestaPendiente.current.valor)
+                : soloLectura && node?.tipo === 'item'
+                  ? advance()
+                  : move(undefined)
+            }
           >
-            Reintentar{confirmacion.current ? ' consulta' : ''}
+            {soloLectura && node?.tipo === 'item'
+              ? 'Continuar la revisión'
+              : `Reintentar${confirmacion.current || respuestaPendiente.current?.confirmada ? ' consulta' : ''}`}
           </button>
         </div>
       )}
@@ -341,6 +448,7 @@ export function StudentActivityPlayer({
             onClose={onClose}
             onResources={openResources}
             desbloqueosServidor={cierreServidor?.nuevos_desbloqueos}
+            resultadosGenerados={cierreServidor?.resultados_generados}
           />
         ) : matrix ? (
           <MatrixNode
@@ -405,12 +513,29 @@ export function StudentActivityPlayer({
           <ItemNode
             key={node.id}
             node={node}
-            text={item?.texto ?? 'Este ítem aún no está disponible.'}
-            options={itemOptions}
-            existing={existingItemAnswer}
+            text={itemServidor?.enunciado ?? item?.texto ?? 'Este ítem aún no está disponible.'}
+            options={
+              itemServidor
+                ? itemServidor.escala.opciones.map((o) => ({ value: o.orden, text: o.etiqueta }))
+                : itemOptions
+            }
+            existing={
+              itemServidor
+                ? valorServidor === undefined
+                  ? undefined
+                  : { valor: valorServidor }
+                : existingItemAnswer
+            }
+            busy={modoApi && guardando}
+            readOnly={modoApi && soloLectura}
             direct={direct}
             onAnswer={itemResponse}
-            onContinue={advance}
+            onContinue={() => {
+              if (!guardando && !respuestaPendiente.current) {
+                setErrorServidor('')
+                advance()
+              }
+            }}
           />
         ) : node.tipo === 'consigna' ? (
           <div className="sx-card-stage">
@@ -434,6 +559,11 @@ export function StudentActivityPlayer({
           <div className="sx-card-stage">
             <section className="sx-glass-dark sx-player-card sx-result-card case-scrollbar">
               <ResultNode activity={activity} instrumentId={node.instrumentoId} />
+              {modoApi && instrumentoServidor && (
+                <button className="sx-primary-button" disabled={guardando} onClick={advance}>
+                  {revisionInstrumento ? 'Volver a la ciudad' : 'Terminar encuentro'}
+                </button>
+              )}
             </section>
           </div>
         )}

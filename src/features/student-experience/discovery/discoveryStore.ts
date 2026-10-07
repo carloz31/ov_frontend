@@ -26,6 +26,7 @@ export type CatalogVisit = {
 export type StudentDiscoveryState = {
   version: 1
   revealedPages: InstrumentPageId[]
+  revealedPagesApi?: Record<string, Record<string, InstrumentPageId[]>>
   planOrder: string[]
   research?: ResearchInProgress
   publishedResearch: {
@@ -88,6 +89,21 @@ export function validDiscoveryState(v: unknown): v is StudentDiscoveryState {
     typeof v.profileBadgesConfigured !== 'boolean' ||
     !isRecord(v.badgeFirstSeenAt) ||
     !Object.entries(v.badgeFirstSeenAt).every(([code, date]) => /^I\d+$/.test(code) && isIso(date))
+  )
+    return false
+  if (
+    v.revealedPagesApi !== undefined &&
+    (!isRecord(v.revealedPagesApi) ||
+      !Object.values(v.revealedPagesApi).every(
+        (resultados) =>
+          isRecord(resultados) &&
+          Object.entries(resultados).every(
+            ([fecha, paginas]) =>
+              isIso(fecha) &&
+              isStrings(paginas) &&
+              paginas.every((id) => ['intereses', 'inteligencias', 'habilidades'].includes(id)),
+          ),
+      ))
   )
     return false
   if (v.research !== undefined) {
@@ -162,3 +178,24 @@ export const useDiscovery = store.useState
 export const useDiscoveryError = store.useError
 export const updateDiscovery = store.update
 export const getDiscovery = store.getSnapshot
+export function paginasReveladasApi(
+  discovery: StudentDiscoveryState,
+  cuenta: string | undefined,
+  calculadoEn: string | undefined,
+): InstrumentPageId[] {
+  return cuenta && calculadoEn ? (discovery.revealedPagesApi?.[cuenta]?.[calculadoEn] ?? []) : []
+}
+export function revelarPaginaApi(cuenta: string, calculadoEn: string, pagina: InstrumentPageId) {
+  updateDiscovery((s) => {
+    const paginas = paginasReveladasApi(s, cuenta, calculadoEn)
+    return paginas.includes(pagina)
+      ? s
+      : {
+          ...s,
+          revealedPagesApi: {
+            ...s.revealedPagesApi,
+            [cuenta]: { ...s.revealedPagesApi?.[cuenta], [calculadoEn]: [...paginas, pagina] },
+          },
+        }
+  })
+}

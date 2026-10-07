@@ -5,7 +5,7 @@ import {
   hidratarAdventureServidor,
 } from '../occupation-exploration/lib/AdventureStore'
 import { baseRoute } from '../student-experience/reflection/config'
-import { ciudadDisponible, misionesCompletadas, proyectarJourney } from './adaptadores'
+import { actividadServidor, ciudadDisponible, misionesCompletadas, proyectarJourney } from './adaptadores'
 import { pedir } from './cliente'
 import { modoApi } from './config'
 import { cuentaActiva } from './cuenta'
@@ -17,6 +17,9 @@ import type {
   ProgresoObjetivo,
   RespuestaServidor,
   TipoObjetivo,
+  RespuestasActividad,
+  AvanceInstrumento,
+  ResultadoPublico,
 } from './tipos'
 
 type AlmacenServidor = {
@@ -24,7 +27,9 @@ type AlmacenServidor = {
   cargando: boolean
   error: ErrorServidor | null
   noVistos: DesbloqueoLegible[]
-  resultadoRiasec: null // Se conectará en F5.
+  resultadoRiasec: ResultadoPublico | null
+  estadoResultado: 'sin_cargar' | 'cargando' | 'pendiente' | 'listo' | 'error'
+  errorResultado: ErrorServidor | null
 }
 let almacen: AlmacenServidor = {
   estado: null,
@@ -32,8 +37,18 @@ let almacen: AlmacenServidor = {
   error: null,
   noVistos: [],
   resultadoRiasec: null,
+  estadoResultado: 'sin_cargar',
+  errorResultado: null,
 }
 let revision = 0
+let revisionCuenta = 0
+let revisionResultado = 0
+let consultaResultado: {
+  cuenta: string | null
+  sesion: number
+  promesa: Promise<RespuestaServidor<ResultadoPublico | null>>
+} | null = null
+export const sesionServidor = () => revisionCuenta
 const oyentes = new Set<() => void>()
 function publicar(cambios: Partial<AlmacenServidor>) {
   almacen = { ...almacen, ...cambios }
@@ -55,7 +70,18 @@ export function prepararAlmacenesApi(cuenta = cuentaActiva() ?? 'est-ana') {
 }
 export function limpiarEstadoServidor() {
   revision++
-  publicar({ estado: null, error: null, cargando: false, noVistos: [], resultadoRiasec: null })
+  revisionCuenta++
+  revisionResultado++
+  consultaResultado = null
+  publicar({
+    estado: null,
+    error: null,
+    cargando: false,
+    noVistos: [],
+    resultadoRiasec: null,
+    estadoResultado: 'sin_cargar',
+    errorResultado: null,
+  })
 }
 export function informarErrorServidor(error: ErrorServidor) {
   publicar({ cargando: false, error })
@@ -87,6 +113,61 @@ export async function refrescar(): Promise<RespuestaServidor<EstadoCuenta>> {
     noVistos: noVistos.tipo === 'ok' ? noVistos.datos : almacen.noVistos,
     error: noVistos.tipo === 'ok' ? null : noVistos,
   })
+  const final = actividadServidor(respuesta.datos, 'act-tip-final')
+  if (final && final.estado !== 'BLOQUEADA') {
+    const resultado = await cargarResultadoRiasec()
+    if (turno !== revision || cuenta !== cuentaActiva()) return cambioCuenta()
+    if (resultado.tipo !== 'ok') return resultado
+  } else publicar({ resultadoRiasec: null, estadoResultado: 'pendiente', errorResultado: null })
+  return respuesta
+}
+const cambioCuenta = (): ErrorServidor => ({
+  tipo: 'http',
+  estado: 409,
+  detalle: 'La cuenta activa cambió durante la consulta.',
+})
+async function consultarCuenta<T>(ruta: string): Promise<RespuestaServidor<T>> {
+  const cuenta = cuentaActiva(),
+    sesion = revisionCuenta
+  if (!modoApi || !cuenta)
+    return { tipo: 'http', estado: 400, detalle: 'No hay una cuenta de servidor activa.' }
+  const respuesta = await pedir<T>(`/cuentas/${encodeURIComponent(cuenta)}${ruta}`)
+  return cuenta === cuentaActiva() && sesion === revisionCuenta ? respuesta : cambioCuenta()
+}
+export function consultarRespuestas(actividad: string) {
+  return consultarCuenta<RespuestasActividad>(`/actividades/${encodeURIComponent(actividad)}/respuestas`)
+}
+export function consultarAvanceInstrumentos() {
+  return consultarCuenta<AvanceInstrumento[]>('/instrumentos')
+}
+export async function cargarResultadoRiasec(): Promise<RespuestaServidor<ResultadoPublico | null>> {
+  const cuenta = cuentaActiva(),
+    sesion = revisionCuenta
+  if (consultaResultado?.cuenta === cuenta && consultaResultado.sesion === sesion)
+    return consultaResultado.promesa
+  const consulta = { cuenta, sesion, promesa: consultarResultadoRiasec() }
+  consultaResultado = consulta
+  try {
+    return await consulta.promesa
+  } finally {
+    if (consultaResultado === consulta) consultaResultado = null
+  }
+}
+async function consultarResultadoRiasec(): Promise<RespuestaServidor<ResultadoPublico | null>> {
+  if (!modoApi) return { tipo: 'http', estado: 400, detalle: 'El servidor no se usa en modo local.' }
+  const turno = ++revisionResultado
+  publicar({ estadoResultado: 'cargando', errorResultado: null })
+  const respuesta = await consultarCuenta<ResultadoPublico>('/instrumentos/TEST-RIASEC/resultado')
+  if (turno !== revisionResultado) return cambioCuenta()
+  if (respuesta.tipo === 'ok') {
+    publicar({ resultadoRiasec: respuesta.datos, estadoResultado: 'listo', errorResultado: null })
+    return respuesta
+  }
+  if (respuesta.tipo === 'bloqueado' && respuesta.detalle.avance) {
+    publicar({ resultadoRiasec: null, estadoResultado: 'pendiente', errorResultado: null })
+    return { tipo: 'ok', datos: null }
+  }
+  publicar({ resultadoRiasec: null, estadoResultado: 'error', errorResultado: respuesta })
   return respuesta
 }
 export function consultarProgreso(tipo: TipoObjetivo, codigo: string) {

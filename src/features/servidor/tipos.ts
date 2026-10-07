@@ -97,7 +97,12 @@ export type ProgresoObjetivo = {
     evaluador_especial?: ResultadoEvaluador | null
   }[]
 }
-export type DetalleError = { mensaje?: string; progreso?: ProgresoObjetivo; items_faltantes?: string[] }
+export type DetalleError = {
+  mensaje?: string
+  progreso?: ProgresoObjetivo
+  items_faltantes?: string[]
+  avance?: AvanceAplicacion | AvanceInstrumento[]
+}
 export type ErrorServidor =
   | { tipo: 'bloqueado'; detalle: DetalleError }
   | { tipo: 'sin_conexion' }
@@ -114,4 +119,58 @@ export type ItemPublico = {
   dimension: string | null
   inverso: boolean
   escala: EscalaPublica
+}
+export type RespuestaPublica = {
+  item: string
+  opcion: OpcionPublica
+  creada_en: string
+  actualizada_en: string
+}
+export type RespuestasActividad = { cuenta: string; actividad: string; respuestas: RespuestaPublica[] }
+export type RespuestaItemEntrada = { item: string; opcion: number }
+export type RespuestaItemsGuardados = {
+  cuenta: string
+  actividad: string
+  respuestas_guardadas: RespuestaItemEntrada[]
+  progreso: { estado: 'EN_CURSO' | 'COMPLETADA'; respondidos: number; total: number }
+}
+export type AvanceAplicacion = {
+  aplicacion: string
+  estado: 'NO_INICIADO' | 'EN_PROGRESO' | 'COMPLETADO'
+  actividades: { completadas: number; total: number; faltantes: string[] }
+  items: { respondidos: number; total: number }
+  hay_resultado_vigente: boolean
+}
+export type AvanceInstrumento = { instrumento: string; aplicaciones: AvanceAplicacion[] }
+export type DimensionResultado = {
+  codigo: string
+  nombre: string
+  puntaje: number
+  puntaje_maximo: number
+  porcentaje: number
+}
+export type CoincidenciaPublica = {
+  posicion: number
+  codigo: string | null
+  codigo_onet: string
+  titulo: string
+  correlacion: number
+  ajuste: 'BEST_FIT' | 'GREAT_FIT' | 'GOOD_FIT'
+}
+export type CarreraRecomendada = {
+  codigo: string
+  nombre: string
+  familia: string
+  via: CoincidenciaPublica[]
+}
+export type ResultadoPublico = {
+  instrumento: string
+  aplicacion: string
+  calculado_en: string
+  perfil_plano: boolean
+  dimensiones: DimensionResultado[]
+  dimensiones_destacadas?: DimensionResultado[] | null
+  codigo_interes?: { codigo: string; hay_empate: boolean } | null
+  coincidencias?: CoincidenciaPublica[] | null
+  carreras_recomendadas?: CarreraRecomendada[] | null
 }

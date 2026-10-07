@@ -1,5 +1,7 @@
 import type { InstrumentPageId } from '../discovery/discoveryStore'
 import { careerDetails, occupationDetails, institutionDetails, careerFamilies } from './catalogDetails'
+import { coincidenciasRiasec, textoAjuste } from '@/features/servidor/adaptadores'
+import type { ResultadoPublico } from '@/features/servidor/tipos'
 export const getCareer = (id: string) => careerDetails.find((c) => c.id === id)
 export const getOccupation = (id: string) => occupationDetails.find((o) => o.id === id)
 export const getInstitution = (id: string) => institutionDetails.find((i) => i.id === id)
@@ -22,10 +24,21 @@ const demoAffinity: Record<string, 'Gran ajuste' | 'Buen ajuste'> = {
   'community-manager': 'Buen ajuste',
   photographer: 'Buen ajuste',
 }
-export const isAffine = (id: string, revealedPages: InstrumentPageId[]) =>
-  revealedPages.includes('intereses') && getOccupation(id)?.contentStatus !== 'pending'
+export const isAffine = (
+  id: string,
+  revealedPages: InstrumentPageId[],
+  resultadoServidor?: { resultado: ResultadoPublico | null; revelado: boolean },
+) => {
+  if (resultadoServidor) {
+    const coincidencia = resultadoServidor.revelado
+      ? coincidenciasRiasec(resultadoServidor.resultado).find((c) => c.codigo === id)
+      : undefined
+    return coincidencia ? textoAjuste(coincidencia.ajuste) : undefined
+  }
+  return revealedPages.includes('intereses') && getOccupation(id)?.contentStatus !== 'pending'
     ? demoAffinity[id]
     : undefined
+}
 export function matchesName(name: string, query: string) {
   const normalizedQuery = normalizeSearchText(query.trim())
   return normalizedQuery.length === 0 || normalizeSearchText(name).includes(normalizedQuery)

@@ -1,6 +1,7 @@
 import { ForestFireCaseProgress } from '@/features/occupation-exploration/components/ForestFireCaseProgress'
 import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
 import { useRef } from 'react'
+import { Link } from 'react-router'
 import { Clock, LockKeyhole, Play, X } from 'lucide-react'
 import { Drawer as DrawerPrimitive } from 'vaul'
 import { useThemeClass } from '@/components/ThemeScope'
@@ -136,6 +137,23 @@ export function ActivityDrawer({
                   <button type="button" className="sx-secondary-button" onClick={onClose}>
                     Más tarde
                   </button>
+                )}
+                {!!details.reviewActivities?.length && (
+                  <section>
+                    <h3>Revisar mis encuentros</h3>
+                    <ul>
+                      {details.reviewActivities.map((a) => (
+                        <li key={a.codigo}>
+                          <Link
+                            className="sx-secondary-button"
+                            to={`/student/exploration?actividad=${a.codigo}&revision=1`}
+                          >
+                            {a.titulo}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
                 )}
               </div>
             </>

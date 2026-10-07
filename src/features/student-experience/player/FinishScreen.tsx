@@ -17,11 +17,13 @@ export function FinishScreen({
   onClose,
   onResources,
   desbloqueosServidor,
+  resultadosGenerados,
 }: {
   activity: Actividad
   onClose: () => void
   onResources?: (ids: string[]) => void
   desbloqueosServidor?: DesbloqueoNuevo[]
+  resultadosGenerados?: { instrumento: string; aplicacion: string }[]
 }) {
   const state = useJourney()
   const navigate = useNavigate()
@@ -39,6 +41,15 @@ export function FinishScreen({
               : 'Consultando tu avance.'}
           </h2>
           <p>Tu actividad quedó registrada en el servidor.</p>
+          {activity.id === 'act-tip-14' &&
+            resultadosGenerados?.some((r) => r.instrumento === 'TEST-RIASEC') && (
+              <section className="sx-finish-section">
+                <h3>Elena tiene algo que mostrarte</h3>
+                <button className="sx-primary-button" onClick={() => navigate('/student/profile/helena')}>
+                  Abrir el libro de Helena
+                </button>
+              </section>
+            )}
           {textosDesbloqueos(desbloqueosServidor ?? []).length > 0 && (
             <section className="sx-finish-section">
               <h3>Lo que se abrió en tu camino</h3>
