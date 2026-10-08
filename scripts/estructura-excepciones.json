@@ -40,16 +40,6 @@
     "detalle": "492 líneas (máximo 300)"
   },
   {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/discovery/components/PassportBadgeDialog.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/discovery/components/StudentPassportView.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
     "regla": "E3-tamano",
     "archivo": "src/features/family-conversations/components/FamilyConversationsView.tsx",
     "detalle": "643 líneas (máximo 300)"
@@ -96,21 +86,6 @@
   },
   {
     "regla": "E3-tamano",
-    "archivo": "src/pages/student/HelenaBookView.tsx",
-    "detalle": "369 líneas (máximo 300)"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/pages/student/HelenaBookView.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/pages/student/OccupationDetailView.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E3-tamano",
     "archivo": "src/pages/student/ResearchGuideView.tsx",
     "detalle": "358 líneas (máximo 300)"
   },
@@ -118,11 +93,6 @@
     "regla": "E3-tamano",
     "archivo": "src/pages/student/StudentBackpackView.tsx",
     "detalle": "506 líneas (máximo 300)"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/pages/student/StudentCatalogView.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
   },
   {
     "regla": "E3-tamano",
@@ -133,11 +103,6 @@
     "regla": "E3-tamano",
     "archivo": "src/pages/student/StudentJournalView.tsx",
     "detalle": "754 líneas (máximo 300)"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/pages/student/StudentProfileView.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
   },
   {
     "regla": "E3-tamano",

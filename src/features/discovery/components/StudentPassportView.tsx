@@ -1,38 +1,19 @@
-import { useState } from 'react'
+import { usePassport } from '../hooks/usePassport'
+
 import { Link } from 'react-router'
 import { ArrowLeft, Award, Check, Eye, LockKeyhole, Target } from 'lucide-react'
-import { useJourney } from '@/store/journeyStore'
-import { getTravelerLevel, useAdventure } from '@/store/adventureStore'
+
 import { appPaths } from '@/routes/paths'
 import { DiscoveryStage } from './DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
-import { useDiscovery } from '@/store/discoveryStore'
+
 import { PassportBadgeDialog } from './PassportBadgeDialog'
-import { achievementIcons, getProfileBadges, getStudentAchievementGroups, travelerTitles } from '../lib/passport'
+import { achievementIcons, travelerTitles } from '../lib/passport'
 import '../styles/passport.css'
-import { modoApi } from '@/config/env'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
-import { insigniasServidor, insigniasOcultasPendientes } from '@/lib/servidor/adaptadores'
-import { getAchievementPresentations } from '@/features/discovery/lib/achievements'
 
 export function StudentPassportView() {
-  const servidor = useEstadoServidor()
-  const gruposApi = modoApi ? insigniasServidor(servidor.estado, getAchievementPresentations()) : undefined
-  const api = gruposApi ? { grupos: gruposApi, cuenta: servidor.estado?.cuenta.codigo ?? '' } : undefined
-  const adventure = useAdventure(),
-    discovery = useDiscovery(),
-    journey = useJourney(),
-    groups = getStudentAchievementGroups(adventure, journey, gruposApi),
-    level = modoApi
-      ? getTravelerLevel(adventure, servidor.estado?.nivel_actual ?? null)
-      : getTravelerLevel(adventure)
-  const [selectedCode, setSelectedCode] = useState<string>()
-  const all = groups.flatMap((g) => g.items),
-    earned = all.filter((b) => b.done),
-    visible = getProfileBadges(adventure, discovery, journey, api)
-  const groupIndex = groups.findIndex((g) => g.items.some((b) => b.code === selectedCode)),
-    group = groups[groupIndex],
-    selected = group?.items.find((b) => b.code === selectedCode)
+  const { groups, level, setSelectedCode, earned, visible, groupIndex, group, selected, titulos, total, ocultasPendientes } = usePassport()
+
   return (
     <DiscoveryStage ambient="profile">
       <div className="sx-p-passport">
@@ -50,7 +31,7 @@ export function StudentPassportView() {
           </div>
           <span className="sx-p-total">
             <Award aria-hidden="true" />
-            {earned.length} de {modoApi ? (servidor.estado?.insignias.length ?? 0) : all.length} insignias
+            {earned.length} de {total} insignias
           </span>
         </header>
         {level ? (
@@ -76,18 +57,7 @@ export function StudentPassportView() {
               </div>
             </div>
             <ol className="sx-p-title-trail" aria-label="Camino de los títulos">
-              {(modoApi
-                ? (servidor.estado?.niveles.map((n) => ({
-                    numero: n.numero,
-                    titulo: n.titulo,
-                    obtenido: n.estado === 'OBTENIDO',
-                  })) ?? [])
-                : travelerTitles.map((titulo, i) => ({
-                    numero: i + 1,
-                    titulo,
-                    obtenido: i + 1 < level.number,
-                  }))
-              ).map(({ numero, titulo, obtenido }) => (
+              {titulos.map(({ numero, titulo, obtenido }) => (
                 <li
                   key={numero}
                   data-state={numero === level.number ? 'current' : obtenido ? 'earned' : 'pending'}
@@ -112,8 +82,8 @@ export function StudentPassportView() {
         ) : (
           <p>No hay un nivel disponible en el servidor.</p>
         )}
-        {modoApi && insigniasOcultasPendientes(servidor.estado) > 0 && (
-          <p>{`${insigniasOcultasPendientes(servidor.estado)} insignias quedan por descubrir.`}</p>
+        {ocultasPendientes > 0 && (
+          <p>{`${ocultasPendientes} insignias quedan por descubrir.`}</p>
         )}
         <div className="sx-d-stack">
           {groups.map((g, index) => (

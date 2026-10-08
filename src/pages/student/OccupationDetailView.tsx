@@ -1,3 +1,4 @@
+import { useCatalogAffinity } from '@/features/discovery/hooks/useCatalogAffinity'
 import { Link, useParams } from 'react-router'
 import { Sparkles } from 'lucide-react'
 import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
@@ -8,13 +9,10 @@ import { FavoriteButton } from '@/components/student/FavoriteButton'
 import { Seal } from '@/components/student/Seal'
 import { TrailBar } from '@/components/student/TrailBar'
 import { useDiscovery } from '@/store/discoveryStore'
-import { paginasReveladasApi } from '@/store/discoveryStore'
-import { modoApi } from '@/config/env'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
-import { coincidenciasRiasec } from '@/lib/servidor/adaptadores'
+
 import { discoveryPaths } from '@/routes/discoveryPaths'
 import { appPaths } from '@/routes/paths'
-import { getOccupation, careersOfOccupation, getFamily, isAffine } from '@/features/discovery/lib/catalogSelectors'
+import { getOccupation, careersOfOccupation, getFamily } from '@/features/discovery/lib/catalogSelectors'
 import { dimensionNames, type RiasecDimension } from '@/features/discovery/lib/catalogDetails'
 import { AtlasNavigation, MissingAtlasPage } from '@/features/discovery/components/AtlasNavigation'
 import { getClassroomInterviews } from '@/features/discovery/lib/research'
@@ -26,14 +24,7 @@ export function OccupationDetailView() {
     context = useOccupationExplorationContext(),
     discovery = useDiscovery(),
     adventure = useAdventure()
-  const servidor = useEstadoServidor()
-  const revelado =
-    modoApi &&
-    paginasReveladasApi(
-      discovery,
-      servidor.estado?.cuenta.codigo,
-      servidor.resultadoRiasec?.calculado_en,
-    ).includes('intereses')
+  const { afinidadPara, coincidenciaPara } = useCatalogAffinity(discovery)
   const occupation = getOccupation(occupationId)
   useCatalogVisit('occupation', occupation?.id)
   if (!occupation)
@@ -43,15 +34,8 @@ export function OccupationDetailView() {
       </DiscoveryStage>
     )
   const profile = context.profiles.find((p) => p.occupationId === occupation.id),
-    affinity = isAffine(
-      occupation.id,
-      discovery.revealedPages,
-      modoApi ? { resultado: servidor.resultadoRiasec, revelado } : undefined,
-    )
-  const coincidencia =
-    modoApi && revelado
-      ? coincidenciasRiasec(servidor.resultadoRiasec).find((c) => c.codigo === occupation.id)
-      : undefined
+    affinity = afinidadPara(occupation.id)
+  const coincidencia = coincidenciaPara(occupation.id)
   const careers = careersOfOccupation(occupation.id)
   const videos = getClassroomInterviews(adventure).filter(
     (v) =>

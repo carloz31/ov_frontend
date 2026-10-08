@@ -1,104 +1,24 @@
+import { useHelenaPages } from '@/features/discovery/hooks/useHelenaPages'
 import { DiscoverySheetContent as SheetContent } from '@/components/student/DiscoverySheetContent'
-import { useReturnFocus } from '@/hooks/useReturnFocus'
-import { useEffect, useState } from 'react'
+
 import { Link } from 'react-router'
 import { LockKeyhole, Eye, BookOpen, Brain, Users } from 'lucide-react'
 import { Sheet, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/Sheet'
-import { useJourney } from '@/store/journeyStore'
+
 import { appPaths } from '@/routes/paths'
-import {
-  useDiscovery,
-  updateDiscovery,
-  revelarPaginaApi,
-  paginasReveladasApi,
-} from '@/store/discoveryStore'
+
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
 import { Seal } from '@/components/student/Seal'
 import { TrailBar } from '@/components/student/TrailBar'
-import type { InstrumentPageId } from '@/types/discovery'
-import { getHelenaPages, getHelenaPagesApi } from '@/features/discovery/lib/helenaPages'
-import { modoApi } from '@/config/env'
-import {
-  cargarResultadoRiasec,
-  consultarAvanceInstrumentos,
-  consultarProgreso,
-  mensajeErrorServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
-import { ciudadDisponible, textoRequisito, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
+
 import { discoveryPaths } from '@/routes/discoveryPaths'
 import { occupationDetails } from '@/features/discovery/lib/catalogDetails'
 
 export function HelenaBookView() {
-  const focus = useReturnFocus()
-  const journey = useJourney(),
-    discovery = useDiscovery(),
-    servidor = useEstadoServidor()
-  const pages = modoApi
-    ? getHelenaPagesApi(
-        paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery),
-        paginasReveladasApi(
-          discovery,
-          servidor.estado?.cuenta.codigo,
-          servidor.resultadoRiasec?.calculado_en,
-        ),
-      )
-    : getHelenaPages(journey, discovery)
-  const [requisito, setRequisito] = useState('Consultando el avance de tus encuentros…')
-  const [errorConsulta, setErrorConsulta] = useState('')
-  const [intento, setIntento] = useState(0)
-  useEffect(() => {
-    if (!modoApi) return
-    let vigente = true
-    void (async () => {
-      const resultado = await cargarResultadoRiasec()
-      if (!vigente) return
-      if (resultado.tipo !== 'ok') {
-        setErrorConsulta(mensajeErrorServidor(resultado))
-        return
-      }
-      if (resultado.datos) {
-        setErrorConsulta('')
-        return
-      }
-      if (!ciudadDisponible(servidor.estado)) {
-        const progreso = await consultarProgreso('BLOQUE', 'CIUDAD')
-        if (!vigente) return
-        if (progreso.tipo === 'ok') {
-          setRequisito(textoRequisito(progreso.datos, servidor.estado))
-          setErrorConsulta('')
-        } else setErrorConsulta(mensajeErrorServidor(progreso))
-      } else {
-        const avance = await consultarAvanceInstrumentos()
-        if (!vigente) return
-        if (avance.tipo !== 'ok') {
-          setErrorConsulta(mensajeErrorServidor(avance))
-          return
-        }
-        const aplicacion = avance.datos
-          .find((i) => i.instrumento === 'TEST-RIASEC')
-          ?.aplicaciones.find((a) => a.aplicacion === 'APL-RIASEC')
-        const primera = aplicacion?.actividades.faltantes[0]
-        setRequisito(
-          primera
-            ? `Conversa con Mara: interacción ${Number(primera.slice(-2))} de 14.`
-            : 'Elena está preparando tu resultado.',
-        )
-        setErrorConsulta('')
-      }
-    })()
-    return () => {
-      vigente = false
-    }
-  }, [servidor.estado, intento])
-  const [meaning, setMeaning] = useState(false)
-  const [opening, setOpening] = useState<InstrumentPageId>()
-  useEffect(() => {
-    if (!opening) return
-    const timer = setTimeout(() => setOpening(undefined), 400)
-    return () => clearTimeout(timer)
-  }, [opening])
+  const { focus, requisito, errorConsulta, setErrorConsulta, setIntento, meaning, setMeaning, opening,
+    revelarPagina, errorResultado, pages } = useHelenaPages()
+
   return (
     <DiscoveryStage ambient="profile">
       <header className="sx-d-header">
@@ -135,7 +55,7 @@ export function HelenaBookView() {
             <p>{p.subtitle}</p>
             {p.demo && (
               <p className="sx-d-demo">
-                {modoApi ? 'Disponible en una próxima iteración · ' : 'Demostración · '}
+                {p.etiquetaDemo}
                 {p.id === 'intereses'
                   ? 'Este ejemplo no es tu resultado personal.'
                   : 'Este instrumento aún no está disponible.'}
@@ -154,11 +74,11 @@ export function HelenaBookView() {
                 <p>
                   <em>{p.teaser}</em>
                 </p>
-                {modoApi && p.id === 'intereses' && (
+                {p.mostrarRequisito && (
                   <>
-                    {errorConsulta || servidor.errorResultado ? (
+                    {errorConsulta || errorResultado ? (
                       <>
-                        <p role="alert">{errorConsulta || mensajeErrorServidor(servidor.errorResultado)}</p>
+                        <p role="alert">{errorConsulta || errorResultado?.mensaje}</p>
                         <button
                           className="sx-d-action"
                           onClick={() => {
@@ -202,24 +122,9 @@ export function HelenaBookView() {
                 <button
                   type="button"
                   className="sx-d-action sx-d-action-gold sx-d-full"
-                  disabled={modoApi && !servidor.resultadoRiasec}
+                  disabled={p.revelacionBloqueada}
                   onClick={() => {
-                    if (modoApi) {
-                      if (!servidor.resultadoRiasec || !servidor.estado) return
-                      revelarPaginaApi(
-                        servidor.estado.cuenta.codigo,
-                        servidor.resultadoRiasec.calculado_en,
-                        p.id,
-                      )
-                      setOpening(p.id)
-                      return
-                    }
-                    setOpening(p.id)
-                    updateDiscovery((s) =>
-                      s.revealedPages.includes(p.id)
-                        ? s
-                        : { ...s, revealedPages: [...s.revealedPages, p.id] },
-                    )
+                    revelarPagina(p.id)
                   }}
                 >
                   Romper el sello
@@ -240,7 +145,7 @@ export function HelenaBookView() {
                         <div key={a.code}>
                           <Seal state="revealed">{a.code}</Seal>
                           <strong>{a.name}</strong>
-                          {modoApi && <span>{a.score}%</span>}
+                          {p.mostrarPuntajes && <span>{a.score}%</span>}
                         </div>
                       ))}
                     </div>
@@ -269,21 +174,17 @@ export function HelenaBookView() {
                       <Link
                         className="sx-d-action sx-d-action-ghost"
                         to={
-                          modoApi
-                            ? '/student/exploration?actividad=act-tip-final&revision=1'
-                            : '/student/exploration?actividad=act-tip-01&modo=directa'
+                          p.significadoHref
                         }
                       >
                         Qué significa
                       </Link>
                     )}
-                    {modoApi &&
-                      !p.perfilPlano &&
-                      !!servidor.resultadoRiasec?.carreras_recomendadas?.length && (
+                    {!!p.carrerasRecomendadas?.length && (
                         <section>
                           <h3>Carreras que conducen a ellas</h3>
                           <ul>
-                            {servidor.resultadoRiasec.carreras_recomendadas.map((c) => (
+                            {p.carrerasRecomendadas.map((c) => (
                               <li key={c.codigo}>
                                 <Link className="sx-d-action" to={discoveryPaths.career(c.codigo)}>
                                   {c.nombre}

@@ -1,3 +1,4 @@
+import { useCatalogAffinity } from '@/features/discovery/hooks/useCatalogAffinity'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Search, GraduationCap, BriefcaseBusiness, School } from 'lucide-react'
@@ -6,23 +7,12 @@ import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { FavoriteButton } from '@/components/student/FavoriteButton'
 import { Seal } from '@/components/student/Seal'
 import { useDiscovery } from '@/store/discoveryStore'
-import { paginasReveladasApi } from '@/store/discoveryStore'
-import { modoApi } from '@/config/env'
-import {
-  cargarResultadoRiasec,
-  mensajeErrorServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
-import { coincidenciasRiasec, textoAjuste } from '@/lib/servidor/adaptadores'
+
+import { mensajeErrorServidor } from '@/store/servidor/estadoServidor'
+import { textoAjuste } from '@/lib/servidor/adaptadores'
 import { discoveryPaths } from '@/routes/discoveryPaths'
-import {
-  careerDetails,
-  occupationDetails,
-  institutionDetails,
-  dimensionNames,
-  institutionTypeNames,
-} from '@/features/discovery/lib/catalogDetails'
-import { getFamily, isAffine, matchesName } from '@/features/discovery/lib/catalogSelectors'
+import { careerDetails, occupationDetails, institutionDetails, dimensionNames, institutionTypeNames } from '@/features/discovery/lib/catalogDetails'
+import { getFamily, matchesName } from '@/features/discovery/lib/catalogSelectors'
 const sectionCopy = {
   professions: {
     title: 'Catálogo de profesiones',
@@ -45,16 +35,8 @@ export function StudentCatalogView({ section }: { section: 'professions' | 'care
     discovery = useDiscovery(),
     [params] = useSearchParams()
   const [query, setQuery] = useState('')
-  const servidor = useEstadoServidor()
-  const revelado =
-    modoApi &&
-    paginasReveladasApi(
-      discovery,
-      servidor.estado?.cuenta.codigo,
-      servidor.resultadoRiasec?.calculado_en,
-    ).includes('intereses')
-  const afinidadApi = modoApi ? { resultado: servidor.resultadoRiasec, revelado } : undefined
-  const coincidencias = modoApi && revelado ? coincidenciasRiasec(servidor.resultadoRiasec) : []
+  const { coincidencias, coincidenciasAdicionales, ordenarOcupaciones, afinidadPara, textoAfinidad,
+    errorAfinidad, perfilPlano, necesitaRevelar, reintentarAfinidad } = useCatalogAffinity(discovery, params.get('afines') === '1')
   const copy = sectionCopy[section]
   const obtained = (id: string) =>
     context.profiles.some((p) => p.occupationId === id && p.discoveryState !== 'unused')
@@ -64,21 +46,10 @@ export function StudentCatalogView({ section }: { section: 'professions' | 'care
       occupation,
       match: coincidencias.find((c) => c.codigo === occupation.id),
     })),
-    ...(modoApi && params.get('afines') === '1'
-      ? coincidencias
-          .filter((c) => !occupationDetails.some((o) => o.id === c.codigo))
-          .map((match) => ({ occupation: undefined, match }))
-      : []),
+    ...coincidenciasAdicionales.map((match) => ({ occupation: undefined, match })),
   ]
     .filter(({ occupation, match }) => matchesName(occupation?.name ?? match?.titulo ?? '', query))
-    .sort((a, b) =>
-      params.get('afines') !== '1'
-        ? 0
-        : modoApi
-          ? (a.match?.posicion ?? Infinity) - (b.match?.posicion ?? Infinity)
-          : Number(!!isAffine(b.occupation!.id, discovery.revealedPages)) -
-            Number(!!isAffine(a.occupation!.id, discovery.revealedPages)),
-    )
+    .sort(ordenarOcupaciones)
   const careers = careerDetails.filter((c) => matchesName(c.name, query)),
     institutions = institutionDetails.filter((i) => matchesName(i.name, query))
   const empty =
@@ -115,20 +86,20 @@ export function StudentCatalogView({ section }: { section: 'professions' | 'care
         />
       </label>
       <div className="sx-d-columns">
-        {modoApi && params.get('afines') === '1' && servidor.errorResultado && (
+        {errorAfinidad && (
           <section role="alert">
-            <p>{mensajeErrorServidor(servidor.errorResultado)}</p>
-            <button className="sx-d-action" onClick={() => void cargarResultadoRiasec()}>
+            <p>{mensajeErrorServidor(errorAfinidad)}</p>
+            <button className="sx-d-action" onClick={() => void reintentarAfinidad()}>
               Reintentar consulta
             </button>
           </section>
         )}
-        {modoApi && params.get('afines') === '1' && servidor.resultadoRiasec?.perfil_plano && (
+        {perfilPlano && (
           <p>
             Tus respuestas todavía no distinguen un interés. No hay ocupaciones afines para este resultado.
           </p>
         )}
-        {modoApi && params.get('afines') === '1' && !revelado && !servidor.errorResultado && (
+        {necesitaRevelar && (
           <Link className="sx-d-action" to="/student/profile/helena">
             Revela tu página de intereses para consultar las afinidades.
           </Link>
@@ -171,11 +142,9 @@ export function StudentCatalogView({ section }: { section: 'professions' | 'care
                   </div>
                   <p className="sx-d-clamp-two">{o.whatTheyDo}</p>
                   {obtained(o.id) && <span className="sx-d-tag">Ícono obtenido</span>}
-                  {params.get('afines') === '1' && isAffine(o.id, discovery.revealedPages, afinidadApi) && (
+                  {params.get('afines') === '1' && afinidadPara(o.id) && (
                     <p>
-                      {modoApi && match
-                        ? `Afín a tu perfil · ${textoAjuste(match.ajuste)} · posición ${match.posicion} · correlación ${match.correlacion}`
-                        : 'Afín a tu perfil · Demostración'}
+                      {textoAfinidad(match)}
                     </p>
                   )}
                   <small>

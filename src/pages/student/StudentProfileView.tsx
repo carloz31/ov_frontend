@@ -1,71 +1,52 @@
+import { useStudentProfile } from '@/features/discovery/hooks/useStudentProfile'
 import { Link, useSearchParams } from 'react-router'
-import { modoApi } from '@/config/env'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
-import { progresoCamino, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
+
 import { Eye, Heart, Sparkles } from 'lucide-react'
-import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
-import {
-  getTravelerLevel,
-  canAccessCity,
-  useAdventure,
-} from '@/store/adventureStore'
-import { useJourney } from '@/store/journeyStore'
+
+import { canAccessCity } from '@/store/adventureStore'
+
 import { appPaths } from '@/routes/paths'
 import { getZoneProgress } from '@/features/adventure/lib/mapPoints'
 import { discoveryPaths } from '@/routes/discoveryPaths'
-import { useDiscovery } from '@/store/discoveryStore'
+
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
 import { Seal } from '@/components/student/Seal'
 import { TrailBar } from '@/components/student/TrailBar'
 import { CollectionSlot } from '@/components/student/CollectionSlot'
 import { StudentPassportView } from '@/features/discovery/components/StudentPassportView'
-import { achievementIcons, getProfileBadges, getStudentAchievementGroups } from '@/features/discovery/lib/passport'
-import { getHelenaPages } from '@/features/discovery/lib/helenaPages'
-import { getOrderedPlans, getPlanCompleteness } from '@/features/discovery/lib/plans'
-import { insigniasServidor } from '@/lib/servidor/adaptadores'
-import { getAchievementPresentations } from '@/features/discovery/lib/achievements'
+import { achievementIcons } from '@/features/discovery/lib/passport'
+
+import { getPlanCompleteness } from '@/features/discovery/lib/plans'
 
 export function ProfileRoute() {
   const [params] = useSearchParams()
   return params.get('section') === 'passport' ? <StudentPassportView /> : <StudentProfileView />
 }
 export function StudentProfileView() {
-  const adventure = useAdventure(),
-    journey = useJourney(),
-    discovery = useDiscovery()
-  const context = useOccupationExplorationContext()
-  const servidor = useEstadoServidor()
-  const nivelApi = modoApi ? getTravelerLevel(adventure, servidor.estado?.nivel_actual ?? null) : null
-  const gruposApi = modoApi ? insigniasServidor(servidor.estado, getAchievementPresentations()) : []
-  const insigniasApi = modoApi
-    ? getProfileBadges(adventure, discovery, journey, {
-        grupos: gruposApi,
-        cuenta: servidor.estado?.cuenta.codigo ?? '',
-      })
-    : []
-  if (modoApi)
+  const { adventure, journey, context, ficha, level, badges, visibleBadges, pages, plans, extraFavorites } = useStudentProfile()
+  if (ficha)
     return (
       <DiscoveryStage ambient="profile">
-        <Parchment title={servidor.estado?.cuenta.nombre ?? 'Mi perfil'}>
-          <TrailBar label="Recorrido" value={progresoCamino(servidor.estado).porcentaje} />
-          {nivelApi ? (
+        <Parchment title={ficha.nombre}>
+          <TrailBar label="Recorrido" value={ficha.progreso} />
+          {ficha.nivel ? (
             <div className="sx-d-row">
               <span className="sx-level-medallion">
                 <span>NIVEL</span>
-                <strong>{String(nivelApi.number).padStart(2, '0')}</strong>
+                <strong>{String(ficha.nivel.number).padStart(2, '0')}</strong>
               </span>
               <div>
-                <h2>{nivelApi.label}</h2>
-                <p>{nivelApi.description}</p>
-                <p>{nivelApi.nextStep}</p>
+                <h2>{ficha.nivel.label}</h2>
+                <p>{ficha.nivel.description}</p>
+                <p>{ficha.nivel.nextStep}</p>
               </div>
             </div>
           ) : (
             <p>No hay un nivel disponible en el servidor.</p>
           )}
           <div className="sx-d-seal-row">
-            {insigniasApi.map((b) => {
+            {ficha.insignias.map((b) => {
               const Icon = achievementIcons[b.icon]
               return (
                 <CollectionSlot key={b.code} icon={<Icon />}>
@@ -81,14 +62,7 @@ export function StudentProfileView() {
             Abrir el libro de Helena
           </Link>
           <p>
-            {paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery).state === 'ready'
-              ? 'Tu página de intereses está lista para revelar.'
-              : paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery).state ===
-                  'revealed'
-                ? 'Tu página de intereses está descifrada.'
-                : servidor.errorResultado
-                  ? 'No se pudo consultar tu resultado.'
-                  : 'Conversa con Mara para reunir las pistas de tus intereses.'}
+            {ficha.textoIntereses}
           </p>
           <Link className="sx-d-action" to={appPaths.student.resources}>
             Abrir mi mochila
@@ -99,16 +73,7 @@ export function StudentProfileView() {
         </Parchment>
       </DiscoveryStage>
     )
-  const level = getTravelerLevel(adventure)
-  const badges = getStudentAchievementGroups(adventure, journey).flatMap((g, index) =>
-    g.items.filter((b) => b.done).map((b) => ({ ...b, group: index })),
-  )
-  const visibleBadges = getProfileBadges(adventure, discovery, journey)
-  const pages = getHelenaPages(journey, discovery)
-  const plans = getOrderedPlans(context.decisionSheets, discovery.planOrder)
-  const extraFavorites = context.careerInterestIds.filter(
-    (id) => !plans.some((p) => p.sourceId === id),
-  ).length
+
   return (
     <DiscoveryStage ambient="profile">
       <Parchment className="sx-d-dark">
