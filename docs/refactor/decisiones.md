@@ -1,5 +1,31 @@
 # Decisiones del refactor de estructura
 
+## Actividades por dominio · F0 · Línea base (8 de octubre de 2026)
+
+- Se lee completo el AGENTS.md del frontend y la especificación vigente de actividades por dominio. Rama: iteracion-1; punto de partida: 90d76f6, cierre de B3.
+- npm test: **379 pruebas, 364 pasan, 15 fallan, cero omitidas y cero canceladas**, en 18,02 segundos. Los nombres y el orden de las fallas coinciden exactamente con B3; se enumeran abajo.
+- npm run build y npm run lint pasan; se conserva el aviso previo de bundle mayor de 500 kB. npm run check:estructura: **515 archivos, cero infracciones y cero excepciones**.
+- No se modifica código, pruebas, dependencias, vistas ni ov_backend. Su última suite, al cerrar B3, tuvo 1103 pruebas correctas, cuatro omitidas y cero fallas; no se repite en esta fase, que solo registra la línea base del front.
+- Registros fuera de ambos repos, en el directorio de visualizaciones de esta conversación (f0-front-*.txt). Un commit F0 en el front, sin push. La solicitud autoriza continuar con F1 tras este cierre, y detenerse antes de F2.
+
+Fallas previas (todas en tests/adventure-rendering.test.mjs):
+
+- immersive submission preserves validation, drafts, versions and the keep action
+- immersive questions preserve attempts, hints, revelation, retry and fresh revision behavior
+- immersive finish shows saved sheets, narrative rewards and the prompted journal action
+- follow-up service waits 700ms, respects both text thresholds and never asks a third turn
+- first text submission saves version one before follow-up; edits and matrices use the normal form
+- follow-up accepts two replies, caps the field at available space and saves one condensed version
+- omitting all turns preserves version one, while a long reply ends follow-up after one turn
+- no question, failure, timeout or fewer than 40 free characters advances silently with the original
+- interrupted follow-up recovers only answered turns and loads the condensed form without duplicate versions
+- follow-up requires 40 free characters and stops before a second question that cannot fit
+- leaving during evaluation never stores a late question and recovery preserves the replied turn
+- every supplied mission node renders, including matrices, slides, questions and instrument items
+- phase 8 path sequence respects both completion records without changing catalog or real thresholds
+- phase 8 direct links open blocked details instead of starting unavailable players
+- discovery atlas covers existing IDs, symmetric relations and gated affinity
+
 ## R0 · Punto de partida y línea base (8 de octubre de 2026)
 
 - Rama de trabajo: `refactor-estructura`, creada desde `iteracion-1`.
