@@ -7,6 +7,7 @@ import {
   useEstadoServidor,
 } from '@/features/servidor/estadoServidor'
 import { textoRequisito } from '@/features/servidor/adaptadores'
+import { actividadServidor } from '@/features/servidor/adaptadores'
 import { ChevronLeft, ChevronRight, PanelLeftOpen } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
@@ -55,7 +56,9 @@ export function MapScreenLayout({
     clave: string
     requirement?: string
     description?: string
+    error?: boolean
   }>()
+  const [intentoRequisito, setIntentoRequisito] = useState(0)
   const ui = useStudentUi()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -87,7 +90,7 @@ export function MapScreenLayout({
   const progress = getZoneProgress(zone, adventure, journey)
   const selected = points.find((point) => point.id === selectedId)
   const baseDetails = selected ? getPointDetails(selected, adventure, journey) : undefined
-  const claveDetalle = `${selected?.id}/${selected?.specActivityId}/${selected?.status}`
+  const claveDetalle = `${servidor.estado?.cuenta.codigo}/${selected?.id}/${selected?.specActivityId}/${selected?.status}`
   const details =
     baseDetails && detalleServidor?.clave === claveDetalle
       ? { ...baseDetails, ...detalleServidor }
@@ -99,9 +102,16 @@ export function MapScreenLayout({
   useEffect(() => {
     if (!modoApi || !selectedPointId) return
     let vigente = true
+    const consultaRequisito =
+      selectedStatus === 'locked' &&
+      (selectedPointId === 'city' || !!actividadServidor(servidor.estado, selectedActivityId ?? ''))
+    setDetalleServidor({
+      clave: claveDetalle,
+      ...(consultaRequisito ? { requirement: 'Consultando el requisito en el servidor…' } : {}),
+    })
     void (async () => {
       const [requirement, items] = await Promise.all([
-        selectedStatus === 'locked' && (selectedZone === 'camino' || selectedPointId === 'mara-test')
+        consultaRequisito
           ? consultarProgreso(
               selectedPointId === 'city' ? 'BLOQUE' : 'ACTIVIDAD',
               selectedPointId === 'city' ? 'CIUDAD' : (selectedActivityId ?? ''),
@@ -120,6 +130,7 @@ export function MapScreenLayout({
                 requirement.tipo === 'ok'
                   ? textoRequisito(requirement.datos, servidor.estado)
                   : mensajeErrorServidor(requirement),
+              error: requirement.tipo !== 'ok',
             }
           : {}),
         ...(items
@@ -135,7 +146,15 @@ export function MapScreenLayout({
     return () => {
       vigente = false
     }
-  }, [claveDetalle, servidor.estado, selectedPointId, selectedActivityId, selectedStatus, selectedZone])
+  }, [
+    claveDetalle,
+    servidor.estado,
+    selectedPointId,
+    selectedActivityId,
+    selectedStatus,
+    selectedZone,
+    intentoRequisito,
+  ])
   useEffect(() => {
     if (selectedPointId) {
       returnPoint.current = selectedPointId
@@ -302,6 +321,11 @@ export function MapScreenLayout({
         onClose={closePoint}
         onAction={action}
         onJournal={journal}
+        onRetryRequirement={
+          modoApi && detalleServidor?.clave === claveDetalle && detalleServidor.error
+            ? () => setIntentoRequisito((i) => i + 1)
+            : undefined
+        }
         onFallbackFocus={() => {
           if (mobile) mobilePanelButton.current?.focus()
           else canvas.current?.focusNode(returnPoint.current)

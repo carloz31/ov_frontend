@@ -12,6 +12,7 @@ import {
 import {
   getAchievementGroups,
   type Achievement,
+  type AchievementGroup,
 } from '@/features/occupation-exploration/lib/AdventureAchievements'
 import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
 import type { StudentDiscoveryState } from '../discovery/discoveryStore'
@@ -40,7 +41,12 @@ export const achievementIcons = {
   telescope: Telescope,
 }
 export type PassportBadge = Achievement & { hidden?: boolean }
-export function getStudentAchievementGroups(adventure: AdventureState, journey?: JourneyState) {
+export function getStudentAchievementGroups(
+  adventure: AdventureState,
+  journey?: JourneyState,
+  gruposApi?: AchievementGroup[],
+) {
+  if (gruposApi !== undefined) return gruposApi
   const badges: PassportBadge[] = challenges.flatMap((c) =>
     c.logroOculto && /^I\d+$/.test(c.logroOculto.codigo)
       ? [
@@ -102,12 +108,14 @@ export function getProfileBadges(
   adventure: AdventureState,
   discovery: StudentDiscoveryState,
   journey?: JourneyState,
+  api?: { grupos: AchievementGroup[]; cuenta: string },
 ) {
-  const earned = getStudentAchievementGroups(adventure, journey).flatMap((g, index) =>
+  const earned = getStudentAchievementGroups(adventure, journey, api?.grupos).flatMap((g, index) =>
     g.items.filter((b) => b.done).map((b) => ({ ...b, group: index })),
   )
-  return discovery.profileBadgesConfigured
-    ? discovery.profileBadges
+  const preferencias = api ? discovery.profileBadgesApi?.[api.cuenta] : discovery
+  return preferencias?.profileBadgesConfigured
+    ? preferencias.profileBadges
         .flatMap((code) => {
           const badge = earned.find((b) => b.code === code)
           return badge ? [badge] : []
@@ -120,15 +128,27 @@ export function toggleProfileBadge(
   adventure: AdventureState,
   code: string,
   journey?: JourneyState,
+  api?: { grupos: AchievementGroup[]; cuenta: string },
 ): StudentDiscoveryState {
   if (
-    !getStudentAchievementGroups(adventure, journey).some((g) =>
+    !getStudentAchievementGroups(adventure, journey, api?.grupos).some((g) =>
       g.items.some((b) => b.code === code && b.done),
     )
   )
     return discovery
-  const selected: string[] = getProfileBadges(adventure, discovery, journey).map((b) => b.code)
+  const selected: string[] = getProfileBadges(adventure, discovery, journey, api).map((b) => b.code)
   if (!selected.includes(code) && selected.length >= 3) return discovery
+  if (api)
+    return {
+      ...discovery,
+      profileBadgesApi: {
+        ...discovery.profileBadgesApi,
+        [api.cuenta]: {
+          profileBadgesConfigured: true,
+          profileBadges: selected.includes(code) ? selected.filter((c) => c !== code) : [...selected, code],
+        },
+      },
+    }
   return {
     ...discovery,
     profileBadgesConfigured: true,

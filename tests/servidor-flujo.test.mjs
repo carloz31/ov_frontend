@@ -86,6 +86,33 @@ test('el ingreso deduplica el montaje, elige solo estudiantes y no marca avisos 
     )
   }
 })
+
+test('el ingreso confirmado conserva sus avisos si falla la consulta y reintenta sin otro POST', async () => {
+  const app = fixtureServidor()
+  const recibo = jsonServidor('completar-mission-welcome')
+  // DATO DE PRUEBA: desbloqueos durante el ingreso y desconexión posterior.
+  const inicial = jsonServidor('estado-inicial')
+  let falla = true
+  app.fetch((r) => {
+    if (r.url === '/api/cuentas') return { body: [inicial.cuenta] }
+    if (r.url === '/api/acciones/ingresar') return { body: recibo }
+    if (r.url.endsWith('/estado'))
+      return falla ? { status: 503, body: 'DATO DE PRUEBA: conexión interrumpida' } : { body: inicial }
+    if (r.url.includes('/desbloqueos?')) return { body: [] }
+    throw Error(r.url)
+  })
+  const acciones = app.load('src/features/servidor/acciones.ts')
+  const almacen = app.load('src/features/servidor/estadoServidor.ts')
+  assert.equal((await acciones.ingresar()).tipo, 'http')
+  assert.ok(almacen.avisosPendientes().some((a) => a.title === 'La primera chispa'))
+  falla = false
+  assert.equal((await acciones.ingresar()).tipo, 'ok')
+  assert.equal(app.requests.filter((r) => r.url === '/api/acciones/ingresar').length, 1)
+  assert.equal(
+    app.requests.some((r) => r.url.includes('marcar-vistos')),
+    false,
+  )
+})
 test('un ingreso anterior no cambia la cuenta nueva cuando llega tarde', async () => {
   const app = fixtureServidor()
   let liberar

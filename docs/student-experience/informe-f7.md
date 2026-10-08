@@ -2,7 +2,7 @@
 
 Fecha: 2026-10-07. Rama `iteracion-1` en ambos repositorios.
 
-**Verificación ejecutada; aceptación pendiente.** Doce HU pasan en el alcance comprobado, HU-073 queda parcial y HU-074 falla. F6 estaba sin cerrar cuando el usuario solicitó expresamente F7. No se resuelve la contradicción pendiente sobre ocultas ni se modifican implementación o expectativas para obtener un resultado verde.
+**F6 cerrada y revalidada.** Las catorce HU pasan en el alcance comprobado. El recorrido inicial de F7 detectó dos defectos de F6; la solicitud posterior del usuario autorizó corregirlos. Este informe conserva el recorrido original y actualiza HU-073, HU-074 y los pasos 11–12 con la verificación del cierre. La aprobación formal de la iteración corresponde al usuario.
 
 ## Entorno y método
 
@@ -25,8 +25,8 @@ Textos y elecciones son DATO DE PRUEBA. Los 60 ítems usan I=5, R=4, A=3 y S/E/C
 | HU-025 · Requisitos | Pasa | Detalle de enc-mitos pide bienvenida; I4 consulta «Invita a un compañero a tu Crew». Suites cubren Ciudad, fichas, conteos, error/reintento y consulta por solicitud sin eventos. Inteligencias/habilidades indican próxima iteración. |
 | HU-026 · Afines y carreras | Pasa | Geólogo/a primero, Mejor ajuste y correlación 0.826325. Libro: Ingeniería Civil, Ingeniería Ambiental, Medicina Veterinaria y via; navegación a ocupación/carrera. Perfil plano y códigos desconocidos cubiertos en pruebas. |
 | HU-027 · Sello | Pasa | Cierre 14 muestra Elena y enlace. Sello listo con resultado vigente, revela IRA y persiste tras recarga. Aislamiento por cuenta/fecha cubierto en pruebas. |
-| HU-073 · Avisos | Parcial | Ficha, insignias, Ciudad y niveles observados; Elena solo en cierre. Al abrir detalle Mi horizonte con aviso de nivel 2 activo, aviso y temporizador siguen activos bajo el diálogo. Falta coordinar ese overlay con la pausa. Consulta previa, avisos nuevos y reintentos pasan en suites. |
-| HU-074 · Pasaporte | Falla | Obtenidas I1–I3, bloqueadas públicas y selección vacía persistente funcionan. Oculta pendiente aparece como botón individual «Logro oculto» y grupo, en lugar del contador aprobado. Tres pruebas F6 fallan. |
+| HU-073 · Avisos | Pasa | Revalidado al cerrar F6: detalle/drawer, actividad, diálogo y menú ocultan y pausan la cola. Al cerrar se retoma sin consumir el aviso. Se incorpora I10 nueva en consulta previa; un único POST al terminar deja GET vacío. |
+| HU-074 · Pasaporte | Pasa | Revalidado: I1–I3 obtenidas, públicas bloqueadas con requisito y oculta pendiente solo en contador, sin tarjeta ni nombre en HTML. Tras obtener I10 en base de prueba aparece completa; recarga conserva ambos estados. Tres pruebas corregidas con aserciones reforzadas. |
 | HU-075 · Nivel | Pasa | Niveles 1, 2 y 3 en sus hitos; panel/perfil/pasaporte coinciden en nivel 3, Cartógrafo de posibilidades. Lista de títulos remota; pruebas cubren ausencia de nivel sin cálculo local. |
 
 ## Recorrido de aceptación (§6)
@@ -43,8 +43,8 @@ Textos y elecciones son DATO DE PRUEBA. Los 60 ítems usan I=5, R=4, A=3 y S/E/C
 | 8 | Tres respuestas de act-tip-01, salida y recarga; entrada directa en cuarta con anteriores confirmadas. |
 | 9 | Catorce interacciones completas; Elena exclusivamente en cierre, enlace al libro y sello de intereses listo. |
 | 10 | IRA, porcentajes, afines/carreras, navegación y revelación persistente. act-tip-final se completa una vez; posterior consulta abre revisión. |
-| 11 | **No cumple completamente:** obtenidas, bloqueadas públicas y niveles correctos; oculta presentada como tarjeta individual. |
-| 12 | Recargas conservan Camino, Ciudad, fichas, insignias, nivel, respuestas y revelación. Selección vacía persiste. También persiste defecto visual del paso 11. |
+| 11 | **Revalidado: pasa.** Obtenidas, bloqueadas públicas y niveles remotos correctos; oculta pendiente solo como contador. I4 conserva su requisito. Al obtener I10, su tarjeta y diálogo muestran nombre, descripción y requisito públicos. |
+| 12 | **Revalidado: pasa.** Recarga conserva estado remoto, contador sin tarjetas ocultas y nivel 3; otra recarga conserva I10 obtenida. Antes de marcar recupera diez avisos; después del lote no quedan no vistos. El recorrido inicial ya verificó respuestas, revelación y selección vacía persistentes. |
 
 Balance remoto: **24 actividades distintas completadas y 25 eventos COMPLETA_ACTIVIDAD**, cuatro fichas disponibles, tres insignias obtenidas y nivel 3. Solo enc-mitos tiene dos eventos; cada otra tiene uno. Consultar libro, revelar y revisar no añadió finalizaciones.
 
@@ -54,7 +54,7 @@ La campana final dice «No tienes novedades pendientes». GET conserva **13 desb
 
 | Nº | Resultado | Comprobación |
 |---|---|---|
-| 1 · Fuente remota | Cumple en alcance auditado | Mapa/mochila/pasaporte/nivel leen servidor. Guardas API omiten applyCompletion, adquisición por diapositivas y sincronización local. Resultado/respuestas remotos. El defecto de ocultas es de presentación, sin inventar adquisición. |
+| 1 · Fuente remota | Cumple en alcance auditado | Mapa/mochila/pasaporte/nivel leen servidor. Guardas API omiten applyCompletion, adquisición por diapositivas y sincronización local. Resultado/respuestas remotos. La presentación de ocultas se corrige al cerrar F6, sin inventar adquisición. |
 | 2 · COMPLETADA remota | Cumple | Entrega local de act-07 no completa servidor. Única llamada de vista a completarActividad: move de StudentActivityPlayer.tsx. Proyecciones usan COMPLETADA recibida. |
 | 3 · Repetición al servidor | Cumple | enc-mitos registra dos eventos y una actividad distinta. Revisiones de instrumento/resultado conservan los 25 eventos; revisión no es nueva realización. |
 | 4 · Red concentrada | Cumple en áreas permitidas | Búsqueda fetch en src, excluidos ambos portales protegidos, solo encuentra servidor/cliente.ts. Adaptadores solo import type. No se afirma auditar carpetas prohibidas por AGENTS.md. |
@@ -67,10 +67,10 @@ La campana final dice «No tienes novedades pendientes». GET conserva **13 desb
 |---|---|
 | npm run build | Pasa, 2828 módulos; permanece aviso previo de bundle grande. |
 | npm run lint | Pasa, sin errores ni advertencias. |
-| npm test | 354: 335 pasan, 19 fallan. Las 16 previas coinciden exactamente por nombre y línea. |
-| uv run pytest -q | 1006 pasan, dos advertencias previas, 1234.34 s; SEMILLA=demo, EVALUADOR=falso, temporales y caché propios. |
+| npm test, cierre F6 | 356: 340 pasan, solo las 16 fallas previas, comparadas exactamente por nombre y línea. Las tres pendientes de F6 pasan; se añaden dos casos de pausa del marcado y campana. |
+| uv run pytest -q, cierre F6 | 1006 pasan, dos advertencias previas, 1080.83 s; SEMILLA=demo, EVALUADOR=falso, temporales y caché propios. |
 
-Fallas nuevas en `tests/servidor-logros.test.mjs`:
+Fallas detectadas en F7 inicial y **corregidas al cerrar F6**, en `tests/servidor-logros.test.mjs` (líneas de la ejecución original):
 
 | Línea del caso | Nombre | Motivo |
 |---|---|---|
@@ -78,7 +78,7 @@ Fallas nuevas en `tests/servidor-logros.test.mjs`:
 | 38 | oculta obtenida y código desconocido usan su información pública sin inventar progreso | Variante busca I10 en fixture que oculta el código como ???; falta adaptar variante tras resolver decisión. |
 | 63 | pasaporte no filtra códigos ocultos ni adicionales y usa nivel remoto y total real | Falta contador; aparece tarjeta «Logro oculto». |
 
-Discrepancia pendiente: plan F6 identifica ocultas mediante `nombre === '???'`; contrato/fixtures entregan `codigo: '???'`, `nombre: 'Logro oculto'`, descripción/requisito nulos. AGENTS.md exige explicar la contradicción antes de resolverla en código. No se cambia contrato ni se regeneran fixtures. Hay que resolver HU-074, completar pausa de HU-073 ante detalles y repetir esos pasos antes de aprobar la iteración.
+Corrección autorizada por el usuario: las ocultas pendientes se identifican con `codigo === '???'` y estado distinto de OBTENIDA, según el contrato. La variante de prueba transforma el registro anonimizado en I10 obtenida, conservando y reforzando las aserciones. No se cambia contrato ni se regeneran fixtures. La pausa de HU-073 incluye portales de diálogo, drawer y menú en el mismo criterio `announcementBlocked` que usa getNextBadge; desmontar el aviso cancela su temporizador. La campana solicita el lote y la cola espera al cierre del menú. No quedan defectos pendientes de F6; las 16 fallas previas permanecen fuera de alcance.
 
 Las 16 fallas anteriores se enumeran por nombre y línea en F0 de `ov_backend/docs/iteraciones/decisiones-iteracion-1.md`: líneas 731, 1504, 1571, 1699, 1776, 1855, 1881, 1915, 1932, 1951, 2000, 2033, 2326, 2621, 2658 y 3229 de `tests/adventure-rendering.test.mjs`. No se modifican expectativas ni se amplía F7 para corregirlas.
 
@@ -86,4 +86,15 @@ Las 16 fallas anteriores se enumeran por nombre y línea en F0 de `ov_backend/do
 
 Evidencia fuera de Git, en la carpeta de visualizaciones de esta conversación: f7-recorrido-dom.json, f7-paso3.json, f7-camino-completo.json, f7-eventos-antes-resultado.json, f7-resultado.json, f7-estado-final.json, logs de build/lint/tests/pytest y capturas f7-elena.png, f7-intereses.png, f7-pasaporte.png, f7-aviso-durante-detalle.png y f7-local.png. Base/servidores temporales retirados al terminar.
 
-README de ambos repos y registro compartido actualizados. Commits F7 solo de documentación; implementación F6 pendiente permanece fuera de ellos. Sin dependencias, contratos/fixtures nuevos, Gemini, lectura de áreas protegidas ni push. F7 termina como verificación con aceptación pendiente, sin declarar F6 completa ni adelantar otra iteración.
+README de ambos repos y registro compartido actualizados. Los commits iniciales F7 fueron documentales; este cierre incorpora la implementación y registros de F6 con el mensaje «Iteración 1 · F6: avisos, pasaporte, nivel y requisitos», sin push. Sin dependencias, cambios de contratos/fixtures, Gemini ni lectura de áreas protegidas. Se detiene el trabajo al cerrar F6.
+
+## Revalidación de HU-073 y HU-074 al cerrar F6
+
+Base desechable nueva, SEMILLA=plataforma y EVALUADOR=falso, backend 8002/frontend 5178. Para repetir exclusivamente los pasos 11–12, el Camino se prepara por API; no se atribuye esa preparación a un nuevo recorrido completo. La verificación completa F7 anterior permanece descrita arriba.
+
+Se abre Mi horizonte mientras hay avisos: quedan siete en la campana, el aviso desaparece y sigue pausado más de siete segundos. No se registra POST de marcado y los 19 no vistos del servidor permanecen. Al cerrar se retoma el aviso con el mismo contador. Actividad y diálogo de salida no presentan la cola; en pasaporte no aparece automáticamente. La campana solicita diez pendientes, y el diálogo de I4 los pausa sin consumirlos. Recargar antes del marcado devuelve los diez.
+
+DATO DE PRUEBA: un evento crudo VENCE_DESAFIO_INTACTO, sin referencia, exclusivamente en esta base desechable obtiene I10 «Luz sin fisuras» mientras el lote está abierto. No se implementa ni se recorre un desafío fuera del alcance. La consulta previa incorpora su aviso después de los diez anteriores: se muestran once en total y solo entonces ocurre un POST global. GET de no vistos queda vacío, incluido tras recargar. I10 se muestra completa, con descripción y requisito del servidor; contador de ocultas desaparece y pasaporte pasa de 3/10 a 4/10. Nivel permanece en 3.
+
+Evidencias nuevas: f6-cierre-dom.json, f6-cierre-inicial.json, f6-cierre-pausa.json, f6-cierre-oculta-obtenida.json, f6-cierre-final.json; capturas f6-cierre-detalle-pausado.png, f6-cierre-pasaporte.png y f6-cierre-obtenida.png; logs f6-cierre-build.log, f6-cierre-lint.log, f6-cierre-tests.log y f6-cierre-pytest.log en visualizaciones de esta conversación.
+

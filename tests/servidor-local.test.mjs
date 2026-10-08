@@ -86,3 +86,24 @@ test('Mara, resultado, libro y afinidad locales conservan sus fuentes sin ejecut
   assert.equal(app.requests.length, 0)
   assert.equal(d.getDiscovery().revealedPagesApi, undefined)
 })
+
+test('pasaporte, nivel y novedades locales no ejecutan adaptadores ni consultan el servidor', () => {
+  const app = fixtureServidor({ api: false })
+  const adaptadores = app.load('src/features/servidor/adaptadores.ts')
+  Object.keys(adaptadores).forEach((key) => {
+    adaptadores[key] = () => {
+      throw Error('Adaptador API en local')
+    }
+  })
+  const store = app.load('src/features/occupation-exploration/lib/AdventureStore.ts')
+  const anterior = store.getTravelerLevel(store.useAdventure())
+  assert.ok(anterior.description)
+  assert.ok(anterior.nextStep)
+  app.load('src/features/student-experience/profile/StudentPassportView.tsx').StudentPassportView()
+  app.load('src/features/student-experience/overlays/NoveltiesMenu.tsx').NoveltiesMenu({})
+  assert.equal(app.requests.length, 0)
+  assert.equal(
+    app.load('src/features/student-experience/discovery/discoveryStore.ts').getDiscovery().profileBadgesApi,
+    undefined,
+  )
+})

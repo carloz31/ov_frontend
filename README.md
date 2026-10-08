@@ -52,4 +52,4 @@ npm test
 
 Las pruebas de integración están en `tests/servidor-*.test.mjs` y usan los ocho fixtures de `tests/fixtures/servidor/`, cuyos contratos proceden de ov_backend.
 
-**F7 · 2026-10-07:** recorrido completo ejecutado, invariantes revisados y aceptación pendiente. Build y lint pasan. Hay 354 pruebas: 335 pasan, las 16 fallas previas conservan nombres y líneas, y tres fallas de F6 afectan a insignias ocultas. HU-074 falla y HU-073 tiene una limitación de pausa al abrir detalles. El backend pasa 1006 pruebas con evaluador falso. Consulta [el informe por HU y las evidencias](docs/student-experience/informe-f7.md) antes de considerar aprobada la iteración.
+**Cierre F6 · 2026-10-07:** HU-073 y HU-074 corregidas y revalidadas; las catorce HU del recorrido F7 pasan en el alcance comprobado. Build y lint pasan. Hay 356 pruebas: 340 pasan y solo quedan las 16 fallas previas, con los mismos nombres y líneas. El backend pasa 1006 pruebas con evaluador falso. Consulta [el informe por HU y las evidencias](docs/student-experience/informe-f7.md); la aprobación formal de la iteración corresponde al usuario.

@@ -24,6 +24,7 @@ export function ActivityDrawer({
   onAction,
   onJournal,
   onFallbackFocus,
+  onRetryRequirement,
 }: {
   point?: StudentMapPoint
   details?: PointDetails
@@ -31,6 +32,7 @@ export function ActivityDrawer({
   onAction: (details: PointDetails) => void
   onJournal: (details: PointDetails) => void
   onFallbackFocus?: () => void
+  onRetryRequirement?: () => void
 }) {
   const adventure = useAdventure()
   const theme = useThemeClass()
@@ -114,6 +116,11 @@ export function ActivityDrawer({
                   <p className="sx-drawer-requirement">
                     <LockKeyhole size={18} />
                     {details.requirement}
+                    {onRetryRequirement && (
+                      <button type="button" className="sx-secondary-button" onClick={onRetryRequirement}>
+                        Reintentar requisito
+                      </button>
+                    )}
                   </p>
                 )}
                 {details.caseProgress && <ForestFireCaseProgress adventure={adventure} />}

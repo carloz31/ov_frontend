@@ -43,7 +43,9 @@ export function AdventurePanel({
   onCheckIn: () => void
 }) {
   const servidor = useEstadoServidor()
-  const level = modoApi ? undefined : getTravelerLevel(adventure)
+  const level = modoApi
+    ? getTravelerLevel(adventure, servidor.estado?.nivel_actual ?? null)
+    : getTravelerLevel(adventure)
   const visible = getListedActivities(points, false).slice(0, 4)
   const greeting = getReturnGreeting(adventure, recommended)
   useCheckInDay()

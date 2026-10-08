@@ -2,6 +2,8 @@ import type { JourneyState } from '../missions/logic'
 import type { Actividad } from '../missions/model'
 import type { HelenaPage } from '../student-experience/profile/helenaPages'
 import type { StudentDiscoveryState } from '../student-experience/discovery/discoveryStore'
+import type { AchievementGroup } from '../occupation-exploration/lib/AdventureAchievements'
+import type { PassportBadge } from '../student-experience/profile/passport'
 import type {
   ActividadEstado,
   DesbloqueoNuevo,
@@ -13,7 +15,133 @@ import type {
   RespuestaPublica,
   ResultadoPublico,
   CoincidenciaPublica,
+  DesbloqueoLegible,
 } from './tipos'
+
+export type AvisoServidor = {
+  id: string
+  kind: 'badge' | 'ficha' | 'ciudad' | 'nivel'
+  title: string
+  description: string
+  href: string
+}
+export const claveDesbloqueo = (d: DesbloqueoNuevo | DesbloqueoLegible) =>
+  `${d.regla}/${d.tipo_objetivo}/${d.objetivo.codigo}`
+export function avisosServidor(desbloqueos: (DesbloqueoNuevo | DesbloqueoLegible)[]): AvisoServidor[] {
+  const encontrados = new Set<string>()
+  return desbloqueos.flatMap<AvisoServidor>((d) => {
+    const id = claveDesbloqueo(d)
+    if (encontrados.has(id)) return []
+    encontrados.add(id)
+    const base = { id, title: d.objetivo.nombre }
+    switch (d.tipo_objetivo) {
+      case 'INSIGNIA':
+        return [
+          {
+            ...base,
+            kind: 'badge',
+            description: 'Un nuevo sello cuenta una parte de tu viaje.',
+            href: '/student/profile?section=passport',
+          },
+        ]
+      case 'FICHA':
+        return [
+          {
+            ...base,
+            kind: 'ficha',
+            description: 'Una nueva ficha viaja en tu mochila.',
+            href: '/student/resources',
+          },
+        ]
+      case 'NIVEL':
+        return [
+          {
+            ...base,
+            kind: 'nivel',
+            description: `Subiste a ${d.objetivo.nombre}.`,
+            href: '/student/profile?section=passport#nivel',
+          },
+        ]
+      case 'BLOQUE':
+        return d.objetivo.codigo === 'CIUDAD'
+          ? [
+              {
+                ...base,
+                kind: 'ciudad',
+                title: 'La ciudad te espera',
+                description: 'Tu camino abrió nuevas posibilidades.',
+                href: '/student/exploration',
+              },
+            ]
+          : []
+      default:
+        return []
+    }
+  })
+}
+export const insigniasOcultasPendientes = (estado: EstadoCuenta | null) =>
+  estado?.insignias.filter((i) => i.codigo === '???' && i.estado !== 'OBTENIDA').length ?? 0
+export function insigniasServidor(
+  estado: EstadoCuenta | null,
+  presentaciones: AchievementGroup[],
+): AchievementGroup[] {
+  const publicas = estado?.insignias.filter((i) => i.estado === 'OBTENIDA' || i.codigo !== '???') ?? []
+  const conocidas = new Set(presentaciones.flatMap((g) => g.items.map((i) => i.code)))
+  const grupos = presentaciones
+    .map((g) => ({
+      ...g,
+      items: g.items.flatMap((p) => {
+        const i = publicas.find((i) => i.codigo === p.code)
+        return i
+          ? [
+              {
+                ...p,
+                title: i.nombre,
+                description: i.requisito ?? i.descripcion ?? '',
+                done: i.estado === 'OBTENIDA',
+              },
+            ]
+          : []
+      }),
+    }))
+    .filter((g) => g.items.length)
+  const otras = publicas
+    .filter((i) => !conocidas.has(i.codigo as PassportBadge['code']))
+    .map((i): PassportBadge => ({
+      code: i.codigo as PassportBadge['code'],
+      title: i.nombre,
+      done: i.estado === 'OBTENIDA',
+      icon: 'sparkles',
+      description: i.requisito ?? i.descripcion ?? '',
+      message: i.descripcion ?? 'Un nuevo descubrimiento acompaña tu viaje.',
+      metaphor: 'Una nueva mirada viaja contigo.',
+      vocationalMeaning: i.descripcion ?? 'Cada descubrimiento amplía tus posibilidades.',
+    }))
+  if (otras.length)
+    grupos.push({
+      title: 'La luz que despeja caminos',
+      description: 'Descubrimientos que aparecen durante el viaje.',
+      icon: 'key',
+      items: otras,
+    })
+  return grupos
+}
+export function textoRequisitoInsignia(
+  progreso: ProgresoObjetivo,
+  estado: EstadoCuenta | null,
+  codigo: string,
+) {
+  const requisito =
+    estado?.insignias.find((i) => i.codigo === codigo)?.requisito ?? 'El requisito sigue pendiente.'
+  if (progreso.reglas.some((r) => r.evaluador_especial)) {
+    const completadas =
+      estado?.bloques
+        .find((b) => b.codigo === 'CAMINO')
+        ?.actividades.filter((a) => a.codigo !== 'mission-welcome' && a.estado === 'COMPLETADA').length ?? 0
+    return `${requisito} · ${Math.min(3, completadas)} de 3 misiones.`
+  }
+  return requisito
+}
 
 export const actividadServidor = (estado: EstadoCuenta | null, codigo: string): ActividadEstado | undefined =>
   estado?.bloques.flatMap((b) => b.actividades).find((a) => a.codigo === codigo)

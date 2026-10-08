@@ -7,6 +7,12 @@ import {
   prepararAlmacenesApi,
   refrescar,
   sesionServidor,
+  incorporarDesbloqueos,
+  consultarNoVistos,
+  avisosPendientes,
+  obtenerEstadoServidor,
+  estadoLoteAvisos,
+  terminarAvisosMarcados,
 } from './estadoServidor'
 import type {
   CuentaResumen,
@@ -16,6 +22,7 @@ import type {
   RespuestaServidor,
   RespuestaItemEntrada,
   RespuestaItemsGuardados,
+  DesbloqueosMarcados,
 } from './tipos'
 
 let inicio: Promise<RespuestaServidor<RespuestaAccion>> | null = null
@@ -54,6 +61,7 @@ export function ingresar(): Promise<RespuestaServidor<RespuestaAccion>> {
         return respuesta
       }
       ingresoRegistrado = respuesta.datos
+      incorporarDesbloqueos(respuesta.datos.nuevos_desbloqueos)
     }
     const estado = await refrescar()
     return estado.tipo === 'ok' ? { tipo: 'ok' as const, datos: ingresoRegistrado } : estado
@@ -85,10 +93,53 @@ export async function completarActividad(
   if (respuesta.tipo !== 'ok') return respuesta
   if (cuenta !== cuentaActiva() || sesion !== sesionServidor())
     return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la acción.' }
+  incorporarDesbloqueos(respuesta.datos.nuevos_desbloqueos)
   const estado = await refrescar()
   return estado.tipo === 'ok'
     ? respuesta
     : { tipo: 'guardado_sin_refrescar', datos: respuesta.datos, error: estado }
+}
+let cierreAvisos: Promise<RespuestaServidor<'terminado' | 'nuevos'>> | null = null
+let sesionCierre = -1
+export function marcarVistos(): Promise<RespuestaServidor<'terminado' | 'nuevos'>> {
+  const cuenta = cuentaActiva(),
+    sesion = sesionServidor()
+  if (!modoApi || !cuenta)
+    return Promise.resolve({ tipo: 'http', estado: 400, detalle: 'No hay una cuenta de servidor activa.' })
+  if (cierreAvisos && sesionCierre === sesion) return cierreAvisos
+  const vigente = () => cuenta === cuentaActiva() && sesion === sesionServidor()
+  sesionCierre = sesion
+  estadoLoteAvisos({ procesandoAvisos: true, errorAvisos: null })
+  const tarea = (async (): Promise<RespuestaServidor<'terminado' | 'nuevos'>> => {
+    let ids = obtenerEstadoServidor().marcadoAvisos
+    if (!ids) {
+      const consulta = await consultarNoVistos()
+      if (consulta.tipo !== 'ok') return consulta
+      if (avisosPendientes().length) return { tipo: 'ok', datos: 'nuevos' }
+      ids = [...obtenerEstadoServidor().avisosMostrados]
+      const respuesta = await pedir<DesbloqueosMarcados>(
+        `/cuentas/${encodeURIComponent(cuenta)}/desbloqueos/marcar-vistos`,
+        {},
+      )
+      if (!vigente())
+        return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante el marcado.' }
+      if (respuesta.tipo !== 'ok') return respuesta
+      estadoLoteAvisos({ marcadoAvisos: ids })
+    }
+    const consulta = await consultarNoVistos()
+    if (!vigente())
+      return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante el marcado.' }
+    if (consulta.tipo !== 'ok') return consulta
+    terminarAvisosMarcados(ids)
+    return { tipo: 'ok', datos: avisosPendientes().length ? 'nuevos' : 'terminado' }
+  })()
+  cierreAvisos = tarea
+  void tarea.then((respuesta) => {
+    if (vigente())
+      estadoLoteAvisos({ procesandoAvisos: false, errorAvisos: respuesta.tipo === 'ok' ? null : respuesta })
+    if (cierreAvisos === tarea) cierreAvisos = null
+  })
+  return tarea
 }
 export type GuardadoItems =
   | RespuestaServidor<RespuestaItemsGuardados>

@@ -12,6 +12,7 @@ export type EstadoActividad = 'BLOQUEADA' | 'DISPONIBLE' | 'EN_CURSO' | 'COMPLET
 export type EstadoDisponibilidad = 'DISPONIBLE' | 'BLOQUEADA'
 export type CuentaResumen = { codigo: string; nombre: string; rol: 'ESTUDIANTE' | 'APODERADO' }
 export type NivelActual = { numero: number; titulo: string }
+export type DesbloqueosMarcados = { marcados: number }
 export type ActividadEstado = { codigo: string; titulo: string; estado: EstadoActividad }
 export type BloqueEstado = {
   codigo: string

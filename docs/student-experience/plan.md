@@ -655,3 +655,40 @@ Recorrido manual con SEMILLA=plataforma y EVALUADOR=falso sobre una base tempora
 Build y lint pasan; se conserva el aviso previo de tamaño de bundle. La suite completa contiene 334 pruebas: 318 pasan y las mismas 16 fallas previas de F3, todas en `adventure-rendering.test.mjs`; sus nombres y líneas coinciden exactamente con F0. No se modifican sus expectativas. Las pruebas de integración suman 42 casos aprobados, con 22 nuevos en F5: construcción, escala, reanudación en el cuarto ítem, despedida, guardado, doble clic, red, 409, solo lectura, reintento sin otro POST, consultas concurrentes, cuenta, aislamiento, resultado IRA, porcentajes, perfil plano, coincidencias, código desconocido, carreras y via, URL y sello por cuenta y fecha. El modo local no utiliza adaptadores ni solicita la API.
 
 El backend aprueba 1006 pruebas con evaluador falso y dos advertencias previas de deprecación; 1321,45 segundos. No cambian sus contratos ni los ocho fixtures. En el backend solo se actualiza el registro F5 de decisiones compartidas. Sin dependencias nuevas ni acceso a áreas protegidas. F5 completa; F6–F7 y las 16 fallas previas quedan pendientes. Un commit por repo en iteracion-1, sin push; se detiene el trabajo antes de F6.
+
+# Iteración 1 · F6 · Avisos, pasaporte, nivel y requisitos · 7 de octubre de 2026
+
+**Completa.** La cola API reutiliza el estilo del aviso de insignia, siete segundos y cierre manual. Presenta insignias, fichas, Ciudad y nivel, con destinos al pasaporte, mochila, Ciudad y nivel del pasaporte. Aparece automáticamente solo en los mapas después de cerrar el reproductor y los overlays prioritarios. En otros módulos la campana abre el mismo lote. Elena permanece únicamente en el cierre de F5.
+
+El lote se marca tras mostrar todos sus avisos, con una consulta previa de no vistos que incorpora cualquier aviso nuevo. Los avisos mostrados se recuerdan durante la sesión; las consultas repetidas no vuelven a reproducirlos. Los fallos permiten reintentar, y un marcado confirmado conserva su recibo para repetir solo GET. Recargar antes de marcar conserva los pendientes del servidor. Otra cuenta o un reinicio descarta el lote anterior. Los desbloqueos confirmados de acciones se conservan aunque falle el refresco; los registros locales de avisos no deciden la cola API.
+
+El pasaporte conserva pergaminos, grupos, iconos, textos narrativos y diálogos. Sus insignias proceden del servidor, con estado OBTENIDA como única fuente de adquisición; las adicionales ausentes quedan excluidas. La elección de hasta tres insignias se almacena por cuenta, incluyendo una selección explícitamente vacía. Las fechas solo se muestran si se recibió fecha_hora de un desbloqueo de esa cuenta. Perfil, panel y pasaporte muestran número y título remoto y las descripciones del front; cada nivel del recorrido usa su estado recibido. Sin nivel remoto no se calcula un sustituto.
+
+Los detalles de mapa, entrada a Ciudad, ficha e insignia pública consultan requisitos al abrirse, con carga, error y reintento. Las respuestas tardías se descartan por cuenta y detalle. El conteo de Camino procede del estado remoto; casos y desafíos ausentes no provocan consultas de códigos inexistentes. Intereses conserva el requisito y avance de Mara de F5.
+
+**Corrección de cierre autorizada por el usuario.** Se identifican las ocultas pendientes mediante `codigo === '???'` y estado distinto de OBTENIDA, respetando contrato y fixtures. Solo se muestra cuántas quedan por descubrir, sin tarjeta ni nombre en HTML. Una obtenida aparece completa con sus datos públicos. La variante de prueba transforma el registro anonimizado en I10 obtenida; sus aserciones se mantienen y refuerzan.
+
+### Validación previa de F6
+
+SEMILLA=plataforma y EVALUADOR=falso, base temporal independiente, backend 8002 y frontend 5177 con proxy temporal; el proxy versionado conserva 8000. La bienvenida se completa en el navegador y los siguientes hitos se preparan mediante API para comprobar avisos sin repetir F4. Se observan los avisos de I1 y ficha, I2 y nivel 2, Ciudad, I3 y nivel 3. Catálogo permanece sin cola automática; la campana abre siete avisos y recargar antes de marcar conserva los siete. Nuevos desbloqueos de Ciudad se incorporan en la consulta previa al marcado. Una segunda recarga conserva los diez pendientes; recorrerlos deja campana vacía y GET no vistos `[]`. Perfil y panel de Ciudad muestran nivel 3; el diálogo bloqueado de I4 obtiene «Invita a un compañero a tu Crew». Los pasos 11–12 se completan en la revalidación de cierre descrita abajo.
+
+Validación previa: build y lint pasan; 354 pruebas, 335 pasan, las mismas 16 fallas previas y tres sobre ocultas. Backend: 1006 pasan, dos advertencias previas, 1241,26 segundos. Ese resultado se sustituye por la validación de cierre siguiente.
+
+### Revalidación de cierre F6
+
+En API, detalles/drawers, diálogos, menús, actividades y overlays prioritarios comparten el bloqueo de anuncios usado por getNextBadge. Al abrirlos, el aviso se desmonta y cancela su temporizador; el lote no consume ni marca avisos durante la pausa. La campana solicita el mismo lote y espera a cerrar su menú antes de presentarlo.
+
+Base desechable nueva, SEMILLA=plataforma y EVALUADOR=falso, backend 8002/frontend 5178. Para repetir exclusivamente los pasos 11–12, el Camino se prepara por API; no se atribuye esa preparación a un nuevo recorrido completo. La verificación completa F7 anterior permanece descrita arriba.
+
+Se abre Mi horizonte mientras hay avisos: quedan siete en la campana, el aviso desaparece y sigue pausado más de siete segundos. No se registra POST de marcado y los 19 no vistos del servidor permanecen. Al cerrar se retoma el aviso con el mismo contador. Actividad y diálogo de salida no presentan la cola; en pasaporte no aparece automáticamente. La campana solicita diez pendientes, y el diálogo de I4 los pausa sin consumirlos. Recargar antes del marcado devuelve los diez.
+
+DATO DE PRUEBA: un evento crudo VENCE_DESAFIO_INTACTO, sin referencia, exclusivamente en esta base desechable obtiene I10 «Luz sin fisuras» mientras el lote está abierto. No se implementa ni se recorre un desafío fuera del alcance. La consulta previa incorpora su aviso después de los diez anteriores: se muestran once en total y solo entonces ocurre un POST global. GET de no vistos queda vacío, incluido tras recargar. I10 se muestra completa, con descripción y requisito del servidor; contador de ocultas desaparece y pasaporte pasa de 3/10 a 4/10. Nivel permanece en 3.
+
+Evidencias nuevas: f6-cierre-dom.json, f6-cierre-inicial.json, f6-cierre-pausa.json, f6-cierre-oculta-obtenida.json, f6-cierre-final.json; capturas f6-cierre-detalle-pausado.png, f6-cierre-pasaporte.png y f6-cierre-obtenida.png; logs f6-cierre-build.log, f6-cierre-lint.log, f6-cierre-tests.log y f6-cierre-pytest.log en visualizaciones de esta conversación.
+
+Build y lint pasan; npm test tiene 356 pruebas, 340 pasan y solo las 16 fallas previas, comparadas por nombre y línea. Las tres pendientes de F6 pasan sin debilitar aserciones; se añaden dos casos de pausa del marcado y solicitud desde campana. Requisitos, niveles, aislamiento por cuenta y modo local conservan sus comprobaciones.
+
+Backend: uv run pytest -q, con SEMILLA=demo, EVALUADOR=falso y temporales propios, termina con 1006 pruebas que pasan y dos advertencias previas en 1080.83 segundos.
+
+Sin dependencias, cambios de contrato, regeneración de fixtures, áreas protegidas, Gemini ni push. Un commit F6 por repo en iteracion-1 con el mensaje acordado; se detiene el trabajo al cerrar la fase.
+

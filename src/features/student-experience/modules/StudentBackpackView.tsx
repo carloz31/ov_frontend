@@ -86,10 +86,13 @@ function StudentBackpackView() {
   const [requisitoId, setRequisitoId] = useState<string | null>(null)
   const [requisito, setRequisito] = useState('')
   const [requisitoPendiente, setRequisitoPendiente] = useState(false)
+  const [errorRequisito, setErrorRequisito] = useState(false)
+  const [intentoRequisito, setIntentoRequisito] = useState(0)
   useEffect(() => {
     if (!modoApi || !requisitoId) return
     let vigente = true
     setRequisitoPendiente(true)
+    setErrorRequisito(false)
     setRequisito('Consultando el requisito en el servidor…')
     void consultarProgreso('FICHA', requisitoId).then((respuesta) => {
       if (!vigente) return
@@ -99,11 +102,12 @@ function StudentBackpackView() {
           : mensajeErrorServidor(respuesta),
       )
       setRequisitoPendiente(false)
+      setErrorRequisito(respuesta.tipo !== 'ok')
     })
     return () => {
       vigente = false
     }
-  }, [requisitoId, servidor.estado])
+  }, [requisitoId, servidor.estado, intentoRequisito])
   const resources = getTravelResources(),
     selected = resources.find((r) => r.id === selectedId)
   const isUnlocked = (r: TravelResource) => isTravelResourceUnlocked(r, journey, adventure)
@@ -383,6 +387,11 @@ function StudentBackpackView() {
               <DialogTitle>Cómo obtener esta ficha</DialogTitle>
               <DialogDescription>{requisito}</DialogDescription>
             </DialogHeader>
+            {errorRequisito && (
+              <button className="sx-secondary-button" onClick={() => setIntentoRequisito((i) => i + 1)}>
+                Reintentar requisito
+              </button>
+            )}
             {!requisitoPendiente && (
               <button
                 type="button"

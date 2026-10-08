@@ -1,3 +1,4 @@
+import type { NivelActual } from '@/features/servidor/tipos'
 import { useSyncExternalStore } from 'react'
 import { cityCases, fieldMissions } from '../data/AdventureData'
 import { journalDemoEntries, readinessDemoCheckIns } from '../data/JournalData'
@@ -209,45 +210,53 @@ export function canAccessFamilyConversations(value: AdventureState) {
   if (cuentaServidor) return false
   return prototypeAllUnlocked || isFamilyUnlocked(value)
 }
-export function getTravelerLevel(value: AdventureState) {
-  const levels = [
-    {
-      number: 1,
-      label: 'Observador del horizonte',
-      description:
-        'Estás aprendiendo a mirar tus intereses y preguntas como pistas, sin apresurarte a elegir un destino.',
-      nextStep: 'Completa tres Misiones de Campo para reunir tus primeras pistas.',
-    },
-    {
-      number: 2,
-      label: 'Recolector de pistas',
-      description:
-        'Ya reconoces señales sobre lo que disfrutas, lo que haces bien y los retos que despiertan tu curiosidad.',
-      nextStep: 'Completa las Misiones de Campo para abrir la ciudad de posibilidades.',
-    },
-    {
-      number: 3,
-      label: 'Cartógrafo de posibilidades',
-      description:
-        'Tu mapa personal empieza a tomar forma. Ahora puedes contrastarlo con profesiones y situaciones del mundo real.',
-      nextStep: 'Resuelve un caso o investiga una profesión para poner a prueba tus ideas.',
-    },
-    {
-      number: 4,
-      label: 'Explorador de la ciudad',
-      description:
-        'Estás probando tus habilidades en escenarios concretos y reemplazando suposiciones por experiencias.',
-      nextStep:
-        'Completa los casos, una investigación y una conversación familiar para integrar tus hallazgos.',
-    },
-    {
-      number: 5,
-      label: 'Autor de su rumbo',
-      description:
-        'Has reunido autoconocimiento, experiencias y otras miradas. Tu rumbo puede cambiar, pero ahora sabes cómo volver a construirlo.',
-      nextStep: 'Sigue revisando tu pasaporte: cada nueva experiencia puede enriquecer tu decisión.',
-    },
-  ] as const
+const travelerLevels = [
+  {
+    number: 1,
+    label: 'Observador del horizonte',
+    description:
+      'Estás aprendiendo a mirar tus intereses y preguntas como pistas, sin apresurarte a elegir un destino.',
+    nextStep: 'Completa tres Misiones de Campo para reunir tus primeras pistas.',
+  },
+  {
+    number: 2,
+    label: 'Recolector de pistas',
+    description:
+      'Ya reconoces señales sobre lo que disfrutas, lo que haces bien y los retos que despiertan tu curiosidad.',
+    nextStep: 'Completa las Misiones de Campo para abrir la ciudad de posibilidades.',
+  },
+  {
+    number: 3,
+    label: 'Cartógrafo de posibilidades',
+    description:
+      'Tu mapa personal empieza a tomar forma. Ahora puedes contrastarlo con profesiones y situaciones del mundo real.',
+    nextStep: 'Resuelve un caso o investiga una profesión para poner a prueba tus ideas.',
+  },
+  {
+    number: 4,
+    label: 'Explorador de la ciudad',
+    description:
+      'Estás probando tus habilidades en escenarios concretos y reemplazando suposiciones por experiencias.',
+    nextStep:
+      'Completa los casos, una investigación y una conversación familiar para integrar tus hallazgos.',
+  },
+  {
+    number: 5,
+    label: 'Autor de su rumbo',
+    description:
+      'Has reunido autoconocimiento, experiencias y otras miradas. Tu rumbo puede cambiar, pero ahora sabes cómo volver a construirlo.',
+    nextStep: 'Sigue revisando tu pasaporte: cada nueva experiencia puede enriquecer tu decisión.',
+  },
+] as const
+export type TravelerLevel = { number: number; label: string; description: string; nextStep: string }
+export function getTravelerLevel(value: AdventureState): TravelerLevel
+export function getTravelerLevel(value: AdventureState, nivel: NivelActual | null): TravelerLevel | null
+export function getTravelerLevel(value: AdventureState, nivel?: NivelActual | null): TravelerLevel | null {
+  if (nivel !== undefined) {
+    const presentacion = nivel ? travelerLevels.find((n) => n.number === nivel.numero) : undefined
+    return presentacion && nivel ? { ...presentacion, label: nivel.titulo } : null
+  }
+  const levels = travelerLevels
   const allCasesSolved = cityCases.every((item) => value.solvedCaseIds.includes(item.id))
   const hasCompletedConversation = value.conversations.some((item) => item.completedAt)
   const hasPublishedResearch = value.videos.length > 0

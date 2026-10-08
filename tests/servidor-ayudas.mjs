@@ -24,6 +24,8 @@ export function fixtureServidor({
     requests = [],
     navigations = []
   const eventos = []
+  const observadores = new Set()
+  let overlayAbierto = false
   let fallarGuardado = false,
     handler = () => {
       throw Error('Solicitud no configurada')
@@ -36,6 +38,7 @@ export function fixtureServidor({
     effects = []
   const hooksReact = {
     ...React,
+    useContext: (context) => context._currentValue,
     useSyncExternalStore: (_, snapshot) => snapshot(),
     useEffect(callback, deps = []) {
       if (!managed) return
@@ -78,10 +81,31 @@ export function fixtureServidor({
     crypto,
     setTimeout,
     clearTimeout,
+    MutationObserver: class {
+      constructor(callback) {
+        this.callback = callback
+      }
+      observe() {
+        observadores.add(this.callback)
+      }
+      disconnect() {
+        observadores.delete(this.callback)
+      }
+    },
     window: {
       addEventListener: (name, fn) => eventos.push({ name, fn }),
+      removeEventListener() {},
+      setInterval,
+      clearInterval,
       matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
       location: { reload() {} },
+    },
+    document: {
+      visibilityState: 'visible',
+      body: {},
+      querySelector: () => (overlayAbierto ? {} : null),
+      addEventListener() {},
+      removeEventListener() {},
     },
     localStorage: {
       getItem: (key) => local.get(key) ?? null,
@@ -170,6 +194,10 @@ export function fixtureServidor({
     sesion,
     requests,
     navigations,
+    overlayOpen(abierto) {
+      overlayAbierto = abierto
+      observadores.forEach((callback) => callback())
+    },
     fetch: (fn) => {
       handler = fn
     },

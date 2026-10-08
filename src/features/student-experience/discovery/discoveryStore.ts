@@ -39,6 +39,7 @@ export type StudentDiscoveryState = {
   reactions: Record<string, InterviewReaction>
   profileBadges: string[]
   profileBadgesConfigured: boolean
+  profileBadgesApi?: Record<string, { profileBadges: string[]; profileBadgesConfigured: boolean }>
   badgeFirstSeenAt: Record<string, string>
   viewedCareerIds: string[]
   catalogVisits: CatalogVisit[]
@@ -65,6 +66,21 @@ export function validPublication(v: unknown): v is ResearchPublication {
   )
 }
 export function validDiscoveryState(v: unknown): v is StudentDiscoveryState {
+  if (
+    isRecord(v) &&
+    v.profileBadgesApi !== undefined &&
+    (!isRecord(v.profileBadgesApi) ||
+      !Object.values(v.profileBadgesApi).every(
+        (p) =>
+          isRecord(p) &&
+          typeof p.profileBadgesConfigured === 'boolean' &&
+          isStrings(p.profileBadges) &&
+          p.profileBadges.length <= 3 &&
+          new Set(p.profileBadges).size === p.profileBadges.length &&
+          p.profileBadges.every((c) => /^I\d+$/.test(c)),
+      ))
+  )
+    return false
   if (
     !isRecord(v) ||
     v.version !== 1 ||

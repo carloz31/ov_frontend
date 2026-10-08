@@ -1,4 +1,13 @@
 import { Link } from 'react-router'
+import { useEffect, useState } from 'react'
+import { modoApi } from '@/features/servidor/config'
+import {
+  consultarProgreso,
+  mensajeErrorServidor,
+  useEstadoServidor,
+} from '@/features/servidor/estadoServidor'
+import { insigniasServidor, textoRequisitoInsignia } from '@/features/servidor/adaptadores'
+import { getAchievementPresentations } from '@/features/occupation-exploration/lib/AdventureAchievements'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Eye, LockKeyhole } from 'lucide-react'
 import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
@@ -28,15 +37,46 @@ export function PassportBadgeDialog({
     journey = useJourney(),
     discovery = useDiscovery(),
     returnFocus = useReturnFocus()
-  const selected = getProfileBadges(adventure, discovery, journey),
+  const servidor = useEstadoServidor()
+  const api = modoApi
+    ? {
+        grupos: insigniasServidor(servidor.estado, getAchievementPresentations()),
+        cuenta: servidor.estado?.cuenta.codigo ?? '',
+      }
+    : undefined
+  const [requisito, setRequisito] = useState('Consultando el requisito en el servidor…')
+  const [error, setError] = useState('')
+  const [intento, setIntento] = useState(0)
+  useEffect(() => {
+    if (!modoApi || !badge || badge.done) return
+    let vigente = true
+    setRequisito('Consultando el requisito en el servidor…')
+    setError('')
+    void consultarProgreso('INSIGNIA', badge.code).then((r) => {
+      if (!vigente) return
+      if (r.tipo === 'ok') setRequisito(textoRequisitoInsignia(r.datos, servidor.estado, badge.code))
+      else {
+        setRequisito('')
+        setError(mensajeErrorServidor(r))
+      }
+    })
+    return () => {
+      vigente = false
+    }
+  }, [badge, servidor.estado, intento])
+  const selected = getProfileBadges(adventure, discovery, journey, api),
     visible = selected.some((b) => b.code === badge?.code)
   const hidden = badge?.hidden && !badge.done
   const destination = badge ? badgeDestinations[badge.code] : undefined
   const Icon = badge ? achievementIcons[badge.icon] : Eye
-  const date = badge
-    ? (discovery.badgeFirstSeenAt[badge.code] ??
-      journey.challengeResults?.find((r) => r.logroOculto === badge.code)?.fechaHora)
-    : undefined
+  const date = modoApi
+    ? badge
+      ? servidor.fechasInsignias[badge.code]
+      : undefined
+    : badge
+      ? (discovery.badgeFirstSeenAt[badge.code] ??
+        journey.challengeResults?.find((r) => r.logroOculto === badge.code)?.fechaHora)
+      : undefined
   return (
     <Dialog
       open={!!badge}
@@ -79,7 +119,7 @@ export function PassportBadgeDialog({
                       dateStyle: 'long',
                       timeZone: 'America/Lima',
                     })}{' '}
-                    · fecha aproximada del primer registro
+                    {!modoApi && ' · fecha aproximada del primer registro'}
                   </p>
                 )}
               </section>
@@ -94,7 +134,9 @@ export function PassportBadgeDialog({
                 aria-pressed={visible}
                 disabled={!visible && selected.length >= 3}
                 onClick={() =>
-                  updateDiscovery((current) => toggleProfileBadge(current, adventure, badge.code, journey))
+                  updateDiscovery((current) =>
+                    toggleProfileBadge(current, adventure, badge.code, journey, api),
+                  )
                 }
               >
                 <Eye aria-hidden="true" size={18} />
@@ -114,7 +156,15 @@ export function PassportBadgeDialog({
               {!hidden && (
                 <section className="sx-p-requirement">
                   <h3>Cómo se descubre</h3>
-                  <p>{badge.description}</p>
+                  <p>{modoApi ? requisito : badge.description}</p>
+                  {modoApi && error && (
+                    <>
+                      <p role="alert">{error}</p>
+                      <button className="sx-d-action" onClick={() => setIntento((i) => i + 1)}>
+                        Reintentar requisito
+                      </button>
+                    </>
+                  )}
                 </section>
               )}
               <section className="sx-p-hidden-meaning">

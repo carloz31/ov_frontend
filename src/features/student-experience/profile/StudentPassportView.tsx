@@ -10,17 +10,26 @@ import { useDiscovery } from '../discovery/discoveryStore'
 import { PassportBadgeDialog } from './PassportBadgeDialog'
 import { achievementIcons, getProfileBadges, getStudentAchievementGroups, travelerTitles } from './passport'
 import './passport.css'
+import { modoApi } from '@/features/servidor/config'
+import { useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { insigniasServidor, insigniasOcultasPendientes } from '@/features/servidor/adaptadores'
+import { getAchievementPresentations } from '@/features/occupation-exploration/lib/AdventureAchievements'
 
 export function StudentPassportView() {
+  const servidor = useEstadoServidor()
+  const gruposApi = modoApi ? insigniasServidor(servidor.estado, getAchievementPresentations()) : undefined
+  const api = gruposApi ? { grupos: gruposApi, cuenta: servidor.estado?.cuenta.codigo ?? '' } : undefined
   const adventure = useAdventure(),
     discovery = useDiscovery(),
     journey = useJourney(),
-    groups = getStudentAchievementGroups(adventure, journey),
-    level = getTravelerLevel(adventure)
+    groups = getStudentAchievementGroups(adventure, journey, gruposApi),
+    level = modoApi
+      ? getTravelerLevel(adventure, servidor.estado?.nivel_actual ?? null)
+      : getTravelerLevel(adventure)
   const [selectedCode, setSelectedCode] = useState<string>()
   const all = groups.flatMap((g) => g.items),
     earned = all.filter((b) => b.done),
-    visible = getProfileBadges(adventure, discovery, journey)
+    visible = getProfileBadges(adventure, discovery, journey, api)
   const groupIndex = groups.findIndex((g) => g.items.some((b) => b.code === selectedCode)),
     group = groups[groupIndex],
     selected = group?.items.find((b) => b.code === selectedCode)
@@ -31,7 +40,7 @@ export function StudentPassportView() {
           <ArrowLeft aria-hidden="true" />
           Mi perfil
         </Link>
-        <header className="sx-d-header">
+        <header className="sx-d-header" id="nivel">
           <div>
             <h1>Pasaporte vocacional</h1>
             <p>
@@ -41,51 +50,71 @@ export function StudentPassportView() {
           </div>
           <span className="sx-p-total">
             <Award aria-hidden="true" />
-            {earned.length} de {all.length} insignias
+            {earned.length} de {modoApi ? (servidor.estado?.insignias.length ?? 0) : all.length} insignias
           </span>
         </header>
-        <Parchment className="sx-d-dark sx-p-level">
-          <div className="sx-p-level-summary">
-            <span className="sx-level-medallion sx-p-level-seal">
-              <span>NIVEL</span>
-              <strong>{String(level.number).padStart(2, '0')}</strong>
-            </span>
-            <div>
-              <p className="sx-d-eyebrow">Nivel {level.number} de 5 · tu título de viajero</p>
-              <h2>{level.label}</h2>
-              <p>{level.description}</p>
+        {level ? (
+          <Parchment className="sx-d-dark sx-p-level">
+            <div className="sx-p-level-summary">
+              <span className="sx-level-medallion sx-p-level-seal">
+                <span>NIVEL</span>
+                <strong>{String(level.number).padStart(2, '0')}</strong>
+              </span>
+              <div>
+                <p className="sx-d-eyebrow">Nivel {level.number} de 5 · tu título de viajero</p>
+                <h2>{level.label}</h2>
+                <p>{level.description}</p>
+              </div>
+              <div className="sx-p-next-title">
+                <Target aria-hidden="true" />
+                <strong>
+                  {level.number === 5
+                    ? 'Llegaste al último título del viaje'
+                    : `Para ser ${travelerTitles[level.number]}`}
+                </strong>
+                <p>{level.nextStep}</p>
+              </div>
             </div>
-            <div className="sx-p-next-title">
-              <Target aria-hidden="true" />
-              <strong>
-                {level.number === 5
-                  ? 'Llegaste al último título del viaje'
-                  : `Para ser ${travelerTitles[level.number]}`}
-              </strong>
-              <p>{level.nextStep}</p>
-            </div>
-          </div>
-          <ol className="sx-p-title-trail" aria-label="Camino de los títulos">
-            {travelerTitles.map((title, i) => (
-              <li
-                key={title}
-                data-state={i + 1 < level.number ? 'earned' : i + 1 === level.number ? 'current' : 'pending'}
-              >
-                <span aria-hidden="true">{i + 1 < level.number ? <Check size={24} /> : i + 1}</span>
-                <strong>{title}</strong>
-                <small>
-                  {i + 1 < level.number
-                    ? 'Alcanzado'
-                    : i + 1 === level.number
+            <ol className="sx-p-title-trail" aria-label="Camino de los títulos">
+              {(modoApi
+                ? (servidor.estado?.niveles.map((n) => ({
+                    numero: n.numero,
+                    titulo: n.titulo,
+                    obtenido: n.estado === 'OBTENIDO',
+                  })) ?? [])
+                : travelerTitles.map((titulo, i) => ({
+                    numero: i + 1,
+                    titulo,
+                    obtenido: i + 1 < level.number,
+                  }))
+              ).map(({ numero, titulo, obtenido }) => (
+                <li
+                  key={numero}
+                  data-state={numero === level.number ? 'current' : obtenido ? 'earned' : 'pending'}
+                >
+                  <span aria-hidden="true">
+                    {obtenido && numero !== level.number ? <Check size={24} /> : numero}
+                  </span>
+                  <strong>{titulo}</strong>
+                  <small>
+                    {numero === level.number
                       ? 'Tu título actual'
-                      : i === level.number
-                        ? 'Siguiente'
-                        : 'Más adelante'}
-                </small>
-              </li>
-            ))}
-          </ol>
-        </Parchment>
+                      : obtenido
+                        ? 'Alcanzado'
+                        : numero === level.number + 1
+                          ? 'Siguiente'
+                          : 'Más adelante'}
+                  </small>
+                </li>
+              ))}
+            </ol>
+          </Parchment>
+        ) : (
+          <p>No hay un nivel disponible en el servidor.</p>
+        )}
+        {modoApi && insigniasOcultasPendientes(servidor.estado) > 0 && (
+          <p>{`${insigniasOcultasPendientes(servidor.estado)} insignias quedan por descubrir.`}</p>
+        )}
         <div className="sx-d-stack">
           {groups.map((g, index) => (
             <Parchment key={g.title} className="sx-p-group">

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { modoApi } from '@/features/servidor/config'
+import { avisosPendientes, useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { useStudentOverlays } from './overlay-context'
 import { Award, Bell, BookOpen, Building2, HeartHandshake, UserRound, X } from 'lucide-react'
 import { useDiscovery } from '../discovery/discoveryStore'
 import { Link } from 'react-router'
@@ -24,7 +26,7 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
     ? orderUnlocks(items, ui).filter((item) => !ui.seenUnlockIds.includes(item.id))
     : []
   const [open, setOpen] = useState(false)
-  if (modoApi) return null // Los avisos del servidor y su marcado se conectan en F6.
+  if (modoApi) return <ServerNoveltiesMenu glass={glass} />
   const unread = ordered.length
   const titles = {
     badge: 'Nueva insignia disponible',
@@ -34,6 +36,7 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
     familia: 'Nueva conversación familiar disponible',
     plan: 'Revisa tus planes',
     memory: 'Lumi recordó algo nuevo',
+    nivel: 'Nuevo nivel',
   }
   const icons = {
     badge: Award,
@@ -43,6 +46,7 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
     familia: HeartHandshake,
     plan: BookOpen,
     memory: BookOpen,
+    nivel: Award,
   }
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -110,6 +114,43 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
           })
         ) : (
           <p className="sx-novelties-empty">No tienes novedades pendientes</p>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function ServerNoveltiesMenu({ glass }: { glass: boolean }) {
+  const [open, setOpen] = useState(false)
+  const servidor = useEstadoServidor()
+  const { openServerNotices } = useStudentOverlays()
+  const pendientes = avisosPendientes().length
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          className={`sx-icon-button sx-novelties-bell ${glass ? 'sx-glass' : ''}`}
+          aria-label="Novedades"
+        >
+          <Bell size={20} />
+          {pendientes > 0 && <span className="sx-novelties-count">{pendientes}</span>}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="sx-root sx-novelties-menu">
+        <h2>Novedades</h2>
+        {pendientes || servidor.errorAvisos ? (
+          <DropdownMenuItem
+            onSelect={() => {
+              // Solo solicita el lote: OverlayQueue espera a que este menú
+              // y cualquier otro overlay terminen de cerrarse.
+              setOpen(false)
+              openServerNotices()
+            }}
+          >
+            Ver {pendientes} avisos pendientes{servidor.errorAvisos ? ' · Reintentar' : ''}
+          </DropdownMenuItem>
+        ) : (
+          <p>No tienes novedades pendientes</p>
         )}
       </DropdownMenuContent>
     </DropdownMenu>

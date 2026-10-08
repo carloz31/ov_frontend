@@ -5,7 +5,14 @@ import {
   hidratarAdventureServidor,
 } from '../occupation-exploration/lib/AdventureStore'
 import { baseRoute } from '../student-experience/reflection/config'
-import { actividadServidor, ciudadDisponible, misionesCompletadas, proyectarJourney } from './adaptadores'
+import {
+  actividadServidor,
+  ciudadDisponible,
+  misionesCompletadas,
+  proyectarJourney,
+  avisosServidor,
+  claveDesbloqueo,
+} from './adaptadores'
 import { pedir } from './cliente'
 import { modoApi } from './config'
 import { cuentaActiva } from './cuenta'
@@ -20,6 +27,7 @@ import type {
   RespuestasActividad,
   AvanceInstrumento,
   ResultadoPublico,
+  DesbloqueoNuevo,
 } from './tipos'
 
 type AlmacenServidor = {
@@ -27,6 +35,12 @@ type AlmacenServidor = {
   cargando: boolean
   error: ErrorServidor | null
   noVistos: DesbloqueoLegible[]
+  desbloqueosAccion: DesbloqueoNuevo[]
+  avisosMostrados: string[]
+  errorAvisos: ErrorServidor | null
+  procesandoAvisos: boolean
+  marcadoAvisos: string[] | null
+  fechasInsignias: Record<string, string>
   resultadoRiasec: ResultadoPublico | null
   estadoResultado: 'sin_cargar' | 'cargando' | 'pendiente' | 'listo' | 'error'
   errorResultado: ErrorServidor | null
@@ -36,6 +50,12 @@ let almacen: AlmacenServidor = {
   cargando: false,
   error: null,
   noVistos: [],
+  desbloqueosAccion: [],
+  avisosMostrados: [],
+  errorAvisos: null,
+  procesandoAvisos: false,
+  marcadoAvisos: null,
+  fechasInsignias: {},
   resultadoRiasec: null,
   estadoResultado: 'sin_cargar',
   errorResultado: null,
@@ -78,6 +98,12 @@ export function limpiarEstadoServidor() {
     error: null,
     cargando: false,
     noVistos: [],
+    desbloqueosAccion: [],
+    avisosMostrados: [],
+    errorAvisos: null,
+    procesandoAvisos: false,
+    marcadoAvisos: null,
+    fechasInsignias: {},
     resultadoRiasec: null,
     estadoResultado: 'sin_cargar',
     errorResultado: null,
@@ -103,9 +129,7 @@ export async function refrescar(): Promise<RespuestaServidor<EstadoCuenta>> {
   publicar({ estado: respuesta.datos })
   hidratarJourneyServidor((actual) => proyectarJourney(respuesta.datos, actual))
   hidratarAdventureServidor(misionesCompletadas(respuesta.datos, baseRoute))
-  const noVistos = await pedir<DesbloqueoLegible[]>(
-    `/cuentas/${encodeURIComponent(cuenta)}/desbloqueos?solo_no_vistos=true`,
-  )
+  const noVistos = await consultarNoVistos()
   if (turno !== revision || cuenta !== cuentaActiva())
     return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la consulta.' }
   publicar({
@@ -113,6 +137,7 @@ export async function refrescar(): Promise<RespuestaServidor<EstadoCuenta>> {
     noVistos: noVistos.tipo === 'ok' ? noVistos.datos : almacen.noVistos,
     error: noVistos.tipo === 'ok' ? null : noVistos,
   })
+  if (noVistos.tipo !== 'ok') return noVistos
   const final = actividadServidor(respuesta.datos, 'act-tip-final')
   if (final && final.estado !== 'BLOQUEADA') {
     const resultado = await cargarResultadoRiasec()
@@ -171,9 +196,46 @@ async function consultarResultadoRiasec(): Promise<RespuestaServidor<ResultadoPu
   return respuesta
 }
 export function consultarProgreso(tipo: TipoObjetivo, codigo: string) {
-  return pedir<ProgresoObjetivo>(
-    `/cuentas/${encodeURIComponent(cuentaActiva() ?? '')}/progreso/${tipo}/${encodeURIComponent(codigo)}`,
+  return consultarCuenta<ProgresoObjetivo>(`/progreso/${tipo}/${encodeURIComponent(codigo)}`)
+}
+
+export function incorporarDesbloqueos(desbloqueos: DesbloqueoNuevo[]) {
+  const todos = new Map(almacen.desbloqueosAccion.map((d) => [claveDesbloqueo(d), d]))
+  desbloqueos.forEach((d) => todos.set(claveDesbloqueo(d), d))
+  publicar({ desbloqueosAccion: [...todos.values()] })
+}
+export function avisosPendientes() {
+  return avisosServidor([...almacen.noVistos, ...almacen.desbloqueosAccion]).filter(
+    (a) => !almacen.avisosMostrados.includes(a.id),
   )
+}
+export function mostrarAviso(id: string) {
+  if (!almacen.avisosMostrados.includes(id)) publicar({ avisosMostrados: [...almacen.avisosMostrados, id] })
+}
+export function estadoLoteAvisos(
+  cambios: Partial<Pick<AlmacenServidor, 'errorAvisos' | 'procesandoAvisos' | 'marcadoAvisos'>>,
+) {
+  publicar(cambios)
+}
+export function terminarAvisosMarcados(ids: string[]) {
+  publicar({
+    desbloqueosAccion: almacen.desbloqueosAccion.filter((d) => !ids.includes(claveDesbloqueo(d))),
+    avisosMostrados: almacen.avisosMostrados.filter((id) => !ids.includes(id)),
+    marcadoAvisos: null,
+  })
+}
+export async function consultarNoVistos() {
+  const respuesta = await consultarCuenta<DesbloqueoLegible[]>('/desbloqueos?solo_no_vistos=true')
+  if (respuesta.tipo === 'ok') {
+    const fechas = { ...almacen.fechasInsignias }
+    respuesta.datos
+      .filter((d) => d.tipo_objetivo === 'INSIGNIA')
+      .forEach((d) => {
+        fechas[d.objetivo.codigo] = d.fecha_hora
+      })
+    publicar({ noVistos: respuesta.datos, fechasInsignias: fechas })
+  }
+  return respuesta
 }
 export function consultarItems(actividad: string) {
   return pedir<ItemPublico[]>(`/actividades/${encodeURIComponent(actividad)}/items`)

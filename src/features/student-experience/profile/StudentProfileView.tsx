@@ -23,20 +23,11 @@ import { StudentPassportView } from './StudentPassportView'
 import { achievementIcons, getProfileBadges, getStudentAchievementGroups } from './passport'
 import { getHelenaPages } from './helenaPages'
 import { getOrderedPlans, getPlanCompleteness } from '../plans/plans'
+import { insigniasServidor } from '@/features/servidor/adaptadores'
+import { getAchievementPresentations } from '@/features/occupation-exploration/lib/AdventureAchievements'
 
 export function ProfileRoute() {
   const [params] = useSearchParams()
-  if (modoApi && params.get('section') === 'passport')
-    return (
-      <DiscoveryStage ambient="profile">
-        <Parchment title="Pasaporte vocacional">
-          <p>Los sellos y el nivel estarán listos pronto.</p>
-          <Link className="sx-d-action" to={appPaths.student.profile}>
-            Volver a mi perfil
-          </Link>
-        </Parchment>
-      </DiscoveryStage>
-    )
   return params.get('section') === 'passport' ? <StudentPassportView /> : <StudentProfileView />
 }
 export function StudentProfileView() {
@@ -45,12 +36,47 @@ export function StudentProfileView() {
     discovery = useDiscovery()
   const context = useOccupationExplorationContext()
   const servidor = useEstadoServidor()
+  const nivelApi = modoApi ? getTravelerLevel(adventure, servidor.estado?.nivel_actual ?? null) : null
+  const gruposApi = modoApi ? insigniasServidor(servidor.estado, getAchievementPresentations()) : []
+  const insigniasApi = modoApi
+    ? getProfileBadges(adventure, discovery, journey, {
+        grupos: gruposApi,
+        cuenta: servidor.estado?.cuenta.codigo ?? '',
+      })
+    : []
   if (modoApi)
     return (
       <DiscoveryStage ambient="profile">
         <Parchment title={servidor.estado?.cuenta.nombre ?? 'Mi perfil'}>
           <TrailBar label="Recorrido" value={progresoCamino(servidor.estado).porcentaje} />
-          <p>Tus fichas ya están en la mochila. Los sellos del pasaporte y el nivel estarán listos pronto.</p>
+          {nivelApi ? (
+            <div className="sx-d-row">
+              <span className="sx-level-medallion">
+                <span>NIVEL</span>
+                <strong>{String(nivelApi.number).padStart(2, '0')}</strong>
+              </span>
+              <div>
+                <h2>{nivelApi.label}</h2>
+                <p>{nivelApi.description}</p>
+                <p>{nivelApi.nextStep}</p>
+              </div>
+            </div>
+          ) : (
+            <p>No hay un nivel disponible en el servidor.</p>
+          )}
+          <div className="sx-d-seal-row">
+            {insigniasApi.map((b) => {
+              const Icon = achievementIcons[b.icon]
+              return (
+                <CollectionSlot key={b.code} icon={<Icon />}>
+                  {b.title}
+                </CollectionSlot>
+              )
+            })}
+          </div>
+          <Link className="sx-d-action" to={appPaths.student.passport}>
+            Ver mis logros · Elegir qué muestro
+          </Link>
           <Link className="sx-d-action" to="/student/profile/helena">
             Abrir el libro de Helena
           </Link>

@@ -23,7 +23,7 @@ type AchievementGroup = {
   title: string
 }
 
-export function getAchievementGroups(state: AdventureState): AchievementGroup[] {
+export function getAchievementPresentations(): AchievementGroup[] {
   return [
     {
       title: 'Descubrir mis propias pistas',
@@ -39,7 +39,7 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Iniciar tu orientación significa darte permiso para explorar antes de elegir. La curiosidad también es una forma de avanzar.',
           icon: 'campfire',
-          done: state.completedMissionIds.includes('welcome'),
+          done: false,
         },
         {
           code: 'I2',
@@ -50,7 +50,7 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Reconocer patrones entre lo que disfrutas y lo que haces bien te ayuda a imaginar opciones que se parecen más a ti.',
           icon: 'compass',
-          done: state.completedMissionIds.filter((id) => id !== 'welcome').length >= 3,
+          done: false,
         },
         {
           code: 'I3',
@@ -61,7 +61,7 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Ya reuniste una base de autoconocimiento con la que puedes explorar profesiones y situaciones reales con mejores preguntas.',
           icon: 'key',
-          done: isCityUnlocked(state),
+          done: false,
         },
       ],
     },
@@ -79,7 +79,7 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Compartir tus preguntas te permite descubrir cualidades que otras personas reconocen en ti y ampliar tus alternativas.',
           icon: 'send',
-          done: state.crewInvitations.length > 0,
+          done: false,
         },
         {
           code: 'I5',
@@ -90,7 +90,7 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Tu Crew te acompaña, escucha tus ideas y te ayuda a contrastarlas. La decisión sigue siendo tuya, pero no tienes que construirla en soledad.',
           icon: 'people',
-          done: state.crewInvitations.some((item) => item.status === 'accepted'),
+          done: false,
         },
         {
           code: 'I6',
@@ -101,7 +101,7 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Escuchar expectativas y experiencias de tu familia puede darte contexto, apoyo y preguntas nuevas sin reemplazar tu propia voz.',
           icon: 'message',
-          done: state.conversations.some((item) => item.completedAt),
+          done: false,
         },
       ],
     },
@@ -119,7 +119,7 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Resolver un caso te permite probar formas de pensar y trabajar antes de comprometerte con una carrera.',
           icon: 'shield',
-          done: state.solvedCaseIds.length > 0,
+          done: false,
         },
         {
           code: 'I8',
@@ -130,7 +130,7 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Investigar personas y profesiones reales ayuda a reemplazar suposiciones por información concreta sobre cada opción.',
           icon: 'telescope',
-          done: state.videos.length > 0,
+          done: false,
         },
         {
           code: 'I9',
@@ -142,11 +142,29 @@ export function getAchievementGroups(state: AdventureState): AchievementGroup[] 
           vocationalMeaning:
             'Comparaste distintos problemas, profesiones y maneras de aportar. Esa experiencia te permite decidir con más perspectiva.',
           icon: 'sparkles',
-          done: cityCases.every((item) => state.solvedCaseIds.includes(item.id)),
+          done: false,
         },
       ],
     },
   ]
+}
+
+export function getAchievementGroups(state: AdventureState): AchievementGroup[] {
+  const done: Record<string, boolean> = {
+    I1: state.completedMissionIds.includes('welcome'),
+    I2: state.completedMissionIds.filter((id) => id !== 'welcome').length >= 3,
+    I3: isCityUnlocked(state),
+    I4: state.crewInvitations.length > 0,
+    I5: state.crewInvitations.some((item) => item.status === 'accepted'),
+    I6: state.conversations.some((item) => item.completedAt),
+    I7: state.solvedCaseIds.length > 0,
+    I8: state.videos.length > 0,
+    I9: cityCases.every((item) => state.solvedCaseIds.includes(item.id)),
+  }
+  return getAchievementPresentations().map((g) => ({
+    ...g,
+    items: g.items.map((b) => ({ ...b, done: done[b.code] })),
+  }))
 }
 
 export type { Achievement, AchievementGroup, AchievementIcon }
