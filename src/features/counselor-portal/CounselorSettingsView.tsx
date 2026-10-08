@@ -1,5 +1,5 @@
 import { Save } from 'lucide-react'
-import { PageHeader } from '@/components/PageHeader'
+import { PageHeader } from '@/components/common/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'

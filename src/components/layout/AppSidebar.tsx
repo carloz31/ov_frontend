@@ -1,5 +1,5 @@
 import { Compass, Star } from 'lucide-react'
-import { useAppTheme } from '@/components/ThemeScope'
+import { useAppTheme } from '@/components/common/ThemeScope'
 import {
   Sidebar,
   SidebarContent,

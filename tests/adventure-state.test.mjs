@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import path from 'node:path'
 import vm from 'node:vm'
 import test from 'node:test'
@@ -36,19 +36,22 @@ function loadAdventure(saved = null, failWrites = false) {
     const source = ts.transpileModule(readFileSync(file, 'utf8'), {
       compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
     }).outputText
-    const require = (specifier) =>
-      specifier === 'react'
-        ? { useSyncExternalStore: (_, snapshot) => snapshot() }
-        : load(path.resolve(path.dirname(file), `${specifier}.ts`))
+    const require = (specifier) => {
+      if (specifier === 'react') return { useSyncExternalStore: (_, snapshot) => snapshot() }
+      const base = specifier.startsWith('@/')
+        ? path.resolve('src', specifier.slice(2))
+        : path.resolve(path.dirname(file), specifier)
+      return load([base, `${base}.ts`, `${base}.tsx`].find(existsSync))
+    }
     vm.runInContext(`(function(require, exports) { ${source}\n})`, context, { filename: file })(
       require,
       exports,
     )
     return exports
   }
-  const store = load(path.resolve('src/features/occupation-exploration/lib/AdventureStore.ts'))
-  const data = load(path.resolve('src/features/occupation-exploration/data/AdventureData.ts'))
-  const friendship = load(path.resolve('src/features/occupation-exploration/lib/LumiFriendship.ts'))
+  const store = load(path.resolve('src/store/adventureStore.ts'))
+  const data = load(path.resolve('src/data/content/adventure.ts'))
+  const friendship = load(path.resolve('src/lib/lumiFriendship.ts'))
   return {
     store,
     data,

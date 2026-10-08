@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
-import { CharacterAvatar } from '../player/CharacterAvatar'
-import { additionalMissions, reflectionCopy } from './config'
-import { activityById } from '@/features/missions/content'
-import { updateReflections, useReflections } from './store'
-import { isWithinStudentDemo } from '@/features/occupation-exploration/lib/StudentDemoScope'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
+import { additionalMissions, reflectionCopy } from '@/data/activities/reflectionConfig'
+import { activityById } from '@/data/activities/content'
+import { updateReflections, useReflections } from '@/store/reflectionStore'
+import { isWithinStudentDemo } from '@/config/studentDemoScope'
 
 export function AdditionalReveal({
   onFrame,

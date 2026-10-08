@@ -1,3 +1,5 @@
+import type { PassportBadge } from '@/types/profile'
+export type { PassportBadge } from '@/types/profile'
 import {
   Compass,
   Flame,
@@ -9,17 +11,14 @@ import {
   Telescope,
   Users,
 } from 'lucide-react'
-import {
-  getAchievementGroups,
-  type Achievement,
-  type AchievementGroup,
-} from '@/features/occupation-exploration/lib/AdventureAchievements'
-import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
-import type { StudentDiscoveryState } from '../discovery/discoveryStore'
-import type { JourneyState } from '@/features/missions/logic'
-import { challenges } from '../challenges/data'
+import { getAchievementGroups } from '@/features/discovery/lib/achievements'
+import type { AchievementGroup } from '@/types/profile'
+import type { AdventureState } from '@/types/adventure'
+import type { StudentDiscoveryState } from '@/types/discovery'
+import type { JourneyState } from '@/types/activities'
+import { challenges } from '@/data/content/challenges'
 import { appPaths } from '@/routes/paths'
-import { additionalMissions } from '../reflection/config'
+import { additionalMissions } from '@/data/activities/reflectionConfig'
 // Presentation names copied in order from getTravelerLevel in AdventureStore; calculations stay there.
 export const travelerTitles = [
   'Observador del horizonte',
@@ -40,7 +39,6 @@ export const achievementIcons = {
   sparkles: Sparkles,
   telescope: Telescope,
 }
-export type PassportBadge = Achievement & { hidden?: boolean }
 export function getStudentAchievementGroups(
   adventure: AdventureState,
   journey?: JourneyState,

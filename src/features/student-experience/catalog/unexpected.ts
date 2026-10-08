@@ -1,4 +1,4 @@
-import type { CatalogVisit } from '../discovery/discoveryStore'
+import type { CatalogVisit } from '@/types/discovery'
 import type { CareerDetail, OccupationDetail } from './catalogDetails'
 
 export function chooseUnexpected({

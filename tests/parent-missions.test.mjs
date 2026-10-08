@@ -65,7 +65,7 @@ function fixture(saved = {}) {
         }
       if (specifier.endsWith('data/ParentPortalData'))
         return {
-          parentActivities: load('src/features/missions/content.ts').parentActivities,
+          parentActivities: load('src/data/activities/content.ts').parentActivities,
           parentProfile: { name: 'Prueba local', relationship: 'Madre' },
         }
       if (specifier.endsWith('counselor-portal/priorities/PrioritySettings'))
@@ -79,8 +79,8 @@ function fixture(saved = {}) {
     vm.runInContext(`(function(require,exports){${js}\n})`, context)(require, exports)
     return exports
   }
-  const content = load('src/features/missions/content.ts'),
-    logic = load('src/features/missions/logic.ts')
+  const content = load('src/data/activities/content.ts'),
+    logic = load('src/lib/activities/logic.ts')
   const parent = load('src/features/parent-portal/missionLogic.ts'),
     store = load('src/features/parent-portal/missionStore.ts')
   return {
@@ -149,7 +149,7 @@ test('common content separates audiences, validates nodes and table widths, and 
       catalog.recursos.some((resource) => resource.id === id && resource.contenido),
     ),
   )
-  const { validateActivity } = app.load('src/features/missions/validation.ts'),
+  const { validateActivity } = app.load('src/lib/activities/validation.ts'),
     activity = parentActivities[0]
   assert.throws(() => validateActivity({ ...activity, tipo: 'registro' }), /solo admite encuentros/)
   assert.throws(
@@ -280,13 +280,13 @@ test('old encounter follow-up records stay intact without creating new submissio
     ],
   }
   followups.setFollowUpRecord(key, record)
-  const journey = app.load('src/features/missions/store.ts')
+  const journey = app.load('src/store/journeyStore.ts')
   const before = clone(journey.useJourney())
   assert.equal((await followups.recoverFollowUp(activity, node)).saved, false)
   assert.equal((await followups.saveFollowUpResponse(activity, node)).saved, false)
   assert.deepEqual(clone(followups.getFollowUpRecord(key)), record)
   assert.deepEqual(clone(journey.useJourney()), before)
-  const { getFamilyGiftLetter } = app.load('src/features/family-conversations/FamilyConversationData.ts')
+  const { getFamilyGiftLetter } = app.load('src/data/content/familyConversations.ts')
   const legacy = {
     familyGift: { parentCommitment: 'Texto guardado en la actividad antigua' },
     reflectionDrafts: {},
@@ -465,7 +465,7 @@ test('table blocks preserve headings and mobile labels, choices show their own p
   )
   assert.match(html, /Una pregunta propia/)
   assert.match(html, /No se guarda/)
-  const { CharacterAvatar } = app.load('src/features/student-experience/player/CharacterAvatar.tsx')
+  const { CharacterAvatar } = app.load('src/components/student/CharacterAvatar.tsx')
   assert.equal(renderToStaticMarkup(React.createElement(CharacterAvatar, { id: 'orientacion' })), '')
 })
 

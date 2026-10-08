@@ -2,7 +2,7 @@ import { CheckCircle2, Circle, Clock3, Play, LockKeyhole, BookOpen } from 'lucid
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import type { Actividad } from '@/features/missions/model'
+import type { Actividad } from '@/types/activities'
 
 type ParentActivityCardProps = {
   activity: Actividad

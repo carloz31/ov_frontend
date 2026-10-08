@@ -1,7 +1,7 @@
-import type { InstrumentPageId } from '../discovery/discoveryStore'
+import type { InstrumentPageId } from '@/types/discovery'
 import { careerDetails, occupationDetails, institutionDetails, careerFamilies } from './catalogDetails'
-import { coincidenciasRiasec, textoAjuste } from '@/features/servidor/adaptadores'
-import type { ResultadoPublico } from '@/features/servidor/tipos'
+import { coincidenciasRiasec, textoAjuste } from '@/lib/servidor/adaptadores'
+import type { ResultadoPublico } from '@/types/servidor'
 export const getCareer = (id: string) => careerDetails.find((c) => c.id === id)
 export const getOccupation = (id: string) => occupationDetails.find((o) => o.id === id)
 export const getInstitution = (id: string) => institutionDetails.find((i) => i.id === id)

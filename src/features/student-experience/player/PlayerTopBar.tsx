@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { ShieldCheck, Star, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
-import type { Actividad } from '@/features/missions/model'
+import type { Actividad } from '@/types/activities'
 import { PlayerSoundButton } from './PlayerSoundButton'
 
 export function PlayerTopBar({

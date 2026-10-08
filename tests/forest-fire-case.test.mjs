@@ -111,7 +111,6 @@ function fixture(saved = {}, mockRouter = false, desktop = false) {
   }
 }
 const copy = (v) => JSON.parse(JSON.stringify(v))
-const file = (name) => `src/features/student-experience/${name}`
 function elements(tree, predicate) {
   const result = []
   function visit(n) {
@@ -126,14 +125,13 @@ function elements(tree, predicate) {
 const button = (tree, text) =>
   elements(tree, (n) => n.type === 'button' && JSON.stringify(n.props.children).includes(text))[0]
 
-const caseFile = (name) => `src/features/occupation-exploration/${name}`
 function setup(saved = {}) {
   const f = fixture(saved)
-  const logic = f.load(caseFile('lib/ForestFireCaseLogic.ts'))
-  const data = f.load(caseFile('data/ForestFireCaseData.ts'))
-  const store = f.load(caseFile('lib/AdventureStore.ts'))
-  const exploration = f.load(file('discovery/explorationStore.ts'))
-  const outcome = f.load(caseFile('lib/ForestFireCaseOutcome.ts'))
+  const logic = f.load('src/features/cases/lib/forestFireCaseLogic.ts')
+  const data = f.load('src/data/content/forestFireCase.ts')
+  const store = f.load('src/store/adventureStore.ts')
+  const exploration = f.load('src/store/explorationStore.ts')
+  const outcome = f.load('src/features/cases/lib/forestFireCaseOutcome.ts')
   return { f, logic, data, store, exploration, outcome }
 }
 function team(data, target = 14) {
@@ -156,8 +154,8 @@ function named(tree, name) {
 
 test('all 15 contacts resolve to unique catalog entries and 13 pending details contain no invented profiles', () => {
   const { f, data } = setup()
-  const catalog = f.load(caseFile('data/OccupationExplorationData.ts')).occupationCatalog
-  const { occupationDetails } = f.load(file('catalog/catalogDetails.ts'))
+  const catalog = f.load('src/data/catalog/occupations.ts').occupationCatalog
+  const { occupationDetails } = f.load('src/features/student-experience/catalog/catalogDetails.ts')
   assert.equal(new Set(catalog.map((o) => o.id)).size, catalog.length)
   assert.equal(data.forestFireProfessionals.length, 15)
   const details = data.forestFireProfessionals.map((p) =>
@@ -172,7 +170,7 @@ test('all 15 contacts resolve to unique catalog entries and 13 pending details c
     assert.deepEqual(copy(o.careerIds), [])
     assert.ok(Object.values(o.interestScores).every((v) => v === 0))
   }
-  const selectors = f.load(file('catalog/catalogSelectors.ts'))
+  const selectors = f.load('src/features/student-experience/catalog/catalogSelectors.ts')
   assert.equal(selectors.isAffine('psychologist', ['intereses']), undefined)
 })
 
@@ -213,7 +211,7 @@ test('step gates require every clue and a contact for each preceding problem', (
 })
 
 test('scene cover, bounds, pointer threshold and keyboard reveal work in both viewport orientations', () => {
-  const geometry = fixture().load(caseFile('lib/ForestFireSceneGeometry.ts'))
+  const geometry = fixture().load('src/features/cases/lib/forestFireSceneGeometry.ts')
   const image = { width: 1536, height: 1024 }
   for (const viewport of [
     { width: 1280, height: 648 },
@@ -241,8 +239,8 @@ test('scene cover, bounds, pointer threshold and keyboard reveal work in both vi
 
 test('listen opens individual clues, suppresses clicks after dragging, and retains dismissed phase help', () => {
   const f = fixture(),
-    { ListenScreen } = f.load(caseFile('components/ForestFireScene.tsx'))
-  const phase = f.load(caseFile('data/ForestFireCaseData.ts')).forestFirePhases[0]
+    { ListenScreen } = f.load('src/features/occupation-exploration/components/ForestFireScene.tsx')
+  const phase = f.load('src/data/content/forestFireCase.ts').forestFirePhases[0]
   const heard = []
   const props = {
     phase,
@@ -290,7 +288,7 @@ test('listen opens individual clues, suppresses clicks after dragging, and retai
 test('contact drag and plus share assignment, desktop resume replaces the list, mobile has no drag, and zero disables adding', () => {
   for (const desktop of [true, false]) {
     const f = fixture({}, false, desktop),
-      { ProfessionalDirectory } = f.load(caseFile('components/ForestFireProfessionalPanel.tsx'))
+      { ProfessionalDirectory } = f.load('src/features/occupation-exploration/components/ForestFireProfessionalPanel.tsx')
     const added = [],
       dragging = []
     const props = {
@@ -333,7 +331,7 @@ test('contact drag and plus share assignment, desktop resume replaces the list, 
 
 test('case exit follows the activity form and distinguishes discarded attempts from saved results', () => {
   const f = fixture(),
-    { ForestFireCaseHeader } = f.load(caseFile('components/ForestFireCaseHeader.tsx'))
+    { ForestFireCaseHeader } = f.load('src/features/occupation-exploration/components/ForestFireCaseHeader.tsx')
   let exited = false
   const props = {
     label: 'Emergencia',
@@ -465,7 +463,7 @@ test('drawer distinguishes unattempted, zero-score, incomplete and passed attemp
   assert.equal(logic.getForestFireCaseStatus(state).badge, 'Disponible')
   state.caseBestScores['forest-fire'] = 0
   assert.equal(logic.getForestFireCaseStatus(state).badge, 'En progreso')
-  const { ForestFireCaseProgress } = f.load(caseFile('components/ForestFireCaseProgress.tsx'))
+  const { ForestFireCaseProgress } = f.load('src/features/occupation-exploration/components/ForestFireCaseProgress.tsx')
   assert.match(
     renderToStaticMarkup(React.createElement(ForestFireCaseProgress, { adventure: state })),
     /Te faltan 10 puntos/,
@@ -487,12 +485,12 @@ test('both map drawers expose the same status, score and action for every case s
     [10, true, 'Superado', 'Jugar de nuevo'],
   ]) {
     const f = fixture({}, true)
-    const store = f.load(caseFile('lib/AdventureStore.ts'))
+    const store = f.load('src/store/adventureStore.ts')
     if (score !== undefined) store.recordCaseScore('forest-fire', score)
     if (passed) store.completeCase('forest-fire')
     const state = store.useAdventure(),
-      journey = f.load('src/features/missions/store.ts').useJourney()
-    const map = f.load(file('map/mapPoints.ts'))
+      journey = f.load('src/store/journeyStore.ts').useJourney()
+    const map = f.load('src/features/student-experience/map/mapPoints.ts')
     const point = map.getCiudadPoints(state, journey).find((p) => p.id === 'forest-fire')
     const details = map.getPointDetails(point, state, journey)
     assert.equal(details.badge, badge)
@@ -503,7 +501,7 @@ test('both map drawers expose the same status, score and action for every case s
 
 test('resume uses catalog fields and separate tab links, with a safe missing-entry fallback', () => {
   const { f, data } = setup()
-  const { ProfessionalResume } = f.load(caseFile('components/ForestFireProfessionalPanel.tsx'))
+  const { ProfessionalResume } = f.load('src/features/occupation-exploration/components/ForestFireProfessionalPanel.tsx')
   let html = renderToStaticMarkup(
     React.createElement(ProfessionalResume, { professional: data.forestFireProfessionals[0] }),
   )
@@ -521,7 +519,7 @@ test('resume uses catalog fields and separate tab links, with a safe missing-ent
 
 test('phase feedback uses neutral participation and missing narratives without naming the absent role', () => {
   const { f, data } = setup()
-  const { PhaseResultScreen } = f.load(caseFile('ForestFireCaseView.tsx'))
+  const { PhaseResultScreen } = f.load('src/features/occupation-exploration/ForestFireCaseView.tsx')
   const phase = data.forestFirePhases[0]
   const html = renderToStaticMarkup(
     React.createElement(PhaseResultScreen, {
@@ -539,7 +537,7 @@ test('phase feedback uses neutral participation and missing narratives without n
 
 test('final report hides extra screens and budget evaluation and switches buttons and rewards by score', () => {
   const { f, data } = setup(),
-    { FinalReportScreen } = f.load(caseFile('ForestFireCaseView.tsx'))
+    { FinalReportScreen } = f.load('src/features/occupation-exploration/ForestFireCaseView.tsx')
   for (const score of [9, 10, 14]) {
     const html = renderToStaticMarkup(
       React.createElement(FinalReportScreen, {
@@ -561,7 +559,7 @@ test('final report hides extra screens and budget evaluation and switches button
 
 test('actual case flow enforces gates, allows review changes, records once on report and starts a clean retry', () => {
   const { f, data, store } = setup(),
-    { ForestFireCaseView } = f.load(caseFile('ForestFireCaseView.tsx'))
+    { ForestFireCaseView } = f.load('src/features/occupation-exploration/ForestFireCaseView.tsx')
   let closes = 0,
     tree
   const draw = () =>
@@ -618,7 +616,7 @@ test('actual case flow enforces gates, allows review changes, records once on re
 
 test('abandonment and budget game-over do not record a score or reward', () => {
   const { f, data, store } = setup(),
-    { ForestFireCaseView } = f.load(caseFile('ForestFireCaseView.tsx'))
+    { ForestFireCaseView } = f.load('src/features/occupation-exploration/ForestFireCaseView.tsx')
   let tree,
     closed = false
   const draw = () =>

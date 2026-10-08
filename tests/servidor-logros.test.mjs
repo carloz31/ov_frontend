@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { iniciarMara, botonEn } from './servidor-mara-ayudas.mjs'
-import { jsonServidor, copia, elementos, esperar, fixtureServidor } from './servidor-ayudas.mjs'
+import { iniciarMara, botonEn } from './soporte/servidor-mara-ayudas.mjs'
+import { jsonServidor, copia, elementos, esperar, fixtureServidor } from './soporte/servidor-ayudas.mjs'
 
 const texto = (n) =>
   Array.isArray(n)
@@ -13,10 +13,10 @@ const texto = (n) =>
         : ''
 async function iniciar() {
   const f = await iniciarMara(),
-    a = f.app.load('src/features/servidor/adaptadores.ts'),
+    a = f.app.load('src/lib/servidor/adaptadores.ts'),
     p = f.app.load('src/features/student-experience/profile/passport.ts')
   const presentaciones = f.app
-    .load('src/features/occupation-exploration/lib/AdventureAchievements.ts')
+    .load('src/features/discovery/lib/achievements.ts')
     .getAchievementPresentations()
   return { ...f, a, p, presentaciones, grupos: a.insigniasServidor(f.estado, presentaciones) }
 }
@@ -89,7 +89,7 @@ test('pasaporte no filtra códigos ocultos ni adicionales y usa nivel remoto y t
 })
 test('elección de insignias por cuenta respeta máximo tres, selección vacía y almacenamiento local', async () => {
   const f = await iniciar(),
-    d = f.app.load('src/features/student-experience/discovery/discoveryStore.ts'),
+    d = f.app.load('src/store/discoveryStore.ts'),
     api = { grupos: f.grupos, cuenta: 'est-ana' }
   d.updateDiscovery((s) => ({ ...s, profileBadges: ['I1'], profileBadgesConfigured: true }))
   assert.equal(f.p.getProfileBadges({}, d.getDiscovery(), {}, api).length, 3)
@@ -102,13 +102,13 @@ test('elección de insignias por cuenta respeta máximo tres, selección vacía 
   const antes = d.getDiscovery()
   assert.equal(f.p.toggleProfileBadge(antes, {}, 'I4', {}, api), antes)
   const reload = fixtureServidor({ guardado: Object.fromEntries(f.app.local) }).load(
-    'src/features/student-experience/discovery/discoveryStore.ts',
+    'src/store/discoveryStore.ts',
   )
   assert.deepEqual(copia(reload.getDiscovery().profileBadgesApi), copia(d.getDiscovery().profileBadgesApi))
 })
 test('niveles 1 a 3 toman número y título remoto sin leer el avance local; null no supone nivel 1', async () => {
   const f = await iniciar(),
-    level = f.app.load('src/features/occupation-exploration/lib/AdventureStore.ts').getTravelerLevel
+    level = f.app.load('src/store/adventureStore.ts').getTravelerLevel
   for (const numero of [1, 2, 3]) {
     const actual = level(
       new Proxy(

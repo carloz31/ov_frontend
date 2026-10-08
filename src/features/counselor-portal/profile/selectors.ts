@@ -8,7 +8,7 @@ import type {
   QuestionnaireDefinition,
   QuestionnaireResult,
   StudentProfile,
-} from './types'
+} from '@/types/studentProfile'
 
 export const profileAlertLabels: Record<ProfileAlertCode, string> = {
   AVANCE_BAJO_PROMEDIO: 'Avance bajo',

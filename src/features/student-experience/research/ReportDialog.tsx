@@ -1,9 +1,9 @@
-import { useReturnFocus } from '../discovery/useReturnFocus'
+import { useReturnFocus } from '@/hooks/useReturnFocus'
 import { useState } from 'react'
 import { Flag } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
-import { updateAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { updateAdventure } from '@/store/adventureStore'
 
 export function ReportDialog({ videoId, onClose }: { videoId: string; onClose: () => void }) {
   const focus = useReturnFocus()

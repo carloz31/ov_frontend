@@ -1,5 +1,6 @@
-import { applyCompletion, type JourneyState } from '@/features/missions/logic'
-import type { Actividad, NodoPregunta } from '@/features/missions/model'
+import { applyCompletion } from '@/lib/activities/logic'
+import type { JourneyState } from '@/types/activities'
+import type { Actividad, NodoPregunta } from '@/types/activities'
 
 export function evaluateParentQuestion(node: NodoPregunta, selected: string[], previousAttempts: number) {
   const correctOptions = node.opciones.filter((option) => option.correcta)

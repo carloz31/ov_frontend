@@ -1,7 +1,7 @@
 import * as ProgressPrimitive from '@radix-ui/react-progress'
 import type { ComponentProps } from 'react'
-import { useAppTheme } from '@/components/ThemeScope'
-import { cn } from '@/lib/Utils'
+import { useAppTheme } from '@/components/common/ThemeScope'
+import { cn } from '@/lib/utils'
 
 type ProgressProps = ComponentProps<typeof ProgressPrimitive.Root> & {
   intent?: 'completion' | 'data'

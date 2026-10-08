@@ -9,8 +9,8 @@ import { Alert, AlertDescription } from '@/components/ui/Alert'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { profileCatalog, questionnaires, studentProfiles } from './data'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
+import { profileCatalog, questionnaires, studentProfiles } from '@/data/demo/studentProfiles'
 import { usePriorityCatalog } from '../priorities/usePrioritySettings'
 import {
   changeSummary,
@@ -24,7 +24,7 @@ import { profileUrl, questionnaireUrl, safeReturnTo } from './navigation'
 import { ColoredProgress, EmptyMessage, Panel, PriorityLink, QuestionnaireStatus } from './ProfileShared'
 import { DimensionCards } from './DimensionCards'
 import { QuestionnaireComparison } from './QuestionnaireComparison'
-import type { QuestionnaireDefinition, QuestionnaireResult, StudentProfile } from './types'
+import type { QuestionnaireDefinition, QuestionnaireResult, StudentProfile } from '@/types/studentProfile'
 export function QuestionnaireBars({
   definition,
   result,

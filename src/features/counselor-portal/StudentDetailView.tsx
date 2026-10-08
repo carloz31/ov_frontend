@@ -26,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu'
 import { appPaths } from '@/routes/paths'
-import { studentProfiles } from './profile/data'
+import { studentProfiles } from '@/data/demo/studentProfiles'
 import { StudentProfileView } from './profile/StudentProfileView'
 import {
   formatRelative,

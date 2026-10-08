@@ -1,7 +1,7 @@
 import { Link } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
 import { appPaths } from '@/routes/paths'
-import { Parchment } from '../discovery/Parchment'
+import { Parchment } from '@/components/student/Parchment'
 export function AtlasNavigation({ section }: { section: 'careers' | 'professions' | 'institutions' }) {
   const label = { careers: 'Carreras', professions: 'Ocupaciones', institutions: 'Instituciones' }[section]
   return (

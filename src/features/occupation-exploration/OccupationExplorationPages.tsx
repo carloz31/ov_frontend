@@ -2,7 +2,7 @@ import { Navigate, useNavigate, useParams } from 'react-router'
 import { appPaths } from '@/routes/paths'
 import { ExplorationCaseIntroView } from './ExplorationCaseIntroView'
 import { ForestFireCaseView } from './ForestFireCaseView'
-import { canAccessCity, useAdventure } from './lib/AdventureStore'
+import { canAccessCity, useAdventure } from '@/store/adventureStore'
 
 function ExplorationCaseIntroPage() {
   const navigate = useNavigate()

@@ -25,7 +25,7 @@ function explorationAssetsWithDeploymentBase() {
   visit(config)
   assert.equal(typeof base, 'string', 'The deployment base must be defined in Vite')
   const source = readFileSync(
-    'src/features/occupation-exploration/lib/ExplorationAssets.ts',
+    'src/lib/explorationAssets.ts',
     'utf8',
   ).replaceAll('import.meta.env.BASE_URL', JSON.stringify(base))
   const { outputText } = ts.transpileModule(source, {

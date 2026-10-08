@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react'
 import { ArrowRight, Check, Pencil, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/Dialog'
-import type { Actividad, NodoConsigna } from '@/features/missions/model'
-import { latestSubmission } from '@/features/missions/logic'
-import { useJourney } from '@/features/missions/store'
+import type { Actividad, NodoConsigna } from '@/types/activities'
+import { latestSubmission } from '@/lib/activities/logic'
+import { useJourney } from '@/store/journeyStore'
 import { SubmissionNode } from './SubmissionNode'
-import { useReflections } from '../../reflection/store'
+import { useReflections } from '@/store/reflectionStore'
 import { QuestionMemory } from '../../reflection/QuestionMemory'
 
 export function MatrixNode({ activity, onContinue }: { activity: Actividad; onContinue: () => void }) {

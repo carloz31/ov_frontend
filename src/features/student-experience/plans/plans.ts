@@ -1,9 +1,9 @@
 import {
   createDecisionSheet,
   type DecisionSheet,
-} from '@/features/occupation-exploration/types/StudentDecisionTypes'
-import { getExploration, setDecisionSheets } from '../discovery/explorationStore'
-import { updateDiscovery } from '../discovery/discoveryStore'
+} from '@/types/decisions'
+import { getExploration, setDecisionSheets } from '@/store/explorationStore'
+import { updateDiscovery } from '@/store/discoveryStore'
 export const planSections = ['Motivación', 'Fortalezas y obstáculos', 'Presupuesto', 'Cómo me preparo']
 export function getPlanSections(sheet: DecisionSheet) {
   return [

@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { ArrowRight, Check, RadioTower } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
-import { LumiMedallion } from '@/features/student-experience/player/LumiMedallion'
-import type { ForestFireCommunityMessage, ForestFirePhase } from '../types/ForestFireCaseTypes'
+import { LumiMedallion } from '@/components/student/LumiMedallion'
+import type { ForestFireCommunityMessage, ForestFirePhase } from '@/types/cases'
 import {
   centerScene,
   clampSceneOffset,
   coverScene,
   isSceneDrag,
   revealScenePoint,
-} from '../lib/ForestFireSceneGeometry'
+} from '@/features/cases/lib/forestFireSceneGeometry'
 
 export function ListenScreen({
   phase,

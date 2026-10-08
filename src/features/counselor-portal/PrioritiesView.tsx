@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from '@/components/ui/Input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { blocks, questionnaires } from './profile/data'
+import { blocks, questionnaires } from '@/data/demo/studentProfiles'
 import { safeReturnTo } from './profile/navigation'
 import { normalizeSearch } from './profile/selectors'
 import {

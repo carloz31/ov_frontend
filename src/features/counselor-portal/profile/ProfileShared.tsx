@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/Progress'
 import { StaffMetric } from '@/components/staff/StaffPatterns'
 import { prioritiesPath } from './navigation'
 import { displayDate, questionnaireState } from './selectors'
-import type { ActivityState, QuestionnaireApplication } from './types'
+import type { ActivityState, QuestionnaireApplication } from '@/types/studentProfile'
 
 export function ActivityStatus({ state, label }: { state: ActivityState | 'unavailable'; label?: string }) {
   return <StatusBadge status={state}>{label}</StatusBadge>

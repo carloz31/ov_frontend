@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { BookOpen, Check, LockKeyhole, ShieldCheck, Star, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
-import { useJourney, updateJourney, useJourneyError } from '@/features/missions/store'
+import { useJourney, updateJourney, useJourneyError } from '@/store/journeyStore'
 import { PlayerAmbient } from '../player/PlayerAmbient'
 import { PlayerSoundButton } from '../player/PlayerSoundButton'
 import { ResourceSheet } from '../player/ResourceSheet'
-import { LumiMedallion } from '../player/LumiMedallion'
+import { LumiMedallion } from '@/components/student/LumiMedallion'
 import { RewardCard } from '../player/RewardCard'
 import { CheckOption } from '../player/CheckOption'
-import { answerBattle, canStartChallenge, challengeRequirements, recordBattle, startBattle } from './logic'
-import type { Battle, Challenge } from './model'
+import { answerBattle, canStartChallenge, challengeRequirements, recordBattle, startBattle } from '@/lib/challenges'
+import type { Battle, Challenge } from '@/types/challenges'
 
 export function ChallengePlayer({ challenge: c, onClose }: { challenge: Challenge; onClose: () => void }) {
   const state = useJourney()

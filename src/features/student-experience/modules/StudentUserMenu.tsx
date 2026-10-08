@@ -1,8 +1,8 @@
 import { LogOut, UserRound } from 'lucide-react'
 import { useState } from 'react'
-import { desarrollo, modoApi } from '@/features/servidor/config'
-import { reiniciarDatosDePrueba } from '@/features/servidor/acciones'
-import { mensajeErrorServidor, useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { desarrollo, modoApi } from '@/config/env'
+import { reiniciarDatosDePrueba } from '@/store/servidor/operaciones'
+import { mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/estadoServidor'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
 import { useNavigate } from 'react-router'
 import {

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { CharacterAvatar } from './CharacterAvatar'
-import { useTypewriter } from '../overlays/useTypewriter'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
+import { useTypewriter } from '@/hooks/useTypewriter'
 
 export type DialogueBoxProps = {
   speakerId: string

@@ -17,8 +17,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { safeVideoUrl } from '@/features/occupation-exploration/lib/AdventureStore'
-import type { AdventureNotice, AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
+import { safeVideoUrl } from '@/store/adventureStore'
+import type { AdventureNotice, AdventureState } from '@/types/adventure'
 type ResourceMeta = {
   topic: string
   minutes: number

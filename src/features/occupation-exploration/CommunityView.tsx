@@ -3,8 +3,8 @@ import { Flag, Users, UserPlus, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
-import { classroomAliases } from './data/AdventureData'
-import { getTravelerLevel, updateAdventure, useAdventure } from './lib/AdventureStore'
+import { classroomAliases } from '@/data/content/adventure'
+import { getTravelerLevel, updateAdventure, useAdventure } from '@/store/adventureStore'
 
 const examplePosts = [
   {

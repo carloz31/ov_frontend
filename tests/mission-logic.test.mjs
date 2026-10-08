@@ -3,11 +3,11 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import ts from 'typescript'
 
-const code = ts.transpileModule(readFileSync('src/features/missions/logic.ts', 'utf8'), {
+const code = ts.transpileModule(readFileSync('src/lib/activities/logic.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
 }).outputText
 const logic = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)
-const json = (name) => JSON.parse(readFileSync(`src/features/missions/data/${name}.json`, 'utf8'))
+const json = (name) => JSON.parse(readFileSync(`src/data/activities/${name}.json`, 'utf8'))
 const map = json('registro_linea_tiempo')
 const myths = json('encuentro_mitos')
 const mara = json('instrumento_mara')

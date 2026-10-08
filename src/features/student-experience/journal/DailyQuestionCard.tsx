@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { Check, Mail, MailOpen } from 'lucide-react'
-import { getDailyJournalPrompt } from '@/features/occupation-exploration/data/JournalData'
-import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { lumiDayKey } from '@/features/occupation-exploration/lib/LumiFriendship'
-import type { JournalEntry } from '@/features/occupation-exploration/types/AdventureTypes'
-import { Seal } from '../discovery/Seal'
-import { updateStudentUi, useStudentUi } from '../ui-state'
+import { getDailyJournalPrompt } from '@/data/content/journalPrompts'
+import { useAdventure } from '@/store/adventureStore'
+import { lumiDayKey } from '@/lib/lumiFriendship'
+import type { JournalEntry } from '@/types/adventure'
+import { Seal } from '@/components/student/Seal'
+import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
 
 export type DailyQuestionEditorContext = {
   prompt: string

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { ArrowLeft, Check, GripVertical, Plus } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/Dialog'
-import { forestFireProfessionals } from '../data/ForestFireCaseData'
-import type { ForestFireProfessional } from '../types/ForestFireCaseTypes'
+import { forestFireProfessionals } from '@/data/content/forestFireCase'
+import type { ForestFireProfessional } from '@/types/cases'
 import { getOccupation } from '@/features/student-experience/catalog/catalogSelectors'
 import { discoveryPaths } from '@/features/student-experience/paths'
 

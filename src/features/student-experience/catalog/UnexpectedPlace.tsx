@@ -1,11 +1,11 @@
 import { Compass } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router'
-import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
-import { getDiscovery } from '../discovery/discoveryStore'
+import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
+import { getDiscovery } from '@/store/discoveryStore'
 import { discoveryPaths } from '../paths'
 import { careerDetails, occupationDetails } from './catalogDetails'
 import { chooseUnexpected } from './unexpected'
-import { Parchment } from '../discovery/Parchment'
+import { Parchment } from '@/components/student/Parchment'
 
 export function UnexpectedPlace({ kind, currentId }: { kind: 'career' | 'occupation'; currentId: string }) {
   const context = useOccupationExplorationContext()

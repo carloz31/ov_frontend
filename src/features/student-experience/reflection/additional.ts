@@ -1,5 +1,5 @@
-import type { JourneyState } from '@/features/missions/logic'
-import { additionalMissions } from './config'
+import type { JourneyState } from '@/types/activities'
+import { additionalMissions } from '@/data/activities/reflectionConfig'
 
 // Public aggregation for future thematic displays; no role-specific panel dependencies.
 export function additionalThematicProgress(journey: Pick<JourneyState, 'progress'>) {

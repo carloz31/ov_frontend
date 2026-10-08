@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { modoApi } from '@/features/servidor/config'
-import { avisosPendientes, useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { modoApi } from '@/config/env'
+import { avisosPendientes, useEstadoServidor } from '@/store/servidor/estadoServidor'
 import { useStudentOverlays } from './overlay-context'
 import { Award, Bell, BookOpen, Building2, HeartHandshake, UserRound, X } from 'lucide-react'
-import { useDiscovery } from '../discovery/discoveryStore'
+import { useDiscovery } from '@/store/discoveryStore'
 import { Link } from 'react-router'
 import {
   DropdownMenu,
@@ -11,9 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu'
-import { useJourney } from '@/features/missions/store'
-import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { updateStudentUi, useStudentUi } from '../ui-state'
+import { useJourney } from '@/store/journeyStore'
+import { useAdventure } from '@/store/adventureStore'
+import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
 import { getUnlocks, markUnlocksSeen, orderUnlocks } from './unlocks'
 
 export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {

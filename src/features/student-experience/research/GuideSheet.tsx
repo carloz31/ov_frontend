@@ -1,9 +1,9 @@
-import { DiscoverySheetContent as SheetContent } from '../discovery/DiscoverySheetContent'
-import { useReturnFocus } from '../discovery/useReturnFocus'
+import { DiscoverySheetContent as SheetContent } from '@/components/student/DiscoverySheetContent'
+import { useReturnFocus } from '@/hooks/useReturnFocus'
 import { Sheet, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/Sheet'
-import { occupationCatalog } from '@/features/occupation-exploration/data/OccupationExplorationData'
-import type { ResearchInProgress } from '../discovery/discoveryStore'
-import { suggestedQuestions } from './researchData'
+import { occupationCatalog } from '@/data/catalog/occupations'
+import type { ResearchInProgress } from '@/types/discovery'
+import { suggestedQuestions } from '@/data/content/research'
 export function GuideSheet({
   research,
   open,

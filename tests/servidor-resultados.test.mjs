@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { iniciarMara, botonEn } from './servidor-mara-ayudas.mjs'
-import { fixtureServidor, jsonServidor, copia, elementos, esperar } from './servidor-ayudas.mjs'
+import { iniciarMara, botonEn } from './soporte/servidor-mara-ayudas.mjs'
+import { fixtureServidor, jsonServidor, copia, elementos, esperar } from './soporte/servidor-ayudas.mjs'
 
 const texto = (node) =>
   Array.isArray(node)
@@ -15,7 +15,7 @@ const texto = (node) =>
 
 test('el resultado conserva IRA y sus porcentajes en el orden del código, sin ordenar puntajes localmente', async () => {
   const f = await iniciarMara({ resultado: jsonServidor('resultado-riasec') }),
-    a = f.app.load('src/features/servidor/adaptadores.ts')
+    a = f.app.load('src/lib/servidor/adaptadores.ts')
   const resultado = copia(jsonServidor('resultado-riasec'))
   resultado.dimensiones.reverse()
   assert.deepEqual(
@@ -31,14 +31,14 @@ test('el resultado conserva IRA y sus porcentajes en el orden del código, sin o
   assert.match(texto(tree), /100\s*%/)
   assert.match(texto(tree), /75\s*%/)
   assert.match(texto(tree), /50\s*%/)
-  assert.equal(f.app.load('src/features/missions/store.ts').getJourneySnapshot().results.length, 0)
+  assert.equal(f.app.load('src/store/journeyStore.ts').getJourneySnapshot().results.length, 0)
   assert.equal(f.app.requests.filter((r) => r.method === 'POST').length, 0)
 })
 
 test('el sello requiere resultado y se guarda por cuenta y calculado_en sin tocar revealedPages local', async () => {
   const f = await iniciarMara({ resultado: jsonServidor('resultado-riasec') }),
-    a = f.app.load('src/features/servidor/adaptadores.ts'),
-    d = f.app.load('src/features/student-experience/discovery/discoveryStore.ts')
+    a = f.app.load('src/lib/servidor/adaptadores.ts'),
+    d = f.app.load('src/store/discoveryStore.ts')
   d.updateDiscovery((s) => ({ ...s, revealedPages: ['intereses'] }))
   const resultado = jsonServidor('resultado-riasec')
   assert.equal(a.paginaInteresesServidor(f.estado, null, d.getDiscovery()).state, 'sealed')
@@ -61,7 +61,7 @@ test('el sello requiere resultado y se guarda por cuenta y calculado_en sin toca
   )
   assert.deepEqual(Array.from(d.getDiscovery().revealedPages), ['intereses'])
   const reload = fixtureServidor({ guardado: Object.fromEntries(f.app.local) }).load(
-    'src/features/student-experience/discovery/discoveryStore.ts',
+    'src/store/discoveryStore.ts',
   )
   assert.deepEqual(
     Array.from(reload.paginasReveladasApi(reload.getDiscovery(), 'est-ana', resultado.calculado_en)),
@@ -103,7 +103,7 @@ test('las consultas simultáneas del resultado comparten GET sin inventar un cam
 
 test('al fallar la consulta del resultado después del POST 14 se reintenta solo GET y se conserva el aviso', async () => {
   const f = await iniciarMara(),
-    acciones = f.app.load('src/features/servidor/acciones.ts')
+    acciones = f.app.load('src/store/servidor/operaciones.ts')
   const recibo = jsonServidor('completar-act-tip-14')
   let falla = true
   f.app.fetch((req) => {
@@ -150,7 +150,7 @@ test('perfil plano no inventa dimensiones destacadas, coincidencias ni carreras 
     carreras_recomendadas: [],
   }
   const f = await iniciarMara({ resultado }),
-    a = f.app.load('src/features/servidor/adaptadores.ts')
+    a = f.app.load('src/lib/servidor/adaptadores.ts')
   assert.equal(a.areasRiasec(resultado).length, 0)
   assert.equal(a.coincidenciasRiasec(resultado).length, 0)
   const Node = f.app.load('src/features/student-experience/player/nodes/ResultNode.tsx').ResultNode
@@ -186,13 +186,13 @@ test('el catálogo respeta posición y correlación e incluye códigos desconoci
   })
   resultado.coincidencias.reverse()
   const f = await iniciarMara({ resultado, ruta: '/student/catalog/professions?afines=1' })
-  const context = f.app.load('src/features/occupation-exploration/OccupationExplorationContext.ts')
+  const context = f.app.load('src/context/occupationExplorationContext.ts')
   context.useOccupationExplorationContext = () => ({
     profiles: [],
     careerInterestIds: [],
     institutionInterestIds: [],
   })
-  const discovery = f.app.load('src/features/student-experience/discovery/discoveryStore.ts')
+  const discovery = f.app.load('src/store/discoveryStore.ts')
   discovery.revelarPaginaApi('est-ana', resultado.calculado_en, 'intereses')
   const View = f.app.load('src/features/student-experience/catalog/StudentCatalogView.tsx').StudentCatalogView
   const tree = View({ section: 'professions' }),
@@ -207,7 +207,7 @@ test('el catálogo respeta posición y correlación e incluye códigos desconoci
 test('el libro muestra porcentajes, carreras y via del resultado y conserva ejemplos señalados', async () => {
   const resultado = jsonServidor('resultado-riasec'),
     f = await iniciarMara({ resultado })
-  const d = f.app.load('src/features/student-experience/discovery/discoveryStore.ts')
+  const d = f.app.load('src/store/discoveryStore.ts')
   d.revelarPaginaApi('est-ana', resultado.calculado_en, 'intereses')
   const Book = f.app.load('src/features/student-experience/profile/HelenaBookView.tsx').HelenaBookView
   const tree = Book()
@@ -251,6 +251,6 @@ test('act-tip-final muestra el nodo del servidor y la revisión nunca completa e
 })
 
 test('los adaptadores conservan solo imports de tipos, incluidos los de presentación', () => {
-  const source = readFileSync('src/features/servidor/adaptadores.ts', 'utf8')
+  const source = readFileSync('src/lib/servidor/adaptadores.ts', 'utf8')
   assert.ok([...source.matchAll(/^import\s+(.+)$/gm)].every((m) => m[1].startsWith('type ')))
 })

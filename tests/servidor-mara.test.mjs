@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { iniciarMara, itemEn, botonEn } from './servidor-mara-ayudas.mjs'
-import { jsonServidor, elementos, esperar } from './servidor-ayudas.mjs'
+import { iniciarMara, itemEn, botonEn } from './soporte/servidor-mara-ayudas.mjs'
+import { jsonServidor, elementos, esperar } from './soporte/servidor-ayudas.mjs'
 
 test('construye Mara con los códigos, el orden y las opciones reales; reparte tres saludos', async () => {
   const f = await iniciarMara(),
-    a = f.app.load('src/features/servidor/adaptadores.ts')
+    a = f.app.load('src/lib/servidor/adaptadores.ts')
   assert.equal(f.activity.nodos.length, f.items.length + 2)
   assert.deepEqual(
     Array.from(
@@ -32,7 +32,7 @@ test('construye Mara con los códigos, el orden y las opciones reales; reparte t
 
 test('la reanudación usa el primer ítem sin responder e ignora el nodo y las respuestas locales', async () => {
   const f = await iniciarMara({ cantidad: 3 })
-  const journey = f.app.load('src/features/missions/store.ts')
+  const journey = f.app.load('src/store/journeyStore.ts')
   journey.updateJourney((s) => ({
     ...s,
     drafts: { prueba: 'DATO DE PRUEBA: borrador' },
@@ -81,7 +81,7 @@ test('cada selección guarda el orden, bloquea doble clic y no escribe respuesta
   resolver()
   await esperar()
   assert.equal(itemEn(player).props.node.itemId, f.items[1].codigo)
-  const journey = f.app.load('src/features/missions/store.ts').getJourneySnapshot()
+  const journey = f.app.load('src/store/journeyStore.ts').getJourneySnapshot()
   assert.equal(journey.items.length, 0)
   assert.equal(journey.results.length, 0)
   assert.equal(
@@ -177,8 +177,8 @@ test('Ciudad permite Mara disponible, bloquea interacciones futuras por URL y ex
   assert.equal(elementos(screen.render(), (e) => e.type?.name === 'MaraInteractionPlayer').length, 0)
   assert.equal(g.app.query.has('actividad'), false)
   const mapa = g.app.load('src/features/student-experience/map/mapPoints.ts'),
-    journey = g.app.load('src/features/missions/store.ts').getJourneySnapshot(),
-    adventure = g.app.load('src/features/occupation-exploration/lib/AdventureStore.ts').useAdventure()
+    journey = g.app.load('src/store/journeyStore.ts').getJourneySnapshot(),
+    adventure = g.app.load('src/store/adventureStore.ts').useAdventure()
   const point = mapa.getCiudadPoints(adventure, journey).find((p) => p.id === 'mara-test')
   assert.equal(mapa.getPointDetails(point, adventure, journey).reviewActivities[0].codigo, 'act-tip-01')
 })
@@ -224,8 +224,8 @@ test('las consultas de la cuenta anterior se descartan cuando cambia el estudian
       : f.servidor(req),
   )
   const pendiente = f.almacen.consultarRespuestas('act-tip-01')
-  f.app.load('src/features/servidor/acciones.ts').prepararIngreso()
-  f.app.load('src/features/servidor/cuenta.ts').guardarUsuarioIngreso('est-luis')
+  f.app.load('src/store/servidor/operaciones.ts').prepararIngreso()
+  f.app.load('src/store/servidor/cuenta.ts').guardarUsuarioIngreso('est-luis')
   resolver()
   assert.equal((await pendiente).tipo, 'http')
   assert.equal(f.almacen.obtenerEstadoServidor().resultadoRiasec, null)

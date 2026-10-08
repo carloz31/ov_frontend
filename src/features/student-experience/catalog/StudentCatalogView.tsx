@@ -1,19 +1,19 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Search, GraduationCap, BriefcaseBusiness, School } from 'lucide-react'
-import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
+import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
-import { FavoriteButton } from '../discovery/FavoriteButton'
-import { Seal } from '../discovery/Seal'
-import { useDiscovery } from '../discovery/discoveryStore'
-import { paginasReveladasApi } from '../discovery/discoveryStore'
-import { modoApi } from '@/features/servidor/config'
+import { FavoriteButton } from '@/components/student/FavoriteButton'
+import { Seal } from '@/components/student/Seal'
+import { useDiscovery } from '@/store/discoveryStore'
+import { paginasReveladasApi } from '@/store/discoveryStore'
+import { modoApi } from '@/config/env'
 import {
   cargarResultadoRiasec,
   mensajeErrorServidor,
   useEstadoServidor,
-} from '@/features/servidor/estadoServidor'
-import { coincidenciasRiasec, textoAjuste } from '@/features/servidor/adaptadores'
+} from '@/store/servidor/estadoServidor'
+import { coincidenciasRiasec, textoAjuste } from '@/lib/servidor/adaptadores'
 import { discoveryPaths } from '../paths'
 import {
   careerDetails,

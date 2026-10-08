@@ -1,8 +1,8 @@
 import { Check, Crown, Mic, Star } from 'lucide-react'
-import { occupationCatalog } from '@/features/occupation-exploration/data/OccupationExplorationData'
-import { getTravelerLevel, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { useDiscovery } from '../discovery/discoveryStore'
-import { demoLevel, interviewDetails, legendIds, receivedReactions } from './researchData'
+import { occupationCatalog } from '@/data/catalog/occupations'
+import { getTravelerLevel, useAdventure } from '@/store/adventureStore'
+import { useDiscovery } from '@/store/discoveryStore'
+import { demoLevel, interviewDetails, legendIds, receivedReactions } from '@/data/content/research'
 import type { InterviewVideo } from './research'
 export function InterviewCard({
   video,

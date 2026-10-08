@@ -1,5 +1,5 @@
 import { ExternalLink } from 'lucide-react'
-import type { BloqueContenido } from '@/features/missions/model'
+import type { BloqueContenido } from '@/types/activities'
 
 export function ContentBlocks({ blocks }: { blocks: BloqueContenido[] }) {
   return (

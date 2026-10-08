@@ -1,17 +1,17 @@
 import { getLumiBond } from '../journal/lumiBond'
 import { lumiMemories } from '../journal/lumiMemories'
-import { catalog } from '@/features/missions/content'
-import type { JourneyState } from '@/features/missions/logic'
+import { catalog } from '@/data/activities/content'
+import type { JourneyState } from '@/types/activities'
 import { getStudentAchievementGroups } from '../profile/passport'
-import { isCityUnlocked, isFamilyUnlocked } from '@/features/occupation-exploration/lib/AdventureStore'
+import { isCityUnlocked, isFamilyUnlocked } from '@/store/adventureStore'
 import {
   getTravelResources,
   isTravelResourceUnlocked,
-} from '@/features/occupation-exploration/lib/TravelerResources'
-import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
+} from '@/features/backpack/lib/travelerResources'
+import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
-import type { StudentDiscoveryState } from '../discovery/discoveryStore'
-import type { StudentUiState } from '../ui-state'
+import type { StudentDiscoveryState } from '@/types/discovery'
+import type { StudentUiState } from '@/store/studentUiStore'
 
 export type UnlockItem = {
   id: string

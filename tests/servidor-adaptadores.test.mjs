@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import ts from 'typescript'
-import { copia, jsonServidor } from './servidor-ayudas.mjs'
+import { copia, jsonServidor } from './soporte/servidor-ayudas.mjs'
 
-const source = readFileSync('src/features/servidor/adaptadores.ts', 'utf8')
+const source = readFileSync('src/lib/servidor/adaptadores.ts', 'utf8')
 const code = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
 }).outputText

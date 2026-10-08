@@ -1,5 +1,5 @@
-import { activities, questionnaires } from '../profile/data'
-import type { ProfileActivity, QuestionnaireDefinition } from '../profile/types'
+import { activities, questionnaires } from '@/data/demo/studentProfiles'
+import type { ProfileActivity, QuestionnaireDefinition } from '@/types/studentProfile'
 
 export type PrioritySettings = {
   questionnaireIds: string[]

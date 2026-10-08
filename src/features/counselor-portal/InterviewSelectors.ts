@@ -1,6 +1,6 @@
 import type { Interview } from './types/CounselorPortalTypes'
-import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
-import { resourceDemoVideos, legendInterviews } from '@/features/occupation-exploration/data/AdventureData'
+import type { AdventureState } from '@/types/adventure'
+import { resourceDemoVideos, legendInterviews } from '@/data/content/adventure'
 
 export type PublishedInterview = Interview & {
   reports: AdventureState['reports']

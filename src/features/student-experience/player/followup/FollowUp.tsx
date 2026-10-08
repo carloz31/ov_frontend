@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
-import type { Actividad, NodoConsigna } from '@/features/missions/model'
+import type { Actividad, NodoConsigna } from '@/types/activities'
 import { InlineDialogue } from '../InlineDialogue'
-import { useTypewriter } from '../../overlays/useTypewriter'
+import { useTypewriter } from '@/hooks/useTypewriter'
 import { evaluateResponse, finalizeResponse } from '../../reflection/evaluation'
-import { getReflections } from '../../reflection/store'
+import { getReflections } from '@/store/reflectionStore'
 import { getFollowUpRecord, saveFollowUpResponse, setFollowUpRecord, useFollowUps } from './followUpStore'
 import { answeredTurns, responseCapacity } from './responseCondenser'
 

@@ -1,18 +1,18 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { fixtureServidor, servidorInicial, jsonServidor, esperar, elementos } from './servidor-ayudas.mjs'
+import { fixtureServidor, servidorInicial, jsonServidor, esperar, elementos } from './soporte/servidor-ayudas.mjs'
 
 async function iniciar(options) {
   const app = fixtureServidor(options)
   servidorInicial(app)
-  const acciones = app.load('src/features/servidor/acciones.ts')
+  const acciones = app.load('src/store/servidor/operaciones.ts')
   assert.equal((await acciones.ingresar()).tipo, 'ok')
   return { app, acciones }
 }
 function ultimoDialogo(app) {
-  const store = app.load('src/features/missions/store.ts')
-  const activity = app.load('src/features/missions/content.ts').activityById('mission-welcome')
+  const store = app.load('src/store/journeyStore.ts')
+  const activity = app.load('src/data/activities/content.ts').activityById('mission-welcome')
   // DATO DE PRUEBA: comprobación aprobada del contenido real antes del último diálogo.
   store.updateJourney((s) => ({
     ...s,
@@ -47,7 +47,7 @@ function ultimoDialogo(app) {
 }
 test('el cliente distingue 409, red y errores HTTP sin perder el detalle', async () => {
   const app = fixtureServidor(),
-    { pedir } = app.load('src/features/servidor/cliente.ts')
+    { pedir } = app.load('src/services/api/cliente.ts')
   app.fetch(() => ({
     status: 409,
     body: { detail: { mensaje: 'Faltan ítems', items_faltantes: ['RIA-1'] } },
@@ -74,11 +74,11 @@ test('el ingreso deduplica el montaje, elige solo estudiantes y no marca avisos 
   ]) {
     const app = fixtureServidor()
     servidorInicial(app)
-    app.load('src/features/servidor/cuenta.ts').guardarUsuarioIngreso(usuario)
-    const acciones = app.load('src/features/servidor/acciones.ts')
+    app.load('src/store/servidor/cuenta.ts').guardarUsuarioIngreso(usuario)
+    const acciones = app.load('src/store/servidor/operaciones.ts')
     await Promise.all([acciones.ingresar(), acciones.ingresar()])
     assert.equal(app.requests.filter((r) => r.url === '/api/acciones/ingresar').length, 1)
-    assert.equal(app.load('src/features/servidor/cuenta.ts').cuentaActiva(), esperado)
+    assert.equal(app.load('src/store/servidor/cuenta.ts').cuentaActiva(), esperado)
     assert.equal(JSON.parse(app.sesion.get('ov.cuenta-servidor.v1')).codigo, esperado)
     assert.equal(
       app.requests.some((r) => r.url.includes('marcar-vistos')),
@@ -101,8 +101,8 @@ test('el ingreso confirmado conserva sus avisos si falla la consulta y reintenta
     if (r.url.includes('/desbloqueos?')) return { body: [] }
     throw Error(r.url)
   })
-  const acciones = app.load('src/features/servidor/acciones.ts')
-  const almacen = app.load('src/features/servidor/estadoServidor.ts')
+  const acciones = app.load('src/store/servidor/operaciones.ts')
+  const almacen = app.load('src/store/servidor/estadoServidor.ts')
   assert.equal((await acciones.ingresar()).tipo, 'http')
   assert.ok(almacen.avisosPendientes().some((a) => a.title === 'La primera chispa'))
   falla = false
@@ -122,8 +122,8 @@ test('un ingreso anterior no cambia la cuenta nueva cuando llega tarde', async (
         liberar = () => resolve({ body: [jsonServidor('estado-inicial').cuenta] })
       }),
   )
-  const acciones = app.load('src/features/servidor/acciones.ts'),
-    cuenta = app.load('src/features/servidor/cuenta.ts')
+  const acciones = app.load('src/store/servidor/operaciones.ts'),
+    cuenta = app.load('src/store/servidor/cuenta.ts')
   const anterior = acciones.ingresar()
   cuenta.guardarUsuarioIngreso('est-luis')
   acciones.prepararIngreso()
@@ -133,7 +133,7 @@ test('un ingreso anterior no cambia la cuenta nueva cuando llega tarde', async (
   assert.equal((await anterior).tipo, 'http')
   assert.equal(cuenta.cuentaActiva(), 'est-luis')
   assert.equal(
-    app.load('src/features/servidor/estadoServidor.ts').obtenerEstadoServidor().estado.cuenta.codigo,
+    app.load('src/store/servidor/estadoServidor.ts').obtenerEstadoServidor().estado.cuenta.codigo,
     'est-luis',
   )
   assert.equal(app.requests.filter((r) => r.url === '/api/acciones/ingresar').length, 1)
@@ -141,8 +141,8 @@ test('un ingreso anterior no cambia la cuenta nueva cuando llega tarde', async (
 
 test('un ingreso sin servidor expone error y reintenta sin crear estado ficticio', async () => {
   const app = fixtureServidor(),
-    acciones = app.load('src/features/servidor/acciones.ts'),
-    estado = app.load('src/features/servidor/estadoServidor.ts')
+    acciones = app.load('src/store/servidor/operaciones.ts'),
+    estado = app.load('src/store/servidor/estadoServidor.ts')
   assert.equal((await acciones.ingresar()).tipo, 'sin_conexion')
   assert.equal(estado.obtenerEstadoServidor().estado, null)
   assert.equal(estado.obtenerEstadoServidor().error.tipo, 'sin_conexion')
@@ -153,10 +153,10 @@ test('las copias API separan cuentas, conservan borradores y nunca mezclan clave
   const { app, acciones } = await iniciar({
     guardado: { 'ov.missions.v2': 'contenido local', 'ov.student-adventure.v1': 'aventura local' },
   })
-  const journey = app.load('src/features/missions/store.ts'),
-    adventure = app.load('src/features/occupation-exploration/lib/AdventureStore.ts')
+  const journey = app.load('src/store/journeyStore.ts'),
+    adventure = app.load('src/store/adventureStore.ts')
   journey.updateJourney((s) => ({ ...s, drafts: { texto: 'Borrador de Ana' } }))
-  const cuenta = app.load('src/features/servidor/cuenta.ts')
+  const cuenta = app.load('src/store/servidor/cuenta.ts')
   cuenta.guardarUsuarioIngreso('est-luis')
   acciones.prepararIngreso()
   await acciones.ingresar()
@@ -273,14 +273,14 @@ test('repetir una informativa llega nuevamente al servidor sin fabricar logros',
   assert.equal((await acciones.completarActividad('mission-welcome')).datos.nuevos_desbloqueos.length, 3)
   assert.equal((await acciones.completarActividad('mission-welcome')).datos.nuevos_desbloqueos.length, 0)
   assert.equal(completadas, 2)
-  const store = app.load('src/features/missions/store.ts')
+  const store = app.load('src/store/journeyStore.ts')
   assert.equal(store.getJourneySnapshot().resources.length, 0)
   assert.equal(store.getJourneySnapshot().rewards.length, 0)
 })
 test('el mapa y los enlaces directos no usan límites de demo ni abren TIP o desafíos', async () => {
   const { app } = await iniciar({ ruta: '/student/exploration?actividad=el-rumor' })
-  const journey = app.load('src/features/missions/store.ts'),
-    adventure = app.load('src/features/occupation-exploration/lib/AdventureStore.ts'),
+  const journey = app.load('src/store/journeyStore.ts'),
+    adventure = app.load('src/store/adventureStore.ts'),
     mapa = app.load('src/features/student-experience/map/mapPoints.ts')
   const puntos = mapa.getCaminoPoints(adventure.useAdventure(), journey.getJourneySnapshot())
   assert.equal(puntos.length, 10)
@@ -306,7 +306,7 @@ test('el mapa y los enlaces directos no usan límites de demo ni abren TIP o des
 })
 test('hidratar sin espacio corrige el estado obsoleto y conserva el borrador y el nodo local', async () => {
   const { app } = await iniciar()
-  const store = app.load('src/features/missions/store.ts')
+  const store = app.load('src/store/journeyStore.ts')
   store.updateJourney((s) => ({
     ...s,
     drafts: { prueba: 'DATO DE PRUEBA: texto pendiente' },
@@ -320,7 +320,7 @@ test('hidratar sin espacio corrige el estado obsoleto y conserva el borrador y e
     },
   }))
   app.failWrites(true)
-  await app.load('src/features/servidor/estadoServidor.ts').refrescar()
+  await app.load('src/store/servidor/estadoServidor.ts').refrescar()
   assert.equal(store.getJourneySnapshot().progress['mission-welcome'].estado, 'no_iniciada')
   assert.equal(store.getJourneySnapshot().progress['mission-welcome'].nodoActualId, 'welcome-02')
   assert.equal(store.getJourneySnapshot().drafts.prueba, 'DATO DE PRUEBA: texto pendiente')
@@ -328,8 +328,8 @@ test('hidratar sin espacio corrige el estado obsoleto y conserva el borrador y e
 
 test('leer una ficha y pasar una diapositiva no las obtiene ni finaliza en API', async () => {
   const { app } = await iniciar()
-  const store = app.load('src/features/missions/store.ts')
-  const activity = app.load('src/features/missions/content.ts').activityById('mission-welcome')
+  const store = app.load('src/store/journeyStore.ts')
+  const activity = app.load('src/data/activities/content.ts').activityById('mission-welcome')
   store.updateJourney((s) => ({
     ...s,
     progress: { ...s.progress, [activity.id]: { ...s.progress[activity.id], nodoActualId: 'welcome-02' } },
@@ -366,8 +366,8 @@ test('recuperar un cierre confirmado no crea otro evento y una URL bloqueada no 
   assert.equal(app.query.has('actividad'), false)
   screen.unmount()
   app.fetch((r) => (r.url.endsWith('/estado') ? { body: jsonServidor('estado-ciudad') } : { body: [] }))
-  await app.load('src/features/servidor/estadoServidor.ts').refrescar()
-  const activity = app.load('src/features/missions/content.ts').activityById('mission-welcome')
+  await app.load('src/store/servidor/estadoServidor.ts').refrescar()
+  const activity = app.load('src/data/activities/content.ts').activityById('mission-welcome')
   const player = app.mount(
     app.load('src/features/student-experience/player/StudentActivityPlayer.tsx').StudentActivityPlayer,
     { activity, onClose() {} },
@@ -383,7 +383,7 @@ test('recuperar un cierre confirmado no crea otro evento y una URL bloqueada no 
 test('el reinicio solo opera en API y desarrollo y borra únicamente las dos claves API', async () => {
   for (const opciones of [{ api: false }, { desarrollo: false }]) {
     const app = fixtureServidor(opciones)
-    assert.equal((await app.load('src/features/servidor/acciones.ts').reiniciarDatosDePrueba()).tipo, 'http')
+    assert.equal((await app.load('src/store/servidor/operaciones.ts').reiniciarDatosDePrueba()).tipo, 'http')
     assert.equal(app.requests.length, 0)
   }
   const app = fixtureServidor({
@@ -395,7 +395,7 @@ test('el reinicio solo opera en API y desarrollo y borra únicamente las dos cla
     },
   })
   app.fetch(() => ({ body: { mensaje: 'Datos reiniciados' } }))
-  assert.equal((await app.load('src/features/servidor/acciones.ts').reiniciarDatosDePrueba()).tipo, 'ok')
+  assert.equal((await app.load('src/store/servidor/operaciones.ts').reiniciarDatosDePrueba()).tipo, 'ok')
   assert.equal(app.local.has('ov.missions.v2.api'), false)
   assert.equal(app.local.has('ov.student-adventure.v1.api'), false)
   assert.equal(app.local.get('ov.missions.v2'), 'local')

@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from 'react'
-import { initialJourney, type JourneyState } from '@/features/missions/logic'
+import { initialJourney } from '@/lib/activities/logic'
+import type { JourneyState } from '@/types/activities'
 
 export const parentAccountId = 'apo-prototipo'
 const storageKey = 'ov.parent-missions.v1'

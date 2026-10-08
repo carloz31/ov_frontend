@@ -3,7 +3,7 @@ import {
   lumiFriendshipRules,
   normalizeLumiRegistrations,
   type LumiRegistration,
-} from '@/features/occupation-exploration/lib/LumiFriendship'
+} from '@/lib/lumiFriendship'
 export const lumiMemoryThresholds = [1, 5, 10, 15] as const
 const levels = [
   { minimum: 0, label: 'Conociéndonos' },

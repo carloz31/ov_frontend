@@ -1,4 +1,4 @@
-import type { BloqueContenido } from '@/features/missions/model'
+import type { BloqueContenido } from '@/types/activities'
 import { Check } from 'lucide-react'
 import './parent-activities.css'
 

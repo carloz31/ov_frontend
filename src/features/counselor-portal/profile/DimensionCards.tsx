@@ -3,7 +3,7 @@ import { dimensionIcon } from './presentation'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { changes, highlightedDimensions, levelLabel } from './selectors'
-import type { QuestionnaireDefinition, QuestionnaireResult } from './types'
+import type { QuestionnaireDefinition, QuestionnaireResult } from '@/types/studentProfile'
 
 export function DimensionCards({
   definition,

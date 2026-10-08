@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import path from 'node:path'
 import vm from 'node:vm'
 import test from 'node:test'
 import ts from 'typescript'
@@ -25,22 +26,27 @@ function fixture(saved = null) {
       },
     },
   })
-  function load(name) {
-    if (cache.has(name)) return cache.get(name)
+  function load(file) {
+    if (cache.has(file)) return cache.get(file)
     const exports = {}
-    cache.set(name, exports)
-    const code = ts.transpileModule(readFileSync(`src/features/missions/${name}.ts`, 'utf8'), {
+    cache.set(file, exports)
+    const code = ts.transpileModule(readFileSync(file, 'utf8'), {
       compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2023 },
     }).outputText
     vm.runInContext(`(function(require, exports) { ${code}\n })`, context)(
-      (id) =>
-        id === 'react' ? { useSyncExternalStore: (_, snapshot) => snapshot() } : load(id.replace('./', '')),
+      (specifier) => {
+        if (specifier === 'react') return { useSyncExternalStore: (_, snapshot) => snapshot() }
+        const base = specifier.startsWith('@/')
+          ? path.resolve('src', specifier.slice(2))
+          : path.resolve(path.dirname(file), specifier)
+        return load([base, `${base}.ts`, `${base}.tsx`].find(existsSync))
+      },
       exports,
     )
     return exports
   }
   return {
-    store: load('store'),
+    store: load(path.resolve('src/store/journeyStore.ts')),
     persisted: () => persisted,
     fail: (value) => {
       fail = value

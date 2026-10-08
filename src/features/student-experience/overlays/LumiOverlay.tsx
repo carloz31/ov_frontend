@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { ArrowLeft, ChevronRight, X } from 'lucide-react'
-import { useThemeClass } from '@/components/ThemeScope'
-import { CharacterAvatar } from '../player/CharacterAvatar'
-import { useTypewriter } from './useTypewriter'
+import { useThemeClass } from '@/components/common/ThemeScope'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
+import { useTypewriter } from '@/hooks/useTypewriter'
 
 export type LumiOverlayProps = {
   open: boolean

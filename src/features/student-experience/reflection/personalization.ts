@@ -1,11 +1,11 @@
-import type { Actividad, NodoConsigna } from '@/features/missions/model'
-import { latestSubmission, studentId } from '@/features/missions/logic'
-import { getJourneySnapshot } from '@/features/missions/store'
-import { activityById } from '@/features/missions/content'
-import { criteria, personalizations, reflectionCopy, routeOrder } from './config'
-import { currentEvaluation, getReflections, isDeveloped, updateReflections } from './store'
+import type { Actividad, NodoConsigna } from '@/types/activities'
+import { latestSubmission, studentId } from '@/lib/activities/logic'
+import { getJourneySnapshot } from '@/store/journeyStore'
+import { activityById } from '@/data/activities/content'
+import { criteria, personalizations, reflectionCopy, routeOrder } from '@/data/activities/reflectionConfig'
+import { currentEvaluation, getReflections, isDeveloped, updateReflections } from '@/store/reflectionStore'
 import { bounded, getReflectionProvider, metadata } from './provider'
-import type { ShownQuestion } from './model'
+import type { ShownQuestion } from '@/types/reflection'
 
 const normalize = (text: string) => text.toLocaleLowerCase().replace(/\s+/g, ' ').trim()
 export function validPersonalizedQuestion(question: string, quote: string, source: string) {

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
-import type { Occupation } from '../types/OccupationExplorationTypes'
+import type { Occupation } from '@/types/catalog'
 
 function OccupationDetailDialog({
   interested = false,

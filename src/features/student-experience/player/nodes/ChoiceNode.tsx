@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react'
-import type { NodoDialogo, NodoEleccion } from '@/features/missions/model'
+import type { NodoDialogo, NodoEleccion } from '@/types/activities'
 import { DialogueBox } from '../DialogueBox'
 
 export function ChoiceNode({

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
-import { studentProfiles } from '../profile/data'
+import { studentProfiles } from '@/data/demo/studentProfiles'
 import { resolveSalon } from './selectors'
 
 const storageKey = 'ov.staff.selected-salon.v1'

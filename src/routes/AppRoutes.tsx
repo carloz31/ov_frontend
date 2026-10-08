@@ -47,9 +47,9 @@ import { StudentSignalsView } from '@/features/student-experience/modules/Studen
 import { CommunityView } from '@/features/occupation-exploration/CommunityView'
 import { StudentResourcesView } from '@/features/student-experience/modules/StudentResourcesView'
 import { FamilyConversationsView } from '@/features/family-conversations/FamilyConversationsView'
-import { modoApi } from '@/features/servidor/config'
-import { guardarUsuarioIngreso } from '@/features/servidor/cuenta'
-import { prepararIngreso } from '@/features/servidor/acciones'
+import { modoApi } from '@/config/env'
+import { guardarUsuarioIngreso } from '@/store/servidor/cuenta'
+import { prepararIngreso } from '@/store/servidor/operaciones'
 
 const roleHomePaths: Record<PlatformRole, string> = {
   student: appPaths.student.missions,

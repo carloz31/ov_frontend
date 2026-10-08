@@ -1,7 +1,7 @@
-import { DiscoverySheetContent as SheetContent } from '../discovery/DiscoverySheetContent'
-import { useReturnFocus } from '../discovery/useReturnFocus'
+import { DiscoverySheetContent as SheetContent } from '@/components/student/DiscoverySheetContent'
+import { useReturnFocus } from '@/hooks/useReturnFocus'
 import { Sheet, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/Sheet'
-import { demoLevel, getAllies } from './researchData'
+import { demoLevel, getAllies } from '@/data/content/research'
 export function AlliesSheet({
   occupationId,
   occupationName,

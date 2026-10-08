@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import './student-experience.css'
+import '@/styles/student/student-experience.css'
 
 // Keep tokens active in body portals without changing the shared theme context.
 export function StudentThemeScope({ children }: { children: ReactNode }) {

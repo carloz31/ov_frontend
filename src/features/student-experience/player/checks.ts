@@ -1,4 +1,4 @@
-import type { NodoPregunta } from '@/features/missions/model'
+import type { NodoPregunta } from '@/types/activities'
 
 export function evaluateStudentCheck(node: NodoPregunta, selected: string[], previousAttempts: number) {
   const correctIds = node.opciones.filter((o) => o.correcta).map((o) => o.id)

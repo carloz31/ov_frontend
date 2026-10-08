@@ -1,4 +1,4 @@
-import { catalog } from '@/features/missions/content'
+import { catalog } from '@/data/activities/content'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
 import { ParentResourceText } from './ParentContent'
 

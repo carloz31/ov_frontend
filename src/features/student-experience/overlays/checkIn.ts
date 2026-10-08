@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { updateAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { lumiDayKey } from '@/features/occupation-exploration/lib/LumiFriendship'
-import type { AdventureState, ReadinessCheckIn } from '@/features/occupation-exploration/types/AdventureTypes'
+import { updateAdventure } from '@/store/adventureStore'
+import { lumiDayKey } from '@/lib/lumiFriendship'
+import type { AdventureState, ReadinessCheckIn } from '@/types/adventure'
 
 // Use the journal's Lima calendar and preserve the original registration when editing.
 export const localDateKey = lumiDayKey

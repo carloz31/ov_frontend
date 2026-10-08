@@ -1,27 +1,27 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { modoApi } from '@/features/servidor/config'
+import { modoApi } from '@/config/env'
 import {
   avisosPendientes,
   mostrarAviso,
   useEstadoServidor,
   mensajeErrorServidor,
-} from '@/features/servidor/estadoServidor'
-import { marcarVistos } from '@/features/servidor/acciones'
+} from '@/store/servidor/estadoServidor'
+import { marcarVistos } from '@/store/servidor/operaciones'
 import { UnlockToast } from './UnlockToast'
 import { useNavigate } from 'react-router'
-import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { useJourney } from '@/features/missions/store'
+import { useAdventure } from '@/store/adventureStore'
+import { useJourney } from '@/store/journeyStore'
 import { appPaths } from '@/routes/paths'
-import { cityArrivalSteps, guideSteps } from '../guide-texts'
-import { updateStudentUi, useStudentUi } from '../ui-state'
-import type { StudentView } from '../views'
+import { cityArrivalSteps, guideSteps } from '@/data/content/guideTexts'
+import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
+import type { StudentView } from '@/lib/studentViews'
 import { CheckInDialog } from './CheckInDialog'
 import { getTodayCheckIn, localDateKey, saveTodayCheckIn, useCheckInDay } from './checkIn'
 import { LumiOverlay } from './LumiOverlay'
 import { BadgeToast } from './BadgeToast'
 import { getNextBadge, markBadgeAnnounced } from './unlocks'
-import { useReflections } from '../reflection/store'
-import { isWithinStudentDemo } from '@/features/occupation-exploration/lib/StudentDemoScope'
+import { useReflections } from '@/store/reflectionStore'
+import { isWithinStudentDemo } from '@/config/studentDemoScope'
 import {
   getNextOverlay,
   StudentOverlayContext,

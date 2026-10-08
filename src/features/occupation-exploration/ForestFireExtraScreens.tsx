@@ -5,11 +5,11 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
-import { cn } from '@/lib/Utils'
-import { forestFireWordCloud } from './data/ForestFireCaseData'
-import { occupationCatalog } from './data/OccupationExplorationData'
+import { cn } from '@/lib/utils'
+import { forestFireWordCloud } from '@/data/content/forestFireCase'
+import { occupationCatalog } from '@/data/catalog/occupations'
 import { OccupationDetailDialog } from './components/OccupationDetailDialog'
-import type { Occupation } from './types/OccupationExplorationTypes'
+import type { Occupation } from '@/types/catalog'
 const FOREST_FIRE_ROLE_OCCUPATION_IDS = new Set([
   'firefighter',
   'meteorologist',

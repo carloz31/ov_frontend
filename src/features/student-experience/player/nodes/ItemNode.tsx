@@ -1,5 +1,5 @@
 import { ArrowRight } from 'lucide-react'
-import type { NodoItem, RespuestaItem } from '@/features/missions/model'
+import type { NodoItem, RespuestaItem } from '@/types/activities'
 import { DialogueBox } from '../DialogueBox'
 
 export function ItemNode({

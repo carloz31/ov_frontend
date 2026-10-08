@@ -1,32 +1,32 @@
-import { DiscoverySheetContent as SheetContent } from '../discovery/DiscoverySheetContent'
-import { useReturnFocus } from '../discovery/useReturnFocus'
+import { DiscoverySheetContent as SheetContent } from '@/components/student/DiscoverySheetContent'
+import { useReturnFocus } from '@/hooks/useReturnFocus'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { LockKeyhole, Eye, BookOpen, Brain, Users } from 'lucide-react'
 import { Sheet, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/Sheet'
-import { useJourney } from '@/features/missions/store'
+import { useJourney } from '@/store/journeyStore'
 import { appPaths } from '@/routes/paths'
 import {
   useDiscovery,
   updateDiscovery,
   revelarPaginaApi,
   paginasReveladasApi,
-} from '../discovery/discoveryStore'
+} from '@/store/discoveryStore'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
-import { Parchment } from '../discovery/Parchment'
-import { Seal } from '../discovery/Seal'
-import { TrailBar } from '../discovery/TrailBar'
-import type { InstrumentPageId } from '../discovery/discoveryStore'
+import { Parchment } from '@/components/student/Parchment'
+import { Seal } from '@/components/student/Seal'
+import { TrailBar } from '@/components/student/TrailBar'
+import type { InstrumentPageId } from '@/types/discovery'
 import { getHelenaPages, getHelenaPagesApi } from './helenaPages'
-import { modoApi } from '@/features/servidor/config'
+import { modoApi } from '@/config/env'
 import {
   cargarResultadoRiasec,
   consultarAvanceInstrumentos,
   consultarProgreso,
   mensajeErrorServidor,
   useEstadoServidor,
-} from '@/features/servidor/estadoServidor'
-import { ciudadDisponible, textoRequisito, paginaInteresesServidor } from '@/features/servidor/adaptadores'
+} from '@/store/servidor/estadoServidor'
+import { ciudadDisponible, textoRequisito, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
 import { discoveryPaths } from '../paths'
 import { occupationDetails } from '../catalog/catalogDetails'
 

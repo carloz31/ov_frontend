@@ -1,16 +1,16 @@
 import { KeyRound } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { modoApi } from '@/features/servidor/config'
+import { modoApi } from '@/config/env'
 import {
   useEstadoServidor,
   consultarProgreso,
   mensajeErrorServidor,
-} from '@/features/servidor/estadoServidor'
-import { progresoCamino, textoRequisito } from '@/features/servidor/adaptadores'
+} from '@/store/servidor/estadoServidor'
+import { progresoCamino, textoRequisito } from '@/lib/servidor/adaptadores'
 import { Link } from 'react-router'
 import { Progress } from '@/components/ui/Progress'
-import { fieldMissions } from '@/features/occupation-exploration/data/AdventureData'
-import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
+import { fieldMissions } from '@/data/content/adventure'
+import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
 
 export function CityLocked({ adventure }: { adventure: AdventureState }) {

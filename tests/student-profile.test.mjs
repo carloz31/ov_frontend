@@ -28,7 +28,7 @@ function load(file) {
   return exports
 }
 const selectors = load(path.resolve('src/features/counselor-portal/profile/selectors.ts'))
-const data = load(path.resolve('src/features/counselor-portal/profile/data.ts'))
+const data = load(path.resolve('src/data/demo/studentProfiles.ts'))
 const navigation = load(path.resolve('src/features/counselor-portal/profile/navigation.ts'))
 const table = load(path.resolve('src/features/counselor-portal/data/StudentsExampleData.ts'))
 const priorities = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))

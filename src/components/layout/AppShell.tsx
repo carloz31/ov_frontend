@@ -1,6 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import { SidebarInset, SidebarProvider } from '@/components/ui/Sidebar'
-import { ThemeProvider, type AppTheme } from '@/components/ThemeScope'
+import { ThemeProvider, type AppTheme } from '@/components/common/ThemeScope'
 import { AppSidebar } from './AppSidebar'
 import { AppTopBar } from './AppTopBar'
 import type { AppNavigationGroup } from './navigation'

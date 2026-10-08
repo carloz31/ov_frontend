@@ -6,10 +6,10 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
 import { projectStudents, type AlertCode, type ExampleStudent } from './data/StudentsExampleData'
-import { studentProfiles } from './profile/data'
+import { studentProfiles } from '@/data/demo/studentProfiles'
 import { usePriorityCatalog } from './priorities/usePrioritySettings'
 import {
   priorityProgress,

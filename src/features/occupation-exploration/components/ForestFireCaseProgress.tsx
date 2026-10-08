@@ -1,9 +1,9 @@
-import type { AdventureState } from '../types/AdventureTypes'
+import type { AdventureState } from '@/types/adventure'
 import {
   FOREST_FIRE_MAX_SATISFACTION,
   FOREST_FIRE_PASS_SCORE,
   getForestFireCaseStatus,
-} from '../lib/ForestFireCaseLogic'
+} from '@/features/cases/lib/forestFireCaseLogic'
 import './forest-fire-progress.css'
 
 export function ForestFireCaseProgress({

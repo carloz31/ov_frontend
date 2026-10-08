@@ -1,14 +1,14 @@
 import { useEffect } from 'react'
-import { useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/estadoServidor'
 import { useSearchParams } from 'react-router'
-import { activityById } from '@/features/missions/content'
+import { activityById } from '@/data/activities/content'
 import { StudentActivityPlayer } from '../player/StudentActivityPlayer'
-import { useJourney } from '@/features/missions/store'
-import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { useJourney } from '@/store/journeyStore'
+import { useAdventure } from '@/store/adventureStore'
 import { getCaminoPoints } from './mapPoints'
 import { MapScreenLayout } from './MapScreenLayout'
-import '@/features/missions/journey.css'
-import { useReflections } from '../reflection/store'
+import '@/styles/student/journey.css'
+import { useReflections } from '@/store/reflectionStore'
 
 export function CaminoScreen() {
   useEstadoServidor()

@@ -1,5 +1,5 @@
 import { Volume2, VolumeX } from 'lucide-react'
-import { updateStudentUi, useStudentUi } from '../ui-state'
+import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
 
 export function PlayerSoundButton() {
   const ui = useStudentUi()

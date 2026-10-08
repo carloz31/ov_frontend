@@ -1,9 +1,9 @@
 import { useRef, useState } from 'react'
 import { Clock, Eye } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
-import type { ShownQuestion } from './model'
+import type { ShownQuestion } from '@/types/reflection'
 import { missingNotice, missingPhrases } from './personalization'
-import { reflectionCopy } from './config'
+import { reflectionCopy } from '@/data/activities/reflectionConfig'
 
 export function HighlightedQuestion({ text, quote }: { text: string; quote?: string }) {
   if (!quote || !text.includes(`«${quote}»`)) return <>{text}</>

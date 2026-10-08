@@ -1,5 +1,5 @@
 import { Building2, ChartNoAxesColumnIncreasing, GraduationCap, WalletCards } from 'lucide-react'
-import { PageHeader } from '@/components/PageHeader'
+import { PageHeader } from '@/components/common/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { careerGuide } from './data/ParentPortalData'

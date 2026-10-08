@@ -1,10 +1,10 @@
 import { ForestFireCaseProgress } from '@/features/occupation-exploration/components/ForestFireCaseProgress'
-import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { useAdventure } from '@/store/adventureStore'
 import { useRef } from 'react'
 import { Link } from 'react-router'
 import { Clock, LockKeyhole, Play, X } from 'lucide-react'
 import { Drawer as DrawerPrimitive } from 'vaul'
-import { useThemeClass } from '@/components/ThemeScope'
+import { useThemeClass } from '@/components/common/ThemeScope'
 import {
   Drawer,
   DrawerClose,
@@ -13,7 +13,7 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerDescription,
-} from '@/components/ui/drawer'
+} from '@/components/ui/Drawer'
 import { JournalEntryCard } from '@/features/occupation-exploration/components/JournalEntryCard'
 import type { StudentMapPoint, PointDetails } from './mapPoints'
 

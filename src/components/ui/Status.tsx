@@ -1,7 +1,7 @@
 import { CheckCircle2, Circle, Clock3, LockKeyhole, TriangleAlert, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Badge } from './Badge'
-import { cn } from '@/lib/Utils'
+import { cn } from '@/lib/utils'
 
 type Status = 'completed' | 'in-progress' | 'not-started' | 'unavailable'
 export type { Status }

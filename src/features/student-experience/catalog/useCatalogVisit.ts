@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { updateDiscovery } from '../discovery/discoveryStore'
+import { updateDiscovery } from '@/store/discoveryStore'
 export function useCatalogVisit(kind: 'career' | 'occupation', id?: string) {
   const lastVisit = useRef<string | undefined>(undefined)
   useEffect(() => {

@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Flame, Radio } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { cn } from '@/lib/Utils'
+import { cn } from '@/lib/utils'
 import { ForestFireCaseHeader } from './components/ForestFireCaseHeader'
 import './forest-fire.css'
-import { getExplorationImagePath } from './lib/ExplorationAssets'
+import { getExplorationImagePath } from '@/lib/explorationAssets'
 
 const situationNarrative =
   'Durante la madrugada, un incendio forestal se originó en las colinas cercanas a una pequeña localidad rural. Impulsado por el viento y la vegetación seca de la temporada, el fuego avanza sin control, amenazando viviendas, caminos y a las familias que viven en la zona. La comunidad ha dado la voz de alerta y ha solicitado apoyo urgente.'

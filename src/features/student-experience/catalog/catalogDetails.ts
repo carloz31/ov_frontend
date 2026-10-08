@@ -1,5 +1,5 @@
-import { careerCatalog } from '@/features/occupation-exploration/data/ExplorationCatalogData'
-import { occupationCatalog } from '@/features/occupation-exploration/data/OccupationExplorationData'
+import { careerCatalog } from '@/data/catalog/careersAndInstitutions'
+import { occupationCatalog } from '@/data/catalog/occupations'
 export type IncomeRange = { average: number; min: number; max: number }
 export type CareerFamily = {
   id: string

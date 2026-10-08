@@ -1,11 +1,12 @@
-import { occupationCatalog } from '@/features/occupation-exploration/data/OccupationExplorationData'
-import { resourceDemoVideos, legendInterviews } from '@/features/occupation-exploration/data/AdventureData'
-import { safeVideoUrl, updateAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { isTravelResourceUnlocked } from '@/features/occupation-exploration/lib/TravelerResources'
-import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
-import type { JourneyState } from '@/features/missions/logic'
-import { getDiscovery, updateDiscovery, type ResearchPublication } from '../discovery/discoveryStore'
-import { getAllies, legendIds } from './researchData'
+import { occupationCatalog } from '@/data/catalog/occupations'
+import { resourceDemoVideos, legendInterviews } from '@/data/content/adventure'
+import { safeVideoUrl, updateAdventure } from '@/store/adventureStore'
+import { isTravelResourceUnlocked } from '@/features/backpack/lib/travelerResources'
+import type { AdventureState } from '@/types/adventure'
+import type { JourneyState } from '@/types/activities'
+import { getDiscovery, updateDiscovery } from '@/store/discoveryStore'
+import type { ResearchPublication } from '@/types/discovery'
+import { getAllies, legendIds } from '@/data/content/research'
 export type InterviewVideo = AdventureState['videos'][number]
 export function researchUnlocked(adventure: AdventureState, journey: JourneyState) {
   return isTravelResourceUnlocked(

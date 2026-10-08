@@ -1,8 +1,8 @@
 import { createContext, useContext } from 'react'
-import { isCityUnlocked } from '@/features/occupation-exploration/lib/AdventureStore'
-import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
-import type { StudentUiState } from '../ui-state'
-import { isDiscoveryView, type StudentView } from '../views'
+import { isCityUnlocked } from '@/store/adventureStore'
+import type { AdventureState } from '@/types/adventure'
+import type { StudentUiState } from '@/store/studentUiStore'
+import { isDiscoveryView, type StudentView } from '@/lib/studentViews'
 import { getTodayCheckIn, localDateKey } from './checkIn'
 
 export type AutomaticOverlay =

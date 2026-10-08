@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { activityById, finalActivity } from '@/features/missions/content'
+import { activityById, finalActivity } from '@/data/activities/content'
 import {
   construirInteraccionMara,
   inicioInteraccionMara,
   actividadServidor,
-} from '@/features/servidor/adaptadores'
+} from '@/lib/servidor/adaptadores'
 import {
   cargarResultadoRiasec,
   consultarItems,
@@ -12,9 +12,9 @@ import {
   mensajeErrorServidor,
   obtenerEstadoServidor,
   useEstadoServidor,
-} from '@/features/servidor/estadoServidor'
-import type { Actividad } from '@/features/missions/model'
-import type { ItemPublico, RespuestaPublica } from '@/features/servidor/tipos'
+} from '@/store/servidor/estadoServidor'
+import type { Actividad } from '@/types/activities'
+import type { ItemPublico, RespuestaPublica } from '@/types/servidor'
 import { StudentActivityPlayer } from './StudentActivityPlayer'
 
 export type InstrumentoServidor = {

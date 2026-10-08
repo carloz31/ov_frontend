@@ -1,8 +1,8 @@
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router'
-import type { OccupationExplorationContext } from './OccupationExplorationContext'
-import { updateAdventure, useAdventure } from './lib/AdventureStore'
-import { useExploration, setDecisionSheets, toggleCareerInterest, toggleInstitutionInterest, toggleOccupationInterest } from '@/features/student-experience/discovery/explorationStore'
+import type { OccupationExplorationContext } from '@/context/occupationExplorationContext'
+import { updateAdventure, useAdventure } from '@/store/adventureStore'
+import { useExploration, setDecisionSheets, toggleCareerInterest, toggleInstitutionInterest, toggleOccupationInterest } from '@/store/explorationStore'
 
 function OccupationExplorationModule() {
   const location = useLocation()

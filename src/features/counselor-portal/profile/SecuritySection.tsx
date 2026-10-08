@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
 import { displayDate, securityLabel, signalSummary } from './selectors'
 import { EmptyMessage, Panel, TrendValue } from './ProfileShared'
-import type { StudentProfile } from './types'
+import type { StudentProfile } from '@/types/studentProfile'
 
 function SignalTooltip({
   active,

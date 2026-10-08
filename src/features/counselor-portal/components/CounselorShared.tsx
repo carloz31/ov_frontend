@@ -12,7 +12,7 @@ import {
   YAxis,
 } from 'recharts'
 import { Badge } from '@/components/ui/Badge'
-import { cn } from '@/lib/Utils'
+import { cn } from '@/lib/utils'
 import { alertLabels } from '../CounselorPortalSelectors'
 import type { AlertCode, TrafficLight } from '../types/CounselorPortalTypes'
 

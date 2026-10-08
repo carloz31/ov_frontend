@@ -1,4 +1,4 @@
-import type { ProfileSection } from './types'
+import type { ProfileSection } from '@/types/studentProfile'
 
 export const studentsPath = '/counselor/students'
 export const prioritiesPath = '/counselor/priorities'

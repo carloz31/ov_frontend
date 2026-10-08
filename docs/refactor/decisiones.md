@@ -43,3 +43,21 @@ La solicitud autoriza ejecutar R0 y R1 en este mismo turno. Tras registrar y con
 - No se modifica `ov_backend`; no corresponde ejecutar sus pruebas.
 - Infracciones de estructura pendientes de medir en R3b; no se ejecuta todavía `check:estructura` ni se generan excepciones.
 - Pendiente: R3a (capas compartidas) y fases posteriores. El trabajo se detiene al terminar R2.
+
+## R3a · Capas compartidas (8 de octubre de 2026)
+
+- Se mueven con `git mv` 87 archivos de `src/` a los destinos del mapa para configuración, tipos, datos, estado, lógica, hooks, contexto, componentes compartidos, cliente HTTP y estilos. Los cambios de mayúsculas (`Drawer`, `Select`, `utils`, `theme`) se realizan en dos pasos en Windows.
+- Para cumplir la condición explícita de cierre «ningún import apunta a missions u occupation-exploration/lib», se incluyen en esta subfase los siete módulos restantes de esas carpetas: `JourneyContent`, `AdventureAchievements`, `TravelerResources`, `LumiSuggestions`, `ForestFireCaseLogic`, `ForestFireCaseOutcome` y `ForestFireSceneGeometry`. Sus destinos son los del mapa; R3b mueve el resto.
+- Se trasladan los tipos de §6.3, con sus tipos dependientes, a `types/activities.ts`, `types/discovery.ts` y `types/profile.ts`. Los módulos de origen los importan y conservan sus exports de tipos. `lib/servidor/adaptadores.ts` solo importa tipos de `types/`.
+- Se conserva una sola declaración de `interviewDetails` en `data/content/research.ts`; el módulo de la orientadora la importa y conserva su export, junto con `reactionOptions`. Se comprobó que ambas declaraciones originales eran idénticas.
+- Se actualizan `components.json` y el import de `styles/theme.css` en `index.css`. No se modifican reglas CSS, contenido JSON, marcado, textos, claves de almacenamiento ni operaciones HTTP.
+- Adaptación A1: se actualizan rutas, imports sustituidos y patrones de imports. Los ayudantes `file`, `caseFile`, la base del piloto y los argumentos de `immersivePlayerHarness` pasan a rutas explícitas, sin resolución de carpetas.
+- Adaptación A2: los cargadores de `adventure-state.test.mjs` y `mission-store.test.mjs` resuelven `@/` como el cargador de `adventure-rendering`.
+- Adaptación A5: `servidor-ayudas.mjs` y `servidor-mara-ayudas.mjs` se mueven a `tests/soporte/`, con sus imports actualizados.
+- Archivos de pruebas adaptados (solo A1, A2 y A5): `adventure-rendering.test.mjs`, `adventure-state.test.mjs`, `deployment-assets.test.mjs`, `forest-fire-case.test.mjs`, `mission-logic.test.mjs`, `mission-store.test.mjs`, `parent-missions.test.mjs`, `servidor-adaptadores.test.mjs`, `servidor-avisos.test.mjs`, `servidor-flujo.test.mjs`, `servidor-local.test.mjs`, `servidor-logros.test.mjs`, `servidor-mara.test.mjs`, `servidor-resultados.test.mjs`, ambos ayudantes de `soporte/`, `staff-palette.test.mjs`, `student-profile.test.mjs`, `student-progress-challenges.test.mjs` y `student-reflection-pilot.test.mjs`. No se cambian aserciones de comportamiento.
+- `npm run build` y `npm run lint`: pasan, sin nuevos avisos de lint. Se conserva el aviso de tamaño del bundle.
+- `npm test`: antes **352/336/16**; después **352/337/15** (total/correctas/fallas). Según la excepción de §9.1, se registra que «real access conditions lock successive missions and expose the city gate without changing review mode» empieza a pasar: su falla anterior era `Cannot find module '../challenges/data'`, y al mover ese dato a la capa compartida su import pasa a `@/data/content/challenges`. No se cambia la prueba para corregir su comportamiento. Las otras 15 fallas conservan nombre y motivo; no hay nuevas fallas.
+- Auditoría de los 305 archivos originales de `src/`: el código ejecutable y JSX, excluyendo imports y exports de módulos, coinciden; CSS y JSON coinciden. La única excepción de código es la extracción explícita de la copia duplicada de `interviewDetails`, comprobada por separado.
+- Registros en `logs/refactor-r3a-*.log` y `logs/r3a-auditoria.json`, ignorados por Git. No quedan imports a las carpetas indicadas en la condición de R3a.
+- No se modifica `ov_backend`; no corresponde ejecutar sus pruebas. Las infracciones de estructura se medirán en R3b.
+- La solicitud «ejecuta R3» abarca R3a y R3b: se confirma R3a y se continúa con R3b, deteniéndose antes de R4.

@@ -1,6 +1,6 @@
-import { activities, studentProfiles } from '../profile/data'
+import { activities, studentProfiles } from '@/data/demo/studentProfiles'
 import { priorityProgress, profileAlerts } from '../profile/selectors'
-import type { ProfileActivity, ProfileAlertCode, QuestionnaireDefinition } from '../profile/types'
+import type { ProfileActivity, ProfileAlertCode, QuestionnaireDefinition } from '@/types/studentProfile'
 import { configuredCatalog, initialPrioritySettings } from '../priorities/PrioritySettings'
 
 export type AlertCode = ProfileAlertCode

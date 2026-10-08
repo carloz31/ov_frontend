@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
-import type { Actividad, Entregable, NodoConsigna } from '@/features/missions/model'
-import { applyCompletion, latestSubmission, studentId, validateSubmission } from '@/features/missions/logic'
-import { journeyEnServidor, updateJourney } from '@/features/missions/store'
+import type { Actividad, Entregable, NodoConsigna } from '@/types/activities'
+import { applyCompletion, latestSubmission, studentId, validateSubmission } from '@/lib/activities/logic'
+import { journeyEnServidor, updateJourney } from '@/store/journeyStore'
 import type { FollowUpTurn } from './followUpService'
 import { answeredTurns, templateCondenser, type ResponseCondenser } from './responseCondenser'
 

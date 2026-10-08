@@ -1,6 +1,6 @@
 import { Link } from 'react-router'
-import { modoApi } from '@/features/servidor/config'
-import { useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { modoApi } from '@/config/env'
+import { useEstadoServidor } from '@/store/servidor/estadoServidor'
 import {
   Backpack,
   Building2,
@@ -20,8 +20,8 @@ import {
 import {
   canAccessFamilyConversations,
   getTravelerLevel,
-} from '@/features/occupation-exploration/lib/AdventureStore'
-import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
+} from '@/store/adventureStore'
+import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
 import { getReturnGreeting, type StudentMapPoint } from './mapPoints'
 import { getListedActivities, studentActivitiesPath } from './navigation'

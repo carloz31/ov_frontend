@@ -1,14 +1,10 @@
-import { useReturnFocus } from '../discovery/useReturnFocus'
+import { useReturnFocus } from '@/hooks/useReturnFocus'
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
-import { safeVideoUrl } from '@/features/occupation-exploration/lib/AdventureStore'
-import {
-  getDiscovery,
-  updateDiscovery,
-  type ResearchInProgress,
-  type ResearchPublication,
-} from '../discovery/discoveryStore'
-import { getAllies } from './researchData'
+import { safeVideoUrl } from '@/store/adventureStore'
+import { getDiscovery, updateDiscovery } from '@/store/discoveryStore'
+import type { ResearchInProgress, ResearchPublication } from '@/types/discovery'
+import { getAllies } from '@/data/content/research'
 import { isPublicationValid, publishResearch } from './research'
 export function PublishDialog({ research, onClose }: { research: ResearchInProgress; onClose: () => void }) {
   const focus = useReturnFocus()

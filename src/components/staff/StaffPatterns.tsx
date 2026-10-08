@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { TriangleAlert, type LucideIcon } from 'lucide-react'
 import { Card } from '@/components/ui/Card'
 import { Progress } from '@/components/ui/Progress'
-import { cn } from '@/lib/Utils'
+import { cn } from '@/lib/utils'
 
 export function StaffEntityHeader({
   title,

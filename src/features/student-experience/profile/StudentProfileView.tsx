@@ -1,30 +1,30 @@
 import { Link, useSearchParams } from 'react-router'
-import { modoApi } from '@/features/servidor/config'
-import { useEstadoServidor } from '@/features/servidor/estadoServidor'
-import { progresoCamino, paginaInteresesServidor } from '@/features/servidor/adaptadores'
+import { modoApi } from '@/config/env'
+import { useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { progresoCamino, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
 import { Eye, Heart, Sparkles } from 'lucide-react'
-import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
+import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
 import {
   getTravelerLevel,
   canAccessCity,
   useAdventure,
-} from '@/features/occupation-exploration/lib/AdventureStore'
-import { useJourney } from '@/features/missions/store'
+} from '@/store/adventureStore'
+import { useJourney } from '@/store/journeyStore'
 import { appPaths } from '@/routes/paths'
 import { getZoneProgress } from '../map/mapPoints'
 import { discoveryPaths } from '../paths'
-import { useDiscovery } from '../discovery/discoveryStore'
+import { useDiscovery } from '@/store/discoveryStore'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
-import { Parchment } from '../discovery/Parchment'
-import { Seal } from '../discovery/Seal'
-import { TrailBar } from '../discovery/TrailBar'
-import { CollectionSlot } from '../discovery/CollectionSlot'
+import { Parchment } from '@/components/student/Parchment'
+import { Seal } from '@/components/student/Seal'
+import { TrailBar } from '@/components/student/TrailBar'
+import { CollectionSlot } from '@/components/student/CollectionSlot'
 import { StudentPassportView } from './StudentPassportView'
 import { achievementIcons, getProfileBadges, getStudentAchievementGroups } from './passport'
 import { getHelenaPages } from './helenaPages'
 import { getOrderedPlans, getPlanCompleteness } from '../plans/plans'
-import { insigniasServidor } from '@/features/servidor/adaptadores'
-import { getAchievementPresentations } from '@/features/occupation-exploration/lib/AdventureAchievements'
+import { insigniasServidor } from '@/lib/servidor/adaptadores'
+import { getAchievementPresentations } from '@/features/discovery/lib/achievements'
 
 export function ProfileRoute() {
   const [params] = useSearchParams()

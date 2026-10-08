@@ -1,6 +1,6 @@
 import { ArrowRight, BookOpen } from 'lucide-react'
-import type { NodoDiapositiva } from '@/features/missions/model'
-import { CharacterAvatar } from '../CharacterAvatar'
+import type { NodoDiapositiva } from '@/types/activities'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
 import { ContentBlocks } from '../ContentBlocks'
 
 export function SlideNode({

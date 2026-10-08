@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
-import { modoApi } from '@/features/servidor/config'
+import { modoApi } from '@/config/env'
 import { appPaths } from '@/routes/paths'
 import {
   consultarProgreso,
   mensajeErrorServidor,
   useEstadoServidor,
-} from '@/features/servidor/estadoServidor'
-import { textoRequisito } from '@/features/servidor/adaptadores'
+} from '@/store/servidor/estadoServidor'
+import { textoRequisito } from '@/lib/servidor/adaptadores'
 import {
   Backpack,
   BookOpen,
@@ -30,28 +30,28 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { BackpackViewerFrame as DialogContent } from '../backpack/BackpackViewerFrame'
-import { ResourceText } from '@/features/missions/JourneyContent'
-import { updateJourney, useJourney } from '@/features/missions/store'
-import { activities } from '@/features/missions/content'
-import { updateAdventure, useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { ResourceText } from '@/features/activities/components/JourneyContent'
+import { updateJourney, useJourney } from '@/store/journeyStore'
+import { activities } from '@/data/activities/content'
+import { updateAdventure, useAdventure } from '@/store/adventureStore'
 import {
   isTravelResourceUnlocked,
   resourceFileUrl,
   youtubeEmbedUrl,
   type TravelResource,
-} from '@/features/occupation-exploration/lib/TravelerResources'
+} from '@/features/backpack/lib/travelerResources'
 import {
   getStudentTravelResources as getTravelResources,
   studentResourceRequirement as resourceRequirement,
 } from '../backpack/challengeResources'
-import { cityCases } from '@/features/occupation-exploration/data/AdventureData'
+import { cityCases } from '@/data/content/adventure'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
-import { Parchment } from '../discovery/Parchment'
-import { TrailBar } from '../discovery/TrailBar'
-import { FavoriteButton } from '../discovery/FavoriteButton'
+import { Parchment } from '@/components/student/Parchment'
+import { TrailBar } from '@/components/student/TrailBar'
+import { FavoriteButton } from '@/components/student/FavoriteButton'
 import { getCiudadPoints } from '../map/mapPoints'
-import '@/features/missions/journey.css'
-import '@/features/occupation-exploration/resources.css'
+import '@/styles/student/journey.css'
+import '@/styles/student/resources.css'
 import '../backpack/backpack.css'
 
 type KindFilter = 'all' | 'sheet' | 'testimonial'

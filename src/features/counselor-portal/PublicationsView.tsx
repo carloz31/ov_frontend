@@ -1,7 +1,7 @@
 import { Eye, EyeOff, MoreHorizontal, Star } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
-import { PageHeader } from '@/components/PageHeader'
+import { PageHeader } from '@/components/common/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -12,9 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { useAdventure, updateAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { useAdventure, updateAdventure } from '@/store/adventureStore'
 import { InterviewDetail } from './components/ResourcePreviews'
 import { interviewDetails, reactionOptions } from './data/InterviewDetails'
 import { useCounselorPortal } from './CounselorPortalContext'

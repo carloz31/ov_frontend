@@ -15,7 +15,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { useNavigate } from 'react-router'
-import { familyDetailGuide } from '../guide-texts'
+import { familyDetailGuide } from '@/data/content/guideTexts'
 import { useStudentOverlays } from '../overlays/overlay-context'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -26,18 +26,18 @@ import {
   prototypeAllUnlocked,
   updateAdventure,
   useAdventure,
-} from '@/features/occupation-exploration/lib/AdventureStore'
-import type { FamilyConversation } from '@/features/occupation-exploration/types/AdventureTypes'
+} from '@/store/adventureStore'
+import type { FamilyConversation } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
-import { cn } from '@/lib/Utils'
-import '@/features/occupation-exploration/adventure.css'
+import { cn } from '@/lib/utils'
+import '@/styles/student/adventure.css'
 import {
   familyConversationDemoData,
   familyConversationTopics,
   getFamilyConversationDemo,
   getFamilyGiftLetter,
   type FamilyConversationTopic,
-} from '@/features/family-conversations/FamilyConversationData'
+} from '@/data/content/familyConversations'
 
 type ConversationTab = 'answer' | 'waiting' | 'ready' | 'completed'
 

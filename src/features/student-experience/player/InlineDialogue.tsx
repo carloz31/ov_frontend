@@ -1,4 +1,4 @@
-import { CharacterAvatar } from './CharacterAvatar'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
 
 export function InlineDialogue({
   speakerId,

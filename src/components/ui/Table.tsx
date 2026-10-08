@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { cn } from '@/lib/Utils'
+import { cn } from '@/lib/utils'
 
 function Table({ className, ...props }: React.ComponentProps<'table'>) {
   return <div className="relative w-full overflow-x-auto"><table className={cn('w-full caption-bottom text-sm [&_th:first-child]:pl-6 [&_td:first-child]:pl-6 [&_th:last-child]:pr-8 [&_td:last-child]:pr-8', className)} {...props} /></div>

@@ -31,18 +31,18 @@ import {
   parentRoute,
   selectedFamilyChild,
 } from './selectors'
-import { activities, questionnaires, studentProfiles } from '@/features/counselor-portal/profile/data'
+import { activities, questionnaires, studentProfiles } from '@/data/demo/studentProfiles'
 import { displayDate, generalProgress } from '@/features/counselor-portal/profile/selectors'
 import { QuestionnaireBars } from '@/features/counselor-portal/profile/Questionnaires'
 import { usePrioritySettings } from '@/features/counselor-portal/priorities/usePrioritySettings'
 import {
   canAccessFamilyConversations,
   useAdventure,
-} from '@/features/occupation-exploration/lib/AdventureStore'
+} from '@/store/adventureStore'
 import {
   familyConversationTopics,
   familyConversationDemoData,
-} from '@/features/family-conversations/FamilyConversationData'
+} from '@/data/content/familyConversations'
 
 function ParentOverviewView() {
   const mainRef = useRef<HTMLElement>(null)

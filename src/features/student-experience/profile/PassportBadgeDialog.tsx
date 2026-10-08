@@ -1,26 +1,21 @@
 import { Link } from 'react-router'
 import { useEffect, useState } from 'react'
-import { modoApi } from '@/features/servidor/config'
+import { modoApi } from '@/config/env'
 import {
   consultarProgreso,
   mensajeErrorServidor,
   useEstadoServidor,
-} from '@/features/servidor/estadoServidor'
-import { insigniasServidor, textoRequisitoInsignia } from '@/features/servidor/adaptadores'
-import { getAchievementPresentations } from '@/features/occupation-exploration/lib/AdventureAchievements'
+} from '@/store/servidor/estadoServidor'
+import { insigniasServidor, textoRequisitoInsignia } from '@/lib/servidor/adaptadores'
+import { getAchievementPresentations } from '@/features/discovery/lib/achievements'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { Eye, LockKeyhole } from 'lucide-react'
-import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
-import { useJourney } from '@/features/missions/store'
-import { updateDiscovery, useDiscovery } from '../discovery/discoveryStore'
-import { useReturnFocus } from '../discovery/useReturnFocus'
-import {
-  achievementIcons,
-  badgeDestinations,
-  getProfileBadges,
-  toggleProfileBadge,
-  type PassportBadge,
-} from './passport'
+import { useAdventure } from '@/store/adventureStore'
+import { useJourney } from '@/store/journeyStore'
+import { updateDiscovery, useDiscovery } from '@/store/discoveryStore'
+import { useReturnFocus } from '@/hooks/useReturnFocus'
+import { achievementIcons, badgeDestinations, getProfileBadges, toggleProfileBadge } from './passport'
+import type { PassportBadge } from '@/types/profile'
 
 export function PassportBadgeDialog({
   badge,

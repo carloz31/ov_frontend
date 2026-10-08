@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import { useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/estadoServidor'
 import { CheckCheck, Compass, Footprints, MapPin } from 'lucide-react'
 import { Link } from 'react-router'
-import { useJourney } from '@/features/missions/store'
-import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { useJourney } from '@/store/journeyStore'
+import { useAdventure } from '@/store/adventureStore'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
-import { Parchment } from '../discovery/Parchment'
+import { Parchment } from '@/components/student/Parchment'
 import { getCaminoPoints, getCiudadPoints, getPointDetails } from '../map/mapPoints'
 import { getListedActivities, getPointMapHref } from '../map/navigation'
-import './history.css'
-import { useReflections } from '../reflection/store'
+import '@/styles/student/history.css'
+import { useReflections } from '@/store/reflectionStore'
 
 export function StudentActivitiesView() {
   useEstadoServidor()

@@ -1,6 +1,6 @@
 import { Check, Trash2, ArrowUp, ArrowDown } from 'lucide-react'
-import type { DecisionSheet } from '@/features/occupation-exploration/types/StudentDecisionTypes'
-import { TrailBar } from '../discovery/TrailBar'
+import type { DecisionSheet } from '@/types/decisions'
+import { TrailBar } from '@/components/student/TrailBar'
 import { getPlanCompleteness, getPlanSections, planSections } from './plans'
 export function PlanCard({
   sheet,

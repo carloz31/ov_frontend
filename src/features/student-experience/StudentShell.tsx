@@ -1,26 +1,26 @@
 import { useEffect } from 'react'
-import { modoApi } from '@/features/servidor/config'
-import { ingresar } from '@/features/servidor/acciones'
-import { mensajeErrorServidor, refrescar, useEstadoServidor } from '@/features/servidor/estadoServidor'
+import { modoApi } from '@/config/env'
+import { ingresar } from '@/store/servidor/operaciones'
+import { mensajeErrorServidor, refrescar, useEstadoServidor } from '@/store/servidor/estadoServidor'
 import { Outlet, useLocation } from 'react-router'
-import { useJourney } from '@/features/missions/store'
-import { useOccupationExplorationContext } from '@/features/occupation-exploration/OccupationExplorationContext'
+import { useJourney } from '@/store/journeyStore'
+import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
 import {
   completeMission,
   useAdventure,
   useAdventureStorageError,
-} from '@/features/occupation-exploration/lib/AdventureStore'
-import { updateDiscovery } from './discovery/discoveryStore'
+} from '@/store/adventureStore'
+import { updateDiscovery } from '@/store/discoveryStore'
 import { recordBadgeFirstSeenAt } from './profile/passport'
 import { getMissionsToSync } from './map/mapPoints'
 import { StudentModuleLayout } from './modules/StudentModuleLayout'
 import { OverlayQueue } from './overlays/OverlayQueue'
 import { seedStudentUnlocks } from './overlays/unlocks'
-import { updateStudentUi } from './ui-state'
-import { getStudentView } from './views'
-import '@/features/occupation-exploration/adventure.css'
-import './student-experience.css'
-import './reflection/reflection.css'
+import { updateStudentUi } from '@/store/studentUiStore'
+import { getStudentView } from '@/lib/studentViews'
+import '@/styles/student/adventure.css'
+import '@/styles/student/student-experience.css'
+import '@/styles/student/reflection.css'
 
 export function StudentShell() {
   const location = useLocation()

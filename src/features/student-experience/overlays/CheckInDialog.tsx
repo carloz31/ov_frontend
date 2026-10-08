@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
-import type { ReadinessCheckIn } from '@/features/occupation-exploration/types/AdventureTypes'
-import { CharacterAvatar } from '../player/CharacterAvatar'
+import type { ReadinessCheckIn } from '@/types/adventure'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
 
 export function CheckInDialog({
   open,

@@ -2,9 +2,9 @@ import {
   getTravelResources,
   resourceRequirement,
   type TravelResource,
-} from '@/features/occupation-exploration/lib/TravelerResources'
-import { modoApi } from '@/features/servidor/config'
-import { challenges, challengeRewards } from '../challenges/data'
+} from '@/features/backpack/lib/travelerResources'
+import { modoApi } from '@/config/env'
+import { challenges, challengeRewards } from '@/data/content/challenges'
 
 export function getStudentTravelResources(): TravelResource[] {
   if (modoApi) return getTravelResources()

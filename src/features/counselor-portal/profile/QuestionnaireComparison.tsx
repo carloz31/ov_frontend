@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/Table'
 import { ChangeLabel, EmptyMessage } from './ProfileShared'
 import { changes, levelLabel } from './selectors'
-import type { DimensionValue, QuestionnaireDefinition, QuestionnaireResult } from './types'
+import type { DimensionValue, QuestionnaireDefinition, QuestionnaireResult } from '@/types/studentProfile'
 
 export function QuestionnaireComparison({
   definition,

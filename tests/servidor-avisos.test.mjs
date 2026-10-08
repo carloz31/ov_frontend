@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { fixtureServidor, jsonServidor, esperar, elementos } from './servidor-ayudas.mjs'
+import { fixtureServidor, jsonServidor, esperar, elementos } from './soporte/servidor-ayudas.mjs'
 
 async function iniciar() {
   const app = fixtureServidor(),
@@ -17,9 +17,9 @@ async function iniciar() {
     throw Error(r.url)
   }
   app.fetch(servidor)
-  app.load('src/features/servidor/cuenta.ts').seleccionarCuenta([estado.cuenta])
-  const store = app.load('src/features/servidor/estadoServidor.ts'),
-    acciones = app.load('src/features/servidor/acciones.ts')
+  app.load('src/store/servidor/cuenta.ts').seleccionarCuenta([estado.cuenta])
+  const store = app.load('src/store/servidor/estadoServidor.ts'),
+    acciones = app.load('src/store/servidor/operaciones.ts')
   await store.refrescar()
   return {
     app,
@@ -37,7 +37,7 @@ function mostrarTodo(f) {
 
 test('mapea solo los cuatro tipos del servidor y deduplica por regla, tipo y código', async () => {
   const f = await iniciar(),
-    adaptadores = f.app.load('src/features/servidor/adaptadores.ts')
+    adaptadores = f.app.load('src/lib/servidor/adaptadores.ts')
   const noVistos = jsonServidor('desbloqueos-no-vistos')
   const avisos = adaptadores.avisosServidor([...noVistos, ...noVistos])
   assert.ok(avisos.some((a) => a.kind === 'ciudad'))
@@ -171,7 +171,7 @@ test('el marcado tardío de la cuenta anterior no deja recibos ni borra el nuevo
   f.store.limpiarEstadoServidor()
   // DATO DE PRUEBA: cambio de cuenta durante el POST en curso.
   f.app
-    .load('src/features/servidor/cuenta.ts')
+    .load('src/store/servidor/cuenta.ts')
     .seleccionarCuenta([{ codigo: 'est-luis', nombre: 'Luis', rol: 'ESTUDIANTE' }])
   resolver({ body: { marcados: 12 } })
   assert.equal((await marcado).tipo, 'http')
@@ -182,7 +182,7 @@ test('el marcado tardío de la cuenta anterior no deja recibos ni borra el nuevo
 
 test('cola automática solo en mapas, pausada por actividad y guía; la campana solicita la misma cola', async () => {
   const f = await iniciar()
-  const ui = f.app.load('src/features/student-experience/ui-state.ts')
+  const ui = f.app.load('src/store/studentUiStore.ts')
   ui.updateStudentUi((s) => ({
     ...s,
     introsSeen: { ...s.introsSeen, missions: true, central: true },
@@ -231,7 +231,7 @@ test('cola automática solo en mapas, pausada por actividad y guía; la campana 
 
 test('un overlay pausa también el cierre del lote y solo se marca después de cerrarlo', async () => {
   const f = await iniciar()
-  const ui = f.app.load('src/features/student-experience/ui-state.ts')
+  const ui = f.app.load('src/store/studentUiStore.ts')
   ui.updateStudentUi((s) => ({
     ...s,
     introsSeen: { ...s.introsSeen, missions: true },

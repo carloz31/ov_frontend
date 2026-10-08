@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { Link } from 'react-router'
 import { X } from 'lucide-react'
-import type { AvisoServidor } from '@/features/servidor/adaptadores'
-import { CharacterAvatar } from '../player/CharacterAvatar'
+import type { AvisoServidor } from '@/lib/servidor/adaptadores'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
 
 export function UnlockToast({ aviso, onDismiss }: { aviso: AvisoServidor; onDismiss: () => void }) {
   const dismiss = useRef(onDismiss)

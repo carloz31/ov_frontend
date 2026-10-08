@@ -1,6 +1,6 @@
-import { criteria } from '../../reflection/config'
+import { criteria } from '@/data/activities/reflectionConfig'
 import { bounded, getReflectionProvider } from '../../reflection/provider'
-import { studentId } from '@/features/missions/logic'
+import { studentId } from '@/lib/activities/logic'
 
 export type FollowUpTurn = {
   orden: 1 | 2

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { CharacterAvatar } from '../player/CharacterAvatar'
-import { updateStudentUi, useStudentUi } from '../ui-state'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
+import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
 import type { StudentZone } from './mapPoints'
 
 export function ZoneTransition({ zone }: { zone: StudentZone }) {

@@ -11,17 +11,17 @@ import {
   X,
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogDescription, DialogTitle, DialogTrigger } from '@/components/ui/Dialog'
-import { forestFirePhases, forestFireProfessionals } from './data/ForestFireCaseData'
-import { professionalTestimonials } from './data/OccupationExplorationData'
+import { forestFirePhases, forestFireProfessionals } from '@/data/content/forestFireCase'
+import { professionalTestimonials } from '@/data/catalog/occupations'
 import { ForestFireCaseHeader } from './components/ForestFireCaseHeader'
 import { ListenScreen } from './components/ForestFireScene'
 import { ForestFireProfessionalPanel, ProfessionalDirectory } from './components/ForestFireProfessionalPanel'
-import { LumiMedallion } from '@/features/student-experience/player/LumiMedallion'
+import { LumiMedallion } from '@/components/student/LumiMedallion'
 import { getOccupation } from '@/features/student-experience/catalog/catalogSelectors'
 import { discoveryPaths } from '@/features/student-experience/paths'
-import { finishForestFireAttempt } from './lib/ForestFireCaseOutcome'
-import { useAdventure, useAdventureStorageError } from './lib/AdventureStore'
-import { useExplorationError } from '@/features/student-experience/discovery/explorationStore'
+import { finishForestFireAttempt } from '@/features/cases/lib/forestFireCaseOutcome'
+import { useAdventure, useAdventureStorageError } from '@/store/adventureStore'
+import { useExplorationError } from '@/store/explorationStore'
 import {
   FOREST_FIRE_BUDGET_LIMIT,
   FOREST_FIRE_MAX_SATISFACTION,
@@ -34,8 +34,8 @@ import {
   getProblemSatisfaction,
   getTotalSatisfaction,
   toggleAssignment,
-} from './lib/ForestFireCaseLogic'
-import type { ForestFireAssignments, ForestFirePhase } from './types/ForestFireCaseTypes'
+} from '@/features/cases/lib/forestFireCaseLogic'
+import type { ForestFireAssignments, ForestFirePhase } from '@/types/cases'
 import { ExtraProfessionalQuestionScreen, ProfessionalWordCloudScreen } from './ForestFireExtraScreens'
 import './forest-fire.css'
 import './forest-fire-workspace.css'

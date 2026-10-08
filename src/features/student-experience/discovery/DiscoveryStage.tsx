@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
 import { CatalogNavigation } from '../catalog/CatalogNavigation'
-import { useDiscoveryError } from './discoveryStore'
-import { useExplorationError } from './explorationStore'
-import './discovery.css'
+import { useDiscoveryError } from '@/store/discoveryStore'
+import { useExplorationError } from '@/store/explorationStore'
+import '@/styles/student/discovery.css'
 
 export function DiscoveryStage({
   ambient,

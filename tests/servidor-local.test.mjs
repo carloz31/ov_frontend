@@ -1,17 +1,17 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { fixtureServidor, elementos, esperar } from './servidor-ayudas.mjs'
+import { fixtureServidor, elementos, esperar } from './soporte/servidor-ayudas.mjs'
 
 test('local mantiene claves, finalización y recomendaciones sin consultar al servidor ni usar adaptadores', async () => {
   const app = fixtureServidor({ api: false })
-  const adaptadores = app.load('src/features/servidor/adaptadores.ts')
+  const adaptadores = app.load('src/lib/servidor/adaptadores.ts')
   for (const key of Object.keys(adaptadores))
     adaptadores[key] = () => {
       throw Error('El modo local usó un adaptador del servidor')
     }
-  const store = app.load('src/features/missions/store.ts'),
-    adventure = app.load('src/features/occupation-exploration/lib/AdventureStore.ts')
-  const activity = app.load('src/features/missions/content.ts').activityById('mission-welcome')
+  const store = app.load('src/store/journeyStore.ts'),
+    adventure = app.load('src/store/adventureStore.ts')
+  const activity = app.load('src/data/activities/content.ts').activityById('mission-welcome')
   // DATO DE PRUEBA: comprobación aprobada del contenido real antes del último diálogo.
   store.updateJourney((s) => ({
     ...s,
@@ -59,14 +59,14 @@ test('local mantiene claves, finalización y recomendaciones sin consultar al se
 })
 test('Mara, resultado, libro y afinidad locales conservan sus fuentes sin ejecutar adaptadores API', () => {
   const app = fixtureServidor({ api: false })
-  const adaptadores = app.load('src/features/servidor/adaptadores.ts')
+  const adaptadores = app.load('src/lib/servidor/adaptadores.ts')
   for (const key of Object.keys(adaptadores))
     adaptadores[key] = () => {
       throw Error('Se usó un adaptador API en local')
     }
-  const content = app.load('src/features/missions/content.ts'),
-    journey = app.load('src/features/missions/store.ts'),
-    d = app.load('src/features/student-experience/discovery/discoveryStore.ts')
+  const content = app.load('src/data/activities/content.ts'),
+    journey = app.load('src/store/journeyStore.ts'),
+    d = app.load('src/store/discoveryStore.ts')
   assert.ok(content.activityById('act-tip-01').nodos.some((n) => n.itemId === 'tip-001'))
   app
     .load('src/features/student-experience/player/nodes/ResultNode.tsx')
@@ -89,13 +89,13 @@ test('Mara, resultado, libro y afinidad locales conservan sus fuentes sin ejecut
 
 test('pasaporte, nivel y novedades locales no ejecutan adaptadores ni consultan el servidor', () => {
   const app = fixtureServidor({ api: false })
-  const adaptadores = app.load('src/features/servidor/adaptadores.ts')
+  const adaptadores = app.load('src/lib/servidor/adaptadores.ts')
   Object.keys(adaptadores).forEach((key) => {
     adaptadores[key] = () => {
       throw Error('Adaptador API en local')
     }
   })
-  const store = app.load('src/features/occupation-exploration/lib/AdventureStore.ts')
+  const store = app.load('src/store/adventureStore.ts')
   const anterior = store.getTravelerLevel(store.useAdventure())
   assert.ok(anterior.description)
   assert.ok(anterior.nextStep)
@@ -103,7 +103,7 @@ test('pasaporte, nivel y novedades locales no ejecutan adaptadores ni consultan 
   app.load('src/features/student-experience/overlays/NoveltiesMenu.tsx').NoveltiesMenu({})
   assert.equal(app.requests.length, 0)
   assert.equal(
-    app.load('src/features/student-experience/discovery/discoveryStore.ts').getDiscovery().profileBadgesApi,
+    app.load('src/store/discoveryStore.ts').getDiscovery().profileBadgesApi,
     undefined,
   )
 })

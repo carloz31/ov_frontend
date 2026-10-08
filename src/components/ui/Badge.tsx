@@ -1,8 +1,8 @@
 import { cva, type VariantProps } from 'class-variance-authority'
 import { Children, isValidElement, type HTMLAttributes } from 'react'
 import { Check, Clock3, TriangleAlert } from 'lucide-react'
-import { useAppTheme } from '@/components/ThemeScope'
-import { cn } from '@/lib/Utils'
+import { useAppTheme } from '@/components/common/ThemeScope'
+import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
   'inline-flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold',

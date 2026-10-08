@@ -1,5 +1,5 @@
 import type { HTMLAttributes } from 'react'
-import { cn } from '@/lib/Utils'
+import { cn } from '@/lib/utils'
 
 function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (

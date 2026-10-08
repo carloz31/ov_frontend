@@ -1,26 +1,9 @@
-import { catalog, tipActivityIds } from '@/features/missions/content'
-import { calculateResult, type JourneyState } from '@/features/missions/logic'
-import type { InstrumentPageId, StudentDiscoveryState } from '../discovery/discoveryStore'
-
-export type HelenaPageState = 'sealed' | 'ready' | 'revealed'
-export type HelenaResult = {
-  source: 'real' | 'demo'
-  areas: { code: string; name: string; score: number; description: string }[]
-}
-export type HelenaPage = {
-  id: InstrumentPageId
-  numeral: 'I' | 'II' | 'III'
-  title: string
-  subtitle: string
-  required: boolean
-  state: HelenaPageState
-  missions: { done: number; total: number }
-  teaser: string
-  activityHref?: string
-  result?: HelenaResult
-  demo: boolean
-  perfilPlano?: boolean
-}
+import type { HelenaPageState, HelenaResult, HelenaPage } from '@/types/profile'
+export type { HelenaPageState, HelenaResult, HelenaPage } from '@/types/profile'
+import { catalog, tipActivityIds } from '@/data/activities/content'
+import { calculateResult } from '@/lib/activities/logic'
+import type { JourneyState } from '@/types/activities'
+import type { InstrumentPageId, StudentDiscoveryState } from '@/types/discovery'
 export function getHelenaPagesApi(intereses: HelenaPage, reveladas: InstrumentPageId[]): HelenaPage[] {
   // Se conservan los ejemplos de los otros instrumentos; sus misiones aún no existen en la API.
   const ejemplos: HelenaPage[] = [

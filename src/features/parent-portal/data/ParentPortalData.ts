@@ -1,9 +1,9 @@
-import { parentActivities } from '@/features/missions/content'
+import { parentActivities } from '@/data/activities/content'
 import type { ParentChild } from '../types/ParentPortalTypes'
 
-import { studentProfiles } from '@/features/counselor-portal/profile/data'
+import { studentProfiles } from '@/data/demo/studentProfiles'
 import { fullName, generalProgress } from '@/features/counselor-portal/profile/selectors'
-import { activities } from '@/features/counselor-portal/profile/data'
+import { activities } from '@/data/demo/studentProfiles'
 
 const familyStudent = studentProfiles.find((student) => student.id === 'ejemplo-07')!
 const conversationChildId = familyStudent.id

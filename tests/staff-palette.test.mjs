@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 test('staff reading colors meet AA contrast on their intended surfaces', () => {
-  const css = readFileSync('src/styles/Theme.css', 'utf8')
+  const css = readFileSync('src/styles/theme.css', 'utf8')
   const theme = css.match(/\.theme-staff \{([\s\S]*?)\}/)[1]
   const tokens = Object.fromEntries(
     [...theme.matchAll(/--([\w-]+):\s*(#[\da-f]{6});/gi)].map(([, key, value]) => [key, value]),

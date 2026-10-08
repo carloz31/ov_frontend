@@ -1,5 +1,5 @@
 import { CircleHelp, Volume2, VolumeX } from 'lucide-react'
-import { updateStudentUi, useStudentUi } from '../ui-state'
+import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
 
 export function MapControls({ onHelp }: { onHelp: () => void }) {
   const ui = useStudentUi()

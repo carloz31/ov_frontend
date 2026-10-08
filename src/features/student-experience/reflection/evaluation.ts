@@ -1,10 +1,10 @@
-import type { Actividad, Entregable, NodoConsigna } from '@/features/missions/model'
-import { latestSubmission, studentId, applyCompletion } from '@/features/missions/logic'
-import { getJourneySnapshot, journeyEnServidor, updateJourney } from '@/features/missions/store'
-import { criteria } from './config'
-import { closeResponse, currentEvaluation, getReflections, updateReflections } from './store'
+import type { Actividad, Entregable, NodoConsigna } from '@/types/activities'
+import { latestSubmission, studentId, applyCompletion } from '@/lib/activities/logic'
+import { getJourneySnapshot, journeyEnServidor, updateJourney } from '@/store/journeyStore'
+import { criteria } from '@/data/activities/reflectionConfig'
+import { closeResponse, currentEvaluation, getReflections, updateReflections } from '@/store/reflectionStore'
 import { bounded, getReflectionProvider, metadata, type EvaluationResult } from './provider'
-import type { Evaluation } from './model'
+import type { Evaluation } from '@/types/reflection'
 
 export function beginResponse(activity: Actividad, node: NodoConsigna, entry: Entregable) {
   if (entry.contenido.tipo !== 'texto') return false

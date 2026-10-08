@@ -19,7 +19,7 @@ import type {
   QuestionnaireApplication,
   QuestionnaireDefinition,
   StudentProfile,
-} from '../profile/types'
+} from '@/types/studentProfile'
 
 export function resolveSalon(requested: string | null, saved: string | null, salons: string[]) {
   const value = requested ?? saved ?? 'all'

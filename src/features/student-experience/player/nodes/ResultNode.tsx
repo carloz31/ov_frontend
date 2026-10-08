@@ -1,17 +1,17 @@
 import { useEffect } from 'react'
 import { Link } from 'react-router'
-import { modoApi } from '@/features/servidor/config'
-import { areasRiasec } from '@/features/servidor/adaptadores'
+import { modoApi } from '@/config/env'
+import { areasRiasec } from '@/lib/servidor/adaptadores'
 import {
   cargarResultadoRiasec,
   mensajeErrorServidor,
   useEstadoServidor,
-} from '@/features/servidor/estadoServidor'
-import { catalog, tipActivityIds } from '@/features/missions/content'
-import { calculateResult, applyCompletion } from '@/features/missions/logic'
-import type { Actividad } from '@/features/missions/model'
-import { updateJourney, useJourney } from '@/features/missions/store'
-import { CharacterAvatar } from '../CharacterAvatar'
+} from '@/store/servidor/estadoServidor'
+import { catalog, tipActivityIds } from '@/data/activities/content'
+import { calculateResult, applyCompletion } from '@/lib/activities/logic'
+import type { Actividad } from '@/types/activities'
+import { updateJourney, useJourney } from '@/store/journeyStore'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
 
 export function ResultNode({ activity, instrumentId }: { activity: Actividad; instrumentId: string }) {
   const state = useJourney()

@@ -1,26 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { modoApi } from '@/features/servidor/config'
-import { completarActividad, responderItems } from '@/features/servidor/acciones'
-import { actividadServidor, textoBloqueo } from '@/features/servidor/adaptadores'
+import { modoApi } from '@/config/env'
+import { completarActividad, responderItems } from '@/store/servidor/operaciones'
+import { actividadServidor, textoBloqueo } from '@/lib/servidor/adaptadores'
 import {
   mensajeErrorServidor,
   obtenerEstadoServidor,
   consultarRespuestas,
   cargarResultadoRiasec,
-} from '@/features/servidor/estadoServidor'
-import type { RespuestaCompletarActividad, RespuestaItemsGuardados } from '@/features/servidor/tipos'
+} from '@/store/servidor/estadoServidor'
+import type { RespuestaCompletarActividad, RespuestaItemsGuardados } from '@/types/servidor'
 import type { InstrumentoServidor } from './MaraInteractionPlayer'
-import { catalog } from '@/features/missions/content'
-import {
-  applyCompletion,
-  isActivityComplete,
-  nextPendingNode,
-  studentId,
-  visibleNodes,
-  type JourneyState,
-} from '@/features/missions/logic'
-import type { Actividad, Nodo, NodoDialogo } from '@/features/missions/model'
-import { getJourneySnapshot, updateJourney, useJourney, useJourneyError } from '@/features/missions/store'
+import { catalog } from '@/data/activities/content'
+import { applyCompletion, isActivityComplete, nextPendingNode, studentId, visibleNodes } from '@/lib/activities/logic'
+import type { JourneyState } from '@/types/activities'
+import type { Actividad, Nodo, NodoDialogo } from '@/types/activities'
+import { getJourneySnapshot, updateJourney, useJourney, useJourneyError } from '@/store/journeyStore'
 import { DialogueBox } from './DialogueBox'
 import { PlayerAmbient } from './PlayerAmbient'
 import { PlayerTopBar } from './PlayerTopBar'

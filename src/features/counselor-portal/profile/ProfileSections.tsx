@@ -10,9 +10,9 @@ import { Card } from '@/components/ui/Card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
 import { Input } from '@/components/ui/Input'
 import { Progress } from '@/components/ui/Progress'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { activities, blocks, profileCatalog } from './data'
+import { activities, blocks, profileCatalog } from '@/data/demo/studentProfiles'
 import { usePriorityCatalog } from '../priorities/usePrioritySettings'
 import {
   affinities,
@@ -40,7 +40,7 @@ import {
   QuestionnaireStatus,
   TrendValue,
 } from './ProfileShared'
-import type { ProfilePlan, StudentProfile } from './types'
+import type { ProfilePlan, StudentProfile } from '@/types/studentProfile'
 
 export function SummarySection({ student, returnTo }: { student: StudentProfile; returnTo: string }) {
   const { questionnaires } = usePriorityCatalog()

@@ -5,9 +5,9 @@ import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { StaffAlertCard, StaffEntityHeader } from '@/components/staff/StaffPatterns'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs'
-import { activities, studentProfiles } from './data'
+import { activities, studentProfiles } from '@/data/demo/studentProfiles'
 import { usePriorityCatalog } from '../priorities/usePrioritySettings'
 import {
   classroomAverage,
@@ -23,7 +23,7 @@ import { EmailContact, ProgressIndicator } from './ProfileShared'
 import { QuestionnairesSection } from './Questionnaires'
 import { OptionsSection, RecordsSection, SummarySection } from './ProfileSections'
 import { SecuritySection } from './SecuritySection'
-import type { ProfileAlertCode, ProfileSection, StudentProfile } from './types'
+import type { ProfileAlertCode, ProfileSection, StudentProfile } from '@/types/studentProfile'
 
 function ProfileAlerts({ student, returnTo }: { student: StudentProfile; returnTo: string }) {
   const [open, setOpen] = useState(false)

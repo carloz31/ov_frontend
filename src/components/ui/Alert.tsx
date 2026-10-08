@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react'
-import { cn } from '@/lib/Utils'
+import { cn } from '@/lib/utils'
 function Alert({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div

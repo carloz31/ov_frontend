@@ -14,7 +14,7 @@ import {
   UsersRound,
 } from 'lucide-react'
 import { useNavigate } from 'react-router'
-import { GuideDialogue } from '@/components/GuideDialogue'
+import { GuideDialogue } from '@/components/common/GuideDialogue'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
@@ -24,11 +24,11 @@ import {
   prototypeAllUnlocked,
   updateAdventure,
   useAdventure,
-} from '@/features/occupation-exploration/lib/AdventureStore'
-import type { FamilyConversation } from '@/features/occupation-exploration/types/AdventureTypes'
+} from '@/store/adventureStore'
+import type { FamilyConversation } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
-import { cn } from '@/lib/Utils'
-import '@/features/occupation-exploration/adventure.css'
+import { cn } from '@/lib/utils'
+import '@/styles/student/adventure.css'
 import {
   familyConversationDemoData,
   familyConversationTopics,
@@ -36,7 +36,7 @@ import {
   getFamilyGiftLetter,
   type ConversationAudience,
   type FamilyConversationTopic,
-} from './FamilyConversationData'
+} from '@/data/content/familyConversations'
 
 type ConversationTab = 'answer' | 'waiting' | 'ready' | 'completed'
 

@@ -1,7 +1,7 @@
-import type { Actividad } from '@/features/missions/model'
+import type { Actividad } from '@/types/activities'
 import type { ParentChild } from './types/ParentPortalTypes'
-import type { FamilyConversation } from '@/features/occupation-exploration/types/AdventureTypes'
-import type { QuestionnaireApplication } from '@/features/counselor-portal/profile/types'
+import type { FamilyConversation } from '@/types/adventure'
+import type { QuestionnaireApplication } from '@/types/studentProfile'
 import {
   shareableQuestionnaireIds,
   type PrioritySettings,

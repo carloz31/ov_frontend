@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { ArrowLeft, ExternalLink, Play, FileText, Lightbulb, Star, Crown, Flag } from 'lucide-react'
-import { safeVideoUrl } from '@/features/occupation-exploration/lib/AdventureStore'
-import { youtubeEmbedUrl } from '@/features/occupation-exploration/lib/TravelerResources'
-import { useDiscovery } from '../discovery/discoveryStore'
-import { Parchment } from '../discovery/Parchment'
-import { TrailBar } from '../discovery/TrailBar'
-import { interviewDetails, LEGEND_REACTIONS_REQUIRED, receivedReactions } from './researchData'
+import { safeVideoUrl } from '@/store/adventureStore'
+import { youtubeEmbedUrl } from '@/features/backpack/lib/travelerResources'
+import { useDiscovery } from '@/store/discoveryStore'
+import { Parchment } from '@/components/student/Parchment'
+import { TrailBar } from '@/components/student/TrailBar'
+import { interviewDetails, LEGEND_REACTIONS_REQUIRED, receivedReactions } from '@/data/content/research'
 import { saveLearned, toggleLiked, type InterviewVideo } from './research'
 export function InterviewDetail({
   video,

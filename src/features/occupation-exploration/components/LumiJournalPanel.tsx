@@ -1,11 +1,11 @@
 import { ArrowRight, Heart, MessageCircle, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
-import { useJourney } from '../../missions/store'
-import { useAdventure } from '../lib/AdventureStore'
-import { getLumiFriendship, lumiFriendshipRules } from '../lib/LumiFriendship'
-import { getLumiSuggestions, type LumiSuggestion } from '../lib/LumiSuggestions'
-import { useLumiNow } from '../lib/useLumiNow'
+import { useJourney } from '@/store/journeyStore'
+import { useAdventure } from '@/store/adventureStore'
+import { getLumiFriendship, lumiFriendshipRules } from '@/lib/lumiFriendship'
+import { getLumiSuggestions, type LumiSuggestion } from '@/features/journal/lib/lumiSuggestions'
+import { useLumiNow } from '@/hooks/useLumiNow'
 
 export function LumiPortrait() {
   return (

@@ -1,32 +1,32 @@
-import type { JourneyState } from '@/features/missions/logic'
-import { modoApi } from '@/features/servidor/config'
-import { obtenerEstadoServidor } from '@/features/servidor/estadoServidor'
+import type { JourneyState } from '@/types/activities'
+import { modoApi } from '@/config/env'
+import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
 import {
   actividadServidor,
   ciudadDisponible,
   estadoPunto,
   interaccionMara,
   progresoCamino,
-} from '@/features/servidor/adaptadores'
-import { activityById } from '@/features/missions/content'
+} from '@/lib/servidor/adaptadores'
+import { activityById } from '@/data/activities/content'
 import { BookOpen, Building2, ClipboardList, Feather, KeyRound, Swords, type LucideIcon } from 'lucide-react'
-import { getForestFireCaseStatus } from '@/features/occupation-exploration/lib/ForestFireCaseLogic'
-import { challenges } from '../challenges/data'
-import { canStartChallenge, challengeRequirements } from '../challenges/logic'
+import { getForestFireCaseStatus } from '@/features/cases/lib/forestFireCaseLogic'
+import { challenges } from '@/data/content/challenges'
+import { canStartChallenge, challengeRequirements } from '@/lib/challenges'
 import {
   cityCases,
   fieldMissions,
   type FieldMission,
-} from '@/features/occupation-exploration/data/AdventureData'
-import { canAccessCity } from '@/features/occupation-exploration/lib/AdventureStore'
-import { lumiDayKey } from '@/features/occupation-exploration/lib/LumiFriendship'
-import { getActivityPrompt } from '@/features/occupation-exploration/data/JournalData'
-import { getExplorationImagePath } from '@/features/occupation-exploration/lib/ExplorationAssets'
-import type { AdventureState } from '@/features/occupation-exploration/types/AdventureTypes'
+} from '@/data/content/adventure'
+import { canAccessCity } from '@/store/adventureStore'
+import { lumiDayKey } from '@/lib/lumiFriendship'
+import { getActivityPrompt } from '@/data/content/journalPrompts'
+import { getExplorationImagePath } from '@/lib/explorationAssets'
+import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
-import { additionalMissions, baseRoute, pendingContent } from '../reflection/config'
-import { getReflections } from '../reflection/store'
-import { isWithinStudentDemo } from '@/features/occupation-exploration/lib/StudentDemoScope'
+import { additionalMissions, baseRoute, pendingContent } from '@/data/activities/reflectionConfig'
+import { getReflections } from '@/store/reflectionStore'
+import { isWithinStudentDemo } from '@/config/studentDemoScope'
 
 export type StudentMapPoint = {
   id: string

@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, BookOpen } from 'lucide-react'
-import { catalog } from '@/features/missions/content'
-import { studentId } from '@/features/missions/logic'
-import type { Actividad, NodoPregunta } from '@/features/missions/model'
-import { updateJourney, useJourney } from '@/features/missions/store'
+import { catalog } from '@/data/activities/content'
+import { studentId } from '@/lib/activities/logic'
+import type { Actividad, NodoPregunta } from '@/types/activities'
+import { updateJourney, useJourney } from '@/store/journeyStore'
 import { DialogueBox } from '../DialogueBox'
 import { CheckOption, type CheckOptionState } from '../CheckOption'
 import { evaluateStudentCheck } from '../checks'
-import { LumiMedallion } from '../LumiMedallion'
+import { LumiMedallion } from '@/components/student/LumiMedallion'
 
 export function QuestionNode({
   activity,

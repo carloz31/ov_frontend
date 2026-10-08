@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { Link } from 'react-router'
-import type { Achievement } from '@/features/occupation-exploration/lib/AdventureAchievements'
+import type { Achievement } from '@/types/profile'
 import { appPaths } from '@/routes/paths'
-import { CharacterAvatar } from '../player/CharacterAvatar'
+import { CharacterAvatar } from '@/components/student/CharacterAvatar'
 
 export function BadgeToast({ badge, onDismiss }: { badge: Achievement; onDismiss: () => void }) {
   const dismiss = useRef(onDismiss)

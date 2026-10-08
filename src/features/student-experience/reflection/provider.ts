@@ -1,7 +1,7 @@
-import type { AiMetadata, Classification, Criterion, Scenario } from './model'
-import { getReflections } from './store'
-import { presentationScenarios } from './config'
-import { studentDemoEnabled } from '@/features/occupation-exploration/lib/StudentDemoScope'
+import type { AiMetadata, Classification, Criterion, Scenario } from '@/types/reflection'
+import { getReflections } from '@/store/reflectionStore'
+import { presentationScenarios } from '@/data/activities/reflectionConfig'
+import { studentDemoEnabled } from '@/config/studentDemoScope'
 
 export type EvaluationInput = {
   estudianteId: string

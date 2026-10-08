@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { ArrowLeft, Compass, LockKeyhole, Signal } from 'lucide-react'
 import { Link } from 'react-router'
-import { useAdventure } from '@/features/occupation-exploration/lib/AdventureStore'
+import { useAdventure } from '@/store/adventureStore'
 import { DiscoveryStage } from '../discovery/DiscoveryStage'
-import { Parchment } from '../discovery/Parchment'
+import { Parchment } from '@/components/student/Parchment'
 import { getTodayCheckIn, useCheckInDay } from '../overlays/checkIn'
 import { useStudentOverlays } from '../overlays/overlay-context'
-import './history.css'
+import '@/styles/student/history.css'
 
 function StudentSignalsView() {
   const state = useAdventure()
