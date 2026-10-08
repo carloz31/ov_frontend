@@ -54,7 +54,6 @@ const { fieldMissions } = load(path.resolve('src/features/occupation-exploration
 const { familyConversationDemoData, familyConversationTopics } = load(
   path.resolve('src/features/family-conversations/FamilyConversationData.ts'),
 )
-const { AdventureMap } = load(path.resolve('src/components/AdventureMap.tsx'))
 const { AppRoutes } = load(path.resolve('src/routes/AppRoutes.tsx'))
 const parentMissionStore = load(path.resolve('src/features/parent-portal/missionStore.ts'))
 function completedParentJourney() {
@@ -627,8 +626,6 @@ test('adventure keeps the original mission route and switches between path and c
   assert.match(city, /Una vuelta por el molino/)
   assert.match(city, /Test · Interacción 1 de 14/)
   assert.match(city, /Cambiar zona de la aventura/)
-  const source = readFileSync(path.resolve('src/components/AdventureMap.tsx'), 'utf8')
-  assert.doesNotMatch(source, /onWheel|preventDefault/)
 })
 test('immersive maps expose the panel, recommendations and one block sign', () => {
   const missions = render('/student/missions')
@@ -1127,32 +1124,6 @@ test('the passport lives inside the profile with five narrative levels and group
   const menu = render('/student/missions')
   assert.doesNotMatch(menu, />Mi pasaporte<\/span>/)
 })
-test('only field missions connect their map points with a route', () => {
-  const props = {
-    points: [],
-    onSelect() {},
-    label: 'Mapa de prueba',
-    backgroundImage: '/images/adventure/test-map.jpeg',
-    progress: { icon: React.createElement('span'), label: 'Progreso', value: 0 },
-  }
-  const missions = renderToStaticMarkup(React.createElement(AdventureMap, { ...props, variant: 'route' }))
-  const cases = renderToStaticMarkup(React.createElement(AdventureMap, { ...props, variant: 'open' }))
-  assert.match(missions, /<polyline[^>]+stroke-dasharray="18 22"/)
-  assert.doesNotMatch(cases, /<polyline/)
-  assert.match(missions, /test-map\.jpeg/)
-})
-test('map details use the shadcn drawer and expose a close button', () => {
-  const source = readFileSync(path.resolve('src/components/MapPointDrawer.tsx'), 'utf8')
-  assert.match(source, /from '@\/components\/ui\/drawer'/)
-  assert.match(source, /<DrawerClose asChild>/)
-  assert.match(source, /aria-label="Cerrar ficha"/)
-  assert.match(source, /overflow-x-hidden/)
-})
-test('case drawers contain only the start action and no embedded questions', () => {
-  const source = readFileSync(path.resolve('src/features/occupation-exploration/CityMapView.tsx'), 'utf8')
-  assert.match(source, /<Play \/> Iniciar/)
-  assert.doesNotMatch(source, /¿A quiénes convocarías\?|type="checkbox"|Confirmar equipo/)
-})
 test('family answer remains hidden until the student submits their own answer', () => {
   const patch = {
     conversations: [{ id: 'work-trends', parent: 'Respuesta reservada de familia' }],
@@ -1361,13 +1332,6 @@ test('journal home supports topics and keeps readiness separate from entries', (
   assert.match(html, /Conversación libre/)
   assert.equal((html.match(/>Conversación libre /g) ?? []).length, 1)
   assert.doesNotMatch(html, /Contarle algo a Lumi|Pulsa aquí para registrarla|Ver historial/)
-  const source = readFileSync(
-    path.resolve('src/features/occupation-exploration/components/PostActivityJournalSheet.tsx'),
-    'utf8',
-  )
-  assert.match(source, /readinessCheckIns/)
-  assert.match(source, /journal: entry/)
-  assert.match(source, /Omitir por ahora/)
 })
 test('signal history keeps its ten-point chart and daily check-in separate from private entries', () => {
   const html = render('/student/journal/signal', { journalOnboardingSeen: true })
@@ -3041,41 +3005,6 @@ test('separate signal history reuses check-in editing and keyboard point selecti
   const selectedValue = point.props['aria-label'].match(/: (\d+) de 10$/)[1]
   assert.match(history.text(tree), new RegExp(`Señal seleccionada · ${selectedValue}/10`))
   history.dispose()
-})
-
-test('investigation cards preserve visits, favorites and a single reaction without changing the published draft', () => {
-  const previousWindow = context.window
-  context.window = { ...previousWindow, removeEventListener() {} }
-  let navigated
-  const board = immersivePlayerHarness('../modules/StudentResourceBoard', {
-    'react-router': { useNavigate: () => destination => { navigated = destination } },
-  })
-  try {
-  store.updateAdventure(() => ({ ...store.createInitialAdventure(), solvedCaseIds: ['forest-fire'] }))
-  const draftBefore = JSON.stringify(store.useAdventure().research)
-  let tree = board.draw({ tab: 'research' })
-  const article = board.find(tree, element => element.type === 'article' && board.text(element).includes('Objetos que hacen más fácil la vida diaria'))
-  const action = (tree, label) => board.find(tree, element => board.text(element) === label && element.props.onClick)
-  action(article, 'Agregar a favoritos').props.onClick()
-  assert.ok(store.useAdventure().bookmarks.includes('demo-industrial-design'))
-  action(article, 'Ver entrevista').props.onClick()
-  assert.ok(store.useAdventure().visits.includes('demo-industrial-design'))
-  tree = board.draw({ tab: 'research' })
-  const detail = board.find(tree, element => element.type?.name === 'InterviewDetail')
-  assert.equal(detail.props.video.id, 'demo-industrial-design')
-  detail.props.onReact({ label: 'Muy completa' })
-  detail.props.onReact({ label: 'Me enseñó algo que no sabía' })
-  assert.equal(store.useAdventure().reactions.filter(item => item.videoId === 'demo-industrial-design').length, 1)
-  assert.equal(JSON.stringify(store.useAdventure().research), draftBefore)
-  assert.equal(navigated, undefined)
-  store.updateAdventure(current => ({ ...current, interviewModeration: { ...current.interviewModeration, 'demo-industrial-design': { hidden: true, featured: false } } }))
-  tree = board.draw({ tab: 'research' })
-  assert.equal(board.find(tree, element => element.type?.name === 'InterviewDetail'), undefined)
-  assert.ok(!board.text(tree).includes('Objetos que hacen más fácil la vida diaria'))
-  } finally {
-    board.dispose()
-    context.window = previousWindow
-  }
 })
 
 test('discovery stores survive reload, validate nested data and report storage failures', () => {

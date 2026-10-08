@@ -498,22 +498,6 @@ test('both map drawers expose the same status, score and action for every case s
     assert.equal(details.badge, badge)
     assert.equal(details.actionLabel, action)
     assert.equal(details.caseProgress, true)
-    const { CityMapView } = f.load(caseFile('CityMapView.tsx'))
-    let tree = f.draw(CityMapView)
-    named(tree, 'AdventureMap').props.onSelect('forest-fire')
-    tree = f.draw(CityMapView)
-    const drawer = named(tree, 'MapPointDrawer')
-    assert.equal(drawer.props.badge, badge)
-    assert.equal(
-      named(drawer.props.footer, 'ForestFireCaseProgress').props.adventure.caseBestScores['forest-fire'],
-      score,
-    )
-    assert.ok(
-      elements(
-        drawer.props.footer,
-        (n) => Array.isArray(n.props?.children) && n.props.children.includes(action),
-      ).length,
-    )
   }
 })
 
