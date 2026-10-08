@@ -325,6 +325,7 @@ const occupationCatalog: Occupation[] = [
   ...additionalOccupationCatalog.filter((o) => !baseOccupationCatalog.some((base) => base.id === o.id)),
 ]
 
+// DATO DE PRUEBA: Perfiles de ocupación ficticios; los reemplazarán perfiles del estudiante.
 const mockOccupationProfiles: OccupationProfile[] = [
   { occupationId: 'sound-technician', discoveryState: 'explored', interested: false },
   { occupationId: 'electrician', discoveryState: 'unused', interested: false },

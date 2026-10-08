@@ -1,111 +1,77 @@
-import { useMapScreen } from '../hooks/useMapScreen'
-import { useCallback, useEffect, useRef, useState } from 'react'
-
+import { useMapInteraction } from '@/features/adventure/hooks/useMapInteraction'
+import type { ComponentProps, ReactNode } from 'react'
 import { ChevronLeft, ChevronRight, PanelLeftOpen } from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
 import type { JourneyState } from '@/types/activities'
-
 import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
 import { StudentUserMenu } from './StudentUserMenu'
 import { StudentBrand } from '@/components/student/StudentBrand'
 import { NoveltiesMenu } from './overlays/NoveltiesMenu'
-import { useStudentOverlays } from '../context/overlayContext'
 import { guideSteps } from '@/data/content/guideTexts'
-import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
+import { updateStudentUi } from '@/store/studentUiStore'
 import { ActivityDrawer } from './ActivityDrawer'
-import { AdventurePanel, CollapsedAdventurePanel } from './AdventurePanel'
+import { AdventurePanel } from './AdventurePanel'
+import { CollapsedAdventurePanel } from '@/features/adventure/components/CollapsedAdventurePanel'
 import { CityLocked } from './CityLocked'
-import { MapCanvas, type MapCanvasHandle } from './MapCanvas'
+import { MapCanvas } from './MapCanvas'
 import { MapControls } from './MapControls'
-import { type PointDetails, type StudentMapPoint, type StudentZone } from '../lib/mapPoints'
+import { type StudentMapPoint, type StudentZone } from '../lib/mapPoints'
 import { ZoneSwitch } from './ZoneSwitch'
 import { ZoneTransition } from './ZoneTransition'
 import { ZoomControls } from './ZoomControls'
-import { initialScale } from '../lib/geometry'
-import { AdditionalReveal } from '@/features/activities/components/reflection/AdditionalReveal'
-
 export function MapScreenLayout({
   zone,
   points,
   adventure,
   journey,
+  renderCaseProgress,
+  renderJournal,
+  renderAdditional,
 }: {
   zone: StudentZone
   points: StudentMapPoint[]
   adventure: AdventureState
   journey: JourneyState
+  renderCaseProgress?: ComponentProps<typeof ActivityDrawer>['renderCaseProgress']
+  renderJournal?: ComponentProps<typeof ActivityDrawer>['renderJournal']
+  renderAdditional?: (props: {
+    onFrame: (ids: string[]) => void
+    onSelect: (id: string) => void
+    enabled: boolean
+  }) => ReactNode
 }) {
-  const ui = useStudentUi()
-  const navigate = useNavigate()
-  const [params, setParams] = useSearchParams()
-  const canvas = useRef<MapCanvasHandle>(null)
-  const frameAdditional = useCallback((ids: string[]) => {
-    canvas.current?.framePoints(ids)
-  }, [])
-  const returnPoint = useRef<string | undefined>(undefined)
-  const mobilePanelButton = useRef<HTMLButtonElement>(null)
-  const selectedId = params.get('punto') ?? undefined
-  const [scale, setScale] = useState(initialScale)
-  const [minimumScale, setMinimumScale] = useState(0)
-  const { openGuide, openCheckIn, announcementBlocked } = useStudentOverlays()
-  const [mobilePanelOpen, setMobilePanelOpen] = useState(false)
-  const [mobile, setMobile] = useState(false)
-  useEffect(() => {
-    const query = window.matchMedia('(max-width: 767px)')
-    const update = () => {
-      setMobile(query.matches)
-      if (!query.matches) setMobilePanelOpen(false)
-    }
-    update()
-    query.addEventListener('change', update)
-    return () => query.removeEventListener('change', update)
-  }, [])
-  const { cityOpen, locked, recommended, progress, selected, details, selectedPointId,
-    accionDisponible, mostrarMisionesAdicionales, reintentarRequisito } = useMapScreen({ zone, points, adventure, journey, selectedId })
-  useEffect(() => {
-    if (selectedPointId) {
-      returnPoint.current = selectedPointId
-      canvas.current?.focusPoint(selectedPointId)
-    }
-  }, [selectedPointId])
-  function closePoint() {
-    setParams(
-      (current) => {
-        const next = new URLSearchParams(current)
-        next.delete('punto')
-        return next
-      },
-      { replace: true },
-    )
-  }
-  function selectPoint(id: string) {
-    setMobilePanelOpen(false)
-    canvas.current?.focusPoint(id)
-    setParams((current) => {
-      const next = new URLSearchParams(current)
-      next.set('punto', id)
-      next.delete('actividad')
-      next.delete('revision')
-      return next
-    })
-  }
-  function action(detail: PointDetails) {
-    if (!accionDisponible(detail)) return
-    if (detail.href) navigate(detail.href)
-    else if (detail.activityId)
-      setParams({ actividad: detail.activityId, ...(detail.revision ? { revision: '1' } : {}) })
-  }
-  function journal(detail: PointDetails) {
-    if (!detail.journal) return
-    const query = new URLSearchParams({
-      activity: detail.journal.activityId,
-      title: detail.journal.title,
-      prompt: detail.journal.prompt,
-    })
-    navigate(`${appPaths.student.journal}?${query}`)
-  }
+  const {
+    ui,
+    navigate,
+    canvas,
+    frameAdditional,
+    returnPoint,
+    mobilePanelButton,
+    selectedId,
+    scale,
+    setScale,
+    minimumScale,
+    setMinimumScale,
+    openGuide,
+    openCheckIn,
+    announcementBlocked,
+    mobilePanelOpen,
+    setMobilePanelOpen,
+    mobile,
+    cityOpen,
+    locked,
+    recommended,
+    progress,
+    selected,
+    details,
+    mostrarMisionesAdicionales,
+    reintentarRequisito,
+    closePoint,
+    selectPoint,
+    action,
+    journal,
+  } = useMapInteraction({ zone, points, adventure, journey })
   const panel = (
     <AdventurePanel
       adventure={adventure}
@@ -151,13 +117,12 @@ export function MapScreenLayout({
           }
         />
         {locked && <CityLocked adventure={adventure} />}
-        {mostrarMisionesAdicionales && (
-          <AdditionalReveal
-            onFrame={frameAdditional}
-            onSelect={selectPoint}
-            enabled={!announcementBlocked && !selectedId && !mobilePanelOpen}
-          />
-        )}
+        {mostrarMisionesAdicionales &&
+          renderAdditional?.({
+            onFrame: frameAdditional,
+            onSelect: selectPoint,
+            enabled: !announcementBlocked && !selectedId && !mobilePanelOpen,
+          })}
         <aside
           className="sx-glass sx-adventure-panel"
           data-collapsed={ui.panelCollapsed}
@@ -225,6 +190,8 @@ export function MapScreenLayout({
         </SheetContent>
       </Sheet>
       <ActivityDrawer
+        renderCaseProgress={renderCaseProgress}
+        renderJournal={renderJournal}
         point={selected}
         details={details}
         onClose={closePoint}

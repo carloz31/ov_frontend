@@ -1,15 +1,12 @@
-// Retained for a later stage; currently hidden behind SHOW_EXTRA_PROFESSIONAL.
-import { useState } from 'react'
-import { ArrowRight, BookOpen, CheckCircle2, Flame, MessageCircle, Search } from 'lucide-react'
+import { useExtraProfessionalQuestion } from '@/features/cases/hooks/useExtraProfessionalQuestion'
+import { BookOpen, CheckCircle2, MessageCircle, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { cn } from '@/lib/utils'
-import { forestFireWordCloud } from '@/data/content/forestFireCase'
 import { occupationCatalog } from '@/data/catalog/occupations'
-import { OccupationDetailDialog } from './OccupationDetailDialog'
-import type { Occupation } from '@/types/catalog'
+import { OccupationDetailDialog } from '@/features/cases/components/OccupationDetailDialog'
+import { ScreenHeading } from '@/features/cases/components/ScreenHeading'
 const FOREST_FIRE_ROLE_OCCUPATION_IDS = new Set([
   'firefighter',
   'meteorologist',
@@ -24,12 +21,10 @@ const FOREST_FIRE_ROLE_OCCUPATION_IDS = new Set([
   'social-worker',
   'journalist',
 ])
-
 const forestFireReflectionOccupations = occupationCatalog.filter(
   (occupation) => !FOREST_FIRE_ROLE_OCCUPATION_IDS.has(occupation.id),
 )
-
-function ExtraProfessionalQuestionScreen({
+export function ExtraProfessionalQuestionScreen({
   onReasonChange,
   onSelectProfessional,
   onSubmit,
@@ -42,22 +37,14 @@ function ExtraProfessionalQuestionScreen({
   reason: string
   selectedProfessionalId: string
 }) {
-  const [search, setSearch] = useState('')
-  const [detailOccupation, setDetailOccupation] = useState<Occupation>()
-  const normalizedSearch = search.trim().toLocaleLowerCase('es')
-  const filteredOccupations = forestFireReflectionOccupations.filter(
-    (occupation) =>
-      !normalizedSearch ||
-      [
-        occupation.name,
-        occupation.sector,
-        occupation.shortDescription,
-        occupation.contextualDescription,
-        ...occupation.skills,
-      ].some((value) => value.toLocaleLowerCase('es').includes(normalizedSearch)),
-  )
-  const selectedOccupation = occupationCatalog.find((occupation) => occupation.id === selectedProfessionalId)
-
+  const {
+    search,
+    setSearch,
+    detailOccupation,
+    setDetailOccupation,
+    filteredOccupations,
+    selectedOccupation,
+  } = useExtraProfessionalQuestion(selectedProfessionalId)
   return (
     <div className="mx-auto max-w-5xl">
       <ScreenHeading
@@ -191,145 +178,3 @@ function ExtraProfessionalQuestionScreen({
     </div>
   )
 }
-
-function ProfessionalWordCloudScreen({
-  onContinue,
-  reason,
-  selectedProfessionalId,
-}: {
-  onContinue: () => void
-  reason: string
-  selectedProfessionalId: string
-}) {
-  const [openProfessionalId, setOpenProfessionalId] = useState<string>()
-  const cloudEntries = forestFireWordCloud.some((entry) => entry.occupationId === selectedProfessionalId)
-    ? forestFireWordCloud
-    : [...forestFireWordCloud, { occupationId: selectedProfessionalId, mentions: 0, comments: [] }]
-  const selectedEntry = cloudEntries.find((entry) => entry.occupationId === openProfessionalId)
-  const selectedProfessional = occupationCatalog.find((occupation) => occupation.id === openProfessionalId)
-  const cloudColors = [
-    'text-[#ff9a72]',
-    'text-[#a9a2ff]',
-    'text-[#61c7a5]',
-    'text-[#78b9ef]',
-    'text-[#f1c05c]',
-  ]
-
-  return (
-    <div>
-      <ScreenHeading
-        badge="Voces de estudiantes"
-        description="El tamaño de cada profesión representa cuántos estudiantes imaginaron un aporte para ella. Pulsa una para leer sus razones."
-        inverse
-        title="Así respondió la comunidad"
-      />
-      <Card className="border-white/18 bg-[#171827]/88 p-6 text-white shadow-[0_26px_75px_rgb(0_0_0/30%)] backdrop-blur-xl md:p-9">
-        <div className="flex min-h-[360px] flex-wrap items-center justify-center gap-x-8 gap-y-6 rounded-3xl border border-white/10 bg-black/12 p-6 md:p-10">
-          {cloudEntries.map((entry, index) => {
-            const professional = occupationCatalog.find((item) => item.id === entry.occupationId)!
-            const mentions = entry.mentions + (entry.occupationId === selectedProfessionalId ? 1 : 0)
-            return (
-              <button
-                className={cn(
-                  'rounded-2xl px-3 py-2 font-black leading-none transition-transform hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
-                  cloudColors[index % cloudColors.length],
-                  entry.occupationId === selectedProfessionalId && 'bg-white/10 ring-1 ring-white/20',
-                )}
-                key={entry.occupationId}
-                onClick={() => setOpenProfessionalId(entry.occupationId)}
-                style={{ fontSize: `${0.8 + mentions * 0.055}rem` }}
-                type="button"
-              >
-                {professional.name}
-                <span className="ml-1 align-top text-[10px] font-bold text-white/35">{mentions}</span>
-              </button>
-            )
-          })}
-        </div>
-        <div className="mt-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <p className="text-xs leading-5 text-white/45">
-            Tu selección aparece destacada y se suma a las respuestas del grupo.
-          </p>
-          <Button className="bg-[#ff875f] hover:bg-[#f47550]" onClick={onContinue} size="lg">
-            Ver informe final <ArrowRight />
-          </Button>
-        </div>
-      </Card>
-
-      <Dialog
-        onOpenChange={(open) => !open && setOpenProfessionalId(undefined)}
-        open={Boolean(openProfessionalId)}
-      >
-        {selectedEntry && selectedProfessional && (
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <Badge className="mb-1" variant="default">
-                <MessageCircle className="size-3.5" /> Comentarios de estudiantes
-              </Badge>
-              <DialogTitle>{selectedProfessional.name}</DialogTitle>
-              <DialogDescription>
-                {selectedEntry.mentions + (selectedProfessional.id === selectedProfessionalId ? 1 : 0)}{' '}
-                estudiantes imaginaron un aporte para esta profesión.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-3">
-              {selectedProfessional.id === selectedProfessionalId && (
-                <div className="rounded-2xl border border-primary/20 bg-[var(--primary-soft)] p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-                    Tu comentario
-                  </p>
-                  <p className="mt-2 text-sm leading-6">“{reason}”</p>
-                </div>
-              )}
-              {selectedEntry.comments.map((comment, index) => (
-                <div className="flex gap-3 rounded-2xl border bg-muted/35 p-4" key={comment}>
-                  <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-xs font-black text-primary shadow-sm">
-                    {index + 1}
-                  </span>
-                  <p className="text-sm leading-6 text-muted-foreground">“{comment}”</p>
-                </div>
-              ))}
-            </div>
-            <div className="mt-5 flex justify-end">
-              <Button onClick={() => setOpenProfessionalId(undefined)}>Cerrar comentarios</Button>
-            </div>
-          </DialogContent>
-        )}
-      </Dialog>
-    </div>
-  )
-}
-
-function ScreenHeading({
-  badge,
-  description,
-  inverse = false,
-  title,
-}: {
-  badge: string
-  description: string
-  inverse?: boolean
-  title: string
-}) {
-  return (
-    <section className={cn('mb-7', inverse && 'text-white')}>
-      <Badge
-        className={cn('mb-3', inverse && 'border border-white/12 bg-white/10 text-white')}
-        variant="default"
-      >
-        <Flame className="size-3.5" /> {badge}
-      </Badge>
-      <h1 className="text-3xl font-black tracking-[-0.03em] sm:text-4xl">{title}</h1>
-      <p
-        className={cn(
-          'mt-3 max-w-3xl text-base leading-7',
-          inverse ? 'text-white/65' : 'text-muted-foreground',
-        )}
-      >
-        {description}
-      </p>
-    </section>
-  )
-}
-
-export { ExtraProfessionalQuestionScreen, ProfessionalWordCloudScreen }

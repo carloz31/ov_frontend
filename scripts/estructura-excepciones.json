@@ -1,48 +1,13 @@
 [
   {
     "regla": "E3-tamano",
-    "archivo": "src/features/activities/components/challenges/ChallengePlayer.tsx",
-    "detalle": "368 líneas (máximo 300)"
-  },
-  {
-    "regla": "E7-features",
-    "archivo": "src/features/adventure/components/ActivityDrawer.tsx",
-    "detalle": "usa un componente de la feature cases: src/features/cases/components/ForestFireCaseProgress.tsx"
-  },
-  {
-    "regla": "E7-features",
-    "archivo": "src/features/adventure/components/ActivityDrawer.tsx",
-    "detalle": "usa un componente de la feature journal: src/features/journal/components/JournalEntryCard.tsx"
-  },
-  {
-    "regla": "E7-features",
-    "archivo": "src/features/adventure/components/MapScreenLayout.tsx",
-    "detalle": "usa un componente de la feature activities: src/features/activities/components/reflection/AdditionalReveal.tsx"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/features/adventure/lib/mapPoints.ts",
-    "detalle": "624 líneas (máximo 400)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/features/cases/components/ForestFireCaseView.tsx",
-    "detalle": "762 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/features/cases/components/ForestFireExtraScreens.tsx",
-    "detalle": "336 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
     "archivo": "src/features/counselor/components/ResourcePreviews.tsx",
     "detalle": "492 líneas (máximo 300)"
   },
   {
     "regla": "E3-tamano",
     "archivo": "src/features/family-conversations/components/FamilyConversationsView.tsx",
-    "detalle": "643 líneas (máximo 300)"
+    "detalle": "612 líneas (máximo 300)"
   },
   {
     "regla": "E3-tamano",
@@ -83,30 +48,5 @@
     "regla": "E3-tamano",
     "archivo": "src/pages/parent/ParentOverviewView.tsx",
     "detalle": "355 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/pages/student/ResearchGuideView.tsx",
-    "detalle": "358 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/pages/student/StudentBackpackView.tsx",
-    "detalle": "506 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/pages/student/StudentFamilyConversationsView.tsx",
-    "detalle": "610 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/pages/student/StudentJournalView.tsx",
-    "detalle": "754 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/pages/student/StudentResearchView.tsx",
-    "detalle": "315 líneas (máximo 300)"
   }
 ]

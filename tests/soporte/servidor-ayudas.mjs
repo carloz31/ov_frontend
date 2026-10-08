@@ -157,6 +157,23 @@ export function fixtureServidor({
     ).outputText
     const require = (specifier) => {
       if (specifier.endsWith('.css')) return {}
+      if (specifier === 'react/jsx-runtime') {
+        const runtime = nativeRequire(specifier)
+        const render = (factory) => (type, props, key) =>
+          [
+            'NodeRenderer',
+            'ForestFireWorkspace',
+            'ChallengeStage',
+            'ResearchHeader',
+            'ResearchGuideSteps',
+            'ResearchOccupationPicker',
+            'ResearchReplacementDialog',
+            'HelenaBookPages',
+          ].includes(type?.name)
+            ? type(props)
+            : factory(type, props, key)
+        return { ...runtime, jsx: render(runtime.jsx), jsxs: render(runtime.jsxs) }
+      }
       if (specifier === 'react') return hooksReact
       if (specifier === 'react-router')
         return {

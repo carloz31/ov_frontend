@@ -1,3 +1,4 @@
+import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -550,7 +551,7 @@ test('student shell returns to the last visited zone and preserves module naviga
 })
 
 test('completed v2 missions synchronize in field order without duplicates or mutations', () => {
-  const { getMissionsToSync, specActivityByMission } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const { getMissionsToSync, specActivityByMission } = loadMapPoints(load)
   const adventure = store.createInitialAdventure()
   adventure.completedMissionIds = ['welcome', 'story']
   const journey = journeyLogic.initialJourney()
@@ -650,7 +651,7 @@ test('immersive maps expose the panel, recommendations and one block sign', () =
 
 test('new map canvases draw segments only on the path, with completion and frontier styles', () => {
   const { MapCanvas } = load(path.resolve('src/features/adventure/components/MapCanvas.tsx'))
-  const { getCaminoPoints } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const { getCaminoPoints } = loadMapPoints(load)
   const journey = journeyLogic.initialJourney()
   journey.progress['mission-welcome'] = { estado: 'completada' }
   journey.progress['enc-mitos'] = { estado: 'completada' }
@@ -667,7 +668,7 @@ test('new map canvases draw segments only on the path, with completion and front
 })
 
 test('student point calculations preserve progress, recommendations and every drawer action', () => {
-  const { getCaminoPoints, getCiudadPoints, getZoneProgress, getRecommendedPoint, getPointDetails } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const { getCaminoPoints, getCiudadPoints, getZoneProgress, getRecommendedPoint, getPointDetails } = loadMapPoints(load)
   const adventure = store.createInitialAdventure()
   const journey = journeyLogic.initialJourney()
   adventure.completedMissionIds = []
@@ -736,15 +737,13 @@ test('map zoom preserves its cursor anchor, respects bounds and focuses beside t
 })
 
 test('real access conditions lock successive missions and expose the city gate without changing review mode', () => {
-  const file = path.resolve('src/features/adventure/lib/mapPoints.ts')
-  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const exports = {}
   const require = name => {
     if (name === '@/store/adventureStore') return { ...store, prototypeAllUnlocked: false, canAccessCity: store.isCityUnlocked }
     if (!name.startsWith('@/')) return nativeRequire(name)
     return load(path.resolve('src', `${name.slice(2)}.ts`))
   }
-  vm.runInContext(`(function(require,exports){${js}\n})`, context)(require, exports)
+  Object.assign(exports, loadMapPoints(file => loadMovedHook(path.resolve(file), require)))
   const adventure = store.createInitialAdventure()
   adventure.completedMissionIds = []
   const journey = journeyLogic.initialJourney()
@@ -779,7 +778,7 @@ test('new activity drawer composes shared primitives without embedded case quest
 })
 
 test('return greeting uses the previous Lima visit and never reproaches absences', () => {
-  const { getReturnGreeting, getCaminoPoints } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const { getReturnGreeting, getCaminoPoints } = loadMapPoints(load)
   const adventure = store.createInitialAdventure()
   const point = getCaminoPoints(adventure, journeyLogic.initialJourney())[0]
   const now = new Date('2026-10-03T17:00:00Z')
@@ -1043,6 +1042,7 @@ test('Lumi exposes the complete accessible text while its visible text starts pr
   }
   const exports = {}
   const require = specifier => {
+    if (specifier === '@/features/adventure/components/overlays/LumiDialogue') return loadMovedHook(path.resolve('src/features/adventure/components/overlays/LumiDialogue.tsx'), require)
     if (specifier === '@radix-ui/react-dialog') return primitives
     if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
     const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
@@ -1103,6 +1103,7 @@ test('check-in dialog requires a choice and preselects the saved value when reop
   const pass = ({ children }) => children
   const exports = {}
   const require = specifier => {
+    if (specifier === '@/features/adventure/components/overlays/CheckInContent') return loadMovedHook(path.resolve('src/features/adventure/components/overlays/CheckInContent.tsx'), require)
     if (specifier === '@/components/ui/Dialog') return {
       Dialog: pass, DialogContent: pass,
       DialogTitle: ({ children }) => React.createElement('h2', {}, children),
@@ -1457,11 +1458,29 @@ function immersivePlayerHarness(name, overrides = {}) {
   const require = specifier => {
     if (Object.hasOwn(overrides, specifier)) return overrides[specifier]
     if (specifier.endsWith('.css')) return {}
+    if (specifier === 'react/jsx-runtime') {
+      const runtime = nativeRequire(specifier)
+      const render = (factory) => (type, props, key) =>
+        [
+          'NodeRenderer',
+          'ForestFireWorkspace',
+          'ChallengeStage',
+          'ResearchHeader',
+          'ResearchGuideSteps',
+          'ResearchOccupationPicker',
+          'ResearchReplacementDialog',
+          'HelenaBookPages',
+        ].includes(type?.name)
+          ? type(props)
+          : factory(type, props, key)
+      return { ...runtime, jsx: render(runtime.jsx), jsxs: render(runtime.jsxs) }
+    }
     if (specifier === 'react') return react
     if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
     const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
-    if (/[\\/]features[\\/](adventure|auth|activities|backpack|discovery)[\\/]hooks[\\/]use(ServerSession|TravelerLevel|CityRequirement|StudentAccount|CityAccess|MapScreen|Novelties|NoveltyQueue|Login|ActivityCompletion|InstrumentResponses|ActivityResources|ActivityFinish|InstrumentResult|Backpack|CatalogAffinity|StudentProfile|Passport|BadgeDetail|HelenaPages)$/.test(base))
+    if (/[\\/]features[\\/](adventure|auth|activities|backpack|discovery|cases|journal|family-conversations)[\\/]hooks[\\/]use[^\\/]+$/.test(base))
       return loadMovedHook(`${base}.ts`, require)
+    if (["NodeRenderer","ForestFireWorkspace","ChallengeStage","ResearchHeader","ResearchGuideSteps","ResearchOccupationPicker","ResearchReplacementDialog","HelenaBookPages"].includes(path.basename(base))) return loadMovedHook(`${base}.tsx`, require)
     return load([`${base}.tsx`, `${base}.ts`].find(existsSync))
   }
   const exports = {}
@@ -2221,7 +2240,7 @@ test('overlay queue resumes earned badges after the player and presents them con
 })
 
 test('student shell synchronizes v2 milestones into real levels and access without altering saved answers or private records', () => {
-  const { specActivityByMission } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const { specActivityByMission } = loadMapPoints(load)
   const fixture = followUpFixture()
   const saved = { ...journeyStore.useJourney(), drafts: { [fixture.key]: 'Borrador anterior conservado' } }
   const initial = store.createInitialAdventure()
@@ -2597,7 +2616,7 @@ test('family child selection replaces the entire summary and pending results sta
 })
 
 test('phase 8 path sequence respects both completion records without changing catalog or real thresholds', () => {
-  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const logic = loadMapPoints(load)
   const originalIds = fieldMissions.map(mission => mission.id)
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   let points = logic.getCaminoPoints(adventure, journey)
@@ -2659,7 +2678,7 @@ test('phase 8 direct links open blocked details instead of starting unavailable 
 })
 
 test('phase 8 finish returns to the map with one continue action at every point of the path', () => {
-  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const logic = loadMapPoints(load)
   const { FinishScreen } = load(path.resolve('src/features/activities/components/FinishScreen.tsx'))
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   for (const [completed, expected] of [[['welcome'], 'enc-mitos'], [['welcome', 'beliefs'], 'act-07'], [['welcome', 'beliefs', 'pregones'], 'mission-story'], [['welcome', 'beliefs', 'pregones', 'story'], undefined]]) {
@@ -2690,7 +2709,7 @@ test('phase 8 toggling the overlaid panel preserves a zoomed and panned map tran
   context.setTimeout = setTimeout; context.clearTimeout = clearTimeout
   const canvas = immersivePlayerHarness('src/features/adventure/components/MapCanvas')
   const ref = { current: null }
-  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const logic = loadMapPoints(load)
   const props = { ref, points: logic.getCaminoPoints(store.createInitialAdventure(), journeyLogic.initialJourney()), panelOpen: true, variant: 'route', onSelect() {}, onScaleChange() {}, backgroundImage: '', label: 'Mapa' }
   const mount = tree => { tree.props.ref.current = { getBoundingClientRect: () => ({ width: 1280, height: 752 }), addEventListener() {}, removeEventListener() {} } }
   const transform = tree => canvas.find(tree, element => element.props.className === 'sx-map-canvas').props.style.transform
@@ -2719,10 +2738,10 @@ test('phase 8 point links focus a known drawer and closing removes only its para
   let params = new URLSearchParams('punto=beliefs&keep=1'), focused
   const layout = immersivePlayerHarness('src/features/adventure/components/MapScreenLayout', {
     'react-router': { useNavigate: () => () => {}, useSearchParams: () => [params, next => { params = typeof next === 'function' ? next(params) : next }] },
-    '../context/overlayContext': { useStudentOverlays: () => ({ openGuide() {}, openCheckIn() {} }) },
+    '@/features/adventure/context/overlayContext': { useStudentOverlays: () => ({ openGuide() {}, openCheckIn() {} }) },
   })
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
-  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const logic = loadMapPoints(load)
   const props = { zone: 'missions', adventure, journey, points: logic.getCaminoPoints(adventure, journey) }
   const mount = tree => {
     layout.find(tree, element => element.props.label === 'Aventura · Camino de misiones').props.ref.current = { focusPoint: id => { focused = id } }
@@ -2741,7 +2760,7 @@ test('phase 8 point links focus a known drawer and closing removes only its para
 
 test('phase 8 map labels contain names only and use activity icons or a question mark', () => {
   const { MapNode } = load(path.resolve('src/features/adventure/components/MapNode.tsx'))
-  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const logic = loadMapPoints(load)
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   const points = [...logic.getCaminoPoints(adventure, journey), ...logic.getCiudadPoints(adventure, journey)]
   for (const [id, icon] of [['welcome', 'book-open'], ['beliefs', 'book-open'], ['story', 'feather'], ['compass', 'clipboard-list'], ['forest-fire', 'building-2'], ['city', 'key-round']]) {
@@ -2798,7 +2817,7 @@ test('phase 8 activities combine zones, classify publications and return to the 
 })
 
 test('phase 8 palette is local to the student route marker and covers inherited portal themes', () => {
-  const css = readFileSync(path.resolve('src/styles/student/student-experience.css'), 'utf8')
+  const css = readFileSync(path.resolve('src/styles/student/student-base.css'), 'utf8')
   assert.match(css, /body:has\(\[data-student-experience\]\)/)
   assert.match(css, /body:has\(\[data-student-experience\]\) \.theme-student/)
   assert.match(css, /--primary: #2457b8;/)
@@ -2932,7 +2951,7 @@ test('phase 9 panel has five direct links, a compact next-step action and the re
   const panel = immersivePlayerHarness('src/features/adventure/components/AdventurePanel', {
     '../lib/checkIn': { useCheckInDay() {}, getTodayCheckIn: () => undefined },
   })
-  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const logic = loadMapPoints(load)
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   const points = logic.getCaminoPoints(adventure, journey)
   let selected

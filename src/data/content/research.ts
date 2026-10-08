@@ -1,6 +1,7 @@
 import { classroomAliases } from '@/data/content/adventure'
 
 // Metadatos conservados de StudentResourceBoard; niveles y reacciones recibidas son demostraciones.
+// DATO DE PRUEBA: Comentarios de entrevistas; los reemplazará la integración de investigaciones.
 export const interviewDetails: Record<
   string,
   {
@@ -116,10 +117,12 @@ export const demoOccupationByVideo: Record<string, string> = {
   'legend-community-health': 'paramedic',
   'legend-animation': 'illustrator',
 }
+// DATO DE PRUEBA: Aliados de ejemplo; los reemplazará el servidor.
 export function getAllies(occupationId: string) {
   const start = [...occupationId].reduce((sum, c) => sum + c.charCodeAt(0), 0) % classroomAliases.length
   return [classroomAliases[start], classroomAliases[(start + 1) % classroomAliases.length]]
 }
+// DATO DE PRUEBA: Nivel de investigación ficticio; lo reemplazará el servidor.
 export function demoLevel(alias: string) {
   return {
     number: (alias.length % 3) + 1,
@@ -128,6 +131,7 @@ export function demoLevel(alias: string) {
     ],
   }
 }
+// DATO DE PRUEBA: Reacciones de ejemplo; las reemplazará el servidor.
 export function receivedReactions(videoId: string) {
   const comments = interviewDetails[videoId]?.comments ?? []
   return {

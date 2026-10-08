@@ -8,7 +8,8 @@ import { discoveryPaths } from '@/routes/discoveryPaths'
 import { appPaths } from '@/routes/paths'
 import { getInstitution, careersOfInstitution, getFamily } from '@/features/discovery/lib/catalogSelectors'
 import { institutionTypeNames } from '@/features/discovery/lib/catalogDetails'
-import { AtlasNavigation, MissingAtlasPage } from '@/features/discovery/components/AtlasNavigation'
+import { AtlasNavigation } from '@/features/discovery/components/AtlasNavigation'
+import { MissingAtlasPage } from '@/features/discovery/components/MissingAtlasPage'
 export function InstitutionDetailView() {
   const { institutionId = '' } = useParams(),
     context = useOccupationExplorationContext()

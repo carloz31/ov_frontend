@@ -1,3 +1,4 @@
+import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -207,7 +208,7 @@ test('base map is the source of order, predecessor requirements, nine mandatory 
     assert.deepEqual(copy(activity.requisitos), i ? [app.config.baseRoute[i - 1][1]] : [])
   })
   assert.equal(app.content.activityById('act-06').siguienteSugerida, undefined)
-  const map = app.load('src/features/adventure/lib/mapPoints.ts')
+  const map = loadMapPoints(app.load)
   const adventure = app
     .load('src/store/adventureStore.ts')
     .createInitialAdventure()
@@ -242,7 +243,7 @@ test('demo stops at Huellas even with historical completions and unlocks; restor
   const journey = copy(app.journey.getJourneySnapshot())
   for (const [, id] of app.config.baseRoute) journey.progress[id] = { estado: 'completada' }
   const storedBefore = copy([...app.storage.entries()])
-  const map = app.load('src/features/adventure/lib/mapPoints.ts')
+  const map = loadMapPoints(app.load)
   const points = map.getCaminoPoints(adventure, journey)
   assert.deepEqual(copy(points.slice(0, 4).map((p) => p.status)), [
     'completed',
@@ -589,7 +590,7 @@ test('historical private future submissions, completed activities and old versio
 
 test('alternative unlocks are hidden until developed, never affect mandatory progress or levels; badges and notices are unique', async () => {
   const app = fixture(),
-    map = app.load('src/features/adventure/lib/mapPoints.ts'),
+    map = loadMapPoints(app.load),
     adventure = app.load('src/store/adventureStore.ts').createInitialAdventure()
   assert.equal(
     map.getCaminoPoints(adventure, app.journey.getJourneySnapshot()).filter((p) => p.additional).length,

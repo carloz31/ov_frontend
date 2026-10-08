@@ -1,3 +1,4 @@
+import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { fixtureServidor, elementos, esperar } from './soporte/servidor-ayudas.mjs'
@@ -49,7 +50,7 @@ test('local mantiene claves, finalización y recomendaciones sin consultar al se
   assert.equal(store.getJourneySnapshot().progress[activity.id].estado, 'completada')
   assert.equal(store.getJourneySnapshot().rewards.length, 1)
   assert.ok(elementos(player.render(), (e) => e.type?.name === 'FinishScreen').length)
-  const mapa = app.load('src/features/adventure/lib/mapPoints.ts')
+  const mapa = loadMapPoints(app.load)
   const points = mapa.getCaminoPoints(adventure.useAdventure(), store.getJourneySnapshot())
   assert.equal(mapa.getRecommendedPoint(points).specActivityId, 'enc-mitos')
   assert.ok(app.local.has('ov.missions.v2'))

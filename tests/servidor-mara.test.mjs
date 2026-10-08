@@ -1,3 +1,4 @@
+import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { iniciarMara, itemEn, botonEn } from './soporte/servidor-mara-ayudas.mjs'
@@ -176,7 +177,7 @@ test('Ciudad permite Mara disponible, bloquea interacciones futuras por URL y ex
   )
   assert.equal(elementos(screen.render(), (e) => e.type?.name === 'MaraInteractionPlayer').length, 0)
   assert.equal(g.app.query.has('actividad'), false)
-  const mapa = g.app.load('src/features/adventure/lib/mapPoints.ts'),
+  const mapa = loadMapPoints(g.app.load),
     journey = g.app.load('src/store/journeyStore.ts').getJourneySnapshot(),
     adventure = g.app.load('src/store/adventureStore.ts').useAdventure()
   const point = mapa.getCiudadPoints(adventure, journey).find((p) => p.id === 'mara-test')

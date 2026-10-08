@@ -6,14 +6,22 @@ import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
 import { FavoriteButton } from '@/components/student/FavoriteButton'
 import { useDiscovery } from '@/store/discoveryStore'
-import { CatalogRevisitNotice, UnexpectedPlace } from '@/features/discovery/components/UnexpectedPlace'
+import { CatalogRevisitNotice } from '@/features/discovery/components/CatalogRevisitNotice'
+import { UnexpectedPlace } from '@/features/discovery/components/UnexpectedPlace'
 import { useCatalogVisit } from '@/features/discovery/hooks/useCatalogVisit'
 import { discoveryPaths } from '@/routes/discoveryPaths'
 import { appPaths } from '@/routes/paths'
 import { createPlanFromCareer, getOrderedPlans } from '@/features/discovery/lib/plans'
-import { getCareer, getFamily, institutionsOfCareer, occupationsOfCareer, isAffine } from '@/features/discovery/lib/catalogSelectors'
+import {
+  getCareer,
+  getFamily,
+  institutionsOfCareer,
+  occupationsOfCareer,
+  isAffine,
+} from '@/features/discovery/lib/catalogSelectors'
 import { institutionTypeNames, type IncomeRange } from '@/features/discovery/lib/catalogDetails'
-import { AtlasNavigation, MissingAtlasPage } from '@/features/discovery/components/AtlasNavigation'
+import { AtlasNavigation } from '@/features/discovery/components/AtlasNavigation'
+import { MissingAtlasPage } from '@/features/discovery/components/MissingAtlasPage'
 const soles = (n: number) => `S/ ${n.toLocaleString('es-PE')}`
 function IncomeCard({ title, range, scale }: { title: string; range?: IncomeRange; scale: number }) {
   return (

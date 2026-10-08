@@ -1,38 +1,19 @@
+import { BackpackHeader } from '@/features/backpack/components/BackpackHeader'
 import { useBackpack } from '@/features/backpack/hooks/useBackpack'
-
 import { appPaths } from '@/routes/paths'
-
-import { Backpack, BookOpen, Check, Compass, ExternalLink, FileText, Flame, Languages, LockKeyhole, MessageSquareQuote, Play, ScrollText, Search, Sparkles, Star, type LucideIcon } from 'lucide-react'
-
+import { Check, Search, Sparkles, Star } from 'lucide-react'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { BackpackViewerFrame as DialogContent } from '@/features/backpack/components/BackpackViewerFrame'
-import { ResourceText } from '@/features/activities/components/JourneyContent'
-
-import { activities } from '@/data/activities/content'
-
-import { resourceFileUrl, youtubeEmbedUrl, type TravelResource } from '@/features/backpack/lib/travelerResources'
-import { studentResourceRequirement as resourceRequirement } from '@/features/backpack/lib/challengeResources'
-import { cityCases } from '@/data/content/adventure'
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
-import { TrailBar } from '@/components/student/TrailBar'
-import { FavoriteButton } from '@/components/student/FavoriteButton'
 
 import '@/styles/student/journey.css'
 import '@/styles/student/resources.css'
 import '@/features/backpack/styles/backpack.css'
-
-const resourceIcons: Record<TravelResource['icon'], LucideIcon> = {
-  compass: Compass,
-  scroll: ScrollText,
-  book: BookOpen,
-  sparkles: Sparkles,
-  quote: MessageSquareQuote,
-  flame: Flame,
-  languages: Languages,
-}
+import { BackpackCard } from '@/features/backpack/components/BackpackCard'
+import { ResourceContent } from '@/features/backpack/components/ResourceContent'
 const kindLabels = { sheet: 'Ficha', testimonial: 'Testimonio', interview: 'Entrevista' }
 const kinds = [
   { id: 'all', label: 'Todo' },
@@ -41,40 +22,40 @@ const kinds = [
 ] as const
 
 function StudentBackpackView() {
-  const { adventure, journey, navigate, kind, tabs, query, setQuery, favoritesOnly, setFavoritesOnly,
-    selected, setSelectedId, requisitoId, setRequisitoId, requisito, requisitoPendiente, errorRequisito,
-    setIntentoRequisito, mostrarRequisito, isUnlocked, visible, sheets, voices, cityPoints,
-    chooseKind, toggleFavorite, openResource, clear, consultarRequisito, marcarLeida } = useBackpack()
+  const model = useBackpack()
+  const {
+    adventure,
+    journey,
+    navigate,
+    kind,
+    tabs,
+    query,
+    setQuery,
+    favoritesOnly,
+    setFavoritesOnly,
+    selected,
+    setSelectedId,
+    requisitoId,
+    setRequisitoId,
+    requisito,
+    requisitoPendiente,
+    errorRequisito,
+    setIntentoRequisito,
+    mostrarRequisito,
+    isUnlocked,
+    visible,
+    cityPoints,
+    chooseKind,
+    toggleFavorite,
+    openResource,
+    clear,
+    consultarRequisito,
+    marcarLeida,
+  } = model
 
   return (
     <DiscoveryStage ambient="backpack">
-      <header className="sx-d-header">
-        <div>
-          <p className="sx-d-eyebrow">Provisiones para tu aventura</p>
-          <h1>Tu mochila de viaje</h1>
-          <p>
-            Cada paso deja una nueva pista. Reúne fichas y voces de la ciudad, y guarda las que quieras tener
-            a mano cuando armes tus planes.
-          </p>
-        </div>
-        <div className="sx-b-summary">
-          <Backpack aria-hidden="true" size={40} />
-          <div>
-            <h2>Compartimentos</h2>
-            <TrailBar
-              label="Fichas"
-              value={sheets.length ? (sheets.filter(isUnlocked).length / sheets.length) * 100 : 0}
-              text={`${sheets.filter(isUnlocked).length} de ${sheets.length}`}
-            />
-            <TrailBar
-              label="Voces de la ciudad"
-              value={voices.length ? (voices.filter(isUnlocked).length / voices.length) * 100 : 0}
-              text={`${voices.filter(isUnlocked).length} de ${voices.length}`}
-              muted
-            />
-          </div>
-        </div>
-      </header>
+      <BackpackHeader model={model} />
       <section aria-label="Mi mochila">
         <div className="sx-b-controls">
           <div className="sx-b-tabs" role="tablist" aria-label="Tipo de recurso">
@@ -172,9 +153,7 @@ function StudentBackpackView() {
                         }
                         onOpen={() => openResource(resource)}
                         onFavorite={() => toggleFavorite(resource.id)}
-                        onRequirement={() =>
-                          consultarRequisito(resource)
-                        }
+                        onRequirement={() => consultarRequisito(resource)}
                       />
                     ))}
                     {type === 'testimonial' && !favoritesOnly && !query.trim() && (
@@ -234,9 +213,7 @@ function StudentBackpackView() {
                 <Button
                   variant="outline"
                   disabled={(journey.readResourceIds ?? journey.resources).includes(selected.id)}
-                  onClick={() =>
-                    marcarLeida(selected)
-                  }
+                  onClick={() => marcarLeida(selected)}
                 >
                   <Check size={18} />
                   {(journey.readResourceIds ?? journey.resources).includes(selected.id)
@@ -297,208 +274,6 @@ function StudentBackpackView() {
         </Dialog>
       )}
     </DiscoveryStage>
-  )
-}
-
-function BackpackCard({
-  resource,
-  unlocked,
-  saved,
-  visited,
-  playable,
-  onOpen,
-  onFavorite,
-  onRequirement,
-}: {
-  resource: TravelResource
-  unlocked: boolean
-  saved: boolean
-  visited: boolean
-  playable: boolean
-  onOpen: () => void
-  onFavorite: () => void
-  onRequirement: () => void
-}) {
-  const Icon = resourceIcons[resource.icon],
-    requirement = resourceRequirement(resource)
-  const activity =
-    'activityId' in resource.requirement
-      ? activities.find(
-          (a) =>
-            a.id === ('activityId' in resource.requirement ? resource.requirement.activityId : undefined),
-        )
-      : undefined
-  const call =
-    'caseId' in resource.requirement
-      ? cityCases.find(
-          (c) => c.id === ('caseId' in resource.requirement ? resource.requirement.caseId : undefined),
-        )
-      : undefined
-  const [name, role] = resource.author?.split(' · ') ?? []
-  return (
-    <article
-      className={`sx-b-card ${resource.kind === 'sheet' ? 'sx-b-sheet' : 'sx-b-voice'} ${unlocked ? 'sx-b-unlocked' : 'sx-b-locked'}`}
-      data-icon={resource.icon}
-    >
-      {unlocked && <FavoriteButton compact icon="star" selected={saved} onToggle={onFavorite} />}
-      {resource.kind === 'sheet' ? (
-        <>
-          <div className="sx-b-object" aria-hidden="true">
-            <div className="sx-b-scroll">
-              <Icon size={32} />
-            </div>
-            {!unlocked && <LockKeyhole className="sx-b-object-lock" size={32} />}
-          </div>
-          {unlocked && !visited && <span className="sx-b-new">Nueva</span>}
-          <h3>{resource.title}</h3>
-          {unlocked ? (
-            <>
-              <p>{resource.summary}</p>
-              <p className="sx-b-origin">
-                Obtenida en{' '}
-                <strong>
-                  {activity?.titulo ??
-                    ('activityId' in resource.requirement ? resource.requirement.activityId : 'el camino')}
-                </strong>
-              </p>
-              <button type="button" className="sx-d-action sx-b-open-sheet" onClick={onOpen}>
-                Abrir ficha
-              </button>
-            </>
-          ) : (
-            <>
-              <p>
-                <LockKeyhole aria-hidden="true" size={16} /> Bloqueado · {requirement.text}
-              </p>
-              <button type="button" className="sx-d-action sx-d-action-ghost" onClick={onRequirement}>
-                {requirement.label}
-              </button>
-            </>
-          )}
-        </>
-      ) : unlocked ? (
-        <>
-          <div className="sx-b-author">
-            <span>
-              {name
-                ?.split(' ')
-                .slice(0, 2)
-                .map((n) => n[0])
-                .join('') ?? 'VO'}
-            </span>
-            <div>
-              <strong>{name}</strong>
-              <p>{role}</p>
-            </div>
-          </div>
-          <h3>{resource.title}</h3>
-          <blockquote>“{resource.summary}”</blockquote>
-          <p>
-            Te la regaló el llamado <strong>{call?.title ?? 'de la ciudad'}</strong>
-          </p>
-          <button type="button" className="sx-d-action sx-d-action-gold" onClick={onOpen}>
-            <Play aria-hidden="true" size={18} />
-            Escuchar su historia
-          </button>
-        </>
-      ) : (
-        <>
-          <div className="sx-b-voice-mist" aria-hidden="true">
-            <span className="sx-b-silhouette" />
-            <LockKeyhole size={56} />
-          </div>
-          <p className="sx-b-voice-label">Una voz por descubrir</p>
-          <h3>{resource.title}</h3>
-          <p>{resource.summary}</p>
-          <div className="sx-b-requirement">{requirement.text}</div>
-          {playable ? (
-            <button type="button" className="sx-d-action sx-d-action-ghost" onClick={onRequirement}>
-              Ir a la Central de Casos
-            </button>
-          ) : (
-            <p className="sx-b-coming">Este llamado llega pronto</p>
-          )}
-        </>
-      )}
-    </article>
-  )
-}
-function ResourceContent({ resource }: { resource: TravelResource }) {
-  const videoUrl = youtubeEmbedUrl(resource.url)
-  const fileUrl = resourceFileUrl(resource.url)
-  const isPdf = fileUrl && (resource.fileFormat === 'pdf' || /\.pdf(?:[?#]|$)/i.test(fileUrl))
-  const placeholderUrl = fileUrl && /^https:\/\/example\.com(?:\/|$)/.test(fileUrl)
-  return (
-    <div className="space-y-5">
-      {resource.kind === 'sheet' ? (
-        <>
-          {resource.content && <ResourceText text={resource.content} />}
-          {isPdf && (
-            <iframe
-              src={fileUrl}
-              title={`PDF: ${resource.title}`}
-              className="h-[55vh] w-full rounded-xl border bg-white"
-            />
-          )}
-          {fileUrl && (
-            <Button asChild variant="outline">
-              <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-                <FileText />
-                {isPdf
-                  ? 'Abrir PDF en otra pestaña'
-                  : resource.fileFormat === 'archivo'
-                    ? 'Abrir archivo'
-                    : 'Abrir fuente del recurso'}
-                <ExternalLink />
-              </a>
-            </Button>
-          )}
-          {!resource.content && !fileUrl && (
-            <p className="rounded-xl bg-[#f4f3e8] p-4 text-sm">
-              El contenido de esta ficha estará disponible próximamente.
-            </p>
-          )}
-        </>
-      ) : (
-        <>
-          {videoUrl ? (
-            <div className="aspect-video overflow-hidden rounded-2xl bg-black">
-              <iframe
-                className="size-full"
-                src={videoUrl}
-                title={resource.title}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
-          ) : (
-            <div className="grid aspect-video place-items-center rounded-2xl border border-dashed border-[#d9dbc8] bg-[#f0f1e4] p-6 text-center">
-              <div>
-                <MessageSquareQuote className="mx-auto size-10 text-[#809477]" />
-                <p className="mt-4 text-sm font-semibold">
-                  {!fileUrl || placeholderUrl
-                    ? 'El video de esta entrevista está pendiente'
-                    : 'Esta entrevista se abre desde su enlace original'}
-                </p>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {!fileUrl || placeholderUrl
-                    ? 'Puedes leer el resumen compartido mientras se incorpora su enlace.'
-                    : 'Abre el enlace para visualizar el contenido compartido.'}
-                </p>
-              </div>
-            </div>
-          )}
-          {fileUrl && !placeholderUrl && (
-            <Button asChild variant="outline">
-              <a href={fileUrl} target="_blank" rel="noopener noreferrer">
-                {videoUrl ? 'Ver en YouTube' : 'Abrir entrevista'}
-                <ExternalLink />
-              </a>
-            </Button>
-          )}
-        </>
-      )}
-    </div>
   )
 }
 

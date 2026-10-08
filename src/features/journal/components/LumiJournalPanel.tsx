@@ -6,43 +6,8 @@ import { useAdventure } from '@/store/adventureStore'
 import { getLumiFriendship, lumiFriendshipRules } from '@/lib/lumiFriendship'
 import { getLumiSuggestions, type LumiSuggestion } from '@/features/journal/lib/lumiSuggestions'
 import { useLumiNow } from '@/hooks/useLumiNow'
-
-export function LumiPortrait() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 100 100"
-      className="size-full drop-shadow-[0_5px_8px_rgb(166_129_52/20%)]"
-    >
-      <path
-        d="M50 7 63 30 89 34 72 55 75 83 50 73 25 83 28 55 11 34 37 30Z"
-        fill="#c7a65a"
-        stroke="#9f7d37"
-        strokeWidth="2"
-        strokeLinejoin="round"
-      />
-      <ellipse cx="50" cy="48" rx="24" ry="22" fill="#fff0b6" />
-      <ellipse cx="42" cy="46" rx="2.5" ry="4" fill="#4b4066" />
-      <ellipse cx="58" cy="46" rx="2.5" ry="4" fill="#4b4066" />
-      <path d="M44 55Q50 61 56 55" fill="none" stroke="#4b4066" strokeWidth="2.5" strokeLinecap="round" />
-    </svg>
-  )
-}
-
-export function LumiQuestion({ prompt }: { prompt: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="size-14 shrink-0">
-        <LumiPortrait />
-      </span>
-      <div className="rounded-2xl rounded-tl-none border border-[#c7a65a]/25 bg-[#fff9e9] px-5 py-4">
-        <p className="text-xs font-bold tracking-wide text-[#8c6b2c]">Lumi</p>
-        <p className="mt-1 text-base font-medium leading-7 text-[#4b4066]">{prompt}</p>
-      </div>
-    </div>
-  )
-}
-
+import { LumiPortrait } from '@/features/journal/components/LumiPortrait'
+import { LumiQuestion } from '@/features/journal/components/LumiQuestion'
 export function LumiJournalPanel({
   onNew,
   onSuggested,

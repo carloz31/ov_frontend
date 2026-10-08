@@ -1,14 +1,27 @@
 import { useTravelerLevel } from '../hooks/useTravelerLevel'
 import { Link } from 'react-router'
-
-import { Backpack, Building2, MapPinned, BookOpen, ChevronRight, Compass, FolderHeart, HeartHandshake, LibraryBig, LockKeyhole, PenLine, Search, Target, TrendingUp } from 'lucide-react'
+import {
+  Backpack,
+  Building2,
+  MapPinned,
+  BookOpen,
+  ChevronRight,
+  Compass,
+  FolderHeart,
+  HeartHandshake,
+  LibraryBig,
+  LockKeyhole,
+  PenLine,
+  Search,
+  Target,
+  TrendingUp,
+} from 'lucide-react'
 import { canAccessFamilyConversations } from '@/store/adventureStore'
 import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
 import { getReturnGreeting, type StudentMapPoint } from '../lib/mapPoints'
 import { getListedActivities, studentActivitiesPath } from '../lib/navigation'
 import { getTodayCheckIn, useCheckInDay } from '../lib/checkIn'
-
 export function AdventurePanel({
   adventure,
   points,
@@ -94,12 +107,7 @@ export function AdventurePanel({
             {zonaCiudad ? 'Ciudad' : 'Camino'}
           </span>
           <h2>{progress.label}</h2>
-          <p>
-            Crece con cada{' '}
-            {zonaCiudad
-              ? progresoCiudad
-              : 'misión del camino.'}
-          </p>
+          <p>Crece con cada {zonaCiudad ? progresoCiudad : 'misión del camino.'}</p>
         </div>
       </section>
       <section className="sx-panel-section">
@@ -229,35 +237,6 @@ export function AdventurePanel({
           Ver más
         </Link>
       </section>
-    </div>
-  )
-}
-
-export function CollapsedAdventurePanel({
-  progress,
-  recommended,
-  onSelect,
-}: {
-  progress: number
-  recommended?: StudentMapPoint
-  onSelect: (id: string) => void
-}) {
-  return (
-    <div className="sx-panel-strip">
-      <Link to={appPaths.student.profile} aria-label="Mi perfil">
-        <span className="sx-panel-avatar">AL</span>
-      </Link>
-      <strong aria-label="Avance de la zona">{Math.round(Math.min(100, Math.max(0, progress)))}%</strong>
-      {recommended && (
-        <button
-          className="sx-strip-next"
-          type="button"
-          aria-label={`Siguiente paso: ${recommended.title}`}
-          onClick={() => onSelect(recommended.id)}
-        >
-          <Target aria-hidden="true" size={22} />
-        </button>
-      )}
     </div>
   )
 }

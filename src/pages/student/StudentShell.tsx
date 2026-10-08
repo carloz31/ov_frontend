@@ -1,18 +1,28 @@
 import { useServerSession } from '@/features/adventure/hooks/useServerSession'
-
 import { mensajeErrorServidor } from '@/store/servidor/estadoServidor'
 import { Outlet } from 'react-router'
-
 import { StudentModuleLayout } from '@/features/adventure/components/StudentModuleLayout'
 import { OverlayQueue } from '@/features/adventure/components/overlays/OverlayQueue'
-
 import '@/styles/student/adventure.css'
-import '@/styles/student/student-experience.css'
+import '@/styles/student/student-base.css'
+import '@/styles/student/student-logbook.css'
+import '@/styles/student/student-targets.css'
+import '@/styles/student/student-progress.css'
 import '@/styles/student/reflection.css'
-
 export function StudentShell() {
-  const { context, storageError, view, isMap, activityOpen, esperandoIngreso,
-    errorIngreso, errorConsulta, cargando, reintentarIngreso, reintentarConsulta } = useServerSession()
+  const {
+    context,
+    storageError,
+    view,
+    isMap,
+    activityOpen,
+    esperandoIngreso,
+    errorIngreso,
+    errorConsulta,
+    cargando,
+    reintentarIngreso,
+    reintentarConsulta,
+  } = useServerSession()
 
   const outlet = <Outlet context={context} />
   if (esperandoIngreso)

@@ -4,18 +4,6 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import type { ShownQuestion } from '@/types/reflection'
 import { missingNotice, missingPhrases } from '../../lib/reflection/personalization'
 import { reflectionCopy } from '@/data/activities/reflectionConfig'
-
-export function HighlightedQuestion({ text, quote }: { text: string; quote?: string }) {
-  if (!quote || !text.includes(`«${quote}»`)) return <>{text}</>
-  const [before, after] = text.split(`«${quote}»`)
-  return (
-    <>
-      {before}
-      <mark>«{quote}»</mark>
-      {after}
-    </>
-  )
-}
 export function QuestionMemory({
   question,
   compact = false,

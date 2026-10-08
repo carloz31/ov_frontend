@@ -1,3 +1,4 @@
+import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -64,6 +65,23 @@ function fixture(saved = {}, mockRouter = false, desktop = false) {
           useNavigate: () => () => {},
           useSearchParams: () => [new URLSearchParams(), () => {}],
         }
+      if (id === 'react/jsx-runtime') {
+        const runtime = nativeRequire(id)
+        const render = (factory) => (type, props, key) =>
+          [
+            'NodeRenderer',
+            'ForestFireWorkspace',
+            'ChallengeStage',
+            'ResearchHeader',
+            'ResearchGuideSteps',
+            'ResearchOccupationPicker',
+            'ResearchReplacementDialog',
+            'HelenaBookPages',
+          ].includes(type?.name)
+            ? type(props)
+            : factory(type, props, key)
+        return { ...runtime, jsx: render(runtime.jsx), jsxs: render(runtime.jsxs) }
+      }
       if (id === 'react')
         return {
           ...React,
@@ -288,7 +306,7 @@ test('listen opens individual clues, suppresses clicks after dragging, and retai
 test('contact drag and plus share assignment, desktop resume replaces the list, mobile has no drag, and zero disables adding', () => {
   for (const desktop of [true, false]) {
     const f = fixture({}, false, desktop),
-      { ProfessionalDirectory } = f.load('src/features/cases/components/ForestFireProfessionalPanel.tsx')
+      { ProfessionalDirectory } = f.load('src/features/cases/components/ProfessionalDirectory.tsx')
     const added = [],
       dragging = []
     const props = {
@@ -490,7 +508,7 @@ test('both map drawers expose the same status, score and action for every case s
     if (passed) store.completeCase('forest-fire')
     const state = store.useAdventure(),
       journey = f.load('src/store/journeyStore.ts').useJourney()
-    const map = f.load('src/features/adventure/lib/mapPoints.ts')
+    const map = loadMapPoints(f.load)
     const point = map.getCiudadPoints(state, journey).find((p) => p.id === 'forest-fire')
     const details = map.getPointDetails(point, state, journey)
     assert.equal(details.badge, badge)
@@ -501,7 +519,7 @@ test('both map drawers expose the same status, score and action for every case s
 
 test('resume uses catalog fields and separate tab links, with a safe missing-entry fallback', () => {
   const { f, data } = setup()
-  const { ProfessionalResume } = f.load('src/features/cases/components/ForestFireProfessionalPanel.tsx')
+  const { ProfessionalResume } = f.load('src/features/cases/components/ProfessionalResume.tsx')
   let html = renderToStaticMarkup(
     React.createElement(ProfessionalResume, { professional: data.forestFireProfessionals[0] }),
   )
@@ -519,7 +537,7 @@ test('resume uses catalog fields and separate tab links, with a safe missing-ent
 
 test('phase feedback uses neutral participation and missing narratives without naming the absent role', () => {
   const { f, data } = setup()
-  const { PhaseResultScreen } = f.load('src/features/cases/components/ForestFireCaseView.tsx')
+  const { PhaseResultScreen } = f.load('src/features/cases/components/PhaseResultScreen.tsx')
   const phase = data.forestFirePhases[0]
   const html = renderToStaticMarkup(
     React.createElement(PhaseResultScreen, {
@@ -537,7 +555,7 @@ test('phase feedback uses neutral participation and missing narratives without n
 
 test('final report hides extra screens and budget evaluation and switches buttons and rewards by score', () => {
   const { f, data } = setup(),
-    { FinalReportScreen } = f.load('src/features/cases/components/ForestFireCaseView.tsx')
+    { FinalReportScreen } = f.load('src/features/cases/components/FinalReportScreen.tsx')
   for (const score of [9, 10, 14]) {
     const html = renderToStaticMarkup(
       React.createElement(FinalReportScreen, {

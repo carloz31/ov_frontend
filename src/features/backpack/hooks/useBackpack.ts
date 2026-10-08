@@ -1,22 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import { modoApi } from '@/config/env'
-
 import { consultarProgreso, mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/estadoServidor'
 import { textoRequisito } from '@/lib/servidor/adaptadores'
-
 import { useNavigate, useSearchParams } from 'react-router'
-
 import { updateJourney, useJourney } from '@/store/journeyStore'
-
 import { updateAdventure, useAdventure } from '@/store/adventureStore'
 import { isTravelResourceUnlocked, type TravelResource } from '@/features/backpack/lib/travelerResources'
 import {
   getStudentTravelResources as getTravelResources,
   studentResourceRequirement as resourceRequirement,
 } from '@/features/backpack/lib/challengeResources'
-
-import { getCiudadPoints } from '@/features/adventure/lib/mapPoints'
-
+import { getCiudadPoints } from '@/features/adventure/lib/ciudadPoints'
 type KindFilter = 'all' | 'sheet' | 'testimonial'
 export function useBackpack() {
   const servidor = useEstadoServidor()

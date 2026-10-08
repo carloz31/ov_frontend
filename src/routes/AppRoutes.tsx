@@ -13,16 +13,14 @@ import { StudentRecordDetailView } from '@/pages/counselor/StudentRecordDetailVi
 import { FamilyRecordDetailView } from '@/pages/counselor/FamilyRecordDetailView'
 import { StudentsView } from '@/pages/counselor/StudentsView'
 import { OccupationExplorationModule } from '@/pages/student/OccupationExplorationModule'
-import {
-  ExplorationCaseIntroPage,
-  ForestFireCasePage,
-} from '@/pages/student/CasePages'
+import { ExplorationCaseIntroPage } from '@/pages/student/ExplorationCaseIntroPage'
+import { ForestFireCasePage } from '@/pages/student/ForestFireCasePage'
 import { StudentCatalogView } from '@/pages/student/StudentCatalogView'
 import { CareerDetailView } from '@/pages/student/CareerDetailView'
 import { OccupationDetailView } from '@/pages/student/OccupationDetailView'
 import { InstitutionDetailView } from '@/pages/student/InstitutionDetailView'
 import { StudentPlansView } from '@/pages/student/StudentPlansView'
-import { ProfileRoute } from '@/pages/student/StudentProfileView'
+import { ProfileRoute } from '@/pages/student/ProfileRoute'
 import { HelenaBookView } from '@/pages/student/HelenaBookView'
 import { StudentShell } from '@/pages/student/StudentShell'
 import { StudentThemeScope } from '@/pages/student/StudentThemeScope'
@@ -39,14 +37,13 @@ import { ParentOverviewView } from '@/pages/parent/ParentOverviewView'
 import { ParentPortalModule } from '@/pages/parent/ParentPortalModule'
 import { parentChildren } from '@/features/parent/data/parentPortal'
 import { appPaths } from './paths'
-import { ResearchRoute } from '@/pages/student/StudentResearchView'
+import { ResearchRoute } from '@/pages/student/ResearchRoute'
 import { ResearchGuideView } from '@/pages/student/ResearchGuideView'
 import { StudentJournalView } from '@/pages/student/StudentJournalView'
 import { StudentSignalsView } from '@/pages/student/StudentSignalsView'
 import { CommunityView } from '@/pages/student/CommunityView'
 import { StudentResourcesView } from '@/pages/student/StudentResourcesView'
 import { FamilyConversationsView } from '@/features/family-conversations/components/FamilyConversationsView'
-
 function AppRoutes() {
   return (
     <Routes>

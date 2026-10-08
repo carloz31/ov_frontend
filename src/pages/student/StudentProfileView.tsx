@@ -1,30 +1,20 @@
 import { useStudentProfile } from '@/features/discovery/hooks/useStudentProfile'
-import { Link, useSearchParams } from 'react-router'
-
+import { Link } from 'react-router'
 import { Eye, Heart, Sparkles } from 'lucide-react'
-
 import { canAccessCity } from '@/store/adventureStore'
-
 import { appPaths } from '@/routes/paths'
 import { getZoneProgress } from '@/features/adventure/lib/mapPoints'
 import { discoveryPaths } from '@/routes/discoveryPaths'
-
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
 import { Seal } from '@/components/student/Seal'
 import { TrailBar } from '@/components/student/TrailBar'
 import { CollectionSlot } from '@/components/student/CollectionSlot'
-import { StudentPassportView } from '@/features/discovery/components/StudentPassportView'
 import { achievementIcons } from '@/features/discovery/lib/passport'
-
 import { getPlanCompleteness } from '@/features/discovery/lib/plans'
-
-export function ProfileRoute() {
-  const [params] = useSearchParams()
-  return params.get('section') === 'passport' ? <StudentPassportView /> : <StudentProfileView />
-}
 export function StudentProfileView() {
-  const { adventure, journey, context, ficha, level, badges, visibleBadges, pages, plans, extraFavorites } = useStudentProfile()
+  const { adventure, journey, context, ficha, level, badges, visibleBadges, pages, plans, extraFavorites } =
+    useStudentProfile()
   if (ficha)
     return (
       <DiscoveryStage ambient="profile">
@@ -61,9 +51,7 @@ export function StudentProfileView() {
           <Link className="sx-d-action" to="/student/profile/helena">
             Abrir el libro de Helena
           </Link>
-          <p>
-            {ficha.textoIntereses}
-          </p>
+          <p>{ficha.textoIntereses}</p>
           <Link className="sx-d-action" to={appPaths.student.resources}>
             Abrir mi mochila
           </Link>

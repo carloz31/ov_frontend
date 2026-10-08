@@ -2,24 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import type { Actividad, NodoConsigna } from '@/types/activities'
 import { InlineDialogue } from '../InlineDialogue'
-import { useTypewriter } from '@/hooks/useTypewriter'
 import { evaluateResponse, finalizeResponse } from '../../lib/reflection/evaluation'
 import { getReflections } from '@/store/reflectionStore'
-import { getFollowUpRecord, saveFollowUpResponse, setFollowUpRecord, useFollowUps } from '../../store/followUpStore'
+import {
+  getFollowUpRecord,
+  saveFollowUpResponse,
+  setFollowUpRecord,
+  useFollowUps,
+} from '../../store/followUpStore'
 import { answeredTurns, responseCapacity } from '../../lib/responseCondenser'
-
-function TypedQuestion({ text }: { text: string }) {
-  const { visible } = useTypewriter(text)
-  return (
-    <div>
-      <div aria-hidden="true">
-        <InlineDialogue speakerId="companero" text={visible} light />
-      </div>
-      <p className="sr-only">Lumi: {text}</p>
-    </div>
-  )
-}
-
+import { TypedQuestion } from '@/features/activities/components/followup/TypedQuestion'
 export function FollowUp({
   activity,
   node,

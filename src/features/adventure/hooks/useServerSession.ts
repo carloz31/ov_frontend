@@ -8,12 +8,10 @@ import { useOccupationExplorationContext } from '@/context/occupationExploration
 import { completeMission, useAdventure, useAdventureStorageError } from '@/store/adventureStore'
 import { updateDiscovery } from '@/store/discoveryStore'
 import { recordBadgeFirstSeenAt } from '@/features/discovery/lib/passport'
-import { getMissionsToSync } from '@/features/adventure/lib/mapPoints'
-
+import { getMissionsToSync } from '@/features/adventure/lib/missionSync'
 import { seedStudentUnlocks } from '@/features/adventure/lib/unlocks'
 import { updateStudentUi } from '@/store/studentUiStore'
 import { getStudentView } from '@/lib/studentViews'
-
 export function useServerSession() {
   const location = useLocation()
   const context = useOccupationExplorationContext()

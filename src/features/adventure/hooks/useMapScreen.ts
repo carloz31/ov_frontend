@@ -8,20 +8,16 @@ import {
 } from '@/store/servidor/estadoServidor'
 import { textoRequisito } from '@/lib/servidor/adaptadores'
 import { actividadServidor } from '@/lib/servidor/adaptadores'
-
 import type { JourneyState } from '@/types/activities'
 import { canAccessCity } from '@/store/adventureStore'
 import type { AdventureState } from '@/types/adventure'
-
+import { getPointDetails, type PointDetails } from '@/features/adventure/lib/pointDetails'
 import {
-  getPointDetails,
   getRecommendedPoint,
   getZoneProgress,
-  type PointDetails,
   type StudentMapPoint,
   type StudentZone,
 } from '@/features/adventure/lib/mapPoints'
-
 export function useMapScreen({
   zone,
   points,

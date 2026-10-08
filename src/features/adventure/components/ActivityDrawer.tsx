@@ -1,4 +1,5 @@
-import { ForestFireCaseProgress } from '@/features/cases/components/ForestFireCaseProgress'
+import type { ReactNode } from 'react'
+import type { AdventureState } from '@/types/adventure'
 import { useAdventure } from '@/store/adventureStore'
 import { useRef } from 'react'
 import { Link } from 'react-router'
@@ -14,9 +15,8 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from '@/components/ui/Drawer'
-import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard'
-import type { StudentMapPoint, PointDetails } from '../lib/mapPoints'
-
+import type { StudentMapPoint } from '../lib/mapPoints'
+import type { PointDetails } from '@/features/adventure/lib/pointDetails'
 export function ActivityDrawer({
   point,
   details,
@@ -25,6 +25,8 @@ export function ActivityDrawer({
   onJournal,
   onFallbackFocus,
   onRetryRequirement,
+  renderCaseProgress,
+  renderJournal,
 }: {
   point?: StudentMapPoint
   details?: PointDetails
@@ -33,6 +35,8 @@ export function ActivityDrawer({
   onJournal: (details: PointDetails) => void
   onFallbackFocus?: () => void
   onRetryRequirement?: () => void
+  renderCaseProgress?: (adventure: AdventureState) => ReactNode
+  renderJournal?: (journal: NonNullable<PointDetails['journal']>, onOpen: () => void) => ReactNode
 }) {
   const adventure = useAdventure()
   const theme = useThemeClass()
@@ -123,14 +127,8 @@ export function ActivityDrawer({
                     )}
                   </p>
                 )}
-                {details.caseProgress && <ForestFireCaseProgress adventure={adventure} />}
-                {details.journal && (
-                  <JournalEntryCard
-                    completed={details.journal.completed}
-                    prompt={details.journal.prompt}
-                    onOpen={() => onJournal(details)}
-                  />
-                )}
+                {details.caseProgress && renderCaseProgress?.(adventure)}
+                {details.journal && renderJournal?.(details.journal, () => onJournal(details))}
                 <button
                   type="button"
                   className="sx-primary-button sx-drawer-action"

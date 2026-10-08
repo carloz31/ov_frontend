@@ -1,5 +1,6 @@
 import type { JournalEntry, ReadinessCheckIn } from '@/types/adventure'
 
+// DATO DE PRUEBA: Entradas de diario ficticias; las reemplazarán entradas del estudiante.
 const journalDemoEntries: JournalEntry[] = [
   {
     id: 'demo-journal-family',
@@ -98,6 +99,7 @@ const journalDemoEntries: JournalEntry[] = [
   },
 ]
 
+// DATO DE PRUEBA: Check-ins de ejemplo; los reemplazarán registros del estudiante.
 const readinessDemoCheckIns: ReadinessCheckIn[] = [
   { id: 'demo-check-jul-14', createdAt: '2026-07-14T13:00:00.000Z', linkedActivityId: 'story', value: 4 },
   {

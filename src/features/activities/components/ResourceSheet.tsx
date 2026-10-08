@@ -1,12 +1,9 @@
 import { useActivityResources } from '../hooks/useActivityResources'
-
 import { BookOpen, Check, ExternalLink, FileText, Headphones, Link2, Play } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
-
 import { youtubeEmbedUrl } from '@/features/backpack/lib/travelerResources'
-import { ResourceText } from './ContentBlocks'
-
+import { ResourceText } from '@/features/activities/components/content/ResourceText'
 export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: string[]; onClose: () => void }) {
   const { state, returnFocus, resources, marcarLeida, guardarRecurso } = useActivityResources(ids)
   const icons = { ficha: BookOpen, video: Play, lectura: FileText, enlace: Link2, audio: Headphones }
@@ -69,9 +66,7 @@ export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: stri
                       type="button"
                       className="sx-secondary-button"
                       disabled={(state.readResourceIds ?? state.resources).includes(resource.id)}
-                      onClick={() =>
-                        marcarLeida(resource)
-                      }
+                      onClick={() => marcarLeida(resource)}
                     >
                       <Check size={18} />
                       {(state.readResourceIds ?? state.resources).includes(resource.id)
@@ -94,9 +89,7 @@ export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: stri
                       type="button"
                       className="sx-secondary-button"
                       disabled={state.resources.includes(resource.id)}
-                      onClick={() =>
-                        guardarRecurso(resource)
-                      }
+                      onClick={() => guardarRecurso(resource)}
                     >
                       {state.resources.includes(resource.id) ? (
                         <>

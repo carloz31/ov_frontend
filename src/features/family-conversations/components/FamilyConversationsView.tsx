@@ -1,3 +1,4 @@
+import { updateConversation, getTopicStatus, getConversationGift, getGiftResource } from '../lib/conversations'
 import { useMemo, useState } from 'react'
 import {
   ArrowLeft,
@@ -21,7 +22,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Progress } from '@/components/ui/Progress'
 import {
   canAccessFamilyConversations,
-  prototypeAllUnlocked,
   updateAdventure,
   useAdventure,
 } from '@/store/adventureStore'
@@ -32,8 +32,6 @@ import '@/styles/student/adventure.css'
 import {
   familyConversationDemoData,
   familyConversationTopics,
-  getFamilyConversationDemo,
-  getFamilyGiftLetter,
   type ConversationAudience,
   type FamilyConversationTopic,
 } from '@/data/content/familyConversations'
@@ -64,8 +62,7 @@ function FamilyConversationsView({ audience = 'student' }: { audience?: Conversa
   })
   const selected = topicRows.find(({ topic }) => topic.id === selectedTopicId)
   const completedCount = topicRows.filter(({ status }) => status === 'completed').length
-  const giftCompleted = completedCount === familyConversationTopics.length
-  const canPreviewGift = prototypeAllUnlocked || giftCompleted
+  const { giftCompleted, canPreviewGift } = getConversationGift(completedCount)
 
   if (!canAccessFamilyConversations(state)) {
     return (
@@ -530,9 +527,7 @@ function GiftProgressCard({
   onOpenChange: (open: boolean) => void
 }) {
   const state = useAdventure()
-  const resourceId = `family-letter-${audience}`
-  const saved = state.bookmarks.includes(resourceId)
-  const letter = getFamilyGiftLetter(state, audience)
+  const { resourceId, saved, letter } = getGiftResource(state, audience)
 
   function saveLetter() {
     if (saved) return
@@ -611,32 +606,6 @@ function GiftProgressCard({
       </Dialog>
     </section>
   )
-}
-
-function updateConversation(id: string, update: (current: FamilyConversation) => FamilyConversation) {
-  updateAdventure((state) => {
-    const current = state.conversations.find((conversation) => conversation.id === id) ??
-      getFamilyConversationDemo(id) ?? { id }
-    return {
-      ...state,
-      conversations: [
-        ...state.conversations.filter((conversation) => conversation.id !== id),
-        update(current),
-      ],
-    }
-  })
-}
-
-function getTopicStatus(
-  conversation: FamilyConversation | undefined,
-  audience: ConversationAudience,
-): ConversationTab {
-  const ownAnswer = conversation?.[audience]
-  const otherAnswer = conversation?.[audience === 'student' ? 'parent' : 'student']
-  if (!ownAnswer) return 'answer'
-  if (!otherAnswer) return 'waiting'
-  if (conversation?.studentMarkedAt && conversation.parentMarkedAt) return 'completed'
-  return 'ready'
 }
 
 export { FamilyConversationsView }

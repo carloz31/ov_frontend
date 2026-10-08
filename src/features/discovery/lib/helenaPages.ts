@@ -38,6 +38,7 @@ export function getHelenaPageState(complete: boolean, revealed: boolean): Helena
 }
 
 // Demostraciones: se reemplazan cuando existan las 14 interacciones y los instrumentos completos.
+// DATO DE PRUEBA: Intereses de ejemplo de Helena; los reemplazarán resultados del servidor.
 export const demoInterests: HelenaResult = {
   source: 'demo',
   areas: [

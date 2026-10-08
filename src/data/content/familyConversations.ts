@@ -115,6 +115,7 @@ const familyConversationTopics: FamilyConversationTopic[] = [
   },
 ]
 
+// DATO DE PRUEBA: Conversaciones familiares ficticias; las reemplazarán respuestas de la familia.
 const familyConversationDemoData: FamilyConversation[] = [
   {
     id: 'strengths',

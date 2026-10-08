@@ -1,3 +1,4 @@
+import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
@@ -55,6 +56,23 @@ function fixture(saved = {}) {
     ).outputText
     const require = (id) => {
       if (id.endsWith('.css')) return {}
+      if (id === 'react/jsx-runtime') {
+        const runtime = nativeRequire(id)
+        const render = (factory) => (type, props, key) =>
+          [
+            'NodeRenderer',
+            'ForestFireWorkspace',
+            'ChallengeStage',
+            'ResearchHeader',
+            'ResearchGuideSteps',
+            'ResearchOccupationPicker',
+            'ResearchReplacementDialog',
+            'HelenaBookPages',
+          ].includes(type?.name)
+            ? type(props)
+            : factory(type, props, key)
+        return { ...runtime, jsx: render(runtime.jsx), jsxs: render(runtime.jsxs) }
+      }
       if (id === 'react')
         return {
           ...React,
@@ -171,7 +189,7 @@ test('all required sheets and activities must be completed; map keeps the enemy 
   const adventure = f
     .load('src/store/adventureStore.ts')
     .createInitialAdventure()
-  const map = f.load('src/features/adventure/lib/mapPoints.ts')
+  const map = loadMapPoints(f.load)
   const locked = map.getCiudadPoints(adventure, journey.initialJourney()).find((p) => p.id === c.id)
   assert.equal(locked.status, 'locked')
   assert.match(map.getPointDetails(locked, adventure, journey.initialJourney()).requirement, /Pendiente/)

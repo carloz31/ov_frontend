@@ -1,3 +1,4 @@
+import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
@@ -281,7 +282,7 @@ test('el mapa y los enlaces directos no usan límites de demo ni abren TIP o des
   const { app } = await iniciar({ ruta: '/student/exploration?actividad=el-rumor' })
   const journey = app.load('src/store/journeyStore.ts'),
     adventure = app.load('src/store/adventureStore.ts'),
-    mapa = app.load('src/features/adventure/lib/mapPoints.ts')
+    mapa = loadMapPoints(app.load)
   const puntos = mapa.getCaminoPoints(adventure.useAdventure(), journey.getJourneySnapshot())
   assert.equal(puntos.length, 10)
   assert.equal(

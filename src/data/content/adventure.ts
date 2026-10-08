@@ -181,7 +181,9 @@ export const cityCases = [
     professionals: ['event-coordinator', 'security-guard'],
   },
 ]
+// DATO DE PRUEBA: Alias ficticios de salón; los reemplazará el servidor.
 export const classroomAliases = ['Río', 'Quilla', 'Cedro', 'Nova', 'Brisa']
+// DATO DE PRUEBA: Avisos de recursos de ejemplo; los reemplazará el servidor.
 export const resourceDemoNotices = [
   {
     id: 'future-fair',
@@ -249,6 +251,7 @@ export const resourceDemoNotices = [
   },
 ] as const
 
+// DATO DE PRUEBA: Videos de recursos de ejemplo; los reemplazará el catálogo integrado.
 export const resourceDemoVideos = [
   {
     id: 'i3',
@@ -296,6 +299,7 @@ export const resourceDemoVideos = [
   },
 ]
 
+// DATO DE PRUEBA: Lectura de recurso de ejemplo; la reemplazará el catálogo integrado.
 export const resourceReading =
   'Explorar tu futuro es un proceso. Puedes empezar por reconocer experiencias que disfrutas, conversar con personas de distintas profesiones y anotar las preguntas que aparecen. No necesitas tener una respuesta definitiva hoy. Tu siguiente paso puede ser pequeño y cambiar con lo que aprendas.'
 

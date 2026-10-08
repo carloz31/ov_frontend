@@ -1,12 +1,8 @@
-import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
+import { ResearchHeader } from '@/features/discovery/components/research/ResearchHeader'
+import { useStudentResearch } from '@/features/discovery/hooks/useStudentResearch'
+import { Link } from 'react-router'
 import { Crown, LockKeyhole, Check, Search } from 'lucide-react'
-import { occupationCatalog } from '@/data/catalog/occupations'
-import { updateAdventure, useAdventure } from '@/store/adventureStore'
-import { useJourney } from '@/store/journeyStore'
 import { appPaths } from '@/routes/paths'
-import { discoveryPaths } from '@/routes/discoveryPaths'
-import { useDiscovery, updateDiscovery } from '@/store/discoveryStore'
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
 import { CollectionSlot } from '@/components/student/CollectionSlot'
@@ -16,61 +12,37 @@ import { PublishDialog } from '@/features/discovery/components/research/PublishD
 import { InterviewCard } from '@/features/discovery/components/research/InterviewCard'
 import { InterviewDetail } from '@/features/discovery/components/research/InterviewDetail'
 import { ReportDialog } from '@/features/discovery/components/research/ReportDialog'
-import { getAllies } from '@/data/content/research'
-import { getClassroomInterviews, getLegendInterviews, interviewVisible, researchUnlocked } from '@/features/discovery/lib/research'
-
-export function ResearchRoute() {
-  return <StudentResearchView />
-}
 export function StudentResearchView() {
-  const state = useAdventure(),
-    discovery = useDiscovery(),
-    navigate = useNavigate(),
-    [params, setParams] = useSearchParams()
-  const unlocked = researchUnlocked(state, useJourney()),
-    research = discovery.research
-  const [tab, setTab] = useState<'classroom' | 'mine'>('classroom'),
-    [legends, setLegends] = useState(false),
-    [guide, setGuide] = useState(false),
-    [allies, setAllies] = useState(false),
-    [publish, setPublish] = useState(false),
-    [reporting, setReporting] = useState<string>(),
-    [query, setQuery] = useState(''),
-    [favoritesOnly, setFavoritesOnly] = useState(false)
-  const videos = legends ? getLegendInterviews(state) : getClassroomInterviews(state)
-  const isOwn = (id: string, alias: string) =>
-    discovery.publishedResearch.some((p) => p.videoId === id) || alias.split(/ y |, /).includes('Alex')
-  const selectedId = params.get('entrevista')
-  const selected = [...getClassroomInterviews(state), ...getLegendInterviews(state)].find(
-    (v) => v.id === selectedId && interviewVisible(v, state),
-  )
-  const visibleSelectedId = selected?.id
-  useEffect(() => {
-    if (unlocked && visibleSelectedId)
-      updateAdventure((current) =>
-        current.visits.includes(visibleSelectedId)
-          ? current
-          : { ...current, visits: [...current.visits, visibleSelectedId] },
-      )
-  }, [unlocked, visibleSelectedId])
-  const visible = videos.filter(
-    (v) =>
-      (legends || tab === 'classroom' || isOwn(v.id, v.alias)) &&
-      (!favoritesOnly || state.bookmarks.includes(v.id)) &&
-      v.title.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
-  )
-  const occupation = occupationCatalog.find((o) => o.id === research?.occupationId)
-  const toggleBookmark = (id: string) =>
-    updateAdventure((current) => ({
-      ...current,
-      bookmarks: current.bookmarks.includes(id)
-        ? current.bookmarks.filter((value) => value !== id)
-        : [...current.bookmarks, id],
-    }))
-  const markSeen = (id: string) =>
-    updateAdventure((current) =>
-      current.visits.includes(id) ? current : { ...current, visits: [...current.visits, id] },
-    )
+  const model = useStudentResearch()
+  const {
+    state,
+    navigate,
+    setParams,
+    unlocked,
+    research,
+    tab,
+    setTab,
+    legends,
+    setLegends,
+    guide,
+    setGuide,
+    allies,
+    setAllies,
+    publish,
+    setPublish,
+    reporting,
+    setReporting,
+    query,
+    setQuery,
+    favoritesOnly,
+    setFavoritesOnly,
+    isOwn,
+    selected,
+    visible,
+    occupation,
+    toggleBookmark,
+    markSeen,
+  } = model
   return (
     <DiscoveryStage ambient="research">
       {selected && unlocked ? (
@@ -96,53 +68,7 @@ export function StudentResearchView() {
         />
       ) : (
         <>
-          <header className="sx-d-header">
-            <div>
-              <h1>{legends ? 'Salón de Leyendas' : 'Investigaciones'}</h1>
-              <p>
-                {legends
-                  ? 'Entrevistas que siguen inspirando nuevos viajes'
-                  : 'Entrevistas a profesionales hechas por tu salón'}
-              </p>
-            </div>
-            {unlocked && (
-              <div className="sx-d-actions">
-                {research?.publishedVideoId ? (
-                  <button
-                    type="button"
-                    className="sx-d-action sx-d-action-gold"
-                    onClick={() => {
-                      updateDiscovery((s) => ({ ...s, research: undefined }))
-                      navigate(discoveryPaths.researchGuide)
-                    }}
-                  >
-                    Iniciar otra investigación
-                  </button>
-                ) : research?.guideReadyAt ? (
-                  <>
-                    <button
-                      type="button"
-                      className="sx-d-action sx-d-action-ghost"
-                      onClick={() => setAllies(true)}
-                    >
-                      Aliados · {getAllies(research.occupationId).length}
-                    </button>
-                    <button
-                      type="button"
-                      className="sx-d-action sx-d-action-gold"
-                      onClick={() => setGuide(true)}
-                    >
-                      Ver mi guion
-                    </button>
-                  </>
-                ) : (
-                  <Link className="sx-d-action sx-d-action-gold" to={discoveryPaths.researchGuide}>
-                    {research ? 'Continuar mi guion' : 'Iniciar investigación'}
-                  </Link>
-                )}
-              </div>
-            )}
-          </header>
+          <ResearchHeader model={model} />
           {!unlocked ? (
             <Parchment title="Las investigaciones se abren al resolver tu primer caso en la Central de Casos.">
               <LockKeyhole size={52} aria-hidden="true" />

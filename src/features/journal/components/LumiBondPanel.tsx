@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Sparkles } from 'lucide-react'
-import { LumiPortrait } from '@/features/journal/components/LumiJournalPanel'
+import { LumiPortrait } from '@/features/journal/components/LumiPortrait'
 import { Parchment } from '@/components/student/Parchment'
 import { TrailBar } from '@/components/student/TrailBar'
 import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
 import { lumiMemories } from '../data/lumiMemories'
 import type { LumiBond } from '../lib/lumiBond'
-
 export function LumiBondPanel({ bond }: { bond: LumiBond }) {
   const ui = useStudentUi(),
     [params, setParams] = useSearchParams(),

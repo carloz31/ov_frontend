@@ -6,11 +6,12 @@ import { useJourney } from '@/store/journeyStore'
 import { useAdventure } from '@/store/adventureStore'
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
-import { getCaminoPoints, getCiudadPoints, getPointDetails } from '@/features/adventure/lib/mapPoints'
+import { getCaminoPoints } from '@/features/adventure/lib/caminoPoints'
+import { getCiudadPoints } from '@/features/adventure/lib/ciudadPoints'
+import { getPointDetails } from '@/features/adventure/lib/pointDetails'
 import { getListedActivities, getPointMapHref } from '@/features/adventure/lib/navigation'
 import '@/styles/student/history.css'
 import { useReflections } from '@/store/reflectionStore'
-
 export function StudentActivitiesView() {
   useEstadoServidor()
   const adventure = useAdventure()

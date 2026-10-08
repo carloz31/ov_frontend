@@ -1,12 +1,11 @@
 import { Compass } from 'lucide-react'
-import { useLocation, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
 import { getDiscovery } from '@/store/discoveryStore'
 import { discoveryPaths } from '@/routes/discoveryPaths'
 import { careerDetails, occupationDetails } from '../lib/catalogDetails'
 import { chooseUnexpected } from '../lib/unexpected'
 import { Parchment } from '@/components/student/Parchment'
-
 export function UnexpectedPlace({ kind, currentId }: { kind: 'career' | 'occupation'; currentId: string }) {
   const context = useOccupationExplorationContext()
   const navigate = useNavigate()
@@ -53,12 +52,4 @@ export function UnexpectedPlace({ kind, currentId }: { kind: 'career' | 'occupat
       {!eligible && <p>Las otras opciones están en tus favoritos o en tus planes.</p>}
     </Parchment>
   )
-}
-export function CatalogRevisitNotice() {
-  const location = useLocation()
-  return location.state?.revisitingCatalog ? (
-    <p role="status" className="sx-d-warning">
-      Ya recorriste todo el catálogo. Aquí tienes una que viste hace tiempo.
-    </p>
-  ) : null
 }

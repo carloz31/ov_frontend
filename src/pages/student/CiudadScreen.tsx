@@ -1,15 +1,12 @@
+import { ForestFireCaseProgress } from '@/features/cases/components/ForestFireCaseProgress'
+import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard'
 import { useCityAccess } from '@/features/adventure/hooks/useCityAccess'
-
 import { MaraInteractionPlayer } from '@/features/activities/components/MaraInteractionPlayer'
-
 import { ChallengePlayer } from '@/features/activities/components/challenges/ChallengePlayer'
-
 import { StudentActivityPlayer } from '@/features/activities/components/StudentActivityPlayer'
-
-import { getCiudadPoints } from '@/features/adventure/lib/mapPoints'
+import { getCiudadPoints } from '@/features/adventure/lib/ciudadPoints'
 import { MapScreenLayout } from '@/features/adventure/components/MapScreenLayout'
 import '@/styles/student/journey.css'
-
 export function CiudadScreen() {
   const { adventure, journey, params, setParams, interaccion, challenge, activity } = useCityAccess()
   if (interaccion)
@@ -38,6 +35,10 @@ export function CiudadScreen() {
     )
   return (
     <MapScreenLayout
+      renderCaseProgress={(adventure) => <ForestFireCaseProgress adventure={adventure} />}
+      renderJournal={(journal, onOpen) => (
+        <JournalEntryCard completed={journal.completed} prompt={journal.prompt} onOpen={onOpen} />
+      )}
       zone="central"
       points={getCiudadPoints(adventure, journey)}
       adventure={adventure}

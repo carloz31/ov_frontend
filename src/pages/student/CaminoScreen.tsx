@@ -1,3 +1,6 @@
+import { ForestFireCaseProgress } from '@/features/cases/components/ForestFireCaseProgress'
+import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard'
+import { AdditionalReveal } from '@/features/activities/components/reflection/AdditionalReveal'
 import { useEffect } from 'react'
 import { useEstadoServidor } from '@/store/servidor/estadoServidor'
 import { useSearchParams } from 'react-router'
@@ -5,11 +8,10 @@ import { activityById } from '@/data/activities/content'
 import { StudentActivityPlayer } from '@/features/activities/components/StudentActivityPlayer'
 import { useJourney } from '@/store/journeyStore'
 import { useAdventure } from '@/store/adventureStore'
-import { getCaminoPoints } from '@/features/adventure/lib/mapPoints'
+import { getCaminoPoints } from '@/features/adventure/lib/caminoPoints'
 import { MapScreenLayout } from '@/features/adventure/components/MapScreenLayout'
 import '@/styles/student/journey.css'
 import { useReflections } from '@/store/reflectionStore'
-
 export function CaminoScreen() {
   useEstadoServidor()
   const adventure = useAdventure()
@@ -40,5 +42,17 @@ export function CaminoScreen() {
         />
       </div>
     )
-  return <MapScreenLayout zone="missions" points={points} adventure={adventure} journey={journey} />
+  return (
+    <MapScreenLayout
+      renderCaseProgress={(adventure) => <ForestFireCaseProgress adventure={adventure} />}
+      renderJournal={(journal, onOpen) => (
+        <JournalEntryCard completed={journal.completed} prompt={journal.prompt} onOpen={onOpen} />
+      )}
+      renderAdditional={(props) => <AdditionalReveal {...props} />}
+      zone="missions"
+      points={points}
+      adventure={adventure}
+      journey={journey}
+    />
+  )
 }

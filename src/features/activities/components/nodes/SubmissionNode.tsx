@@ -10,9 +10,9 @@ import { criteria, personalizations, reflectionCopy } from '@/data/activities/re
 import { beginResponse } from '../../lib/reflection/evaluation'
 import { getReflections, updateReflections, useReflections } from '@/store/reflectionStore'
 import { prepareQuestion, questionInfluencesLater } from '../../lib/reflection/personalization'
-import { HighlightedQuestion, QuestionMemory } from '../reflection/QuestionMemory'
+import { HighlightedQuestion } from '@/features/activities/components/reflection/HighlightedQuestion'
+import { QuestionMemory } from '../reflection/QuestionMemory'
 import { LumiMedallion } from '@/components/student/LumiMedallion'
-
 export function SubmissionNode({
   activity,
   node,
