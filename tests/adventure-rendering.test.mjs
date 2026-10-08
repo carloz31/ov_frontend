@@ -55,7 +55,7 @@ const { familyConversationDemoData, familyConversationTopics } = load(
   path.resolve('src/data/content/familyConversations.ts'),
 )
 const { AppRoutes } = load(path.resolve('src/routes/AppRoutes.tsx'))
-const parentMissionStore = load(path.resolve('src/features/parent-portal/missionStore.ts'))
+const parentMissionStore = load(path.resolve('src/features/parent/store/parentJourneyStore.ts'))
 function completedParentJourney() {
   const { parentActivities } = load(path.resolve('src/data/activities/content.ts'))
   const { initialJourney } = load(path.resolve('src/lib/activities/logic.ts'))
@@ -93,8 +93,8 @@ function render(route, patch = {}) {
 
 test('students list shows priority progress and averages the selected classroom before rounding', () => {
   const { activities, questionnaires, studentProfiles } = load(path.resolve('src/data/demo/studentProfiles.ts'))
-  const { priorityProgress } = load(path.resolve('src/features/counselor-portal/profile/selectors.ts'))
-  const { configuredCatalog, initialPrioritySettings } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const { priorityProgress } = load(path.resolve('src/features/student-tracking/lib/selectors.ts'))
+  const { configuredCatalog, initialPrioritySettings } = load(path.resolve('src/features/counselor/store/prioritySettings.ts'))
   const catalog = configuredCatalog(initialPrioritySettings())
   const fabio = studentProfiles[5]
   const fabioPriority = priorityProgress(fabio, catalog.activities, catalog.questionnaires)
@@ -147,15 +147,15 @@ test('staff routes receive the calm theme and the student keeps its own theme', 
   assert.doesNotMatch(render('/student/conversations'), /class="[^"]*\btheme-staff /)
   const table = render('/counselor/students')
   assert.doesNotMatch(table, /y \d+ más/)
-  const { exampleStudents } = load(path.resolve('src/features/counselor-portal/data/StudentsExampleData.ts'))
-  const { profileAlertLabels } = load(path.resolve('src/features/counselor-portal/profile/selectors.ts'))
+  const { exampleStudents } = load(path.resolve('src/features/counselor/data/exampleStudents.ts'))
+  const { profileAlertLabels } = load(path.resolve('src/features/student-tracking/lib/selectors.ts'))
   for (const student of exampleStudents)
     for (const alert of student.alertas) assert.ok(table.includes(profileAlertLabels[alert]))
 })
 
 test('instrument series use emphasis and reference colors, including pending exits and flat profiles', () => {
   const { ThemeProvider } = load(path.resolve('src/components/common/ThemeScope.tsx'))
-  const { QuestionnaireBars } = load(path.resolve('src/features/counselor-portal/profile/Questionnaires.tsx'))
+  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/Questionnaires.tsx'))
   const { questionnaires, studentProfiles } = load(
     path.resolve('src/data/demo/studentProfiles.ts'),
   )
@@ -191,7 +191,7 @@ test('instrument series use emphasis and reference colors, including pending exi
 })
 test('highlight results share one prominent summary after bars, including ties and empty values', () => {
   const { ThemeProvider } = load(path.resolve('src/components/common/ThemeScope.tsx'))
-  const { QuestionnaireBars } = load(path.resolve('src/features/counselor-portal/profile/Questionnaires.tsx'))
+  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/Questionnaires.tsx'))
   const { questionnaires } = load(path.resolve('src/data/demo/studentProfiles.ts'))
   const renderResult = (definition, values) => renderToStaticMarkup(
     React.createElement(ThemeProvider, { theme: 'staff' },
@@ -224,7 +224,7 @@ test('highlight results share one prominent summary after bars, including ties a
 })
 
 test('comparisons render exact changes in a table and mobile facts without duplicate bars', () => {
-  const { QuestionnaireComparison } = load(path.resolve('src/features/counselor-portal/profile/QuestionnaireComparison.tsx'))
+  const { QuestionnaireComparison } = load(path.resolve('src/features/student-tracking/components/QuestionnaireComparison.tsx'))
   const { questionnaires } = load(path.resolve('src/data/demo/studentProfiles.ts'))
   const definition = questionnaires.find(q => q.id === 'entry')
   const result = {
@@ -381,7 +381,7 @@ test('new profile tabs, result routes, empty states and unknown IDs render', () 
 })
 
 test('profile explains missing priorities and directs to the full questionnaire filter', () => {
-  const { prioritySettingsStore, initialPrioritySettings } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const { prioritySettingsStore, initialPrioritySettings } = load(path.resolve('src/features/counselor/store/prioritySettings.ts'))
   const defaults = initialPrioritySettings()
   try {
     defaults.questionnaireIds.forEach(id => prioritySettingsStore.dispatch({ type: 'questionnaire', id, checked: false }))
@@ -540,7 +540,7 @@ test('student shell returns to the last visited zone and preserves module naviga
 })
 
 test('completed v2 missions synchronize in field order without duplicates or mutations', () => {
-  const { getMissionsToSync, specActivityByMission } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const { getMissionsToSync, specActivityByMission } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const adventure = store.createInitialAdventure()
   adventure.completedMissionIds = ['welcome', 'story']
   const journey = journeyLogic.initialJourney()
@@ -639,8 +639,8 @@ test('immersive maps expose the panel, recommendations and one block sign', () =
 })
 
 test('new map canvases draw segments only on the path, with completion and frontier styles', () => {
-  const { MapCanvas } = load(path.resolve('src/features/student-experience/map/MapCanvas.tsx'))
-  const { getCaminoPoints } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const { MapCanvas } = load(path.resolve('src/features/adventure/components/MapCanvas.tsx'))
+  const { getCaminoPoints } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const journey = journeyLogic.initialJourney()
   journey.progress['mission-welcome'] = { estado: 'completada' }
   journey.progress['enc-mitos'] = { estado: 'completada' }
@@ -657,7 +657,7 @@ test('new map canvases draw segments only on the path, with completion and front
 })
 
 test('student point calculations preserve progress, recommendations and every drawer action', () => {
-  const { getCaminoPoints, getCiudadPoints, getZoneProgress, getRecommendedPoint, getPointDetails } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const { getCaminoPoints, getCiudadPoints, getZoneProgress, getRecommendedPoint, getPointDetails } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const adventure = store.createInitialAdventure()
   const journey = journeyLogic.initialJourney()
   adventure.completedMissionIds = []
@@ -700,7 +700,7 @@ test('student point calculations preserve progress, recommendations and every dr
 })
 
 test('map zoom preserves its cursor anchor, respects bounds and focuses beside the open panel', () => {
-  const { getMinimumScale, canvasSize, maxScale, clampTransform, zoomTransform, focusTransform, visibleCenter, mapPosition } = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  const { getMinimumScale, canvasSize, maxScale, clampTransform, zoomTransform, focusTransform, visibleCenter, mapPosition } = load(path.resolve('src/features/adventure/lib/geometry.ts'))
   const bounds = { width: 1280, height: 752 }
   const current = { x: -400, y: -200, scale: .8 }
   const cursor = { x: 700, y: 320 }
@@ -720,13 +720,13 @@ test('map zoom preserves its cursor anchor, respects bounds and focuses beside t
   const firstPoint = focusTransform({ x: 0, y: 0, scale: .55 }, { x: 130, y: 140 }, bounds, true)
   assert.ok(firstPoint.x + mapPosition({ x: 130, y: 140 }).x * firstPoint.scale > 304)
   assert.equal(firstPoint.scale, .55)
-  const source = readFileSync(path.resolve('src/features/student-experience/map/MapCanvas.tsx'), 'utf8')
+  const source = readFileSync(path.resolve('src/features/adventure/components/MapCanvas.tsx'), 'utf8')
   assert.match(source, /addEventListener\('wheel', wheel, \{ passive: false \}\)/)
   assert.match(source, /removeEventListener\('wheel', wheel\)/)
 })
 
 test('real access conditions lock successive missions and expose the city gate without changing review mode', () => {
-  const file = path.resolve('src/features/student-experience/map/mapPoints.ts')
+  const file = path.resolve('src/features/adventure/lib/mapPoints.ts')
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const exports = {}
   const require = name => {
@@ -748,19 +748,19 @@ test('real access conditions lock successive missions and expose the city gate w
   assert.equal(advanced[1].status, 'available')
   assert.equal(advanced[2].status, 'locked')
   assert.match(exports.getReturnGreeting({ ...adventure, visits: ['2026-09-29'] }, advanced[1], new Date('2026-10-03T17:00:00Z')), /La ciudad sigue esperándote al final del camino\./)
-  const { CityLocked } = load(path.resolve('src/features/student-experience/map/CityLocked.tsx'))
+  const { CityLocked } = load(path.resolve('src/features/adventure/components/CityLocked.tsx'))
   const gate = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(CityLocked, { adventure })))
   assert.match(gate, /Capítulo 2 · La ciudad/)
   assert.match(gate, /Una llave, mil posibilidades/)
   assert.match(gate, /Continuar mi recorrido/)
-  const { ZoneSwitch } = load(path.resolve('src/features/student-experience/map/ZoneSwitch.tsx'))
+  const { ZoneSwitch } = load(path.resolve('src/features/adventure/components/ZoneSwitch.tsx'))
   const switcher = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(ZoneSwitch, { zone: 'missions', cityOpen: false, onCityLocked() {} })))
   assert.match(switcher, /aria-disabled="true"/)
   assert.equal(store.prototypeAllUnlocked, true)
 })
 
 test('new activity drawer composes shared primitives without embedded case questions', () => {
-  const source = readFileSync(path.resolve('src/features/student-experience/map/ActivityDrawer.tsx'), 'utf8')
+  const source = readFileSync(path.resolve('src/features/adventure/components/ActivityDrawer.tsx'), 'utf8')
   assert.match(source, /from '@\/components\/ui\/Drawer'/)
   assert.match(source, /<DrawerClose asChild>/)
   assert.match(source, /aria-label="Cerrar ficha"/)
@@ -769,7 +769,7 @@ test('new activity drawer composes shared primitives without embedded case quest
 })
 
 test('return greeting uses the previous Lima visit and never reproaches absences', () => {
-  const { getReturnGreeting, getCaminoPoints } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const { getReturnGreeting, getCaminoPoints } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const adventure = store.createInitialAdventure()
   const point = getCaminoPoints(adventure, journeyLogic.initialJourney())[0]
   const now = new Date('2026-10-03T17:00:00Z')
@@ -781,7 +781,7 @@ test('return greeting uses the previous Lima visit and never reproaches absences
 })
 
 test('student overlay queue prioritizes real city arrival, section introductions and the daily signal', () => {
-  const { getNextOverlay } = load(path.resolve('src/features/student-experience/overlays/overlay-context.ts'))
+  const { getNextOverlay } = load(path.resolve('src/features/adventure/context/overlayContext.ts'))
   const { initialStudentUiState } = load(path.resolve('src/store/studentUiStore.ts'))
   const { studentViews, isDiscoveryView } = load(path.resolve('src/lib/studentViews.ts'))
   const adventure = store.createInitialAdventure()
@@ -813,7 +813,7 @@ test('student overlay queue prioritizes real city arrival, section introductions
 })
 
 test('student daily signal uses Lima dates and replaces the original registration without changing private entries', () => {
-  const { getTodayCheckIn, saveTodayCheckIn, localDateKey } = load(path.resolve('src/features/student-experience/overlays/checkIn.ts'))
+  const { getTodayCheckIn, saveTodayCheckIn, localDateKey } = load(path.resolve('src/features/adventure/lib/checkIn.ts'))
   assert.equal(localDateKey(new Date('2026-10-04T04:59:00Z')), '2026-10-03')
   assert.equal(localDateKey(new Date('2026-10-04T05:00:00Z')), '2026-10-04')
   const now = new Date()
@@ -923,7 +923,7 @@ test('typewriter advances at its configured pace, completes immediately and hono
 })
 
 test('mounted overlay queue opens from effects, remembers introductions and resumes after activity exit', () => {
-  const file = path.resolve('src/features/student-experience/overlays/OverlayQueue.tsx')
+  const file = path.resolve('src/features/adventure/components/overlays/OverlayQueue.tsx')
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
   const { initialStudentUiState } = load(path.resolve('src/store/studentUiStore.ts'))
   let ui = initialStudentUiState()
@@ -952,8 +952,8 @@ test('mounted overlay queue opens from effects, remembers introductions and resu
     if (specifier === 'react-router') return { useNavigate: () => destination => destinations.push(destination) }
     if (specifier.endsWith('/adventureStore')) return { useAdventure: () => adventure }
     if (specifier === '@/store/studentUiStore') return { useStudentUi: () => ui, updateStudentUi: update => { ui = update(ui) } }
-    if (specifier === './checkIn') {
-      const original = load(path.resolve('src/features/student-experience/overlays/checkIn.ts'))
+    if (specifier === '../../lib/checkIn') {
+      const original = load(path.resolve('src/features/adventure/lib/checkIn.ts'))
       return { ...original, useCheckInDay: () => original.localDateKey(new Date()), saveTodayCheckIn: value => {
         adventure = { ...adventure, readinessCheckIns: [{ id: 'saved', value, createdAt: new Date().toISOString(), linkedActivityId: 'daily-check-in' }] }
       } }
@@ -1020,7 +1020,7 @@ test('mounted overlay queue opens from effects, remembers introductions and resu
 })
 
 test('Lumi exposes the complete accessible text while its visible text starts progressively', () => {
-  const file = path.resolve('src/features/student-experience/overlays/LumiOverlay.tsx')
+  const file = path.resolve('src/features/adventure/components/overlays/LumiOverlay.tsx')
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
   const pass = ({ children }) => children
   const primitives = {
@@ -1048,7 +1048,7 @@ test('Lumi exposes the complete accessible text while its visible text starts pr
 })
 
 test('daily check-in clock refreshes on tab visibility and focus, then releases its listeners', () => {
-  const file = path.resolve('src/features/student-experience/overlays/checkIn.ts')
+  const file = path.resolve('src/features/adventure/lib/checkIn.ts')
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   let now = '2026-10-04T04:59:00Z', day, cleanup, interval
   const windowListeners = new Map(), documentListeners = new Map()
@@ -1087,7 +1087,7 @@ test('daily check-in clock refreshes on tab visibility and focus, then releases 
 })
 
 test('check-in dialog requires a choice and preselects the saved value when reopened', () => {
-  const file = path.resolve('src/features/student-experience/overlays/CheckInDialog.tsx')
+  const file = path.resolve('src/features/adventure/components/overlays/CheckInDialog.tsx')
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
   const pass = ({ children }) => children
   const exports = {}
@@ -1395,7 +1395,7 @@ test('Lumi suggestions appear only after real completions and disappear after an
     1,
   )
   const { JournalEntryCard } = load(
-    path.resolve('src/features/occupation-exploration/components/JournalEntryCard.tsx'),
+    path.resolve('src/features/journal/components/JournalEntryCard.tsx'),
   )
   assert.equal(
     renderToStaticMarkup(React.createElement(JournalEntryCard, { completed: false, onOpen() {} })),
@@ -1471,7 +1471,7 @@ test('immersive submission preserves validation, drafts, versions and the keep a
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
   let saved = 0, kept = 0, prevented = false
   const props = { activity, node, edit: true, onSaved: () => saved++, onKeep: () => kept++ }
-  const form = immersivePlayerHarness('src/features/student-experience/player/nodes/SubmissionNode')
+  const form = immersivePlayerHarness('src/features/activities/components/nodes/SubmissionNode')
   let tree = form.draw(props)
   tree.props.onSubmit({ preventDefault() { prevented = true } })
   assert.equal(prevented, true)
@@ -1508,7 +1508,7 @@ test('immersive option submissions keep multiple selection and omit optional fil
   let saved = 0
   const node = { ...original, id: 'options-test', entregable: { tipo: 'opcion', multiple: true, opciones: ['Una opción', 'Otra opción'] } }
   const props = { activity, node, onSaved: () => saved++ }
-  const form = immersivePlayerHarness('src/features/student-experience/player/nodes/SubmissionNode')
+  const form = immersivePlayerHarness('src/features/activities/components/nodes/SubmissionNode')
   let tree = form.draw(props)
   form.find(tree, element => element.type === 'input').props.onChange()
   tree = form.draw(props)
@@ -1519,14 +1519,14 @@ test('immersive option submissions keep multiple selection and omit optional fil
   assert.equal(saved, 1)
   assert.equal(journeyLogic.latestSubmission(journeyStore.useJourney(), activity.id, node.id).contenido.seleccion.length, 2)
   form.dispose()
-  const file = immersivePlayerHarness('src/features/student-experience/player/nodes/SubmissionNode')
+  const file = immersivePlayerHarness('src/features/activities/components/nodes/SubmissionNode')
   const before = saved
   const unavailable = file.draw({ ...props, node: { ...original, obligatoria: false, entregable: { tipo: 'archivo', formatos: ['pdf'], maxArchivos: 1, maxMB: 2 } } })
   assert.equal(file.text(unavailable), 'Esta entrega no está disponible en la plataforma.')
   assert.equal(saved, before + 1)
   assert.equal(file.find(unavailable, element => element.type === 'input'), undefined)
   file.dispose()
-  const mandatory = immersivePlayerHarness('src/features/student-experience/player/nodes/SubmissionNode')
+  const mandatory = immersivePlayerHarness('src/features/activities/components/nodes/SubmissionNode')
   mandatory.draw({ ...props, node: { ...original, obligatoria: true, entregable: { tipo: 'archivo', formatos: ['pdf'], maxArchivos: 1, maxMB: 2 } } })
   assert.equal(saved, before + 1)
   mandatory.dispose()
@@ -1538,7 +1538,7 @@ test('immersive questions preserve attempts, hints, revelation, retry and fresh 
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
   let continued = 0, resources
   const props = { activity, node, onContinue: () => continued++, onResources: ids => { resources = ids } }
-  const question = immersivePlayerHarness('src/features/student-experience/player/nodes/QuestionNode')
+  const question = immersivePlayerHarness('src/features/activities/components/nodes/QuestionNode')
   const wrong = node.opciones.find(option => !option.correcta)
   let tree = question.draw(props)
   for (let i = 0; i <= node.pistas.length; i++) {
@@ -1561,7 +1561,7 @@ test('immersive questions preserve attempts, hints, revelation, retry and fresh 
     }
   }
   assert.equal(continued, 1)
-  const fresh = immersivePlayerHarness('src/features/student-experience/player/nodes/QuestionNode')
+  const fresh = immersivePlayerHarness('src/features/activities/components/nodes/QuestionNode')
   assert.ok(fresh.button(fresh.draw({ ...props, fresh: true }), wrong.texto))
   fresh.dispose()
   question.dispose()
@@ -1569,7 +1569,7 @@ test('immersive questions preserve attempts, hints, revelation, retry and fresh 
 
 test('immersive matrix requires all seven submissions even when a legacy alternative is saved', () => {
   const activity = journeyContent.activities.find(activity => activity.id === 'act-06')
-  const { MatrixNode } = load(path.resolve('src/features/student-experience/player/nodes/MatrixNode.tsx'))
+  const { MatrixNode } = load(path.resolve('src/features/activities/components/nodes/MatrixNode.tsx'))
   const required = activity.nodos.filter(node => node.tipo === 'consigna' && node.obligatoria)
   const legacy = { id: 'old-file', actividadId: activity.id, nodoId: 'g-archivo', version: 1, contenido: { tipo: 'archivo', archivos: [{ id: 'file', nombre: 'old.pdf' }] } }
   const draw = submissions => {
@@ -1594,7 +1594,7 @@ test('immersive direct instrument resumes pending items and completes once witho
   const activity = journeyContent.activities.find(activity => activity.id === 'act-tip-01')
   const node = activity.nodos.find(node => node.tipo === 'item')
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
-  const player = immersivePlayerHarness('src/features/student-experience/player/StudentActivityPlayer')
+  const player = immersivePlayerHarness('src/features/activities/components/StudentActivityPlayer')
   const props = { activity, direct: true, onClose() {}, onNext() {} }
   let tree = player.draw(props)
   const item = player.find(tree, element => element.props.node?.tipo === 'item')
@@ -1607,7 +1607,7 @@ test('immersive direct instrument resumes pending items and completes once witho
   assert.equal(saved.progress[activity.id].estado, 'en_curso')
   assert.equal(saved.rewards.length, 0)
   assert.equal(player.find(tree, element => element.props.speakerId === 'mara'), undefined)
-  const resumed = immersivePlayerHarness('src/features/student-experience/player/StudentActivityPlayer')
+  const resumed = immersivePlayerHarness('src/features/activities/components/StudentActivityPlayer')
   const items = activity.nodos.filter(node => node.tipo === 'item')
   tree = resumed.draw(props)
   assert.equal(resumed.find(tree, element => element.props.node?.tipo === 'item').props.node.id, items[1].id)
@@ -1626,7 +1626,7 @@ test('immersive direct instrument resumes pending items and completes once witho
 })
 
 test('immersive resources show their content, normalize YouTube and preserve saved backpack state', () => {
-  const file = path.resolve('src/features/student-experience/player/ResourceSheet.tsx')
+  const file = path.resolve('src/features/activities/components/ResourceSheet.tsx')
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
   const resources = [
     { id: 'sheet-test', titulo: 'Una ficha', tipo: 'ficha', contenido: '## Ideas\n\nUna **pista** para explorar.', fuente: 'Fuente de la ficha', guardableEnRecursos: true },
@@ -1662,13 +1662,13 @@ test('immersive resources show their content, normalize YouTube and preserve sav
 
 test('immersive finish shows saved sheets, narrative rewards and the prompted journal action', () => {
   const activity = journeyContent.activities.find(activity => activity.id === 'enc-mitos')
-  const { FinishScreen } = load(path.resolve('src/features/student-experience/player/FinishScreen.tsx'))
+  const { FinishScreen } = load(path.resolve('src/features/activities/components/FinishScreen.tsx'))
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'], progress: { [activity.id]: { estado: 'completada' } } }))
   const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(FinishScreen, { activity, onClose() {} })))
   for (const text of ['Este hallazgo viaja contigo.', activity.recompensa.mensajeFin, 'Lo que llevas contigo', 'En tu mochila', 'Escribir en mi diario', 'Continuar']) assert.ok(html.includes(text))
   assert.doesNotMatch(html, /Revisar mis propias creencias|Seguir hacia|Volver al mapa/)
   assert.doesNotMatch(html, /\bpuntos\b|\bpts\b|Nueva insignia/)
-  const { ResultNode } = load(path.resolve('src/features/student-experience/player/nodes/ResultNode.tsx'))
+  const { ResultNode } = load(path.resolve('src/features/activities/components/nodes/ResultNode.tsx'))
   const result = renderToStaticMarkup(React.createElement(ResultNode, { activity: journeyContent.finalActivity, instrumentId: 'tip' }))
   assert.match(result, /Elena te espera al completar los 14 encuentros/)
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
@@ -1681,7 +1681,7 @@ test('immersive choices preserve recorded responses and show reactions before th
   const node = { ...choice, registrar: true, opciones: [{ ...choice.opciones[0], reaccion: [reaction] }] }
   const activity = { ...original, nodos: original.nodos.map(current => current.id === node.id ? node : current) }
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { [activity.id]: { estado: 'en_curso', nodoActualId: node.id } } }))
-  const player = immersivePlayerHarness('src/features/student-experience/player/StudentActivityPlayer')
+  const player = immersivePlayerHarness('src/features/activities/components/StudentActivityPlayer')
   const props = { activity, onClose() {}, onNext() {} }
   let tree = player.draw(props)
   const panel = player.find(tree, element => element.props.node?.tipo === 'eleccion')
@@ -1699,9 +1699,9 @@ test('immersive choices preserve recorded responses and show reactions before th
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
 })
 
-const followUpService = load(path.resolve('src/features/student-experience/player/followup/followUpService.ts'))
-const followUpStore = load(path.resolve('src/features/student-experience/player/followup/followUpStore.ts'))
-const responseCondenser = load(path.resolve('src/features/student-experience/player/followup/responseCondenser.ts'))
+const followUpService = load(path.resolve('src/features/activities/lib/followUpService.ts'))
+const followUpStore = load(path.resolve('src/features/activities/store/followUpStore.ts'))
+const responseCondenser = load(path.resolve('src/features/activities/lib/responseCondenser.ts'))
 function followUpClock() {
   const previous = { setTimeout: context.setTimeout, clearTimeout: context.clearTimeout }
   const timers = new Map()
@@ -1791,14 +1791,14 @@ test('response condenser preserves exact labels and blank lines, excludes omitte
 })
 
 test('follow-up store survives remounts and reload events and tolerates corrupt or unavailable storage', () => {
-  const file = path.resolve('src/features/student-experience/player/followup/followUpStore.ts')
+  const file = path.resolve('src/features/activities/store/followUpStore.ts')
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const memory = new Map(), events = []
   let unavailable = false
   const storage = { getItem: key => { if (unavailable) throw new Error('No storage'); return memory.get(key) ?? null }, setItem: (key, value) => { if (unavailable) throw new Error('No storage'); memory.set(key, value) } }
   const fresh = () => {
     const exports = {}
-    const require = specifier => specifier === 'react' ? { ...React, useSyncExternalStore: (_, snapshot) => snapshot() } : specifier.includes('/activities/logic') ? journeyLogic : specifier.includes('/store/journeyStore') ? journeyStore : specifier === './responseCondenser' ? responseCondenser : {}
+    const require = specifier => specifier === 'react' ? { ...React, useSyncExternalStore: (_, snapshot) => snapshot() } : specifier.includes('/activities/logic') ? journeyLogic : specifier.includes('/store/journeyStore') ? journeyStore : specifier === '../lib/responseCondenser' ? responseCondenser : {}
     vm.runInNewContext('(function(require,exports){' + js + '\n})', { localStorage: storage, window: { addEventListener: (_, callback) => events.push(callback) }, Date, crypto, Map, Set })(require, exports)
     return exports
   }
@@ -1824,7 +1824,7 @@ test('first text submission saves version one before follow-up; edits and matric
     let advanced = 0
     const activity = kind === 'matrix' ? { ...fixture.activity, plantilla: { tipo: 'matriz' } } : fixture.activity
     const props = { activity, node: fixture.node, edit: kind === 'edit', onSaved: () => advanced++ }
-    const form = immersivePlayerHarness('src/features/student-experience/player/nodes/SubmissionNode')
+    const form = immersivePlayerHarness('src/features/activities/components/nodes/SubmissionNode')
     let tree = form.draw(props)
     form.find(tree, element => element.type === 'textarea').props.onChange({ target: { value: fixture.text } })
     tree = form.draw(props); tree.props.onSubmit({ preventDefault() {} })
@@ -1844,7 +1844,7 @@ test('first text submission saves version one before follow-up; edits and matric
 
 test('follow-up accepts two replies, caps the field at available space and saves one condensed version', async () => {
   const fixture = followUpFixture(), clock = followUpClock()
-  const ui = immersivePlayerHarness('src/features/student-experience/player/followup/FollowUp')
+  const ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
   let advanced = 0
   const props = { activity: fixture.activity, node: fixture.node, onContinue: () => advanced++ }
   try {
@@ -1878,7 +1878,7 @@ test('follow-up accepts two replies, caps the field at available space and saves
 
 test('omitting all turns preserves version one, while a long reply ends follow-up after one turn', async () => {
   for (const omit of [true, false]) {
-    const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/student-experience/player/followup/FollowUp')
+    const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
     const props = { activity: fixture.activity, node: fixture.node, onContinue() {} }
     try {
       let tree = ui.draw(props); await clock.tick(700); tree = ui.draw(props); tree = ui.draw(props)
@@ -1896,7 +1896,7 @@ test('omitting all turns preserves version one, while a long reply ends follow-u
 test('no question, failure, timeout or fewer than 40 free characters advances silently with the original', async () => {
   const service = followUpService.mockFollowUpService, original = service.evaluate
   for (const kind of ['long', 'space', 'error', 'timeout']) {
-    const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/student-experience/player/followup/FollowUp')
+    const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
     let advanced = 0
     const node = kind === 'space' ? { ...fixture.node, entregable: { ...fixture.node.entregable, maxCaracteres: 80 } } : fixture.node
     if (kind === 'long') followUpStore.setFollowUpRecord(fixture.key, { textoInicial: 'a'.repeat(200), versionInicial: 1, turnos: [] })
@@ -1915,7 +1915,7 @@ test('no question, failure, timeout or fewer than 40 free characters advances si
 test('interrupted follow-up recovers only answered turns and loads the condensed form without duplicate versions', async () => {
   const fixture = followUpFixture()
   followUpStore.setFollowUpRecord(fixture.key, { textoInicial: fixture.text, versionInicial: 1, turnos: [followUpTurn(1, '¿Por qué?', 'Porque es mi decisión.'), followUpTurn(2, '¿Algo más?', undefined)] })
-  const form = immersivePlayerHarness('src/features/student-experience/player/nodes/SubmissionNode')
+  const form = immersivePlayerHarness('src/features/activities/components/nodes/SubmissionNode')
   const props = { activity: fixture.activity, node: fixture.node, edit: true, onSaved() {} }
   let tree = form.draw(props); assert.match(form.text(tree), /Recuperando/)
   await followUpStore.recoverFollowUp(fixture.activity, fixture.node)
@@ -1966,7 +1966,7 @@ test('follow-up requires 40 free characters and stops before a second question t
   service.evaluate = async () => ({ pregunta: '¿Por qué?' })
   try {
     for (const remaining of [39, 40]) {
-      const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/student-experience/player/followup/FollowUp')
+      const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
       let advanced = 0
       const maximum = fixture.text.length + '\n\nPregunta de Lumi: ¿Por qué?\nRespuesta: '.length + remaining
       const node = { ...fixture.node, entregable: { ...fixture.node.entregable, maxCaracteres: maximum } }
@@ -1995,7 +1995,7 @@ test('follow-up requires 40 free characters and stops before a second question t
 })
 
 test('leaving during evaluation never stores a late question and recovery preserves the replied turn', async () => {
-  const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/student-experience/player/followup/FollowUp')
+  const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
   const props = { activity: fixture.activity, node: fixture.node, onContinue() { assert.fail('An unmounted follow-up must not advance') } }
   try {
     let tree = ui.draw(props); await clock.tick(700); tree = ui.draw(props); tree = ui.draw(props)
@@ -2033,12 +2033,12 @@ test('failed delivery writes preserve version one and failed follow-up markers d
   }
 })
 
-const noveltyLogic = load(path.resolve('src/features/student-experience/overlays/unlocks.ts'))
+const noveltyLogic = load(path.resolve('src/features/adventure/lib/unlocks.ts'))
 const noveltyUi = load(path.resolve('src/store/studentUiStore.ts'))
 const noveltyData = load(path.resolve('src/data/content/adventure.ts'))
 function resetNoveltyUi(patch = {}) {
   const { studentViews } = load(path.resolve('src/lib/studentViews.ts'))
-  const { localDateKey } = load(path.resolve('src/features/student-experience/overlays/checkIn.ts'))
+  const { localDateKey } = load(path.resolve('src/features/adventure/lib/checkIn.ts'))
   noveltyUi.updateStudentUi(() => ({ ...noveltyUi.initialStudentUiState(), initialized: true, cityArrivalSeen: true, introsSeen: Object.fromEntries(studentViews.map(view => [view, true])), checkInPromptDismissedOn: localDateKey(new Date()), ...patch }))
 }
 
@@ -2082,7 +2082,7 @@ test('shell seeds after v2 synchronization so migrated completions do not create
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { 'mission-welcome': { estado: 'completada' } } }))
   store.updateAdventure(() => store.createInitialAdventure())
   noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
-  const shell = immersivePlayerHarness('src/features/student-experience/StudentShell', {
+  const shell = immersivePlayerHarness('src/pages/student/StudentShell', {
     'react-router': { ...nativeRequire('react-router'), useLocation: () => ({ pathname: '/student/missions', search: '' }) },
     '@/context/occupationExplorationContext': { useOccupationExplorationContext: () => ({}) },
   })
@@ -2101,7 +2101,7 @@ test('novelties show only pending entries and close without reading; selection r
   store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: ['welcome'] }))
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'] }))
   resetNoveltyUi({ seenUnlockIds: ['badge:I1'] })
-  const menu = immersivePlayerHarness('src/features/student-experience/overlays/NoveltiesMenu', { '@/store/adventureStore': { useAdventure: () => ({ ...store.useAdventure(), lumiRegistrations: [] }) } })
+  const menu = immersivePlayerHarness('src/features/adventure/components/overlays/NoveltiesMenu', { '@/store/adventureStore': { useAdventure: () => ({ ...store.useAdventure(), lumiRegistrations: [] }) } })
   let tree = menu.draw({})
   assert.equal(menu.text(menu.find(tree, element => element.props.className === 'sx-novelties-count')), '1')
   assert.match(menu.text(tree), /Nueva ficha disponible/)
@@ -2126,7 +2126,7 @@ test('novelties show only pending entries and close without reading; selection r
   assert.equal(menu.find(tree, element => element.props.className === 'sx-novelties-count'), undefined)
   menu.dispose()
   store.updateAdventure(() => store.createInitialAdventure()); journeyStore.updateJourney(() => journeyLogic.initialJourney()); resetNoveltyUi({ initialized: false })
-  const empty = immersivePlayerHarness('src/features/student-experience/overlays/NoveltiesMenu')
+  const empty = immersivePlayerHarness('src/features/adventure/components/overlays/NoveltiesMenu')
   tree = empty.draw({}); assert.match(empty.text(tree), /No tienes novedades pendientes/)
   empty.dispose(); noveltyUi.updateStudentUi(() => noveltyUi.initialStudentUiState())
 })
@@ -2139,7 +2139,7 @@ test('bell appears in both maps and module headers but is absent inside the play
 
 test('badge queue waits behind arrival, introduction, check-in and manual help, and pauses during activities', () => {
   const adventure = { ...store.createInitialAdventure(), completedMissionIds: ['welcome', 'story', 'future', 'beliefs'] }
-  const { getNextOverlay } = load(path.resolve('src/features/student-experience/overlays/overlay-context.ts'))
+  const { getNextOverlay } = load(path.resolve('src/features/adventure/context/overlayContext.ts'))
   resetNoveltyUi()
   let ui = noveltyUi.useStudentUi()
   assert.equal(noveltyLogic.getNextBadge(adventure, ui, true, false), undefined)
@@ -2165,7 +2165,7 @@ test('badge queue waits behind arrival, introduction, check-in and manual help, 
 
 test('badge toast expires after seven seconds without reset on rerenders and cancels its timer when paused', async () => {
   const badge = noveltyLogic.getEarnedBadges({ ...store.createInitialAdventure(), completedMissionIds: ['welcome'] })[0]
-  const clock = followUpClock(), toast = immersivePlayerHarness('src/features/student-experience/overlays/BadgeToast')
+  const clock = followUpClock(), toast = immersivePlayerHarness('src/features/adventure/components/overlays/BadgeToast')
   let dismissed = 0
   try {
     const tree = toast.draw({ badge, onDismiss: () => dismissed++ })
@@ -2176,7 +2176,7 @@ test('badge toast expires after seven seconds without reset on rerenders and can
     await clock.tick(6999); assert.equal(dismissed, 0)
     toast.draw({ badge, onDismiss: () => dismissed++ }); await clock.tick(1); assert.equal(dismissed, 1)
     assert.equal(clock.pending, 0); toast.dispose()
-    const interrupted = immersivePlayerHarness('src/features/student-experience/overlays/BadgeToast')
+    const interrupted = immersivePlayerHarness('src/features/adventure/components/overlays/BadgeToast')
     interrupted.draw({ badge, onDismiss: () => dismissed++ }); await clock.tick(3000); interrupted.dispose(); await clock.tick(4000)
     assert.equal(dismissed, 1); assert.equal(clock.pending, 0)
   } finally { toast.dispose(); clock.restore() }
@@ -2185,10 +2185,10 @@ test('badge toast expires after seven seconds without reset on rerenders and can
 test('overlay queue resumes earned badges after the player and presents them consecutively without duplication', async () => {
   store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: ['welcome', 'story', 'future', 'beliefs'] }))
   resetNoveltyUi()
-  const checkIn = load(path.resolve('src/features/student-experience/overlays/checkIn.ts'))
-  const queue = immersivePlayerHarness('src/features/student-experience/overlays/OverlayQueue', {
+  const checkIn = load(path.resolve('src/features/adventure/lib/checkIn.ts'))
+  const queue = immersivePlayerHarness('src/features/adventure/components/overlays/OverlayQueue', {
     'react-router': { ...nativeRequire('react-router'), useNavigate: () => () => {} },
-    './checkIn': { ...checkIn, useCheckInDay: () => checkIn.localDateKey(new Date()) },
+    '../../lib/checkIn': { ...checkIn, useCheckInDay: () => checkIn.localDateKey(new Date()) },
   })
   const clock = followUpClock()
   const findBadge = tree => queue.find(tree, element => element.type.name === 'BadgeToast')
@@ -2196,7 +2196,7 @@ test('overlay queue resumes earned badges after the player and presents them con
   try {
     let tree = queue.draw(props); assert.equal(findBadge(tree), undefined)
     tree = queue.draw({ ...props, activityOpen: false }); assert.equal(findBadge(tree).props.badge.code, 'I1')
-    const first = immersivePlayerHarness('src/features/student-experience/overlays/BadgeToast')
+    const first = immersivePlayerHarness('src/features/adventure/components/overlays/BadgeToast')
     first.draw(findBadge(tree).props); await clock.tick(7000); first.dispose()
     tree = queue.draw({ ...props, activityOpen: false }); assert.equal(findBadge(tree).props.badge.code, 'I2')
     findBadge(tree).props.onDismiss()
@@ -2207,14 +2207,14 @@ test('overlay queue resumes earned badges after the player and presents them con
 })
 
 test('student shell synchronizes v2 milestones into real levels and access without altering saved answers or private records', () => {
-  const { specActivityByMission } = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const { specActivityByMission } = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const fixture = followUpFixture()
   const saved = { ...journeyStore.useJourney(), drafts: { [fixture.key]: 'Borrador anterior conservado' } }
   const initial = store.createInitialAdventure()
   store.updateAdventure(() => ({ ...initial, journal: [{ ...initial.journal[0], id: 'private-entry', body: 'Texto privado conservado' }], readinessCheckIns: [{ id: 'saved-signal', value: 6, createdAt: new Date().toISOString(), linkedActivityId: 'daily-check-in' }] }))
   const privateBefore = JSON.stringify([store.useAdventure().journal, store.useAdventure().readinessCheckIns, store.useAdventure().conversations])
   resetNoveltyUi()
-  const shell = immersivePlayerHarness('src/features/student-experience/StudentShell', {
+  const shell = immersivePlayerHarness('src/pages/student/StudentShell', {
     'react-router': { ...nativeRequire('react-router'), useLocation: () => ({ pathname: '/student/missions', search: '' }) },
     '@/context/occupationExplorationContext': { useOccupationExplorationContext: () => ({}) },
   })
@@ -2249,7 +2249,7 @@ test('dialogue Enter completes text before advancing and never intercepts forms,
   context.HTMLElement = Target
   context.document = { querySelector: () => modal }
   context.window = { addEventListener: (_, listener) => listeners.add(listener), removeEventListener: (_, listener) => listeners.delete(listener) }
-  const dialogue = immersivePlayerHarness('src/features/student-experience/player/DialogueBox', {
+  const dialogue = immersivePlayerHarness('src/features/activities/components/DialogueBox', {
     '@/hooks/useTypewriter': { useTypewriter: text => ({ visible: done ? text : '', done, complete: () => { done = true; completed++ } }) },
   })
   const props = { speakerId: 'companero', text: 'Texto completo accesible', onContinue: () => advanced++ }
@@ -2277,7 +2277,7 @@ test('reduced-motion zone changes commit the destination immediately without sch
   const clock = followUpClock()
   context.window = { matchMedia: () => ({ matches: true }) }
   resetNoveltyUi({ lastMap: 'missions' })
-  const transition = immersivePlayerHarness('src/features/student-experience/map/ZoneTransition')
+  const transition = immersivePlayerHarness('src/features/adventure/components/ZoneTransition')
   try {
     transition.draw({ zone: 'central' })
     assert.equal(noveltyUi.useStudentUi().lastMap, 'central')
@@ -2303,7 +2303,7 @@ test('every supplied mission node renders, including matrices, slides, questions
           },
         },
       }))
-      const { StudentActivityPlayer } = load(path.resolve('src/features/student-experience/player/StudentActivityPlayer.tsx'))
+      const { StudentActivityPlayer } = load(path.resolve('src/features/activities/components/StudentActivityPlayer.tsx'))
       const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(StudentActivityPlayer, { activity, onClose() {}, onNext() {} })))
       assert.ok(html.includes(activity.titulo), `${activity.id}/${node.id}`)
       assert.match(html, /aria-label="Salir de la actividad"/)
@@ -2379,10 +2379,10 @@ test('saved resources and counselor submissions appear in their respective desti
 
 
 test('live priority configuration updates table, header, summary and profile filters consistently', () => {
-  const { prioritySettingsStore, configuredCatalog, initialPrioritySettings } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const { prioritySettingsStore, configuredCatalog, initialPrioritySettings } = load(path.resolve('src/features/counselor/store/prioritySettings.ts'))
   const { studentProfiles } = load(path.resolve('src/data/demo/studentProfiles.ts'))
-  const { priorityProgress } = load(path.resolve('src/features/counselor-portal/profile/selectors.ts'))
-  const { projectStudents } = load(path.resolve('src/features/counselor-portal/data/StudentsExampleData.ts'))
+  const { priorityProgress } = load(path.resolve('src/features/student-tracking/lib/selectors.ts'))
+  const { projectStudents } = load(path.resolve('src/features/counselor/data/exampleStudents.ts'))
   const defaults = initialPrioritySettings()
   try {
     defaults.questionnaireIds.forEach(id => prioritySettingsStore.dispatch({ type: 'questionnaire', id, checked: id === 'entry' }))
@@ -2426,7 +2426,7 @@ test('Prioritarios starts read-only and shows one list through the tools and rec
 })
 
 test('family results require assigned route completion and honor sharing independently of priorities', () => {
-  const { prioritySettingsStore } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const { prioritySettingsStore } = load(path.resolve('src/features/counselor/store/prioritySettings.ts'))
   const completed = { parentJourney: completedParentJourney() }
   const route = '/parent/children/ejemplo-07/questionnaires/interests'
   const saved = prioritySettingsStore.getSnapshot()
@@ -2446,7 +2446,7 @@ test('family results require assigned route completion and honor sharing indepen
 })
 
 test('family home unites own route and shared child summary with no private student fields', () => {
-  const { parentChildren } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
+  const { parentChildren } = load(path.resolve('src/features/parent/data/parentPortal.ts'))
   const html = render('/parent/overview',{parentJourney: completedParentJourney()})
   assert.equal(parentChildren.length,1)
   assert.equal(parentChildren[0].id,'ejemplo-07')
@@ -2545,7 +2545,7 @@ test('classroom dashboard aggregates current profiles without student names or p
 
 
 test('classroom makes an empty priority configuration explicit without claiming completion', () => {
-  const { prioritySettingsStore } = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+  const { prioritySettingsStore } = load(path.resolve('src/features/counselor/store/prioritySettings.ts'))
   const saved = prioritySettingsStore.getSnapshot()
   try {
     prioritySettingsStore.dispatch({ type: 'replace', settings: { ...saved, questionnaireIds: [], recordIds: [] } })
@@ -2561,7 +2561,7 @@ test('classroom makes an empty priority configuration explicit without claiming 
 
 
 test('family presentation adapts flat profiles without generating a code or exposing choices', () => {
-  const { QuestionnaireBars } = load(path.resolve('src/features/counselor-portal/profile/Questionnaires.tsx'))
+  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/Questionnaires.tsx'))
   const { questionnaires, studentProfiles } = load(path.resolve('src/data/demo/studentProfiles.ts'))
   const student = studentProfiles.find(s=>s.id === 'ejemplo-06')
   const application = student.questionnaires.find(q=>q.questionnaireId === 'interests')
@@ -2572,7 +2572,7 @@ test('family presentation adapts flat profiles without generating a code or expo
 })
 
 test('family child selection replaces the entire summary and pending results stay private', () => {
-  const { parentChildren } = load(path.resolve('src/features/parent-portal/data/ParentPortalData.ts'))
+  const { parentChildren } = load(path.resolve('src/features/parent/data/parentPortal.ts'))
   parentChildren.push({id:'ejemplo-05',name:'Elena Espinoza León',initials:'EE',grade:'5.° de secundaria · A',school:'Colegio Nuevo Horizonte',progress:0})
   try {
     const html=render('/parent/overview?child=ejemplo-05',{parentJourney: completedParentJourney()})
@@ -2583,7 +2583,7 @@ test('family child selection replaces the entire summary and pending results sta
 })
 
 test('phase 8 path sequence respects both completion records without changing catalog or real thresholds', () => {
-  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const originalIds = fieldMissions.map(mission => mission.id)
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   let points = logic.getCaminoPoints(adventure, journey)
@@ -2630,7 +2630,7 @@ test('phase 8 direct links open blocked details instead of starting unavailable 
   assert.match(render('/student/missions?actividad=enc-mitos', { completedMissionIds: ['welcome'] }), /aria-label="Salir de la actividad"/)
   assert.match(render('/student/missions?actividad=mission-future&revision=1', { completedMissionIds: ['future'] }), /aria-label="Salir de la actividad"/)
   let params = new URLSearchParams('actividad=enc-mitos&revision=1')
-  const guard = immersivePlayerHarness('src/features/student-experience/map/CaminoScreen', {
+  const guard = immersivePlayerHarness('src/pages/student/CaminoScreen', {
     'react-router': { useSearchParams: () => [params, next => { params = next }] },
   })
   store.updateAdventure(() => store.createInitialAdventure())
@@ -2645,8 +2645,8 @@ test('phase 8 direct links open blocked details instead of starting unavailable 
 })
 
 test('phase 8 finish returns to the map with one continue action at every point of the path', () => {
-  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
-  const { FinishScreen } = load(path.resolve('src/features/student-experience/player/FinishScreen.tsx'))
+  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
+  const { FinishScreen } = load(path.resolve('src/features/activities/components/FinishScreen.tsx'))
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   for (const [completed, expected] of [[['welcome'], 'enc-mitos'], [['welcome', 'beliefs'], 'act-07'], [['welcome', 'beliefs', 'pregones'], 'mission-story'], [['welcome', 'beliefs', 'pregones', 'story'], undefined]]) {
     adventure.completedMissionIds = completed
@@ -2658,7 +2658,7 @@ test('phase 8 finish returns to the map with one continue action at every point 
     assert.doesNotMatch(html, /Revisar mis propias creencias|Seguir hacia|Volver al mapa/)
     assert.equal((html.match(/>Continuar</g) ?? []).length, 1)
   }
-  const player = immersivePlayerHarness('src/features/student-experience/player/StudentActivityPlayer')
+  const player = immersivePlayerHarness('src/features/activities/components/StudentActivityPlayer')
   const activity = journeyContent.activityById('mission-welcome')
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { [activity.id]: { estado: 'completada', nodoActualId: '$fin' } } }))
   const onClose = () => {}
@@ -2674,9 +2674,9 @@ test('phase 8 toggling the overlaid panel preserves a zoomed and panned map tran
   const previous = { ResizeObserver: context.ResizeObserver, setTimeout: context.setTimeout, clearTimeout: context.clearTimeout }
   context.ResizeObserver = class { observe() {} disconnect() {} }
   context.setTimeout = setTimeout; context.clearTimeout = clearTimeout
-  const canvas = immersivePlayerHarness('src/features/student-experience/map/MapCanvas')
+  const canvas = immersivePlayerHarness('src/features/adventure/components/MapCanvas')
   const ref = { current: null }
-  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const props = { ref, points: logic.getCaminoPoints(store.createInitialAdventure(), journeyLogic.initialJourney()), panelOpen: true, variant: 'route', onSelect() {}, onScaleChange() {}, backgroundImage: '', label: 'Mapa' }
   const mount = tree => { tree.props.ref.current = { getBoundingClientRect: () => ({ width: 1280, height: 752 }), addEventListener() {}, removeEventListener() {} } }
   const transform = tree => canvas.find(tree, element => element.props.className === 'sx-map-canvas').props.style.transform
@@ -2703,12 +2703,12 @@ test('phase 8 point links focus a known drawer and closing removes only its para
   const previousWindow = context.window
   context.window = { ...previousWindow, matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }) }
   let params = new URLSearchParams('punto=beliefs&keep=1'), focused
-  const layout = immersivePlayerHarness('src/features/student-experience/map/MapScreenLayout', {
+  const layout = immersivePlayerHarness('src/features/adventure/components/MapScreenLayout', {
     'react-router': { useNavigate: () => () => {}, useSearchParams: () => [params, next => { params = typeof next === 'function' ? next(params) : next }] },
-    '../overlays/overlay-context': { useStudentOverlays: () => ({ openGuide() {}, openCheckIn() {} }) },
+    '../context/overlayContext': { useStudentOverlays: () => ({ openGuide() {}, openCheckIn() {} }) },
   })
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
-  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const props = { zone: 'missions', adventure, journey, points: logic.getCaminoPoints(adventure, journey) }
   const mount = tree => {
     layout.find(tree, element => element.props.label === 'Aventura · Camino de misiones').props.ref.current = { focusPoint: id => { focused = id } }
@@ -2726,8 +2726,8 @@ test('phase 8 point links focus a known drawer and closing removes only its para
 })
 
 test('phase 8 map labels contain names only and use activity icons or a question mark', () => {
-  const { MapNode } = load(path.resolve('src/features/student-experience/map/MapNode.tsx'))
-  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const { MapNode } = load(path.resolve('src/features/adventure/components/MapNode.tsx'))
+  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   const points = [...logic.getCaminoPoints(adventure, journey), ...logic.getCiudadPoints(adventure, journey)]
   for (const [id, icon] of [['welcome', 'book-open'], ['beliefs', 'book-open'], ['story', 'feather'], ['compass', 'clipboard-list'], ['forest-fire', 'building-2'], ['city', 'key-round']]) {
@@ -2744,7 +2744,7 @@ test('phase 8 map labels contain names only and use activity icons or a question
 })
 
 test('phase 8 available panel caps four pending implemented actions and links to the full list', () => {
-  const { AdventurePanel } = load(path.resolve('src/features/student-experience/map/AdventurePanel.tsx'))
+  const { AdventurePanel } = load(path.resolve('src/features/adventure/components/AdventurePanel.tsx'))
   const points = Array.from({ length: 7 }, (_, index) => ({ id: 'p' + index, title: 'Disponible ' + index, subtitle: 'En progreso', status: 'available', actionEnabled: true }))
   points.push({ ...points[0], id: 'city' }, { ...points[0], id: 'done', status: 'completed' }, { ...points[0], id: 'blocked', status: 'locked' }, { ...points[0], id: 'not-implemented', actionEnabled: false })
   const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(AdventurePanel, {
@@ -2758,7 +2758,7 @@ test('phase 8 available panel caps four pending implemented actions and links to
 test('phase 8 activities combine zones, classify publications and return to the matching map', () => {
   store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: ['welcome'], solvedCaseIds: ['river-mystery'] }))
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), progress: { 'enc-mitos': { estado: 'en_curso' } } }))
-  const view = immersivePlayerHarness('src/features/student-experience/modules/StudentActivitiesView')
+  const view = immersivePlayerHarness('src/pages/student/StudentActivitiesView')
   let tree = view.draw({})
   let entries = view.find(tree, element => element.props.className === 'sx-activities-list').props.children
   assert.deepEqual(Array.from(entries, element => element.key), ['beliefs', 'forest-fire', 'mara-test'])
@@ -2799,7 +2799,7 @@ test('phase 8 every novelty kind retains its existing destination and unread two
   store.updateAdventure(() => ({ ...store.createInitialAdventure(), completedMissionIds: fieldMissions.map(mission => mission.id), solvedCaseIds: ['forest-fire'] }))
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'] }))
   resetNoveltyUi()
-  const menu = immersivePlayerHarness('src/features/student-experience/overlays/NoveltiesMenu'), tree = menu.draw({})
+  const menu = immersivePlayerHarness('src/features/adventure/components/overlays/NoveltiesMenu'), tree = menu.draw({})
   for (const [title, href] of [
     ['Nueva ficha disponible', '/student/resources'],
     ['Nueva insignia disponible', '/student/profile?section=passport'],
@@ -2817,7 +2817,7 @@ test('phase 8 every novelty kind retains its existing destination and unread two
 })
 
 test('PNG maps fill their triple-sized worlds and cover the entire viewport at minimum zoom', () => {
-  const geometry = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  const geometry = load(path.resolve('src/features/adventure/lib/geometry.ts'))
   const { canvasSize, imageSize, initialScale, getMinimumScale, zoomTransform, clampTransform, mapPosition } = geometry
   assert.equal(canvasSize.width, 5016); assert.equal(canvasSize.height, 2823)
   assert.equal(initialScale, .5)
@@ -2854,7 +2854,7 @@ test('PNG maps fill their triple-sized worlds and cover the entire viewport at m
 })
 
 test('phase 10 focusing boundary points never reveals background beside the overlaid panel', () => {
-  const { focusTransform, canvasSize, getMinimumScale } = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  const { focusTransform, canvasSize, getMinimumScale } = load(path.resolve('src/features/adventure/lib/geometry.ts'))
   for (const bounds of [{ width: 1280, height: 752 }, { width: 360, height: 752 }, { width: 1907, height: 865 }]) {
     for (const scale of [getMinimumScale(bounds), .5, 1.4]) {
       for (const panelOpen of [false, true]) {
@@ -2873,10 +2873,10 @@ test('phase 9 initial view is centered at 50 percent and panel toggles preserve 
   const previous = { ResizeObserver: context.ResizeObserver, setTimeout: context.setTimeout, clearTimeout: context.clearTimeout }
   context.ResizeObserver = class { observe() {} disconnect() {} }
   context.setTimeout = setTimeout; context.clearTimeout = clearTimeout
-  const { getMinimumScale, canvasSize } = load(path.resolve('src/features/student-experience/map/geometry.ts'))
+  const { getMinimumScale, canvasSize } = load(path.resolve('src/features/adventure/lib/geometry.ts'))
   try {
     for (const variant of ['route', 'open']) {
-      const canvas = immersivePlayerHarness('src/features/student-experience/map/MapCanvas'), ref = { current: null }
+      const canvas = immersivePlayerHarness('src/features/adventure/components/MapCanvas'), ref = { current: null }
       const bounds = { width: 1280, height: 752 }
       let minimum
       const props = { ref, points: [], panelOpen: true, variant, onSelect() {}, onScaleChange() {}, onMinimumScaleChange: value => { minimum = value }, backgroundImage: '', label: 'Mapa' }
@@ -2900,7 +2900,7 @@ test('phase 9 initial view is centered at 50 percent and panel toggles preserve 
 })
 
 test('phase 9 zoom controls use actual percentages and the viewport minimum', () => {
-  const zoom = immersivePlayerHarness('src/features/student-experience/map/ZoomControls')
+  const zoom = immersivePlayerHarness('src/features/adventure/components/ZoomControls')
   let requested
   const props = { scale: .5, minimumScale: .06, onScale: value => { requested = value }, onZoom() {}, onCenter() {} }
   let tree = zoom.draw(props)
@@ -2915,10 +2915,10 @@ test('phase 9 zoom controls use actual percentages and the viewport minimum', ()
 })
 
 test('phase 9 panel has five direct links, a compact next-step action and the real traveler rank', () => {
-  const panel = immersivePlayerHarness('src/features/student-experience/map/AdventurePanel', {
-    '../overlays/checkIn': { useCheckInDay() {}, getTodayCheckIn: () => undefined },
+  const panel = immersivePlayerHarness('src/features/adventure/components/AdventurePanel', {
+    '../lib/checkIn': { useCheckInDay() {}, getTodayCheckIn: () => undefined },
   })
-  const logic = load(path.resolve('src/features/student-experience/map/mapPoints.ts'))
+  const logic = load(path.resolve('src/features/adventure/lib/mapPoints.ts'))
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
   const points = logic.getCaminoPoints(adventure, journey)
   let selected
@@ -2946,7 +2946,7 @@ test('separate student diary preserves free-entry saving and editing without cha
   store.updateAdventure(() => ({ ...store.createInitialAdventure(), journalOnboardingSeen: true }))
   const before = store.useAdventure()
   const signalBefore = JSON.stringify(before.readinessCheckIns)
-  const diary = immersivePlayerHarness('src/features/student-experience/modules/StudentJournalView', {
+  const diary = immersivePlayerHarness('src/pages/student/StudentJournalView', {
     '@/hooks/useLumiNow': { useLumiNow: () => new Date() },
     '@/hooks/useReturnFocus': { useReturnFocus: () => ({}) },
     'react-router': { useSearchParams: () => [new URLSearchParams()] },
@@ -2978,15 +2978,15 @@ test('separate student diary preserves free-entry saving and editing without cha
 })
 
 test('separate signal history reuses check-in editing and keyboard point selection without private entries', () => {
-  const checkIn = load(path.resolve('src/features/student-experience/overlays/checkIn.ts'))
+  const checkIn = load(path.resolve('src/features/adventure/lib/checkIn.ts'))
   store.updateAdventure(() => store.createInitialAdventure())
   checkIn.saveTodayCheckIn(7)
   const before = store.useAdventure()
   const today = checkIn.getTodayCheckIn(before)
   let opened = 0
-  const history = immersivePlayerHarness('src/features/student-experience/modules/StudentSignalsView', {
-    '../overlays/checkIn': { ...checkIn, useCheckInDay() {} },
-    '../overlays/overlay-context': { useStudentOverlays: () => ({ openCheckIn: () => opened++ }) },
+  const history = immersivePlayerHarness('src/pages/student/StudentSignalsView', {
+    '@/features/adventure/lib/checkIn': { ...checkIn, useCheckInDay() {} },
+    '@/features/adventure/context/overlayContext': { useStudentOverlays: () => ({ openCheckIn: () => opened++ }) },
   })
   let tree = history.draw({})
   const edit = history.find(tree, element => history.text(element) === 'Cambiar mi señal' && element.props.onClick)
@@ -3066,7 +3066,7 @@ test('discovery profile exposes the three chapters and keeps its passport route'
 
 test('Helena seals protect results and reveal a labeled example without changing real progress', () => {
   const d = load(path.resolve('src/store/discoveryStore.ts'))
-  const pages = load(path.resolve('src/features/student-experience/profile/helenaPages.ts'))
+  const pages = load(path.resolve('src/features/discovery/lib/helenaPages.ts'))
   const savedD = d.getDiscovery(), savedJ = journeyStore.useJourney()
   try {
     d.updateDiscovery(() => d.initialDiscoveryState())
@@ -3084,14 +3084,14 @@ test('Helena seals protect results and reveal a labeled example without changing
     html = render('/student/profile/helena')
     assert.match(html, /Descifrada/); assert.match(html, /Ocupaciones afines/); assert.match(html, /Este ejemplo no es tu resultado personal/)
     assert.equal(journeyStore.useJourney().results.length, 0)
-    const unlocks = load(path.resolve('src/features/student-experience/overlays/unlocks.ts'))
+    const unlocks = load(path.resolve('src/features/adventure/lib/unlocks.ts'))
     assert.equal(unlocks.getUnlocks(store.createInitialAdventure(), empty, d.getDiscovery()).filter(u => u.id === 'plans:intereses').length, 1)
   } finally { d.updateDiscovery(() => savedD); journeyStore.updateJourney(() => savedJ) }
 })
 
 
 test('discovery plans compute completeness, preserve archives and honor priority and the three-plan limit', () => {
-  const plans = load(path.resolve('src/features/student-experience/plans/plans.ts'))
+  const plans = load(path.resolve('src/features/discovery/lib/plans.ts'))
   const { createDecisionSheet } = load(path.resolve('src/types/decisions.ts'))
   const first = createDecisionSheet('Psicología', 'psychology')
   assert.equal(plans.getPlanCompleteness(first), 0)
@@ -3132,7 +3132,7 @@ test('discovery research gates access, exposes guide states and retains classroo
 
 test('discovery publishing and positive reactions are validated, private and idempotent', () => {
   const d = load(path.resolve('src/store/discoveryStore.ts'))
-  const r = load(path.resolve('src/features/student-experience/research/research.ts'))
+  const r = load(path.resolve('src/features/discovery/lib/research.ts'))
   const saved = d.getDiscovery(), savedA = store.useAdventure()
   try {
     d.updateDiscovery(() => ({ ...d.initialDiscoveryState(), research: { occupationId: 'paramedic', before: 'Mi idea inicial', ownQuestions: ['¿Cómo te preparas?'], guideReadyAt: '2026-10-04T15:00:00Z' } }))
@@ -3156,8 +3156,8 @@ test('discovery publishing and positive reactions are validated, private and ide
 
 
 test('discovery atlas covers existing IDs, symmetric relations and gated affinity', () => {
-  const data = load(path.resolve('src/features/student-experience/catalog/catalogDetails.ts'))
-  const selectors = load(path.resolve('src/features/student-experience/catalog/catalogSelectors.ts'))
+  const data = load(path.resolve('src/features/discovery/lib/catalogDetails.ts'))
+  const selectors = load(path.resolve('src/features/discovery/lib/catalogSelectors.ts'))
   const catalog = load(path.resolve('src/data/catalog/occupations.ts'))
   assert.equal(data.occupationDetails.length, catalog.occupationCatalog.length)
   assert.equal(data.careerDetails.length, 6)
@@ -3208,7 +3208,7 @@ test('discovery guide resumes its exact step and asks before replacing saved wor
     '@/context/occupationExplorationContext': { useOccupationExplorationContext: () => e.getExploration() },
     'react-router': { Link: 'a', useSearchParams: () => [params, update => { params = update(params) }] },
   }
-  let page = immersivePlayerHarness('src/features/student-experience/research/ResearchGuideView', overrides)
+  let page = immersivePlayerHarness('src/pages/student/ResearchGuideView', overrides)
   try {
     store.updateAdventure(() => ({ ...store.createInitialAdventure(), solvedCaseIds: ['forest-fire'] }))
     d.updateDiscovery(() => ({ ...d.initialDiscoveryState(), research: { occupationId: 'paramedic', before: '', ownQuestions: [], guideStep: 0 } }))
@@ -3216,7 +3216,7 @@ test('discovery guide resumes its exact step and asks before replacing saved wor
     assert.equal(page.button(tree, 'Seguir con las preguntas').props.disabled, true)
     page.find(tree, el => el.type === 'textarea').props.onChange({ target: { value: 'Creo que atiende emergencias y quiero conocer su rutina.' } })
     tree = page.draw({}); page.button(tree, 'Seguir con las preguntas').props.onClick()
-    page.dispose(); page = immersivePlayerHarness('src/features/student-experience/research/ResearchGuideView', overrides)
+    page.dispose(); page = immersivePlayerHarness('src/pages/student/ResearchGuideView', overrides)
     tree = page.draw({}); assert.equal(page.find(tree, el => el.type?.name === 'Parchment').props.title, 'Mi lista de preguntas')
     assert.equal(page.button(tree, 'Terminar mi guion').props.disabled, true)
     page.find(tree, el => el.type === 'input' && el.props.onKeyDown).props.onChange({ target: { value: '¿Qué fue lo más difícil al empezar?' } })
@@ -3244,7 +3244,7 @@ test('discovery plan actions create explicitly, reorder and archive only on conf
   const d = load(path.resolve('src/store/discoveryStore.ts'))
   const e = load(path.resolve('src/store/explorationStore.ts'))
   const savedD = d.getDiscovery(), savedE = e.getExploration()
-  const page = immersivePlayerHarness('src/features/student-experience/plans/StudentPlansView', {
+  const page = immersivePlayerHarness('src/pages/student/StudentPlansView', {
     '@/hooks/useReturnFocus': { useReturnFocus: () => ({}) },
     '@/context/occupationExplorationContext': { useOccupationExplorationContext: () => ({ ...e.getExploration(), setDecisionSheets: e.setDecisionSheets }) },
     'react-router': { Link: 'a' },
@@ -3275,7 +3275,7 @@ test('discovery research tabs accept boundary keys and detail navigation uses hi
   const d = load(path.resolve('src/store/discoveryStore.ts'))
   const saved = d.getDiscovery(), savedA = store.useAdventure()
   let params = new URLSearchParams('keep=1'), focused
-  const page = immersivePlayerHarness('src/features/student-experience/research/StudentResearchView', {
+  const page = immersivePlayerHarness('src/pages/student/StudentResearchView', {
     'react-router': { Link: 'a', useNavigate: () => () => {}, useSearchParams: () => [params, update => { params = update(params) }] },
   })
   const event = key => ({ key, preventDefault() {}, currentTarget: { parentElement: { querySelectorAll: () => [0,1].map(i => ({ focus: () => { focused = i } })) } } })
@@ -3299,7 +3299,7 @@ test('discovery research tabs accept boundary keys and detail navigation uses hi
 
 
 test('Helena prefers complete valid real results over examples and invalid older results', () => {
-  const file = path.resolve('src/features/student-experience/profile/helenaPages.ts')
+  const file = path.resolve('src/features/discovery/lib/helenaPages.ts')
   const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const ids = Array.from({ length: 14 }, (_, i) => `act-tip-${String(i + 1).padStart(2, '0')}`)
   const dimensions = ['Realista','Investigador','Artístico','Social','Emprendedor','Convencional'].map(name => ({ id: name[0], nombre: name }))
@@ -3331,7 +3331,7 @@ test('Helena prefers complete valid real results over examples and invalid older
 
 
 test('collapsed student map reserves its strip and keeps the recommended point visible', () => {
- const g=load(path.resolve('src/features/student-experience/map/geometry.ts'))
+ const g=load(path.resolve('src/features/adventure/lib/geometry.ts'))
  const bounds={width:1280,height:800},point={x:500,y:300},current={x:0,y:0,scale:.5}
  for(const inset of [304,72,0]){
   const center=g.visibleCenter(bounds,false,inset)
@@ -3353,7 +3353,7 @@ test('new backpack separates provisions, protects locked identities and navigate
  const resources=load(path.resolve('src/features/backpack/lib/travelerResources.ts')).getTravelResources()
  for(const voice of resources.filter(r=>r.kind==='testimonial'))assert.ok(!html.includes(voice.author))
  let params=new URLSearchParams('kind=sheet&keep=1'),navigated
- const page=immersivePlayerHarness('src/features/student-experience/modules/StudentBackpackView',{'react-router':{useNavigate:()=>href=>{navigated=href},useSearchParams:()=>[params,update=>{params=update(params)}]}})
+ const page=immersivePlayerHarness('src/pages/student/StudentBackpackView',{'react-router':{useNavigate:()=>href=>{navigated=href},useSearchParams:()=>[params,update=>{params=update(params)}]}})
  try{
   let tree=page.draw({})
   const tab=(tree,id)=>page.find(tree,e=>e.props.id===`sx-backpack-tab-${id}`)
@@ -3372,7 +3372,7 @@ test('new backpack separates provisions, protects locked identities and navigate
 
 
 test('Lumi bond counts Lima days without loss and opens memories at exact boundaries', () => {
- const {getLumiBond}=load(path.resolve('src/features/student-experience/journal/lumiBond.ts'))
+ const {getLumiBond}=load(path.resolve('src/features/journal/lib/lumiBond.ts'))
  const first={entryId:'first',createdAt:'2026-09-01T05:00:00Z'}
  const later={entryId:'later',createdAt:'2026-09-11T05:00:00Z'}
  assert.equal(getLumiBond([first,later],new Date('2026-10-01')).conversations,2)
@@ -3392,7 +3392,7 @@ test('journal uses conversations, inline onboarding and private titled saving wi
  for(const text of ['Amistad con Lumi','Recuerdos de Lumi','Lumi, hoy quiero contarte','Lo que le has contado a Lumi','La amistad nunca se pierde'])assert.ok(html.includes(text))
  assert.doesNotMatch(html,/puntos de amistad|baja 1 punto|role="dialog"/)
  const intro=render('/student/journal',{journalOnboardingSeen:false});assert.match(intro,/Un espacio para ti y Lumi/);assert.doesNotMatch(intro,/role="dialog"/)
- const page=immersivePlayerHarness('src/features/student-experience/modules/StudentJournalView',{'react-router':{useSearchParams:()=>[new URLSearchParams()]},'@/hooks/useLumiNow':{useLumiNow:()=>new Date()},'@/hooks/useReturnFocus':{useReturnFocus:()=>({})}})
+ const page=immersivePlayerHarness('src/pages/student/StudentJournalView',{'react-router':{useSearchParams:()=>[new URLSearchParams()]},'@/hooks/useLumiNow':{useLumiNow:()=>new Date()},'@/hooks/useReturnFocus':{useReturnFocus:()=>({})}})
  const before=store.useAdventure()
  try{
   store.updateAdventure(()=>({...store.createInitialAdventure(),journalOnboardingSeen:true}))
@@ -3412,7 +3412,7 @@ test('journal uses conversations, inline onboarding and private titled saving wi
 
 test('passport selection respects explicit emptiness, earned badges, order and stable observed dates', () => {
  const d=load(path.resolve('src/store/discoveryStore.ts'))
- const p=load(path.resolve('src/features/student-experience/profile/passport.ts'))
+ const p=load(path.resolve('src/features/discovery/lib/passport.ts'))
  const adventure={...store.createInitialAdventure(),completedMissionIds:fieldMissions.map(m=>m.id),solvedCaseIds:['forest-fire']}
  let state=d.initialDiscoveryState()
  assert.deepEqual(Array.from(p.getProfileBadges(adventure,state),b=>b.code),['I1','I2','I3'])
@@ -3442,7 +3442,7 @@ test('passport hides pending meanings, respects the profile limit and starts wit
  const d=load(path.resolve('src/store/discoveryStore.ts'))
  const adventure={...store.createInitialAdventure(),completedMissionIds:fieldMissions.map(m=>m.id),solvedCaseIds:['forest-fire']}
  const groups=load(path.resolve('src/features/discovery/lib/achievements.ts')).getAchievementGroups(adventure)
- const page=immersivePlayerHarness('src/features/student-experience/profile/PassportBadgeDialog',{'@/store/adventureStore':{useAdventure:()=>adventure},'@/store/discoveryStore':{useDiscovery:()=>d.initialDiscoveryState()},'@/hooks/useReturnFocus':{useReturnFocus:()=>({})}})
+ const page=immersivePlayerHarness('src/features/discovery/components/PassportBadgeDialog',{'@/store/adventureStore':{useAdventure:()=>adventure},'@/store/discoveryStore':{useDiscovery:()=>d.initialDiscoveryState()},'@/hooks/useReturnFocus':{useReturnFocus:()=>({})}})
  try{
   const pending=groups.flatMap(g=>g.items).find(b=>!b.done)
   let tree=page.draw({badge:pending,group:'Prueba',groupIndex:1,onClose(){}})
@@ -3477,9 +3477,9 @@ test('discovery badge migration survives reload, tab synchronization and failed 
 test('reading a Lumi memory removes its new marker and novelty, preserves parameters and survives UI reload', () => {
  const ui=load(path.resolve('src/store/studentUiStore.ts'))
  let params=new URLSearchParams('memory=1&keep=1'),state=ui.initialStudentUiState()
- const {getLumiBond}=load(path.resolve('src/features/student-experience/journal/lumiBond.ts'))
+ const {getLumiBond}=load(path.resolve('src/features/journal/lib/lumiBond.ts'))
  const bond=getLumiBond([{entryId:'conversation',createdAt:'2026-09-01T12:00:00Z'}],new Date('2026-10-04T12:00:00Z'))
- const page=immersivePlayerHarness('src/features/student-experience/journal/LumiBondPanel',{'react-router':{useSearchParams:()=>[params,update=>{params=update(params)}]},'@/store/studentUiStore':{useStudentUi:()=>state,updateStudentUi:update=>{state=update(state)}}})
+ const page=immersivePlayerHarness('src/features/journal/components/LumiBondPanel',{'react-router':{useSearchParams:()=>[params,update=>{params=update(params)}]},'@/store/studentUiStore':{useStudentUi:()=>state,updateStudentUi:update=>{state=update(state)}}})
  try{
   page.draw({bond});let tree=page.draw({bond})
   assert.equal(state.seenLumiMemories.join(),'1');assert.ok(state.seenUnlockIds.includes('lumi-memory:1'))
@@ -3495,7 +3495,7 @@ test('reading a Lumi memory removes its new marker and novelty, preserves parame
  const exp={};vm.runInContext(`(function(require,exports){${js}\n})`,sandbox)(name=>name==='react'?{useSyncExternalStore:(_,snapshot)=>snapshot()}:load(path.resolve('src/lib/studentViews.ts')),exp)
  assert.equal(exp.useStudentUi().seenLumiMemories.join(),'1');assert.ok(exp.useStudentUi().seenUnlockIds.includes('lumi-memory:1'))
  raw=JSON.stringify({...state,seenLumiMemories:[1,2]});listener({key:'ov.student-ui.v1'});assert.equal(exp.useStudentUi().seenLumiMemories.join(),'1,2')
- const unlocks=load(path.resolve('src/features/student-experience/overlays/unlocks.ts')).getUnlocks({...store.createInitialAdventure(),lumiRegistrations:[{entryId:'conversation',createdAt:'2026-09-01T12:00:00Z'}]},journeyLogic.initialJourney())
+ const unlocks=load(path.resolve('src/features/adventure/lib/unlocks.ts')).getUnlocks({...store.createInitialAdventure(),lumiRegistrations:[{entryId:'conversation',createdAt:'2026-09-01T12:00:00Z'}]},journeyLogic.initialJourney())
  const memory=unlocks.find(u=>u.kind==='memory');assert.equal(memory.id,'lumi-memory:1');assert.equal(memory.href,'/student/journal?memory=1')
 })
 
@@ -3510,7 +3510,7 @@ test('journal preserves incoming activity, family and event context while requir
  try{
   for(const [query,title,linked,prompt] of cases){
    store.updateAdventure(()=>({...store.createInitialAdventure(),journalOnboardingSeen:false}))
-   const page=immersivePlayerHarness('src/features/student-experience/modules/StudentJournalView',{'react-router':{useSearchParams:()=>[new URLSearchParams(query)]},'@/hooks/useLumiNow':{useLumiNow:()=>new Date()},'@/hooks/useReturnFocus':{useReturnFocus:()=>({})}})
+   const page=immersivePlayerHarness('src/pages/student/StudentJournalView',{'react-router':{useSearchParams:()=>[new URLSearchParams(query)]},'@/hooks/useLumiNow':{useLumiNow:()=>new Date()},'@/hooks/useReturnFocus':{useReturnFocus:()=>({})}})
    try{
     let tree=page.draw({}),editor=page.find(tree,e=>e.type?.name==='JournalEditor')
     assert.equal(editor.props.title,title);assert.match(editor.props.prompt,prompt)
@@ -3532,14 +3532,14 @@ test('journal preserves incoming activity, family and event context while requir
 test('memory navigation opens the journal home from its editor and does not consume unread memories early', () => {
  let params=new URLSearchParams()
  const fixture={...store.createInitialAdventure(),journalOnboardingSeen:true,lumiRegistrations:[{entryId:'conversation',createdAt:'2026-09-01T12:00:00Z'}]}
- const page=immersivePlayerHarness('src/features/student-experience/modules/StudentJournalView',{'react-router':{useSearchParams:()=>[params]},'@/store/adventureStore':{useAdventure:()=>fixture},'@/hooks/useLumiNow':{useLumiNow:()=>new Date('2026-10-04T12:00:00Z')},'@/hooks/useReturnFocus':{useReturnFocus:()=>({})}})
+ const page=immersivePlayerHarness('src/pages/student/StudentJournalView',{'react-router':{useSearchParams:()=>[params]},'@/store/adventureStore':{useAdventure:()=>fixture},'@/hooks/useLumiNow':{useLumiNow:()=>new Date('2026-10-04T12:00:00Z')},'@/hooks/useReturnFocus':{useReturnFocus:()=>({})}})
  try{
   let tree=page.draw({});page.find(tree,e=>e.type?.name==='JournalHome').props.onNew();tree=page.draw({});assert.ok(page.find(tree,e=>e.type?.name==='JournalEditor'))
   params=new URLSearchParams('memory=4');page.draw({});tree=page.draw({});assert.ok(page.find(tree,e=>e.type?.name==='JournalEditor'))
   params=new URLSearchParams('memory=1');page.draw({});tree=page.draw({});assert.ok(page.find(tree,e=>e.type?.name==='JournalHome'))
  }finally{page.dispose()}
  const ui=load(path.resolve('src/store/studentUiStore.ts')),saved=ui.useStudentUi()
- const menu=immersivePlayerHarness('src/features/student-experience/overlays/NoveltiesMenu',{'@/store/adventureStore':{useAdventure:()=>fixture}})
+ const menu=immersivePlayerHarness('src/features/adventure/components/overlays/NoveltiesMenu',{'@/store/adventureStore':{useAdventure:()=>fixture}})
  try{
   ui.updateStudentUi(()=>({...ui.initialStudentUiState(),initialized:true}))
   const tree=menu.draw({}),link=menu.find(tree,e=>e.props.to==='/student/journal?memory=1')
@@ -3560,7 +3560,7 @@ test('shared login accepts arbitrary credentials, toggles visibility and waits b
     assert.doesNotMatch(html, /¿Qué perfil quieres ver\?/)
   }
   let entered = 0
-  const login = immersivePlayerHarness('src/features/access/LoginScreen')
+  const login = immersivePlayerHarness('src/features/auth/components/LoginScreen')
   const props = { onEnter() { entered++ } }
   try {
     let tree = login.draw(props)
@@ -3585,7 +3585,7 @@ test('shared login accepts arbitrary credentials, toggles visibility and waits b
 })
 
 test('demo access persists only its session flag, reloads and signs out without storing credentials', () => {
-  const source = readFileSync('src/features/access/demoAccess.ts', 'utf8')
+  const source = readFileSync('src/features/auth/lib/demoAccess.ts', 'utf8')
   const js = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const values = new Map()
   let denied = false
@@ -3621,9 +3621,9 @@ test('demo access persists only its session flag, reloads and signs out without 
 
 test('shared access gate requires login before profiles and all three portals', () => {
   let pathname = '/profiles', active = false
-  const gate = immersivePlayerHarness('src/features/access/DemoAccessGate', {
+  const gate = immersivePlayerHarness('src/features/auth/components/DemoAccessGate', {
     'react-router': { ...nativeRequire('react-router'), useLocation: () => ({ pathname }) },
-    './demoAccess': { useDemoAccess: () => active },
+    '../lib/demoAccess': { useDemoAccess: () => active },
   })
   const children = React.createElement('span', {}, 'Contenido de la plataforma')
   try {
@@ -3690,7 +3690,7 @@ test('daily question opening persists the Lima date, focuses Respond and passes 
   const { getDailyJournalPrompt } = load(path.resolve('src/data/content/journalPrompts.ts'))
   let ui = initialStudentUiState(), adventure = { journal: [] }, response, read, focused = 0
   const now = new Date('2026-10-08T04:59:00Z'), daily = getDailyJournalPrompt(now)
-  const page = immersivePlayerHarness('src/features/student-experience/journal/DailyQuestionCard', {
+  const page = immersivePlayerHarness('src/features/journal/components/DailyQuestionCard', {
     '@/store/studentUiStore': { useStudentUi: () => ui, updateStudentUi: update => { ui = update(ui) } },
     '@/store/adventureStore': { useAdventure: () => adventure },
   })
@@ -3727,10 +3727,10 @@ test('daily question opening persists the Lima date, focuses Respond and passes 
 test('daily question answers use the current journal editor, fixed tags and ordinary conversation saving', () => {
   const { getDailyJournalPrompt } = load(path.resolve('src/data/content/journalPrompts.ts'))
   const { lumiDayKey } = load(path.resolve('src/lib/lumiFriendship.ts'))
-  const { getLumiBond } = load(path.resolve('src/features/student-experience/journal/lumiBond.ts'))
+  const { getLumiBond } = load(path.resolve('src/features/journal/lib/lumiBond.ts'))
   const now = new Date(), daily = getDailyJournalPrompt(now), linkedActivityId = `daily-prompt-${lumiDayKey(now)}`
   const before = store.useAdventure()
-  const page = immersivePlayerHarness('src/features/student-experience/modules/StudentJournalView', {
+  const page = immersivePlayerHarness('src/pages/student/StudentJournalView', {
     'react-router': { useSearchParams: () => [new URLSearchParams()] },
     '@/hooks/useLumiNow': { useLumiNow: () => now },
     '@/hooks/useReturnFocus': { useReturnFocus: () => ({}) },
@@ -3777,7 +3777,7 @@ test('daily question answers use the current journal editor, fixed tags and ordi
 
 test('daily question is omitted when its source throws or returns an empty prompt', () => {
   for (const getDailyJournalPrompt of [() => { throw Error('unavailable') }, () => ({ prompt: '  ', tags: [] })]) {
-    const page = immersivePlayerHarness('src/features/student-experience/journal/DailyQuestionCard', {
+    const page = immersivePlayerHarness('src/features/journal/components/DailyQuestionCard', {
       '@/data/content/journalPrompts': { getDailyJournalPrompt },
     })
     try { assert.equal(page.draw({ now: new Date(), onRespond() {}, onOpenAnswer() {} }), null) }

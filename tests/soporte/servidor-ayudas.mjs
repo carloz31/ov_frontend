@@ -138,7 +138,7 @@ export function fixtureServidor({
   function load(file) {
     const full = path.resolve(file)
     assert.ok(
-      !/[\\/]features[\\/](parent-portal|counselor-portal)[\\/]/.test(full),
+      !/[\\/]features[\\/](parent|counselor)[\\/]/.test(full),
       'No se leen las áreas protegidas',
     )
     if (cache.has(full)) return cache.get(full)

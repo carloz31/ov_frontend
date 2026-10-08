@@ -39,7 +39,7 @@ function fixture(saved = {}, mockRouter = false, desktop = false) {
   function load(file) {
     const full = path.resolve(file)
     assert.ok(
-      !/[\\/]features[\\/](parent-portal|counselor-portal)[\\/]/.test(full),
+      !/[\\/]features[\\/](parent|counselor)[\\/]/.test(full),
       'Protected portals are never loaded by this suite',
     )
     if (cache.has(full)) return cache.get(full)
@@ -155,7 +155,7 @@ function named(tree, name) {
 test('all 15 contacts resolve to unique catalog entries and 13 pending details contain no invented profiles', () => {
   const { f, data } = setup()
   const catalog = f.load('src/data/catalog/occupations.ts').occupationCatalog
-  const { occupationDetails } = f.load('src/features/student-experience/catalog/catalogDetails.ts')
+  const { occupationDetails } = f.load('src/features/discovery/lib/catalogDetails.ts')
   assert.equal(new Set(catalog.map((o) => o.id)).size, catalog.length)
   assert.equal(data.forestFireProfessionals.length, 15)
   const details = data.forestFireProfessionals.map((p) =>
@@ -170,7 +170,7 @@ test('all 15 contacts resolve to unique catalog entries and 13 pending details c
     assert.deepEqual(copy(o.careerIds), [])
     assert.ok(Object.values(o.interestScores).every((v) => v === 0))
   }
-  const selectors = f.load('src/features/student-experience/catalog/catalogSelectors.ts')
+  const selectors = f.load('src/features/discovery/lib/catalogSelectors.ts')
   assert.equal(selectors.isAffine('psychologist', ['intereses']), undefined)
 })
 
@@ -239,7 +239,7 @@ test('scene cover, bounds, pointer threshold and keyboard reveal work in both vi
 
 test('listen opens individual clues, suppresses clicks after dragging, and retains dismissed phase help', () => {
   const f = fixture(),
-    { ListenScreen } = f.load('src/features/occupation-exploration/components/ForestFireScene.tsx')
+    { ListenScreen } = f.load('src/features/cases/components/ForestFireScene.tsx')
   const phase = f.load('src/data/content/forestFireCase.ts').forestFirePhases[0]
   const heard = []
   const props = {
@@ -288,7 +288,7 @@ test('listen opens individual clues, suppresses clicks after dragging, and retai
 test('contact drag and plus share assignment, desktop resume replaces the list, mobile has no drag, and zero disables adding', () => {
   for (const desktop of [true, false]) {
     const f = fixture({}, false, desktop),
-      { ProfessionalDirectory } = f.load('src/features/occupation-exploration/components/ForestFireProfessionalPanel.tsx')
+      { ProfessionalDirectory } = f.load('src/features/cases/components/ForestFireProfessionalPanel.tsx')
     const added = [],
       dragging = []
     const props = {
@@ -331,7 +331,7 @@ test('contact drag and plus share assignment, desktop resume replaces the list, 
 
 test('case exit follows the activity form and distinguishes discarded attempts from saved results', () => {
   const f = fixture(),
-    { ForestFireCaseHeader } = f.load('src/features/occupation-exploration/components/ForestFireCaseHeader.tsx')
+    { ForestFireCaseHeader } = f.load('src/features/cases/components/ForestFireCaseHeader.tsx')
   let exited = false
   const props = {
     label: 'Emergencia',
@@ -463,7 +463,7 @@ test('drawer distinguishes unattempted, zero-score, incomplete and passed attemp
   assert.equal(logic.getForestFireCaseStatus(state).badge, 'Disponible')
   state.caseBestScores['forest-fire'] = 0
   assert.equal(logic.getForestFireCaseStatus(state).badge, 'En progreso')
-  const { ForestFireCaseProgress } = f.load('src/features/occupation-exploration/components/ForestFireCaseProgress.tsx')
+  const { ForestFireCaseProgress } = f.load('src/features/cases/components/ForestFireCaseProgress.tsx')
   assert.match(
     renderToStaticMarkup(React.createElement(ForestFireCaseProgress, { adventure: state })),
     /Te faltan 10 puntos/,
@@ -490,7 +490,7 @@ test('both map drawers expose the same status, score and action for every case s
     if (passed) store.completeCase('forest-fire')
     const state = store.useAdventure(),
       journey = f.load('src/store/journeyStore.ts').useJourney()
-    const map = f.load('src/features/student-experience/map/mapPoints.ts')
+    const map = f.load('src/features/adventure/lib/mapPoints.ts')
     const point = map.getCiudadPoints(state, journey).find((p) => p.id === 'forest-fire')
     const details = map.getPointDetails(point, state, journey)
     assert.equal(details.badge, badge)
@@ -501,7 +501,7 @@ test('both map drawers expose the same status, score and action for every case s
 
 test('resume uses catalog fields and separate tab links, with a safe missing-entry fallback', () => {
   const { f, data } = setup()
-  const { ProfessionalResume } = f.load('src/features/occupation-exploration/components/ForestFireProfessionalPanel.tsx')
+  const { ProfessionalResume } = f.load('src/features/cases/components/ForestFireProfessionalPanel.tsx')
   let html = renderToStaticMarkup(
     React.createElement(ProfessionalResume, { professional: data.forestFireProfessionals[0] }),
   )
@@ -519,7 +519,7 @@ test('resume uses catalog fields and separate tab links, with a safe missing-ent
 
 test('phase feedback uses neutral participation and missing narratives without naming the absent role', () => {
   const { f, data } = setup()
-  const { PhaseResultScreen } = f.load('src/features/occupation-exploration/ForestFireCaseView.tsx')
+  const { PhaseResultScreen } = f.load('src/features/cases/components/ForestFireCaseView.tsx')
   const phase = data.forestFirePhases[0]
   const html = renderToStaticMarkup(
     React.createElement(PhaseResultScreen, {
@@ -537,7 +537,7 @@ test('phase feedback uses neutral participation and missing narratives without n
 
 test('final report hides extra screens and budget evaluation and switches buttons and rewards by score', () => {
   const { f, data } = setup(),
-    { FinalReportScreen } = f.load('src/features/occupation-exploration/ForestFireCaseView.tsx')
+    { FinalReportScreen } = f.load('src/features/cases/components/ForestFireCaseView.tsx')
   for (const score of [9, 10, 14]) {
     const html = renderToStaticMarkup(
       React.createElement(FinalReportScreen, {
@@ -559,7 +559,7 @@ test('final report hides extra screens and budget evaluation and switches button
 
 test('actual case flow enforces gates, allows review changes, records once on report and starts a clean retry', () => {
   const { f, data, store } = setup(),
-    { ForestFireCaseView } = f.load('src/features/occupation-exploration/ForestFireCaseView.tsx')
+    { ForestFireCaseView } = f.load('src/features/cases/components/ForestFireCaseView.tsx')
   let closes = 0,
     tree
   const draw = () =>
@@ -616,7 +616,7 @@ test('actual case flow enforces gates, allows review changes, records once on re
 
 test('abandonment and budget game-over do not record a score or reward', () => {
   const { f, data, store } = setup(),
-    { ForestFireCaseView } = f.load('src/features/occupation-exploration/ForestFireCaseView.tsx')
+    { ForestFireCaseView } = f.load('src/features/cases/components/ForestFireCaseView.tsx')
   let tree,
     closed = false
   const draw = () =>

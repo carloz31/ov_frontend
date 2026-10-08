@@ -1,0 +1,237 @@
+[
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/activities/components/challenges/ChallengePlayer.tsx",
+    "detalle": "368 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/activities/components/FinishScreen.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/activities/components/nodes/ResultNode.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/activities/components/ResourceSheet.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/activities/components/StudentActivityPlayer.tsx",
+    "detalle": "569 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/activities/components/StudentActivityPlayer.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E7-features",
+    "archivo": "src/features/adventure/components/ActivityDrawer.tsx",
+    "detalle": "usa un componente de la feature cases: src/features/cases/components/ForestFireCaseProgress.tsx"
+  },
+  {
+    "regla": "E7-features",
+    "archivo": "src/features/adventure/components/ActivityDrawer.tsx",
+    "detalle": "usa un componente de la feature journal: src/features/journal/components/JournalEntryCard.tsx"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/adventure/components/AdventurePanel.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/adventure/components/CityLocked.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/adventure/components/MapScreenLayout.tsx",
+    "detalle": "338 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/adventure/components/MapScreenLayout.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E7-features",
+    "archivo": "src/features/adventure/components/MapScreenLayout.tsx",
+    "detalle": "usa un componente de la feature activities: src/features/activities/components/reflection/AdditionalReveal.tsx"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/adventure/components/overlays/NoveltiesMenu.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/adventure/components/overlays/OverlayQueue.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/adventure/components/StudentUserMenu.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/adventure/lib/mapPoints.ts",
+    "detalle": "624 líneas (máximo 400)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/cases/components/ForestFireCaseView.tsx",
+    "detalle": "762 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/cases/components/ForestFireExtraScreens.tsx",
+    "detalle": "336 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/counselor/components/ResourcePreviews.tsx",
+    "detalle": "492 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/discovery/components/PassportBadgeDialog.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/features/discovery/components/StudentPassportView.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/family-conversations/components/FamilyConversationsView.tsx",
+    "detalle": "643 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/student-tracking/components/ProfileSections.tsx",
+    "detalle": "641 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/features/student-tracking/components/Questionnaires.tsx",
+    "detalle": "409 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/pages/auth/LoginRoute.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/counselor/CounselorDashboardView.tsx",
+    "detalle": "387 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/counselor/PrioritiesView.tsx",
+    "detalle": "382 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/counselor/PublicationsView.tsx",
+    "detalle": "313 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/counselor/StudentDetailView.tsx",
+    "detalle": "1485 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/parent/ParentActivityView.tsx",
+    "detalle": "652 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/parent/ParentOverviewView.tsx",
+    "detalle": "355 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/pages/student/CiudadScreen.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/student/HelenaBookView.tsx",
+    "detalle": "369 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/pages/student/HelenaBookView.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/pages/student/OccupationDetailView.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/student/ResearchGuideView.tsx",
+    "detalle": "358 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/student/StudentBackpackView.tsx",
+    "detalle": "617 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/pages/student/StudentBackpackView.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/pages/student/StudentCatalogView.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/student/StudentFamilyConversationsView.tsx",
+    "detalle": "610 líneas (máximo 300)"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/student/StudentJournalView.tsx",
+    "detalle": "754 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/pages/student/StudentProfileView.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E3-tamano",
+    "archivo": "src/pages/student/StudentResearchView.tsx",
+    "detalle": "315 líneas (máximo 300)"
+  },
+  {
+    "regla": "E5-modo-datos",
+    "archivo": "src/pages/student/StudentShell.tsx",
+    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+  },
+  {
+    "regla": "E4-red",
+    "archivo": "src/store/servidor/estadoServidor.ts",
+    "detalle": "importa el cliente HTTP fuera de services/api"
+  },
+  {
+    "regla": "E4-red",
+    "archivo": "src/store/servidor/operaciones.ts",
+    "detalle": "importa el cliente HTTP fuera de services/api"
+  }
+]

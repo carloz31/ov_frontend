@@ -14,7 +14,7 @@ const texto = (n) =>
 async function iniciar() {
   const f = await iniciarMara(),
     a = f.app.load('src/lib/servidor/adaptadores.ts'),
-    p = f.app.load('src/features/student-experience/profile/passport.ts')
+    p = f.app.load('src/features/discovery/lib/passport.ts')
   const presentaciones = f.app
     .load('src/features/discovery/lib/achievements.ts')
     .getAchievementPresentations()
@@ -64,14 +64,14 @@ test('oculta obtenida y código desconocido usan su información pública sin in
   assert.equal(f.a.insigniasOcultasPendientes(estado), 0)
   f.app.fetch((r) => ({ body: r.url.endsWith('/estado') ? estado : [] }))
   await f.almacen.refrescar()
-  const View = f.app.load('src/features/student-experience/profile/StudentPassportView.tsx').StudentPassportView
+  const View = f.app.load('src/features/discovery/components/StudentPassportView.tsx').StudentPassportView
   const tree = View()
   assert.ok(elementos(tree, (e) => e.type === 'button').some((b) => texto(b).includes('Cazador de mitos')))
   assert.doesNotMatch(texto(tree), /quedan por descubrir|Logro oculto|\?\?\?/)
 })
 test('pasaporte no filtra códigos ocultos ni adicionales y usa nivel remoto y total real', async () => {
   const f = await iniciar(),
-    View = f.app.load('src/features/student-experience/profile/StudentPassportView.tsx').StudentPassportView
+    View = f.app.load('src/features/discovery/components/StudentPassportView.tsx').StudentPassportView
   const tree = View(),
     buttons = elementos(tree, (e) => e.type === 'button')
   assert.equal(
@@ -141,7 +141,7 @@ test('cada título del pasaporte respeta número, nombre y estado remoto', async
   f.app.fetch((r) => (r.url.endsWith('/estado') ? { body: estado } : { body: [] }))
   await f.almacen.refrescar()
   const View = f.app.load(
-    'src/features/student-experience/profile/StudentPassportView.tsx',
+    'src/features/discovery/components/StudentPassportView.tsx',
   ).StudentPassportView
   const items = elementos(View(), (e) => e.type === 'li')
   assert.deepEqual(
@@ -191,7 +191,7 @@ test('detalle bloqueado consulta al abrir, muestra error y reintento, sin evento
     return { body: { objetivo: { tipo: 'INSIGNIA', codigo: 'I4' }, disponible: false, reglas: [] } }
   })
   const modal = f.app.mount(
-    f.app.load('src/features/student-experience/profile/PassportBadgeDialog.tsx').PassportBadgeDialog,
+    f.app.load('src/features/discovery/components/PassportBadgeDialog.tsx').PassportBadgeDialog,
     props,
   )
   modal.render()
@@ -214,7 +214,7 @@ test('entrada bloqueada a Ciudad consulta al abrir y reintenta con el conteo rem
     if (falla) throw Error('DATO DE PRUEBA: sin conexión')
     return { body: { objetivo: { tipo: 'BLOQUE', codigo: 'CIUDAD' }, disponible: false, reglas: [] } }
   })
-  const { CityLocked } = f.app.load('src/features/student-experience/map/CityLocked.tsx')
+  const { CityLocked } = f.app.load('src/features/adventure/components/CityLocked.tsx')
   const view = f.app.mount(CityLocked, { adventure: {} })
   assert.match(texto(view.render()), /Consultando el requisito/)
   await esperar()

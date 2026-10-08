@@ -78,7 +78,7 @@ export async function iniciarMara({ cantidad = 0, completada = false, resultado 
     nodoInicialId = adaptadores.inicioInteraccionMara(activity, publicas(), revision),
   } = {}) {
     const { StudentActivityPlayer } = app.load(
-      'src/features/student-experience/player/StudentActivityPlayer.tsx',
+      'src/features/activities/components/StudentActivityPlayer.tsx',
     )
     return app.mount(StudentActivityPlayer, {
       activity,

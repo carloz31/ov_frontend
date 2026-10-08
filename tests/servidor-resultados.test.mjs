@@ -26,7 +26,7 @@ test('el resultado conserva IRA y sus porcentajes en el orden del código, sin o
       ['A', 50],
     ],
   )
-  const node = f.app.load('src/features/student-experience/player/nodes/ResultNode.tsx').ResultNode
+  const node = f.app.load('src/features/activities/components/nodes/ResultNode.tsx').ResultNode
   const tree = node({ activity: f.activity, instrumentId: 'TEST-RIASEC' })
   assert.match(texto(tree), /100\s*%/)
   assert.match(texto(tree), /75\s*%/)
@@ -126,7 +126,7 @@ test('al fallar la consulta del resultado después del POST 14 se reintenta solo
   const segunda = await acciones.completarActividad('act-tip-14', primera.datos)
   assert.equal(segunda.tipo, 'ok')
   assert.equal(f.app.requests.filter((r) => r.url.endsWith('/completar-actividad')).length, 1)
-  const Finish = f.app.load('src/features/student-experience/player/FinishScreen.tsx').FinishScreen
+  const Finish = f.app.load('src/features/activities/components/FinishScreen.tsx').FinishScreen
   const tree = Finish({
     activity: { ...f.activity, id: 'act-tip-14' },
     onClose() {},
@@ -153,7 +153,7 @@ test('perfil plano no inventa dimensiones destacadas, coincidencias ni carreras 
     a = f.app.load('src/lib/servidor/adaptadores.ts')
   assert.equal(a.areasRiasec(resultado).length, 0)
   assert.equal(a.coincidenciasRiasec(resultado).length, 0)
-  const Node = f.app.load('src/features/student-experience/player/nodes/ResultNode.tsx').ResultNode
+  const Node = f.app.load('src/features/activities/components/nodes/ResultNode.tsx').ResultNode
   const tree = Node({ activity: f.activity, instrumentId: 'TEST-RIASEC' })
   assert.match(texto(tree), /no distinguen un interés/)
   assert.equal(elementos(tree, (e) => e.props.to === '/student/exploration?punto=mara-test').length, 1)
@@ -161,7 +161,7 @@ test('perfil plano no inventa dimensiones destacadas, coincidencias ni carreras 
 
 test('isAffine usa código y ajuste del servidor y oculta afinidades antes de revelar', async () => {
   const f = await iniciarMara(),
-    s = f.app.load('src/features/student-experience/catalog/catalogSelectors.ts'),
+    s = f.app.load('src/features/discovery/lib/catalogSelectors.ts'),
     resultado = jsonServidor('resultado-riasec')
   assert.equal(s.isAffine('geologist', ['intereses'], { resultado, revelado: false }), undefined)
   assert.equal(s.isAffine('geologist', [], { resultado, revelado: true }), 'Mejor ajuste')
@@ -194,7 +194,7 @@ test('el catálogo respeta posición y correlación e incluye códigos desconoci
   })
   const discovery = f.app.load('src/store/discoveryStore.ts')
   discovery.revelarPaginaApi('est-ana', resultado.calculado_en, 'intereses')
-  const View = f.app.load('src/features/student-experience/catalog/StudentCatalogView.tsx').StudentCatalogView
+  const View = f.app.load('src/pages/student/StudentCatalogView.tsx').StudentCatalogView
   const tree = View({ section: 'professions' }),
     cards = elementos(tree, (e) => e.type === 'article')
   assert.match(texto(cards[0]), /Geólogo/)
@@ -209,7 +209,7 @@ test('el libro muestra porcentajes, carreras y via del resultado y conserva ejem
     f = await iniciarMara({ resultado })
   const d = f.app.load('src/store/discoveryStore.ts')
   d.revelarPaginaApi('est-ana', resultado.calculado_en, 'intereses')
-  const Book = f.app.load('src/features/student-experience/profile/HelenaBookView.tsx').HelenaBookView
+  const Book = f.app.load('src/pages/student/HelenaBookView.tsx').HelenaBookView
   const tree = Book()
   assert.match(texto(tree), /100\s*%/)
   assert.match(texto(tree), /Carreras que conducen a ellas/)
@@ -226,7 +226,7 @@ test('act-tip-final muestra el nodo del servidor y la revisión nunca completa e
   Final.estado = 'COMPLETADA'
   await f.almacen.refrescar()
   const Wrapper = f.app.load(
-    'src/features/student-experience/player/MaraInteractionPlayer.tsx',
+    'src/features/activities/components/MaraInteractionPlayer.tsx',
   ).MaraInteractionPlayer
   const loader = f.app.mount(Wrapper, { codigo: 'act-tip-final', revision: true, onClose() {} })
   loader.render()
@@ -237,7 +237,7 @@ test('act-tip-final muestra el nodo del servidor y la revisión nunca completa e
   loader.unmount()
   let cerrada = false
   const player = f.app.mount(
-    f.app.load('src/features/student-experience/player/StudentActivityPlayer.tsx').StudentActivityPlayer,
+    f.app.load('src/features/activities/components/StudentActivityPlayer.tsx').StudentActivityPlayer,
     {
       ...props,
       onClose() {

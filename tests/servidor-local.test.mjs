@@ -40,7 +40,7 @@ test('local mantiene claves, finalización y recomendaciones sin consultar al se
     },
   }))
   const { StudentActivityPlayer } = app.load(
-    'src/features/student-experience/player/StudentActivityPlayer.tsx',
+    'src/features/activities/components/StudentActivityPlayer.tsx',
   )
   const player = app.mount(StudentActivityPlayer, { activity, onClose() {} })
   const scene = elementos(player.render(), (e) => e.type?.name === 'DialogueBox')[0]
@@ -49,7 +49,7 @@ test('local mantiene claves, finalización y recomendaciones sin consultar al se
   assert.equal(store.getJourneySnapshot().progress[activity.id].estado, 'completada')
   assert.equal(store.getJourneySnapshot().rewards.length, 1)
   assert.ok(elementos(player.render(), (e) => e.type?.name === 'FinishScreen').length)
-  const mapa = app.load('src/features/student-experience/map/mapPoints.ts')
+  const mapa = app.load('src/features/adventure/lib/mapPoints.ts')
   const points = mapa.getCaminoPoints(adventure.useAdventure(), store.getJourneySnapshot())
   assert.equal(mapa.getRecommendedPoint(points).specActivityId, 'enc-mitos')
   assert.ok(app.local.has('ov.missions.v2'))
@@ -69,20 +69,20 @@ test('Mara, resultado, libro y afinidad locales conservan sus fuentes sin ejecut
     d = app.load('src/store/discoveryStore.ts')
   assert.ok(content.activityById('act-tip-01').nodos.some((n) => n.itemId === 'tip-001'))
   app
-    .load('src/features/student-experience/player/nodes/ResultNode.tsx')
+    .load('src/features/activities/components/nodes/ResultNode.tsx')
     .ResultNode({ activity: content.finalActivity, instrumentId: 'tip' })
   const pages = app
-    .load('src/features/student-experience/profile/helenaPages.ts')
+    .load('src/features/discovery/lib/helenaPages.ts')
     .getHelenaPages(journey.getJourneySnapshot(), d.getDiscovery())
   assert.equal(pages[0].demo, true)
   // El catálogo local conserva su exclusión actual de contenido pendiente.
   assert.equal(
     app
-      .load('src/features/student-experience/catalog/catalogSelectors.ts')
+      .load('src/features/discovery/lib/catalogSelectors.ts')
       .isAffine('psychologist', ['intereses']),
     undefined,
   )
-  app.load('src/features/student-experience/profile/HelenaBookView.tsx').HelenaBookView()
+  app.load('src/pages/student/HelenaBookView.tsx').HelenaBookView()
   assert.equal(app.requests.length, 0)
   assert.equal(d.getDiscovery().revealedPagesApi, undefined)
 })
@@ -99,8 +99,8 @@ test('pasaporte, nivel y novedades locales no ejecutan adaptadores ni consultan 
   const anterior = store.getTravelerLevel(store.useAdventure())
   assert.ok(anterior.description)
   assert.ok(anterior.nextStep)
-  app.load('src/features/student-experience/profile/StudentPassportView.tsx').StudentPassportView()
-  app.load('src/features/student-experience/overlays/NoveltiesMenu.tsx').NoveltiesMenu({})
+  app.load('src/features/discovery/components/StudentPassportView.tsx').StudentPassportView()
+  app.load('src/features/adventure/components/overlays/NoveltiesMenu.tsx').NoveltiesMenu({})
   assert.equal(app.requests.length, 0)
   assert.equal(
     app.load('src/store/discoveryStore.ts').getDiscovery().profileBadgesApi,

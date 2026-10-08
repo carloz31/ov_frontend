@@ -160,7 +160,7 @@ test('la revisión de una completada con resultado recorre las respuestas sin PO
 
 test('Ciudad permite Mara disponible, bloquea interacciones futuras por URL y expone revisiones en el detalle', async () => {
   const f = await iniciarMara({ ruta: '/student/exploration?actividad=act-tip-01' })
-  const Ciudad = f.app.load('src/features/student-experience/map/CiudadScreen.tsx').CiudadScreen
+  const Ciudad = f.app.load('src/pages/student/CiudadScreen.tsx').CiudadScreen
   assert.equal(
     elementos(f.app.mount(Ciudad, {}).render(), (e) => e.type?.name === 'MaraInteractionPlayer').length,
     1,
@@ -171,12 +171,12 @@ test('Ciudad permite Mara disponible, bloquea interacciones futuras por URL y ex
     completada: true,
   })
   const screen = g.app.mount(
-    g.app.load('src/features/student-experience/map/CiudadScreen.tsx').CiudadScreen,
+    g.app.load('src/pages/student/CiudadScreen.tsx').CiudadScreen,
     {},
   )
   assert.equal(elementos(screen.render(), (e) => e.type?.name === 'MaraInteractionPlayer').length, 0)
   assert.equal(g.app.query.has('actividad'), false)
-  const mapa = g.app.load('src/features/student-experience/map/mapPoints.ts'),
+  const mapa = g.app.load('src/features/adventure/lib/mapPoints.ts'),
     journey = g.app.load('src/store/journeyStore.ts').getJourneySnapshot(),
     adventure = g.app.load('src/store/adventureStore.ts').useAdventure()
   const point = mapa.getCiudadPoints(adventure, journey).find((p) => p.id === 'mara-test')
@@ -186,7 +186,7 @@ test('Ciudad permite Mara disponible, bloquea interacciones futuras por URL y ex
 test('la carga de Mara consulta ítems y respuestas y ofrece reintento sin sustituirlos por TIP', async () => {
   const f = await iniciarMara({ cantidad: 3 }),
     Wrapper = f.app.load(
-      'src/features/student-experience/player/MaraInteractionPlayer.tsx',
+      'src/features/activities/components/MaraInteractionPlayer.tsx',
     ).MaraInteractionPlayer
   const loader = f.app.mount(Wrapper, { codigo: 'act-tip-01', onClose() {} })
   loader.render()
@@ -205,7 +205,7 @@ test('la carga de Mara consulta ítems y respuestas y ofrece reintento sin susti
       : g.servidor(req),
   )
   const failed = g.app.mount(
-    g.app.load('src/features/student-experience/player/MaraInteractionPlayer.tsx').MaraInteractionPlayer,
+    g.app.load('src/features/activities/components/MaraInteractionPlayer.tsx').MaraInteractionPlayer,
     { codigo: 'act-tip-01', onClose() {} },
   )
   failed.render()

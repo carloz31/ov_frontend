@@ -37,7 +37,7 @@ function ultimoDialogo(app) {
     },
   }))
   const { StudentActivityPlayer } = app.load(
-    'src/features/student-experience/player/StudentActivityPlayer.tsx',
+    'src/features/activities/components/StudentActivityPlayer.tsx',
   )
   const player = app.mount(StudentActivityPlayer, { activity, onClose() {} })
   const tree = player.render()
@@ -281,7 +281,7 @@ test('el mapa y los enlaces directos no usan límites de demo ni abren TIP o des
   const { app } = await iniciar({ ruta: '/student/exploration?actividad=el-rumor' })
   const journey = app.load('src/store/journeyStore.ts'),
     adventure = app.load('src/store/adventureStore.ts'),
-    mapa = app.load('src/features/student-experience/map/mapPoints.ts')
+    mapa = app.load('src/features/adventure/lib/mapPoints.ts')
   const puntos = mapa.getCaminoPoints(adventure.useAdventure(), journey.getJourneySnapshot())
   assert.equal(puntos.length, 10)
   assert.equal(
@@ -291,7 +291,7 @@ test('el mapa y los enlaces directos no usan límites de demo ni abren TIP o des
   assert.equal(mapa.getRecommendedPoint(puntos).specActivityId, 'mission-welcome')
   const city = mapa.getCiudadPoints(adventure.useAdventure(), journey.getJourneySnapshot())
   assert.ok(city.filter((p) => p.id !== 'mara-test').every((p) => p.status === 'locked' && !p.actionEnabled))
-  const { CiudadScreen } = app.load('src/features/student-experience/map/CiudadScreen.tsx')
+  const { CiudadScreen } = app.load('src/pages/student/CiudadScreen.tsx')
   const mounted = app.mount(CiudadScreen, {}),
     tree = mounted.render()
   assert.equal(
@@ -301,7 +301,7 @@ test('el mapa y los enlaces directos no usan límites de demo ni abren TIP o des
   )
   assert.equal(app.query.has('actividad'), false)
   mounted.unmount()
-  const source = readFileSync('src/features/student-experience/player/StudentActivityPlayer.tsx', 'utf8')
+  const source = readFileSync('src/features/activities/components/StudentActivityPlayer.tsx', 'utf8')
   assert.equal((source.match(/await completarActividad\(/g) ?? []).length, 1)
 })
 test('hidratar sin espacio corrige el estado obsoleto y conserva el borrador y el nodo local', async () => {
@@ -335,7 +335,7 @@ test('leer una ficha y pasar una diapositiva no las obtiene ni finaliza en API',
     progress: { ...s.progress, [activity.id]: { ...s.progress[activity.id], nodoActualId: 'welcome-02' } },
   }))
   const player = app.mount(
-    app.load('src/features/student-experience/player/StudentActivityPlayer.tsx').StudentActivityPlayer,
+    app.load('src/features/activities/components/StudentActivityPlayer.tsx').StudentActivityPlayer,
     { activity, onClose() {} },
   )
   elementos(player.render(), (e) => e.type?.name === 'SlideNode')[0].props.onContinue()
@@ -346,7 +346,7 @@ test('leer una ficha y pasar una diapositiva no las obtiene ni finaliza en API',
     false,
   )
   player.unmount()
-  const { ResourceSheet } = app.load('src/features/student-experience/player/ResourceSheet.tsx')
+  const { ResourceSheet } = app.load('src/features/activities/components/ResourceSheet.tsx')
   const sheet = app.mount(ResourceSheet, { open: true, ids: ['ficha-mitos'], onClose() {} })
   const leer = elementos(
     sheet.render(),
@@ -361,7 +361,7 @@ test('leer una ficha y pasar una diapositiva no las obtiene ni finaliza en API',
 
 test('recuperar un cierre confirmado no crea otro evento y una URL bloqueada no abre el reproductor', async () => {
   const { app } = await iniciar({ ruta: '/student/missions?actividad=mission-story' })
-  const screen = app.mount(app.load('src/features/student-experience/map/CaminoScreen.tsx').CaminoScreen, {})
+  const screen = app.mount(app.load('src/pages/student/CaminoScreen.tsx').CaminoScreen, {})
   assert.equal(elementos(screen.render(), (e) => e.type?.name === 'StudentActivityPlayer').length, 0)
   assert.equal(app.query.has('actividad'), false)
   screen.unmount()
@@ -369,7 +369,7 @@ test('recuperar un cierre confirmado no crea otro evento y una URL bloqueada no 
   await app.load('src/store/servidor/estadoServidor.ts').refrescar()
   const activity = app.load('src/data/activities/content.ts').activityById('mission-welcome')
   const player = app.mount(
-    app.load('src/features/student-experience/player/StudentActivityPlayer.tsx').StudentActivityPlayer,
+    app.load('src/features/activities/components/StudentActivityPlayer.tsx').StudentActivityPlayer,
     { activity, onClose() {} },
   )
   assert.ok(elementos(player.render(), (e) => e.type?.name === 'FinishScreen').length)

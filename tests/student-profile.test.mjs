@@ -27,11 +27,11 @@ function load(file) {
   )
   return exports
 }
-const selectors = load(path.resolve('src/features/counselor-portal/profile/selectors.ts'))
+const selectors = load(path.resolve('src/features/student-tracking/lib/selectors.ts'))
 const data = load(path.resolve('src/data/demo/studentProfiles.ts'))
-const navigation = load(path.resolve('src/features/counselor-portal/profile/navigation.ts'))
-const table = load(path.resolve('src/features/counselor-portal/data/StudentsExampleData.ts'))
-const priorities = load(path.resolve('src/features/counselor-portal/priorities/PrioritySettings.ts'))
+const navigation = load(path.resolve('src/features/student-tracking/lib/navigation.ts'))
+const table = load(path.resolve('src/features/counselor/data/exampleStudents.ts'))
+const priorities = load(path.resolve('src/features/counselor/store/prioritySettings.ts'))
 const initialCatalog = priorities.configuredCatalog(priorities.initialPrioritySettings())
 const copy = (value) => JSON.parse(JSON.stringify(value))
 const initial = data.studentProfiles[4]
@@ -329,7 +329,7 @@ test('draft priority changes remain isolated until one atomic save', () => {
 })
 
 
-const classroom = load(path.resolve('src/features/counselor-portal/classroom/selectors.ts'))
+const classroom = load(path.resolve('src/features/counselor/lib/classroomSelectors.ts'))
 const groupSummary = (students, activities = data.activities, questionnaires = data.questionnaires) => classroom.classroomSummary(students, data.studentProfiles, activities, questionnaires, data.blocks, data.profileCatalog)
 test('classroom counts match every profile and each top counts distinct students', () => {
   for (const salon of ['all', '5.° A', '5.° B']) {
@@ -470,7 +470,7 @@ test('classroom priority average follows current settings and ignores nonpriorit
 })
 
 
-const family = load(path.resolve('src/features/parent-portal/selectors.ts'))
+const family = load(path.resolve('src/features/parent/lib/selectors.ts'))
 test('family route ignores unknown or unassigned completions and handles empty and complete routes', () => {
   const activities=[{id:'a',audiencia:'apoderado',orden:1,requisitos:[]},{id:'b',audiencia:'apoderado',orden:2,requisitos:['a']},{id:'c',audiencia:'estudiante',orden:1,requisitos:[]}]
   const children=[{id:'child'}]

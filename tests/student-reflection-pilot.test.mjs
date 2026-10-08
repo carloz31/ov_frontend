@@ -77,7 +77,7 @@ function fixture(saved = {}, demo = false, mocks = {}) {
   function load(file) {
     const full = path.resolve(file)
     assert.ok(
-      !/[\\/]features[\\/](parent-portal|counselor-portal)[\\/]/.test(full),
+      !/[\\/]features[\\/](parent|counselor)[\\/]/.test(full),
       'Protected portals must never be loaded',
     )
     if (cache.has(full)) return cache.get(full)
@@ -148,9 +148,9 @@ function fixture(saved = {}, demo = false, mocks = {}) {
   app.content = load('src/data/activities/content.ts')
   app.journey = load('src/store/journeyStore.ts')
   app.store = load('src/store/reflectionStore.ts')
-  app.evaluation = load('src/features/student-experience/reflection/evaluation.ts')
-  app.provider = load('src/features/student-experience/reflection/provider.ts')
-  app.questions = load('src/features/student-experience/reflection/personalization.ts')
+  app.evaluation = load('src/features/activities/lib/reflection/evaluation.ts')
+  app.provider = load('src/features/activities/lib/reflection/provider.ts')
+  app.questions = load('src/features/activities/lib/reflection/personalization.ts')
   app.scenario = (key, values, missing, generacion = 'VALIDA') =>
     app.store.updateReflections((s) => ({
       ...s,
@@ -207,7 +207,7 @@ test('base map is the source of order, predecessor requirements, nine mandatory 
     assert.deepEqual(copy(activity.requisitos), i ? [app.config.baseRoute[i - 1][1]] : [])
   })
   assert.equal(app.content.activityById('act-06').siguienteSugerida, undefined)
-  const map = app.load('src/features/student-experience/map/mapPoints.ts')
+  const map = app.load('src/features/adventure/lib/mapPoints.ts')
   const adventure = app
     .load('src/store/adventureStore.ts')
     .createInitialAdventure()
@@ -242,7 +242,7 @@ test('demo stops at Huellas even with historical completions and unlocks; restor
   const journey = copy(app.journey.getJourneySnapshot())
   for (const [, id] of app.config.baseRoute) journey.progress[id] = { estado: 'completada' }
   const storedBefore = copy([...app.storage.entries()])
-  const map = app.load('src/features/student-experience/map/mapPoints.ts')
+  const map = app.load('src/features/adventure/lib/mapPoints.ts')
   const points = map.getCaminoPoints(adventure, journey)
   assert.deepEqual(copy(points.slice(0, 4).map((p) => p.status)), [
     'completed',
@@ -301,7 +301,7 @@ test('presentation Pregones is adequate without manual scenarios, unlocks Ecos a
   assert.equal(question.respuestaOrigen.actividadId, 'act-07')
   assert.ok(question.texto.includes(`«${question.cita}»`))
   assert.ok(question.respuestaOrigen.texto.includes(question.cita))
-  const Submission = app.load('src/features/student-experience/player/nodes/SubmissionNode.tsx').SubmissionNode
+  const Submission = app.load('src/features/activities/components/nodes/SubmissionNode.tsx').SubmissionNode
   const phrase = app.content.activityById('act-07')
   await app.questions.prepareQuestion(
     phrase,
@@ -380,7 +380,7 @@ test('successive scenarios evaluate initial text and augmentations, retain immut
   assert.equal(app.store.getReflections().evaluaciones.length, 2)
   assert.equal(first.clasificacion, 'INSUFICIENTE')
   assert.equal(second.texto, expanded)
-  const code = readFileSync('src/features/student-experience/player/followup/FollowUp.tsx', 'utf8')
+  const code = readFileSync('src/features/activities/components/followup/FollowUp.tsx', 'utf8')
   assert.match(code, /record.turnos.length >= 2/)
   assert.ok(!code.includes('mockFollowUpService'))
 })
@@ -589,7 +589,7 @@ test('historical private future submissions, completed activities and old versio
 
 test('alternative unlocks are hidden until developed, never affect mandatory progress or levels; badges and notices are unique', async () => {
   const app = fixture(),
-    map = app.load('src/features/student-experience/map/mapPoints.ts'),
+    map = app.load('src/features/adventure/lib/mapPoints.ts'),
     adventure = app.load('src/store/adventureStore.ts').createInitialAdventure()
   assert.equal(
     map.getCaminoPoints(adventure, app.journey.getJourneySnapshot()).filter((p) => p.additional).length,
@@ -614,14 +614,14 @@ test('alternative unlocks are hidden until developed, never affect mandatory pro
   state = app.journey.getJourneySnapshot()
   assert.equal(map.getZoneProgress('missions', adventure, state).value, before)
   assert.deepEqual(copy(map.getMissionsToSync(adventure, state)), [])
-  const passport = app.load('src/features/student-experience/profile/passport.ts').getStudentAchievementGroups(adventure, state)
+  const passport = app.load('src/features/discovery/lib/passport.ts').getStudentAchievementGroups(adventure, state)
   assert.equal(
     passport.flatMap((g) => g.items).filter((b) => ['I11', 'I12', 'I13'].includes(b.code)).length,
     3,
   )
-  const unlocks = app.load('src/features/student-experience/overlays/unlocks.ts').getUnlocks(adventure, state)
+  const unlocks = app.load('src/features/adventure/lib/unlocks.ts').getUnlocks(adventure, state)
   assert.equal(unlocks.filter((u) => /^badge:I1[123]$/.test(u.id)).length, 3)
-  assert.deepEqual(copy(app.load('src/features/student-experience/reflection/additional.ts').additionalThematicProgress(state)), {
+  assert.deepEqual(copy(app.load('src/features/activities/lib/reflection/additional.ts').additionalThematicProgress(state)), {
     creencias: 1,
     historia: 1,
     futuro: 1,
@@ -633,7 +633,7 @@ test('visibility precedes the answer field, quoted memory is accessible, and ACT
     activity = app.content.activityById('mission-story'),
     node = activity.nodos.find((n) => n.id === 'story-personas')
   await app.questions.prepareQuestion(activity, node)
-  const Submission = app.load('src/features/student-experience/player/nodes/SubmissionNode.tsx').SubmissionNode
+  const Submission = app.load('src/features/activities/components/nodes/SubmissionNode.tsx').SubmissionNode
   const html = renderToStaticMarkup(React.createElement(Submission, { activity, node, onSaved() {} }))
   assert.ok(html.indexOf('Visible para ti y tu orientadora') < html.indexOf('<textarea'))
   const future = app.content.activityById('mission-future')
@@ -657,7 +657,7 @@ test('visibility precedes the answer field, quoted memory is accessible, and ACT
   )
   assert.match(history, /Tu historial privado/)
   assert.match(history, /Privado en el historial/)
-  const source = readFileSync('src/features/student-experience/player/nodes/SubmissionNode.tsx', 'utf8')
+  const source = readFileSync('src/features/activities/components/nodes/SubmissionNode.tsx', 'utf8')
   assert.match(source, /evaluated = !!criteria\[draftKey\] && activity.plantilla\?\.tipo !== 'matriz'/)
 })
 
@@ -672,7 +672,7 @@ test('reveal interruption retains unseen unlock, queue advances sequentially and
     desbloqueos: s.desbloqueos.map((d, i) => (i ? d : { ...d, visto: true })),
   }))
   assert.equal(restored.store.getReflections().desbloqueos.filter((d) => !d.visto).length, 1)
-  const reveal = readFileSync('src/features/student-experience/reflection/AdditionalReveal.tsx', 'utf8')
+  const reveal = readFileSync('src/features/activities/components/reflection/AdditionalReveal.tsx', 'utf8')
   assert.match(reveal, /2700/)
   assert.match(reveal, /return \(\) => clearTimeout\(timer\)/)
   assert.match(reveal, /prefers-reduced-motion/)
@@ -696,9 +696,9 @@ test('follow-up UI closes immediately for adequacy, supports omission, and evalu
     const app = fixture(),
       item = app.submit()
     app.scenario(item.key, scenario, ['persona'])
-    const followups = app.load('src/features/student-experience/player/followup/followUpStore.ts')
+    const followups = app.load('src/features/activities/store/followUpStore.ts')
     followups.setFollowUpRecord(item.key, { textoInicial: item.text, versionInicial: 1, turnos: [] })
-    const Component = app.load('src/features/student-experience/player/followup/FollowUp.tsx').FollowUp
+    const Component = app.load('src/features/activities/components/followup/FollowUp.tsx').FollowUp
     const view = app.mount(Component, { activity: item.activity, node: item.node, onContinue() {} })
     let tree = await view.settle()
     if (scenario[0] === 'ADECUADA') {
@@ -747,7 +747,7 @@ test('actual reveal lifecycle repeats interrupted sequences, queues origins, pre
   const app = fixture()
   await app.develop('act-07', 'r07-frase')
   await app.develop('mission-story', 'story-logros')
-  const Component = app.load('src/features/student-experience/reflection/AdditionalReveal.tsx').AdditionalReveal
+  const Component = app.load('src/features/activities/components/reflection/AdditionalReveal.tsx').AdditionalReveal
   const framed = [],
     props = {
       onFrame(ids) {
@@ -804,7 +804,7 @@ test('actual reveal lifecycle repeats interrupted sequences, queues origins, pre
   await reduced.develop('act-07', 'r07-frase')
   reduced.reduced(true)
   const instant = reduced.mount(
-    reduced.load('src/features/student-experience/reflection/AdditionalReveal.tsx').AdditionalReveal,
+    reduced.load('src/features/activities/components/reflection/AdditionalReveal.tsx').AdditionalReveal,
     props,
   )
   const final = await instant.settle()
@@ -825,7 +825,7 @@ test('mission announcements hold badge notifications until dismissed and ignore 
   const adventure = app.load('src/store/adventureStore.ts')
   adventure.updateAdventure((s) => ({ ...s, completedMissionIds: ['welcome'] }))
   const ui = app.load('src/store/studentUiStore.ts')
-  const { localDateKey } = app.load('src/features/student-experience/overlays/checkIn.ts')
+  const { localDateKey } = app.load('src/features/adventure/lib/checkIn.ts')
   ui.updateStudentUi((s) => ({
     ...s,
     initialized: true,
@@ -834,7 +834,7 @@ test('mission announcements hold badge notifications until dismissed and ignore 
     checkInPromptDismissedOn: localDateKey(new Date()),
     announcedBadgeCodes: [],
   }))
-  const { OverlayQueue } = app.load('src/features/student-experience/overlays/OverlayQueue.tsx')
+  const { OverlayQueue } = app.load('src/features/adventure/components/overlays/OverlayQueue.tsx')
   const badge = () =>
     findElement(
       OverlayQueue({ view: 'missions', activityOpen: false, children: null }),

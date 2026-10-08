@@ -1,5 +1,5 @@
 import { AppRoutes } from '@/routes/AppRoutes'
-import { DemoAccessGate } from '@/features/access/DemoAccessGate'
+import { DemoAccessGate } from '@/features/auth/components/DemoAccessGate'
 
 function App() {
   return (

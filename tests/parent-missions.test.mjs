@@ -38,7 +38,7 @@ function fixture(saved = {}) {
   })
   function load(relative) {
     const file = path.resolve(relative)
-    assert.ok(!file.includes('counselor-portal'), 'This fixture never reads the protected portal')
+    assert.ok(!file.includes(`${path.sep}features${path.sep}counselor${path.sep}`), 'This fixture never reads the protected portal')
     if (cache.has(file)) return cache.get(file)
     if (file.endsWith('.json')) {
       const value = JSON.parse(readFileSync(file, 'utf8'))
@@ -63,12 +63,12 @@ function fixture(saved = {}) {
           useParams: () => ({ activityId: requestedId }),
           useSearchParams: () => [new URLSearchParams(query)],
         }
-      if (specifier.endsWith('data/ParentPortalData'))
+      if (specifier.endsWith('data/parentPortal'))
         return {
           parentActivities: load('src/data/activities/content.ts').parentActivities,
           parentProfile: { name: 'Prueba local', relationship: 'Madre' },
         }
-      if (specifier.endsWith('counselor-portal/priorities/PrioritySettings'))
+      if (specifier.endsWith('counselor/store/prioritySettings'))
         return { shareableQuestionnaireIds: [] }
       if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
       const base = specifier.startsWith('@/')
@@ -81,8 +81,8 @@ function fixture(saved = {}) {
   }
   const content = load('src/data/activities/content.ts'),
     logic = load('src/lib/activities/logic.ts')
-  const parent = load('src/features/parent-portal/missionLogic.ts'),
-    store = load('src/features/parent-portal/missionStore.ts')
+  const parent = load('src/features/parent/lib/missionLogic.ts'),
+    store = load('src/features/parent/store/parentJourneyStore.ts')
   return {
     content,
     logic,
@@ -100,7 +100,7 @@ function fixture(saved = {}) {
     render(id = 'pad-01-rol', params = '') {
       requestedId = id
       query = params
-      const { ParentActivityView } = load('src/features/parent-portal/ParentActivityView.tsx')
+      const { ParentActivityView } = load('src/pages/parent/ParentActivityView.tsx')
       return renderToStaticMarkup(
         React.createElement(MemoryRouter, {}, React.createElement(ParentActivityView)),
       )
@@ -259,7 +259,7 @@ test('only explicitly registrable choices persist and review leaves completion a
 
 test('old encounter follow-up records stay intact without creating new submissions and the family letter uses its default', async () => {
   const app = fixture(),
-    followups = app.load('src/features/student-experience/player/followup/followUpStore.ts')
+    followups = app.load('src/features/activities/store/followUpStore.ts')
   const activity = app.content.activities.find((activity) => activity.id === 'enc-mitos')
   const submission = app.content.activities
     .find((activity) => activity.id === 'act-07')
@@ -414,7 +414,7 @@ test('backward navigation preserves attempts, resumes at the saved node and leav
 
 test('parent activity routes use the isolated player while the activity list retains its portal shell', () => {
   const app = fixture()
-  const { ParentPortalModule } = app.load('src/features/parent-portal/ParentPortalModule.tsx')
+  const { ParentPortalModule } = app.load('src/pages/parent/ParentPortalModule.tsx')
   const render = (pathname) =>
     renderToStaticMarkup(
       React.createElement(
@@ -440,8 +440,8 @@ test('table blocks preserve headings and mobile labels, choices show their own p
       nota: 'Referencial',
     }
   for (const [file, component] of [
-    ['src/features/parent-portal/components/ParentContent.tsx', 'ParentContent'],
-    ['src/features/student-experience/player/ContentBlocks.tsx', 'ContentBlocks'],
+    ['src/features/parent/components/ParentContent.tsx', 'ParentContent'],
+    ['src/features/activities/components/ContentBlocks.tsx', 'ContentBlocks'],
   ]) {
     const html = renderToStaticMarkup(React.createElement(app.load(file)[component], { blocks: [table] }))
     assert.match(html, /scope="col"/)
@@ -449,7 +449,7 @@ test('table blocks preserve headings and mobile labels, choices show their own p
     assert.match(html, /Técnica/)
     assert.match(html, /Referencial/)
   }
-  const { ChoiceNode } = app.load('src/features/student-experience/player/nodes/ChoiceNode.tsx')
+  const { ChoiceNode } = app.load('src/features/activities/components/nodes/ChoiceNode.tsx')
   const html = renderToStaticMarkup(
     React.createElement(ChoiceNode, {
       node: {

@@ -36,7 +36,7 @@ function fixture(saved = {}) {
   function load(file) {
     const full = path.resolve(file)
     assert.ok(
-      !/[\\/]features[\\/](parent-portal|counselor-portal)[\\/]/.test(full),
+      !/[\\/]features[\\/](parent|counselor)[\\/]/.test(full),
       'Protected portals are never loaded by this suite',
     )
     if (cache.has(full)) return cache.get(full)
@@ -171,7 +171,7 @@ test('all required sheets and activities must be completed; map keeps the enemy 
   const adventure = f
     .load('src/store/adventureStore.ts')
     .createInitialAdventure()
-  const map = f.load('src/features/student-experience/map/mapPoints.ts')
+  const map = f.load('src/features/adventure/lib/mapPoints.ts')
   const locked = map.getCiudadPoints(adventure, journey.initialJourney()).find((p) => p.id === c.id)
   assert.equal(locked.status, 'locked')
   assert.match(map.getPointDetails(locked, adventure, journey.initialJourney()).requirement, /Pendiente/)
@@ -247,7 +247,7 @@ test('challenge results, rewards and hidden badge survive reload and storage fai
   assert.equal(loaded.challengeResults[0].vidasRestantes, 3)
   assert.ok(
     reload
-      .load('src/features/student-experience/backpack/challengeResources.ts')
+      .load('src/features/backpack/lib/challengeResources.ts')
       .getStudentTravelResources()
       .some((r) => r.id === 'ficha-luz-rumor'),
   )
@@ -256,7 +256,7 @@ test('challenge results, rewards and hidden badge survive reload and storage fai
     .createInitialAdventure()
   assert.equal(
     reload
-      .load('src/features/student-experience/profile/passport.ts')
+      .load('src/features/discovery/lib/passport.ts')
       .getStudentAchievementGroups(adventure, loaded)
       .flatMap((g) => g.items)
       .find((b) => b.code === 'I10').done,
@@ -276,7 +276,7 @@ test('first-attempt metric counts one first result per student in timestamp orde
 
 test('student checks resolve binary questions immediately and reveal other questions on attempt two', () => {
   const f = fixture(),
-    { evaluateStudentCheck: check } = f.load('src/features/student-experience/player/checks.ts')
+    { evaluateStudentCheck: check } = f.load('src/features/activities/lib/checks.ts')
   const myths = JSON.parse(readFileSync('src/data/activities/encuentro_mitos.json', 'utf8'))
   const single = myths.nodos.find((n) => n.id === 'e08'),
     binary = myths.nodos.find((n) => n.id === 'e11')
@@ -292,7 +292,7 @@ test('student checks resolve binary questions immediately and reveal other quest
 test('single check UI blocks the first error, keeps the correct answer hidden and completed reviews record nothing', () => {
   const f = fixture(),
     store = f.load('src/store/journeyStore.ts'),
-    { QuestionNode } = f.load('src/features/student-experience/player/nodes/QuestionNode.tsx')
+    { QuestionNode } = f.load('src/features/activities/components/nodes/QuestionNode.tsx')
   const activity = f.load('src/data/activities/content.ts').activities.find((a) => a.id === 'enc-mitos'),
     node = activity.nodos.find((n) => n.id === 'e08')
   const props = { activity, node, onContinue() {}, onResources() {} }
@@ -327,7 +327,7 @@ test('single check UI blocks the first error, keeps the correct answer hidden an
 
 test('multiple checks keep valid picks editable and reveal unmarked correct answers with explanations only at the end', () => {
   const f = fixture(),
-    { QuestionNode } = f.load('src/features/student-experience/player/nodes/QuestionNode.tsx')
+    { QuestionNode } = f.load('src/features/activities/components/nodes/QuestionNode.tsx')
   const activity = f.load('src/data/activities/content.ts').activities.find((a) => a.id === 'enc-mitos'),
     node = activity.nodos.find((n) => n.formato === 'opcion_multiple')
   const props = { activity, node, onContinue() {}, onResources() {} }
@@ -358,7 +358,7 @@ test('multiple checks keep valid picks editable and reveal unmarked correct answ
 
 test('unexpected destinations prioritize new families, exclude plans/favorites/current, use last visit for fallback', () => {
   const f = fixture(),
-    { chooseUnexpected: choose } = f.load('src/features/student-experience/catalog/unexpected.ts')
+    { chooseUnexpected: choose } = f.load('src/features/discovery/lib/unexpected.ts')
   const careers = [
     { id: 'a', familyId: 'one' },
     { id: 'b', familyId: 'one' },
@@ -409,8 +409,8 @@ test('catalog visit migration preserves older visited families, favorites and ba
 
 test('progress has step narration and star spark; finish removes duplicate reward text and exposes sheet action', () => {
   const f = fixture(),
-    { PlayerTopBar } = f.load('src/features/student-experience/player/PlayerTopBar.tsx'),
-    { FinishScreen } = f.load('src/features/student-experience/player/FinishScreen.tsx')
+    { PlayerTopBar } = f.load('src/features/activities/components/PlayerTopBar.tsx'),
+    { FinishScreen } = f.load('src/features/activities/components/FinishScreen.tsx')
   const activity = f.load('src/data/activities/content.ts').activities.find((a) => a.id === 'enc-mitos')
   const render = (element) => renderToStaticMarkup(React.createElement(MemoryRouter, {}, element))
   const normal = render(
@@ -457,7 +457,7 @@ test('progress has step narration and star spark; finish removes duplicate rewar
 test('battle UI prevents sheet access, confirms abandonment and resets after remount without writing a result', () => {
   const { f, c } = setup(),
     store = f.load('src/store/journeyStore.ts'),
-    { ChallengePlayer } = f.load('src/features/student-experience/challenges/ChallengePlayer.tsx')
+    { ChallengePlayer } = f.load('src/features/activities/components/challenges/ChallengePlayer.tsx')
   store.updateJourney((s) => ({ ...s, resources: ['ficha-mitos'], readResourceIds: ['ficha-mitos'] }))
   let closed = 0,
     props = {
@@ -490,7 +490,7 @@ test('battle UI prevents sheet access, confirms abandonment and resets after rem
 test('practice UI finishes without results or reward writes and reveals final feedback immediately on a tap', () => {
   const { f, c } = setup(),
     store = f.load('src/store/journeyStore.ts'),
-    { ChallengePlayer } = f.load('src/features/student-experience/challenges/ChallengePlayer.tsx')
+    { ChallengePlayer } = f.load('src/features/activities/components/challenges/ChallengePlayer.tsx')
   store.updateJourney((s) => ({
     ...s,
     resources: ['ficha-mitos'],

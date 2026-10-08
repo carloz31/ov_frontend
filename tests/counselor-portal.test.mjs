@@ -26,9 +26,9 @@ function load(file) {
   return exports
 }
 
-const data = load(path.resolve('src/features/counselor-portal/data/CounselorPortalData.ts'))
-const selectors = load(path.resolve('src/features/counselor-portal/CounselorPortalSelectors.ts'))
-const { counselorReducer } = load(path.resolve('src/features/counselor-portal/CounselorPortalReducer.ts'))
+const data = load(path.resolve('src/features/counselor/data/counselorPortal.ts'))
+const selectors = load(path.resolve('src/features/counselor/lib/counselorPortalSelectors.ts'))
+const { counselorReducer } = load(path.resolve('src/features/counselor/store/counselorPortalReducer.ts'))
 const now = new Date('2026-09-27T12:00:00.000Z')
 const fresh = () => data.createCounselorPortalState(now)
 
@@ -119,7 +119,7 @@ test('watchlist, publications and interview moderation share one session reducer
 
 
 test('interview moderation preserves reports, prevents featuring hidden content and includes uploaded videos', () => {
-  const { getPublishedInterviews, moderateInterview } = load(path.resolve('src/features/counselor-portal/InterviewSelectors.ts'))
+  const { getPublishedInterviews, moderateInterview } = load(path.resolve('src/features/counselor/lib/interviewSelectors.ts'))
   const state = fresh()
   const adventure = { videos: [], reactions: [], reports: [], interviewModeration: {} }
   const initial = getPublishedInterviews(state.interviews, adventure)

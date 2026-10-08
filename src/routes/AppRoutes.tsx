@@ -1,103 +1,51 @@
-import { Navigate, Route, Routes, useNavigate } from 'react-router'
-import { CounselorDashboardView } from '@/features/counselor-portal/CounselorDashboardView'
-import { CounselorPortalModule } from '@/features/counselor-portal/CounselorPortalModule'
-import { CounselorSettingsView } from '@/features/counselor-portal/CounselorSettingsView'
-import { PrioritiesView } from '@/features/counselor-portal/PrioritiesView'
-import { PublicationsView } from '@/features/counselor-portal/PublicationsView'
-import { StudentDetailView } from '@/features/counselor-portal/StudentDetailView'
-import { QuestionnaireDetailView } from '@/features/counselor-portal/profile/Questionnaires'
-import { StudentRecordDetailView } from '@/features/counselor-portal/StudentRecordDetailView'
-import { FamilyRecordDetailView } from '@/features/counselor-portal/FamilyRecordDetailView'
-import { StudentsView } from '@/features/counselor-portal/StudentsView'
-import { OccupationExplorationModule } from '@/features/occupation-exploration/OccupationExplorationModule'
+import { LoginRoute } from '@/pages/auth/LoginRoute'
+import { RoleSelectionRoute } from '@/pages/auth/RoleSelectionRoute'
+import { SoloLocal } from './SoloLocal'
+import { Navigate, Route, Routes } from 'react-router'
+import { CounselorDashboardView } from '@/pages/counselor/CounselorDashboardView'
+import { CounselorPortalModule } from '@/pages/counselor/CounselorPortalModule'
+import { CounselorSettingsView } from '@/pages/counselor/CounselorSettingsView'
+import { PrioritiesView } from '@/pages/counselor/PrioritiesView'
+import { PublicationsView } from '@/pages/counselor/PublicationsView'
+import { StudentDetailView } from '@/pages/counselor/StudentDetailView'
+import { QuestionnaireDetailView } from '@/features/student-tracking/components/Questionnaires'
+import { StudentRecordDetailView } from '@/pages/counselor/StudentRecordDetailView'
+import { FamilyRecordDetailView } from '@/pages/counselor/FamilyRecordDetailView'
+import { StudentsView } from '@/pages/counselor/StudentsView'
+import { OccupationExplorationModule } from '@/pages/student/OccupationExplorationModule'
 import {
   ExplorationCaseIntroPage,
   ForestFireCasePage,
-} from '@/features/occupation-exploration/OccupationExplorationPages'
-import { StudentCatalogView } from '@/features/student-experience/catalog/StudentCatalogView'
-import { CareerDetailView } from '@/features/student-experience/catalog/CareerDetailView'
-import { OccupationDetailView } from '@/features/student-experience/catalog/OccupationDetailView'
-import { InstitutionDetailView } from '@/features/student-experience/catalog/InstitutionDetailView'
-import { StudentPlansView } from '@/features/student-experience/plans/StudentPlansView'
-import { ProfileRoute } from '@/features/student-experience/profile/StudentProfileView'
-import { HelenaBookView } from '@/features/student-experience/profile/HelenaBookView'
-import { StudentShell } from '@/features/student-experience/StudentShell'
-import { StudentThemeScope } from '@/features/student-experience/StudentThemeScope'
-import { StudentActivitiesView } from '@/features/student-experience/modules/StudentActivitiesView'
-import { CaminoScreen } from '@/features/student-experience/map/CaminoScreen'
-import { CiudadScreen } from '@/features/student-experience/map/CiudadScreen'
-import { StudentFamilyConversationsView } from '@/features/student-experience/modules/StudentFamilyConversationsView'
-import { ParentActivitiesView } from '@/features/parent-portal/ParentActivitiesView'
-import { ParentActivityView } from '@/features/parent-portal/ParentActivityView'
-import { ParentCareerGuideView } from '@/features/parent-portal/ParentCareerGuideView'
-import { ParentQuestionnaireDetailView } from '@/features/parent-portal/ParentQuestionnaireDetailView'
-import { ParentChildrenView } from '@/features/parent-portal/ParentChildrenView'
-import { ParentOverviewView } from '@/features/parent-portal/ParentOverviewView'
-import { ParentPortalModule } from '@/features/parent-portal/ParentPortalModule'
-import { parentChildren } from '@/features/parent-portal/data/ParentPortalData'
-import { RoleSelectionScreen } from '@/features/role-selection/RoleSelectionScreen'
-import type { PlatformRole } from '@/features/role-selection/types/RoleSelectionTypes'
+} from '@/pages/student/CasePages'
+import { StudentCatalogView } from '@/pages/student/StudentCatalogView'
+import { CareerDetailView } from '@/pages/student/CareerDetailView'
+import { OccupationDetailView } from '@/pages/student/OccupationDetailView'
+import { InstitutionDetailView } from '@/pages/student/InstitutionDetailView'
+import { StudentPlansView } from '@/pages/student/StudentPlansView'
+import { ProfileRoute } from '@/pages/student/StudentProfileView'
+import { HelenaBookView } from '@/pages/student/HelenaBookView'
+import { StudentShell } from '@/pages/student/StudentShell'
+import { StudentThemeScope } from '@/pages/student/StudentThemeScope'
+import { StudentActivitiesView } from '@/pages/student/StudentActivitiesView'
+import { CaminoScreen } from '@/pages/student/CaminoScreen'
+import { CiudadScreen } from '@/pages/student/CiudadScreen'
+import { StudentFamilyConversationsView } from '@/pages/student/StudentFamilyConversationsView'
+import { ParentActivitiesView } from '@/pages/parent/ParentActivitiesView'
+import { ParentActivityView } from '@/pages/parent/ParentActivityView'
+import { ParentCareerGuideView } from '@/pages/parent/ParentCareerGuideView'
+import { ParentQuestionnaireDetailView } from '@/pages/parent/ParentQuestionnaireDetailView'
+import { ParentChildrenView } from '@/pages/parent/ParentChildrenView'
+import { ParentOverviewView } from '@/pages/parent/ParentOverviewView'
+import { ParentPortalModule } from '@/pages/parent/ParentPortalModule'
+import { parentChildren } from '@/features/parent/data/parentPortal'
 import { appPaths } from './paths'
-import { LoginScreen } from '@/features/access/LoginScreen'
-import { useDemoAccess, startDemoAccess, endDemoAccess } from '@/features/access/demoAccess'
-import { ResearchRoute } from '@/features/student-experience/research/StudentResearchView'
-import { ResearchGuideView } from '@/features/student-experience/research/ResearchGuideView'
-import { StudentJournalView } from '@/features/student-experience/modules/StudentJournalView'
-import { StudentSignalsView } from '@/features/student-experience/modules/StudentSignalsView'
-import { CommunityView } from '@/features/occupation-exploration/CommunityView'
-import { StudentResourcesView } from '@/features/student-experience/modules/StudentResourcesView'
-import { FamilyConversationsView } from '@/features/family-conversations/FamilyConversationsView'
-import { modoApi } from '@/config/env'
-import { guardarUsuarioIngreso } from '@/store/servidor/cuenta'
-import { prepararIngreso } from '@/store/servidor/operaciones'
-
-const roleHomePaths: Record<PlatformRole, string> = {
-  student: appPaths.student.missions,
-  parent: appPaths.parent.overview,
-  counselor: appPaths.counselor.dashboard,
-}
-
-function RoleSelectionRoute() {
-  const navigate = useNavigate()
-
-  return (
-    <RoleSelectionScreen
-      onSelectRole={(role) => navigate(roleHomePaths[role])}
-      onSignOut={() => {
-        endDemoAccess()
-        navigate(appPaths.login, { replace: true })
-      }}
-    />
-  )
-}
-
-function LoginRoute() {
-  const navigate = useNavigate()
-  const active = useDemoAccess()
-  if (active) return <Navigate replace to={appPaths.roleSelection} />
-  return (
-    <LoginScreen
-      onEnter={(usuario) => {
-        if (modoApi) {
-          guardarUsuarioIngreso(usuario)
-          prepararIngreso()
-        }
-        startDemoAccess()
-        navigate(appPaths.roleSelection, { replace: true })
-      }}
-    />
-  )
-}
-
-function SoloLocal({ children }: { children: React.ReactNode }) {
-  return modoApi ? (
-    <section className="sx-glass sx-player-card">
-      <p>Disponible en una próxima iteración.</p>
-    </section>
-  ) : (
-    children
-  )
-}
+import { ResearchRoute } from '@/pages/student/StudentResearchView'
+import { ResearchGuideView } from '@/pages/student/ResearchGuideView'
+import { StudentJournalView } from '@/pages/student/StudentJournalView'
+import { StudentSignalsView } from '@/pages/student/StudentSignalsView'
+import { CommunityView } from '@/pages/student/CommunityView'
+import { StudentResourcesView } from '@/pages/student/StudentResourcesView'
+import { FamilyConversationsView } from '@/features/family-conversations/components/FamilyConversationsView'
 
 function AppRoutes() {
   return (

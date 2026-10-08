@@ -61,3 +61,19 @@ La solicitud autoriza ejecutar R0 y R1 en este mismo turno. Tras registrar y con
 - Registros en `logs/refactor-r3a-*.log` y `logs/r3a-auditoria.json`, ignorados por Git. No quedan imports a las carpetas indicadas en la condición de R3a.
 - No se modifica `ov_backend`; no corresponde ejecutar sus pruebas. Las infracciones de estructura se medirán en R3b.
 - La solicitud «ejecuta R3» abarca R3a y R3b: se confirma R3a y se continúa con R3b, deteniéndose antes de R4.
+
+## R3b · Features y páginas (8 de octubre de 2026)
+
+- Se mueven con `git mv` los 185 archivos restantes del mapa a las features de dominio y `pages/`. Sumados a R3a, los 272 movimientos del Anexo C quedan completos. Se comprueba que todos los destinos existen y que no quedan archivos en las rutas antiguas (salvo renombres de mayúsculas en Windows).
+- Se extraen `LoginRoute` y `RoleSelectionRoute` a `pages/auth/` y `SoloLocal` a `routes/SoloLocal.tsx`, con los imports necesarios. `roleHomePaths` acompaña a `RoleSelectionRoute`. Una comparación de las funciones confirma que sus cuerpos y el de `AppRoutes` permanecen idénticos.
+- Se retiran las ocho carpetas antiguas de `features/` únicamente después de comprobar que están vacías. No se divide ningún otro componente ni se extrae lógica de datos: esos trabajos corresponden a R5 y R6.
+- Adaptación A1: se actualizan rutas de archivos, imports sustituidos, patrones de imports y las rutas que delimitan los cargadores de pruebas. No se cambian valores esperados, textos, marcado ni aserciones de comportamiento.
+- Archivos de pruebas adaptados: `adventure-rendering.test.mjs`, `counselor-portal.test.mjs`, `forest-fire-case.test.mjs`, `parent-missions.test.mjs`, `servidor-avisos.test.mjs`, `servidor-flujo.test.mjs`, `servidor-local.test.mjs`, `servidor-logros.test.mjs`, `servidor-mara.test.mjs`, `servidor-resultados.test.mjs`, `soporte/servidor-ayudas.mjs`, `soporte/servidor-mara-ayudas.mjs`, `student-profile.test.mjs`, `student-progress-challenges.test.mjs` y `student-reflection-pilot.test.mjs`. El acceso a los portales y a su suite está autorizado por §0 de la especificación.
+- **Diferencia respecto de las 46 excepciones previstas:** el primer registro arroja **47: 22 E3, 2 E4, 20 E5 y 3 E7**. La adicional es `src/pages/auth/LoginRoute.tsx`, que conserva el import de `modoApi` que tenía dentro de `AppRoutes.tsx`; al quedar en `pages/`, el verificador le aplica E5. Esta diferencia se explicó antes de continuar. Se conserva el verificador del Anexo B sin cambios y se registra la infracción real, sin ocultarla ni adelantar R5.
+- `npm run check:estructura`: pasa con las 47 excepciones registradas en `scripts/estructura-excepciones.json`, sobre 310 archivos. No hay infracciones de ubicación, nombres, imports, capas ni alias fuera de las categorías previstas.
+- `npm run build` y `npm run lint`: pasan. Se conserva únicamente el aviso de tamaño del bundle en build.
+- `npm test`: antes y después de R3b **352/337/15**, sin canceladas ni omitidas. Las 15 fallas conservan nombre y motivo. Respecto de R2, sigue pasando la prueba de acceso real descrita en R3a, conforme al registro exigido por §9.1; no aparecen fallas nuevas.
+- Auditoría de los 307 archivos anteriores a R3b: código ejecutable, JSX, CSS y JSON conservados, excluyendo imports y exports de módulos; la extracción de `AppRoutes` se comprueba por separado. No quedan referencias a las carpetas antiguas en `src/` ni en el contenido de `tests/`.
+- Registros en `logs/refactor-r3b-*.log` y `logs/r3b-auditoria.json`, ignorados por Git. Los cuatro documentos entregados continúan sin seguimiento, sin modificaciones.
+- No se modifica `ov_backend`; no corresponde ejecutar sus pruebas. No se agregan dependencias ni se hace push.
+- Pendiente: R4 (servicios del backend, que resolverá las dos E4); R5 debe incluir también el modo de datos de `LoginRoute` al reducir E5; R6 resolverá tamaño y dependencias entre componentes. El trabajo se detiene antes de R4.

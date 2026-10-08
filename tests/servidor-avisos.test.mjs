@@ -188,12 +188,12 @@ test('cola automática solo en mapas, pausada por actividad y guía; la campana 
     introsSeen: { ...s.introsSeen, missions: true, central: true },
     cityArrivalSeen: true,
     checkInPromptDismissedOn: f.app
-      .load('src/features/student-experience/overlays/checkIn.ts')
+      .load('src/features/adventure/lib/checkIn.ts')
       .localDateKey(new Date()),
   }))
   const props = { view: 'profile-general', activityOpen: false, children: null }
   const queue = f.app.mount(
-    f.app.load('src/features/student-experience/overlays/OverlayQueue.tsx').OverlayQueue,
+    f.app.load('src/features/adventure/components/overlays/OverlayQueue.tsx').OverlayQueue,
     props,
   )
   let tree = queue.render()
@@ -236,10 +236,10 @@ test('un overlay pausa también el cierre del lote y solo se marca después de c
     ...s,
     introsSeen: { ...s.introsSeen, missions: true },
     cityArrivalSeen: true,
-    checkInPromptDismissedOn: f.app.load('src/features/student-experience/overlays/checkIn.ts').localDateKey(new Date()),
+    checkInPromptDismissedOn: f.app.load('src/features/adventure/lib/checkIn.ts').localDateKey(new Date()),
   }))
   const queue = f.app.mount(
-    f.app.load('src/features/student-experience/overlays/OverlayQueue.tsx').OverlayQueue,
+    f.app.load('src/features/adventure/components/overlays/OverlayQueue.tsx').OverlayQueue,
     { view: 'missions', activityOpen: false, children: null },
   )
   queue.render()
@@ -259,14 +259,14 @@ test('un overlay pausa también el cierre del lote y solo se marca después de c
 test('la campana puede solicitar el lote desde su menú, pero espera a que el menú se cierre', async () => {
   const f = await iniciar()
   const queue = f.app.mount(
-    f.app.load('src/features/student-experience/overlays/OverlayQueue.tsx').OverlayQueue,
+    f.app.load('src/features/adventure/components/overlays/OverlayQueue.tsx').OverlayQueue,
     { view: 'profile-general', activityOpen: false, children: null },
   )
   queue.render()
   f.app.overlayOpen(true)
   const tree = queue.render()
-  f.app.load('src/features/student-experience/overlays/overlay-context.ts').StudentOverlayContext._currentValue = tree.props.value
-  const { NoveltiesMenu } = f.app.load('src/features/student-experience/overlays/NoveltiesMenu.tsx')
+  f.app.load('src/features/adventure/context/overlayContext.ts').StudentOverlayContext._currentValue = tree.props.value
+  const { NoveltiesMenu } = f.app.load('src/features/adventure/components/overlays/NoveltiesMenu.tsx')
   const servidorMenu = NoveltiesMenu({})
   const menu = servidorMenu.type(servidorMenu.props)
   const solicitud = elementos(menu, (e) => typeof e.props.onSelect === 'function')[0]
