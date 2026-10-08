@@ -91,3 +91,13 @@ La solicitud autoriza ejecutar R0 y R1 en este mismo turno. Tras registrar y con
 - Registros de validación: `logs/refactor-r4-build.log`, `refactor-r4-lint.log`, `refactor-r4-test.log`, `refactor-r4-estructura.log` y `refactor-r4-servidor.log`, todos dentro de `logs/`, ignorado por Git.
 - No se modifica `ov_backend` ni el contrato; no corresponde ejecutar sus pruebas. No se agregan dependencias ni se hace push. Los cuatro documentos entregados continúan sin seguimiento y sin modificaciones.
 - Pendiente: R5 (origen de datos fuera de las vistas) y fases posteriores. El trabajo se detiene al terminar R4.
+
+## R5 · Adventure y autenticación (8 de octubre de 2026)
+
+- Se extraen sesión y sincronización local a `useServerSession`; nivel y presentación del viajero a `useTravelerLevel`; requisitos y apertura de Ciudad a `useCityRequirement` y `useCityAccess`; consultas y acciones del mapa a `useMapScreen`; cuenta y reinicio a `useStudentAccount`; menú y cola de novedades a `useNovelties` y `useNoveltyQueue`. Se conservan efectos, dependencias, cancelaciones, revisiones y orden de llamadas.
+- Se incluye `auth/hooks/useLogin` en este primer commit, según el plan aprobado, para resolver la E5 adicional de R3b. Mantiene el orden de guardar usuario, preparar ingreso, iniciar acceso y navegar. La vista recibe `active` y `enter`.
+- Las vistas reciben datos, acciones y banderas del dominio; no importan el modo de datos. Se conservan componentes, marcado, clases, textos, estilos y exports. No se adelantan las divisiones de R6.
+- Adaptación A3 en `tests/adventure-rendering.test.mjs`: los dos cargadores que simulaban directamente React y el router de las vistas cargan ahora los hooks trasladados con esos mismos mocks. Se actualiza el especificador del mock de `checkIn` para la nueva ubicación. No cambian pruebas, valores esperados ni aserciones.
+- `npm run build` y `npm run lint`: pasan, con el aviso existente de tamaño del bundle. `npm test`: **365/350/15**, mismos nombres y motivos de las 15 fallas de R4, sin canceladas ni omitidas; todas las pruebas `servidor-*` pasan dentro de la suite completa.
+- `npm run check:estructura`: pasa sobre 323 archivos con **35 excepciones: 21 E3, 11 E5 y 3 E7**. Se retiran nueve E5 (ocho de Adventure y una de autenticación) y la E3 de `MapScreenLayout`, que queda por debajo de 300 líneas. No se regenera la lista ni se modifica el verificador.
+- Registros en `logs/refactor-r5-adventure-*.log`, ignorados por Git. No hay dependencias nuevas, cambios en backend ni push. Continúan Activities, Backpack y Discovery dentro de R5.

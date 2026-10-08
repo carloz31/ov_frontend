@@ -1,37 +1,16 @@
+import { useCityRequirement } from '../hooks/useCityRequirement'
 import { KeyRound } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { modoApi } from '@/config/env'
-import {
-  useEstadoServidor,
-  consultarProgreso,
-  mensajeErrorServidor,
-} from '@/store/servidor/estadoServidor'
-import { progresoCamino, textoRequisito } from '@/lib/servidor/adaptadores'
+
+
 import { Link } from 'react-router'
 import { Progress } from '@/components/ui/Progress'
-import { fieldMissions } from '@/data/content/adventure'
+
 import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
 
 export function CityLocked({ adventure }: { adventure: AdventureState }) {
-  const servidor = useEstadoServidor()
-  const [requisito, setRequisito] = useState('Consultando el requisito en el servidor…')
-  const [error, setError] = useState(false)
-  const [intento, setIntento] = useState(0)
-  useEffect(() => {
-    if (!modoApi) return
-    let vigente = true
-    setRequisito('Consultando el requisito en el servidor…')
-    setError(false)
-    void consultarProgreso('BLOQUE', 'CIUDAD').then((r) => {
-      if (!vigente) return
-      setError(r.tipo !== 'ok')
-      setRequisito(r.tipo === 'ok' ? textoRequisito(r.datos, servidor.estado) : mensajeErrorServidor(r))
-    })
-    return () => {
-      vigente = false
-    }
-  }, [servidor.estado, intento])
+  const { requisito, error, setIntento, mostrarRequisito, progreso } = useCityRequirement(adventure)
+
   return (
     <div className="sx-city-mist">
       <section className="sx-glass sx-city-locked">
@@ -45,15 +24,11 @@ export function CityLocked({ adventure }: { adventure: AdventureState }) {
         <Progress
           aria-label="Camino hacia la ciudad"
           value={
-            modoApi
-              ? progresoCamino(servidor.estado).porcentaje
-              : (fieldMissions.filter((item) => adventure.completedMissionIds.includes(item.id)).length /
-                  fieldMissions.length) *
-                100
+            progreso
           }
         />
-        {modoApi && <p role={error ? 'alert' : 'status'}>{requisito}</p>}
-        {modoApi && error && (
+        {mostrarRequisito && <p role={error ? 'alert' : 'status'}>{requisito}</p>}
+        {mostrarRequisito && error && (
           <button className="sx-secondary-button" onClick={() => setIntento((i) => i + 1)}>
             Reintentar requisito
           </button>

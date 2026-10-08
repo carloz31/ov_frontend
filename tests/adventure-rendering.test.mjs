@@ -10,6 +10,16 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
 
 const nativeRequire = createRequire(import.meta.url)
+// A3: el código trasladado a hooks conserva el mismo entorno simulado de su vista.
+function loadMovedHook(file, require) {
+  const js = ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText
+  const exports = {}
+  const movedRequire = specifier => require(specifier.startsWith('.')
+    ? `@/${path.relative(path.resolve('src'), path.resolve(path.dirname(file), specifier)).replaceAll('\\', '/')}`
+    : specifier)
+  vm.runInContext(`(function(require,exports){${js}\n})`, context, { filename: file })(movedRequire, exports)
+  return exports
+}
 const cache = new Map()
 const context = vm.createContext({
   console,
@@ -952,7 +962,7 @@ test('mounted overlay queue opens from effects, remembers introductions and resu
     if (specifier === 'react-router') return { useNavigate: () => destination => destinations.push(destination) }
     if (specifier.endsWith('/adventureStore')) return { useAdventure: () => adventure }
     if (specifier === '@/store/studentUiStore') return { useStudentUi: () => ui, updateStudentUi: update => { ui = update(ui) } }
-    if (specifier === '../../lib/checkIn') {
+    if (specifier === '../../lib/checkIn' || specifier === '@/features/adventure/lib/checkIn') {
       const original = load(path.resolve('src/features/adventure/lib/checkIn.ts'))
       return { ...original, useCheckInDay: () => original.localDateKey(new Date()), saveTodayCheckIn: value => {
         adventure = { ...adventure, readinessCheckIns: [{ id: 'saved', value, createdAt: new Date().toISOString(), linkedActivityId: 'daily-check-in' }] }
@@ -960,6 +970,7 @@ test('mounted overlay queue opens from effects, remembers introductions and resu
     }
     if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
     const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
+    if (base === path.resolve('src/features/adventure/hooks/useNoveltyQueue')) return loadMovedHook(`${base}.ts`, queueRequire)
     return load([`${base}.tsx`, `${base}.ts`].find(existsSync))
   }
   const exports = {}
@@ -1449,6 +1460,8 @@ function immersivePlayerHarness(name, overrides = {}) {
     if (specifier === 'react') return react
     if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
     const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
+    if (/[\\/]features[\\/](adventure|auth|activities|backpack|discovery)[\\/]hooks[\\/]use(ServerSession|TravelerLevel|CityRequirement|StudentAccount|CityAccess|MapScreen|Novelties|NoveltyQueue|Login|ActivityCompletion|InstrumentResponses|ActivityResources|ActivityFinish|InstrumentResult|Backpack|CatalogAffinity|StudentProfile|Passport|BadgeDetail|HelenaPages)$/.test(base))
+      return loadMovedHook(`${base}.ts`, require)
     return load([`${base}.tsx`, `${base}.ts`].find(existsSync))
   }
   const exports = {}
@@ -2188,7 +2201,7 @@ test('overlay queue resumes earned badges after the player and presents them con
   const checkIn = load(path.resolve('src/features/adventure/lib/checkIn.ts'))
   const queue = immersivePlayerHarness('src/features/adventure/components/overlays/OverlayQueue', {
     'react-router': { ...nativeRequire('react-router'), useNavigate: () => () => {} },
-    '../../lib/checkIn': { ...checkIn, useCheckInDay: () => checkIn.localDateKey(new Date()) },
+    '@/features/adventure/lib/checkIn': { ...checkIn, useCheckInDay: () => checkIn.localDateKey(new Date()) },
   })
   const clock = followUpClock()
   const findBadge = tree => queue.find(tree, element => element.type.name === 'BadgeToast')

@@ -40,44 +40,9 @@
     "detalle": "usa un componente de la feature journal: src/features/journal/components/JournalEntryCard.tsx"
   },
   {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/adventure/components/AdventurePanel.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/adventure/components/CityLocked.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/features/adventure/components/MapScreenLayout.tsx",
-    "detalle": "338 líneas (máximo 300)"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/adventure/components/MapScreenLayout.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
     "regla": "E7-features",
     "archivo": "src/features/adventure/components/MapScreenLayout.tsx",
     "detalle": "usa un componente de la feature activities: src/features/activities/components/reflection/AdditionalReveal.tsx"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/adventure/components/overlays/NoveltiesMenu.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/adventure/components/overlays/OverlayQueue.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/adventure/components/StudentUserMenu.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
   },
   {
     "regla": "E3-tamano",
@@ -125,11 +90,6 @@
     "detalle": "409 líneas (máximo 300)"
   },
   {
-    "regla": "E5-modo-datos",
-    "archivo": "src/pages/auth/LoginRoute.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
     "regla": "E3-tamano",
     "archivo": "src/pages/counselor/CounselorDashboardView.tsx",
     "detalle": "387 líneas (máximo 300)"
@@ -158,11 +118,6 @@
     "regla": "E3-tamano",
     "archivo": "src/pages/parent/ParentOverviewView.tsx",
     "detalle": "355 líneas (máximo 300)"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/pages/student/CiudadScreen.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
   },
   {
     "regla": "E3-tamano",
@@ -218,10 +173,5 @@
     "regla": "E3-tamano",
     "archivo": "src/pages/student/StudentResearchView.tsx",
     "detalle": "315 líneas (máximo 300)"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/pages/student/StudentShell.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
   }
 ]

@@ -1,26 +1,8 @@
+import { useTravelerLevel } from '../hooks/useTravelerLevel'
 import { Link } from 'react-router'
-import { modoApi } from '@/config/env'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
-import {
-  Backpack,
-  Building2,
-  MapPinned,
-  BookOpen,
-  ChevronRight,
-  Compass,
-  FolderHeart,
-  HeartHandshake,
-  LibraryBig,
-  LockKeyhole,
-  PenLine,
-  Search,
-  Target,
-  TrendingUp,
-} from 'lucide-react'
-import {
-  canAccessFamilyConversations,
-  getTravelerLevel,
-} from '@/store/adventureStore'
+
+import { Backpack, Building2, MapPinned, BookOpen, ChevronRight, Compass, FolderHeart, HeartHandshake, LibraryBig, LockKeyhole, PenLine, Search, Target, TrendingUp } from 'lucide-react'
+import { canAccessFamilyConversations } from '@/store/adventureStore'
 import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
 import { getReturnGreeting, type StudentMapPoint } from '../lib/mapPoints'
@@ -42,10 +24,7 @@ export function AdventurePanel({
   onSelect: (id: string) => void
   onCheckIn: () => void
 }) {
-  const servidor = useEstadoServidor()
-  const level = modoApi
-    ? getTravelerLevel(adventure, servidor.estado?.nivel_actual ?? null)
-    : getTravelerLevel(adventure)
+  const { level, nombre, progresoCiudad } = useTravelerLevel(adventure)
   const visible = getListedActivities(points, false).slice(0, 4)
   const greeting = getReturnGreeting(adventure, recommended)
   useCheckInDay()
@@ -63,7 +42,7 @@ export function AdventurePanel({
           </span>
           <div>
             <span>¡Qué bueno verte!</span>
-            <strong>{modoApi ? servidor.estado?.cuenta.nombre : 'Alex'}</strong>
+            <strong>{nombre}</strong>
           </div>
           <ChevronRight aria-hidden="true" size={18} />
         </div>
@@ -118,9 +97,7 @@ export function AdventurePanel({
           <p>
             Crece con cada{' '}
             {zonaCiudad
-              ? modoApi
-                ? 'interacción que completas.'
-                : 'llamado que atiendes.'
+              ? progresoCiudad
               : 'misión del camino.'}
           </p>
         </div>

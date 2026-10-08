@@ -1,33 +1,16 @@
-import { useState } from 'react'
-import { modoApi } from '@/config/env'
-import { avisosPendientes, useEstadoServidor } from '@/store/servidor/estadoServidor'
-import { useStudentOverlays } from '../../context/overlayContext'
+import { useNovelties, useServerNovelties } from '../../hooks/useNovelties'
+
 import { Award, Bell, BookOpen, Building2, HeartHandshake, UserRound, X } from 'lucide-react'
-import { useDiscovery } from '@/store/discoveryStore'
+
 import { Link } from 'react-router'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/DropdownMenu'
-import { useJourney } from '@/store/journeyStore'
-import { useAdventure } from '@/store/adventureStore'
-import { updateStudentUi, useStudentUi } from '@/store/studentUiStore'
-import { getUnlocks, markUnlocksSeen, orderUnlocks } from '../../lib/unlocks'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
+
+import { updateStudentUi } from '@/store/studentUiStore'
+import { markUnlocksSeen } from '../../lib/unlocks'
 
 export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
-  const ui = useStudentUi()
-  const adventure = useAdventure(),
-    journey = useJourney(),
-    discovery = useDiscovery()
-  const items = modoApi ? [] : getUnlocks(adventure, journey, discovery)
-  const ordered = ui.initialized
-    ? orderUnlocks(items, ui).filter((item) => !ui.seenUnlockIds.includes(item.id))
-    : []
-  const [open, setOpen] = useState(false)
-  if (modoApi) return <ServerNoveltiesMenu glass={glass} />
-  const unread = ordered.length
+  const { ordered, open, setOpen, unread, loteAvisos } = useNovelties()
+  if (loteAvisos) return <ServerNoveltiesMenu glass={glass} />
   const titles = {
     badge: 'Nueva insignia disponible',
     ficha: 'Nueva ficha disponible',
@@ -121,10 +104,8 @@ export function NoveltiesMenu({ glass = false }: { glass?: boolean }) {
 }
 
 function ServerNoveltiesMenu({ glass }: { glass: boolean }) {
-  const [open, setOpen] = useState(false)
-  const servidor = useEstadoServidor()
-  const { openServerNotices } = useStudentOverlays()
-  const pendientes = avisosPendientes().length
+  const { open, setOpen, openServerNotices, pendientes, errorAvisos } = useServerNovelties()
+
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
@@ -138,7 +119,7 @@ function ServerNoveltiesMenu({ glass }: { glass: boolean }) {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="sx-root sx-novelties-menu">
         <h2>Novedades</h2>
-        {pendientes || servidor.errorAvisos ? (
+        {pendientes || errorAvisos ? (
           <DropdownMenuItem
             onSelect={() => {
               // Solo solicita el lote: OverlayQueue espera a que este menú
@@ -147,7 +128,7 @@ function ServerNoveltiesMenu({ glass }: { glass: boolean }) {
               openServerNotices()
             }}
           >
-            Ver {pendientes} avisos pendientes{servidor.errorAvisos ? ' · Reintentar' : ''}
+            Ver {pendientes} avisos pendientes{errorAvisos ? ' · Reintentar' : ''}
           </DropdownMenuItem>
         ) : (
           <p>No tienes novedades pendientes</p>

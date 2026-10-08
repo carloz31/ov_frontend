@@ -1,18 +1,11 @@
+import { useMapScreen } from '../hooks/useMapScreen'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { modoApi } from '@/config/env'
-import {
-  consultarItems,
-  consultarProgreso,
-  mensajeErrorServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
-import { textoRequisito } from '@/lib/servidor/adaptadores'
-import { actividadServidor } from '@/lib/servidor/adaptadores'
+
 import { ChevronLeft, ChevronRight, PanelLeftOpen } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
 import type { JourneyState } from '@/types/activities'
-import { canAccessCity } from '@/store/adventureStore'
+
 import type { AdventureState } from '@/types/adventure'
 import { appPaths } from '@/routes/paths'
 import { StudentUserMenu } from './StudentUserMenu'
@@ -26,14 +19,7 @@ import { AdventurePanel, CollapsedAdventurePanel } from './AdventurePanel'
 import { CityLocked } from './CityLocked'
 import { MapCanvas, type MapCanvasHandle } from './MapCanvas'
 import { MapControls } from './MapControls'
-import {
-  getPointDetails,
-  getRecommendedPoint,
-  getZoneProgress,
-  type PointDetails,
-  type StudentMapPoint,
-  type StudentZone,
-} from '../lib/mapPoints'
+import { type PointDetails, type StudentMapPoint, type StudentZone } from '../lib/mapPoints'
 import { ZoneSwitch } from './ZoneSwitch'
 import { ZoneTransition } from './ZoneTransition'
 import { ZoomControls } from './ZoomControls'
@@ -51,14 +37,6 @@ export function MapScreenLayout({
   adventure: AdventureState
   journey: JourneyState
 }) {
-  const servidor = useEstadoServidor()
-  const [detalleServidor, setDetalleServidor] = useState<{
-    clave: string
-    requirement?: string
-    description?: string
-    error?: boolean
-  }>()
-  const [intentoRequisito, setIntentoRequisito] = useState(0)
   const ui = useStudentUi()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
@@ -84,77 +62,8 @@ export function MapScreenLayout({
     query.addEventListener('change', update)
     return () => query.removeEventListener('change', update)
   }, [])
-  const cityOpen = canAccessCity(adventure)
-  const locked = zone === 'central' && !cityOpen
-  const recommended = getRecommendedPoint(points)
-  const progress = getZoneProgress(zone, adventure, journey)
-  const selected = points.find((point) => point.id === selectedId)
-  const baseDetails = selected ? getPointDetails(selected, adventure, journey) : undefined
-  const claveDetalle = `${servidor.estado?.cuenta.codigo}/${selected?.id}/${selected?.specActivityId}/${selected?.status}`
-  const details =
-    baseDetails && detalleServidor?.clave === claveDetalle
-      ? { ...baseDetails, ...detalleServidor }
-      : baseDetails
-  const selectedPointId = selected?.id
-  const selectedActivityId = selected?.specActivityId
-  const selectedStatus = selected?.status
-  const selectedZone = selected?.zone
-  useEffect(() => {
-    if (!modoApi || !selectedPointId) return
-    let vigente = true
-    const consultaRequisito =
-      selectedStatus === 'locked' &&
-      (selectedPointId === 'city' || !!actividadServidor(servidor.estado, selectedActivityId ?? ''))
-    setDetalleServidor({
-      clave: claveDetalle,
-      ...(consultaRequisito ? { requirement: 'Consultando el requisito en el servidor…' } : {}),
-    })
-    void (async () => {
-      const [requirement, items] = await Promise.all([
-        consultaRequisito
-          ? consultarProgreso(
-              selectedPointId === 'city' ? 'BLOQUE' : 'ACTIVIDAD',
-              selectedPointId === 'city' ? 'CIUDAD' : (selectedActivityId ?? ''),
-            )
-          : undefined,
-        selectedPointId === 'mara-test' && selectedActivityId
-          ? consultarItems(selectedActivityId)
-          : undefined,
-      ])
-      if (!vigente) return
-      setDetalleServidor({
-        clave: claveDetalle,
-        ...(requirement
-          ? {
-              requirement:
-                requirement.tipo === 'ok'
-                  ? textoRequisito(requirement.datos, servidor.estado)
-                  : mensajeErrorServidor(requirement),
-              error: requirement.tipo !== 'ok',
-            }
-          : {}),
-        ...(items
-          ? {
-              description:
-                items.tipo === 'ok'
-                  ? `Conversa con Mara y responde ${items.datos.length} ítems en esta interacción. No hay respuestas correctas o incorrectas.`
-                  : mensajeErrorServidor(items),
-            }
-          : {}),
-      })
-    })()
-    return () => {
-      vigente = false
-    }
-  }, [
-    claveDetalle,
-    servidor.estado,
-    selectedPointId,
-    selectedActivityId,
-    selectedStatus,
-    selectedZone,
-    intentoRequisito,
-  ])
+  const { cityOpen, locked, recommended, progress, selected, details, selectedPointId,
+    accionDisponible, mostrarMisionesAdicionales, reintentarRequisito } = useMapScreen({ zone, points, adventure, journey, selectedId })
   useEffect(() => {
     if (selectedPointId) {
       returnPoint.current = selectedPointId
@@ -183,7 +92,7 @@ export function MapScreenLayout({
     })
   }
   function action(detail: PointDetails) {
-    if (detail.disabled || (modoApi && servidor.error)) return
+    if (!accionDisponible(detail)) return
     if (detail.href) navigate(detail.href)
     else if (detail.activityId)
       setParams({ actividad: detail.activityId, ...(detail.revision ? { revision: '1' } : {}) })
@@ -242,7 +151,7 @@ export function MapScreenLayout({
           }
         />
         {locked && <CityLocked adventure={adventure} />}
-        {zone === 'missions' && !modoApi && (
+        {mostrarMisionesAdicionales && (
           <AdditionalReveal
             onFrame={frameAdditional}
             onSelect={selectPoint}
@@ -321,11 +230,7 @@ export function MapScreenLayout({
         onClose={closePoint}
         onAction={action}
         onJournal={journal}
-        onRetryRequirement={
-          modoApi && detalleServidor?.clave === claveDetalle && detalleServidor.error
-            ? () => setIntentoRequisito((i) => i + 1)
-            : undefined
-        }
+        onRetryRequirement={reintentarRequisito}
         onFallbackFocus={() => {
           if (mobile) mobilePanelButton.current?.focus()
           else canvas.current?.focusNode(returnPoint.current)
