@@ -7,15 +7,18 @@ import {
   informarErrorServidor,
   limpiarEstadoServidor,
   prepararAlmacenesApi,
-  refrescar,
   sesionServidor,
+  obtenerEstadoServidor,
+  publicar,
+} from './sesion'
+import {
   incorporarDesbloqueos,
   consultarNoVistos,
   avisosPendientes,
-  obtenerEstadoServidor,
   estadoLoteAvisos,
   terminarAvisosMarcados,
-} from './estadoServidor'
+} from './avisos'
+import { refrescar } from './refresco'
 import type {
   ErrorServidor,
   RespuestaAccion,
@@ -60,6 +63,7 @@ export function ingresar(): Promise<RespuestaServidor<RespuestaAccion>> {
         informarErrorServidor(respuesta)
         return respuesta
       }
+      publicar({ consultasHabilitadas: true })
       ingresoRegistrado = respuesta.datos
       incorporarDesbloqueos(respuesta.datos.nuevos_desbloqueos)
     }
@@ -94,7 +98,7 @@ export async function completarActividad(
   if (cuenta !== cuentaActiva() || sesion !== sesionServidor())
     return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la acción.' }
   incorporarDesbloqueos(respuesta.datos.nuevos_desbloqueos)
-  const estado = await refrescar()
+  const estado = await refrescar(respuesta.datos.nuevos_desbloqueos)
   return estado.tipo === 'ok'
     ? respuesta
     : { tipo: 'guardado_sin_refrescar', datos: respuesta.datos, error: estado }
@@ -156,7 +160,7 @@ export async function responderItems(
   if (cuenta !== cuentaActiva() || sesion !== sesionServidor())
     return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la acción.' }
   if (respuesta.tipo !== 'ok') return respuesta
-  const estado = await refrescar()
+  const estado = await refrescar([])
   return estado.tipo === 'ok'
     ? respuesta
     : { tipo: 'guardado_sin_refrescar', datos: respuesta.datos, error: estado }

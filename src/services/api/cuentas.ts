@@ -3,7 +3,7 @@ import type {
   CuentaResumen,
   DesbloqueoLegible,
   DesbloqueosMarcados,
-  EstadoCuenta,
+  ResumenCuenta,
   ProgresoObjetivo,
   RespuestaServidor,
   TipoObjetivo,
@@ -13,8 +13,8 @@ export function listarCuentas(): Promise<RespuestaServidor<CuentaResumen[]>> {
   return obtener('/cuentas')
 }
 
-export function obtenerEstado(cuenta: string): Promise<RespuestaServidor<EstadoCuenta>> {
-  return obtener(`/cuentas/${encodeURIComponent(cuenta)}/estado`)
+export function obtenerResumen(cuenta: string): Promise<RespuestaServidor<ResumenCuenta>> {
+  return obtener(`/cuentas/${encodeURIComponent(cuenta)}/resumen`)
 }
 
 export function obtenerProgreso(

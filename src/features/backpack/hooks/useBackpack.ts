@@ -1,6 +1,8 @@
+import { useFichasServidor } from '@/store/servidor/secciones'
 import { useEffect, useRef, useState } from 'react'
 import { modoApi } from '@/config/env'
-import { consultarProgreso, mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/sesion'
+import { consultarProgreso } from '@/store/servidor/consultas'
 import { textoRequisito } from '@/lib/servidor/adaptadores'
 import { useNavigate, useSearchParams } from 'react-router'
 import { updateJourney, useJourney } from '@/store/journeyStore'
@@ -13,6 +15,7 @@ import {
 import { getCiudadPoints } from '@/features/adventure/lib/ciudadPoints'
 type KindFilter = 'all' | 'sheet' | 'testimonial'
 export function useBackpack() {
+  useFichasServidor()
   const servidor = useEstadoServidor()
   const adventure = useAdventure(),
     journey = useJourney(),
@@ -39,7 +42,7 @@ export function useBackpack() {
       if (!vigente) return
       setRequisito(
         respuesta.tipo === 'ok'
-          ? textoRequisito(respuesta.datos, servidor.estado)
+          ? textoRequisito(respuesta.datos, servidor.actividades.datos)
           : mensajeErrorServidor(respuesta),
       )
       setRequisitoPendiente(false)
@@ -48,7 +51,7 @@ export function useBackpack() {
     return () => {
       vigente = false
     }
-  }, [requisitoId, servidor.estado, intentoRequisito])
+  }, [requisitoId, servidor.actividades.datos, intentoRequisito])
   const resources = getTravelResources(),
     selected = resources.find((r) => r.id === selectedId)
   const isUnlocked = (r: TravelResource) => isTravelResourceUnlocked(r, journey, adventure)

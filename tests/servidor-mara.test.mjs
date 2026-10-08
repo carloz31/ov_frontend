@@ -1,3 +1,4 @@
+import { esConsultaDominio } from './soporte/servidor-ayudas.mjs'
 import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
@@ -96,7 +97,7 @@ test('un guardado confirmado reintenta el refresco sin repetir el POST ni cambia
     player = f.montar({ nodoInicialId: f.activity.nodos[1].id })
   let fallar = true
   f.app.fetch((req) => {
-    if (req.url.endsWith('/estado') && fallar) throw Error('DATO DE PRUEBA: sin red')
+    if (esConsultaDominio(req) && fallar) throw Error('DATO DE PRUEBA: sin red')
     return f.servidor(req)
   })
   itemEn(player).props.onAnswer(5)
@@ -171,10 +172,7 @@ test('Ciudad permite Mara disponible, bloquea interacciones futuras por URL y ex
     cantidad: 5,
     completada: true,
   })
-  const screen = g.app.mount(
-    g.app.load('src/pages/student/CiudadScreen.tsx').CiudadScreen,
-    {},
-  )
+  const screen = g.app.mount(g.app.load('src/pages/student/CiudadScreen.tsx').CiudadScreen, {})
   assert.equal(elementos(screen.render(), (e) => e.type?.name === 'MaraInteractionPlayer').length, 0)
   assert.equal(g.app.query.has('actividad'), false)
   const mapa = loadMapPoints(g.app.load),
@@ -186,9 +184,7 @@ test('Ciudad permite Mara disponible, bloquea interacciones futuras por URL y ex
 
 test('la carga de Mara consulta ítems y respuestas y ofrece reintento sin sustituirlos por TIP', async () => {
   const f = await iniciarMara({ cantidad: 3 }),
-    Wrapper = f.app.load(
-      'src/features/activities/components/MaraInteractionPlayer.tsx',
-    ).MaraInteractionPlayer
+    Wrapper = f.app.load('src/features/activities/components/MaraInteractionPlayer.tsx').MaraInteractionPlayer
   const loader = f.app.mount(Wrapper, { codigo: 'act-tip-01', onClose() {} })
   loader.render()
   await esperar()

@@ -1,3 +1,4 @@
+import { escenarioServidor } from './soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
@@ -31,7 +32,7 @@ function cargarServicios(fetch) {
   return (modulo) => load(`src/services/api/${modulo}.ts`)
 }
 
-const estado = jsonServidor('estado-inicial')
+const estado = escenarioServidor('inicial')
 const completada = jsonServidor('completar-mission-welcome')
 const items = jsonServidor('items-act-tip-01')
 const resultado = jsonServidor('resultado-riasec')
@@ -45,6 +46,17 @@ const instrumentoUrl = 'TEST-RIASEC%20%2F%C3%B1%3F'
 const respuestas = [{ item: items[0].codigo, opcion: items[0].escala.opciones[0].orden }]
 // DATO DE PRUEBA: recibos mínimos para endpoints sin fixture propio.
 const casos = [
+  ...[
+    ['actividades', 'obtenerActividades'],
+    ['fichas', 'obtenerFichas'],
+    ['logros', 'obtenerLogros'],
+  ].map(([modulo, funcion]) => ({
+    modulo,
+    funcion,
+    argumentos: [cuenta],
+    ruta: `/cuentas/${cuentaUrl}/${modulo}`,
+    datos: jsonServidor(modulo + '-inicial'),
+  })),
   {
     modulo: 'cuentas',
     funcion: 'listarCuentas',
@@ -54,10 +66,10 @@ const casos = [
   },
   {
     modulo: 'cuentas',
-    funcion: 'obtenerEstado',
+    funcion: 'obtenerResumen',
     argumentos: [cuenta],
-    ruta: `/cuentas/${cuentaUrl}/estado`,
-    datos: estado,
+    ruta: `/cuentas/${cuentaUrl}/resumen`,
+    datos: jsonServidor('resumen-inicial'),
   },
   {
     modulo: 'cuentas',

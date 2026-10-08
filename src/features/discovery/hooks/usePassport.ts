@@ -1,3 +1,4 @@
+import { useLogrosServidor } from '@/store/servidor/secciones'
 import { useState } from 'react'
 
 import { useJourney } from '@/store/journeyStore'
@@ -11,20 +12,25 @@ import {
   travelerTitles,
 } from '@/features/discovery/lib/passport'
 import { modoApi } from '@/config/env'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
 import { insigniasServidor, insigniasOcultasPendientes } from '@/lib/servidor/adaptadores'
 import { getAchievementPresentations } from '@/features/discovery/lib/achievements'
 
 export function usePassport() {
+  useLogrosServidor()
   const servidor = useEstadoServidor()
-  const gruposApi = modoApi ? insigniasServidor(servidor.estado, getAchievementPresentations()) : undefined
-  const api = gruposApi ? { grupos: gruposApi, cuenta: servidor.estado?.cuenta.codigo ?? '' } : undefined
+  const gruposApi = modoApi
+    ? insigniasServidor(servidor.logros.datos, getAchievementPresentations())
+    : undefined
+  const api = gruposApi
+    ? { grupos: gruposApi, cuenta: servidor.resumen.datos?.cuenta.codigo ?? '' }
+    : undefined
   const adventure = useAdventure(),
     discovery = useDiscovery(),
     journey = useJourney(),
     groups = getStudentAchievementGroups(adventure, journey, gruposApi),
     level = modoApi
-      ? getTravelerLevel(adventure, servidor.estado?.nivel_actual ?? null)
+      ? getTravelerLevel(adventure, servidor.resumen.datos?.nivel_actual ?? null)
       : getTravelerLevel(adventure)
   const [selectedCode, setSelectedCode] = useState<string>()
   const all = groups.flatMap((g) => g.items),
@@ -35,7 +41,7 @@ export function usePassport() {
     selected = group?.items.find((b) => b.code === selectedCode)
   const titulos = level
     ? modoApi
-      ? (servidor.estado?.niveles.map((n) => ({
+      ? (servidor.logros.datos?.niveles.map((n) => ({
           numero: n.numero,
           titulo: n.titulo,
           obtenido: n.estado === 'OBTENIDO',
@@ -56,7 +62,7 @@ export function usePassport() {
     group,
     selected,
     titulos,
-    total: modoApi ? (servidor.estado?.insignias.length ?? 0) : all.length,
-    ocultasPendientes: modoApi ? insigniasOcultasPendientes(servidor.estado) : 0,
+    total: modoApi ? (servidor.logros.datos?.insignias.length ?? 0) : all.length,
+    ocultasPendientes: modoApi ? insigniasOcultasPendientes(servidor.logros.datos) : 0,
   }
 }

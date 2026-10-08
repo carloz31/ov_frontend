@@ -8,7 +8,7 @@ import { FavoriteButton } from '@/components/student/FavoriteButton'
 import { Seal } from '@/components/student/Seal'
 import { useDiscovery } from '@/store/discoveryStore'
 
-import { mensajeErrorServidor } from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor } from '@/store/servidor/sesion'
 import { textoAjuste } from '@/lib/servidor/adaptadores'
 import { discoveryPaths } from '@/routes/discoveryPaths'
 import { careerDetails, occupationDetails, institutionDetails, dimensionNames, institutionTypeNames } from '@/features/discovery/lib/catalogDetails'

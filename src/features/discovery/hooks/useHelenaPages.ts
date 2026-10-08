@@ -8,13 +8,9 @@ import { useDiscovery, updateDiscovery, revelarPaginaApi, paginasReveladasApi } 
 import type { InstrumentPageId } from '@/types/discovery'
 import { getHelenaPages, getHelenaPagesApi } from '@/features/discovery/lib/helenaPages'
 import { modoApi } from '@/config/env'
-import {
-  cargarResultadoRiasec,
-  consultarAvanceInstrumentos,
-  consultarProgreso,
-  mensajeErrorServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/sesion'
+import { cargarResultadoRiasec } from '@/store/servidor/resultado'
+import { consultarAvanceInstrumentos, consultarProgreso } from '@/store/servidor/consultas'
 import { ciudadDisponible, textoRequisito, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
 
 export function useHelenaPages() {
@@ -24,10 +20,15 @@ export function useHelenaPages() {
     servidor = useEstadoServidor()
   const pages = modoApi
     ? getHelenaPagesApi(
-        paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery),
+        paginaInteresesServidor(
+          servidor.actividades.datos,
+          servidor.resultadoRiasec,
+          discovery,
+          servidor.resumen.datos?.cuenta.codigo ?? null,
+        ),
         paginasReveladasApi(
           discovery,
-          servidor.estado?.cuenta.codigo,
+          servidor.resumen.datos?.cuenta.codigo,
           servidor.resultadoRiasec?.calculado_en,
         ),
       )
@@ -49,11 +50,11 @@ export function useHelenaPages() {
         setErrorConsulta('')
         return
       }
-      if (!ciudadDisponible(servidor.estado)) {
+      if (!ciudadDisponible(servidor.actividades.datos)) {
         const progreso = await consultarProgreso('BLOQUE', 'CIUDAD')
         if (!vigente) return
         if (progreso.tipo === 'ok') {
-          setRequisito(textoRequisito(progreso.datos, servidor.estado))
+          setRequisito(textoRequisito(progreso.datos, servidor.actividades.datos))
           setErrorConsulta('')
         } else setErrorConsulta(mensajeErrorServidor(progreso))
       } else {
@@ -78,7 +79,7 @@ export function useHelenaPages() {
     return () => {
       vigente = false
     }
-  }, [servidor.estado, intento])
+  }, [servidor.actividades.datos, intento])
   const [meaning, setMeaning] = useState(false)
   const [opening, setOpening] = useState<InstrumentPageId>()
   useEffect(() => {
@@ -88,8 +89,8 @@ export function useHelenaPages() {
   }, [opening])
   function revelarPagina(id: InstrumentPageId) {
     if (modoApi) {
-      if (!servidor.resultadoRiasec || !servidor.estado) return
-      revelarPaginaApi(servidor.estado.cuenta.codigo, servidor.resultadoRiasec.calculado_en, id)
+      if (!servidor.resultadoRiasec || !servidor.actividades.datos) return
+      revelarPaginaApi(servidor.resumen.datos!.cuenta.codigo, servidor.resultadoRiasec.calculado_en, id)
       setOpening(id)
       return
     }

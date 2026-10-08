@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { modoApi } from '@/config/env'
-import { useEstadoServidor, consultarProgreso, mensajeErrorServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor, mensajeErrorServidor } from '@/store/servidor/sesion'
+import { consultarProgreso } from '@/store/servidor/consultas'
 import { progresoCamino, textoRequisito } from '@/lib/servidor/adaptadores'
 
 import { fieldMissions } from '@/data/content/adventure'
@@ -19,19 +20,21 @@ export function useCityRequirement(adventure: AdventureState) {
     void consultarProgreso('BLOQUE', 'CIUDAD').then((r) => {
       if (!vigente) return
       setError(r.tipo !== 'ok')
-      setRequisito(r.tipo === 'ok' ? textoRequisito(r.datos, servidor.estado) : mensajeErrorServidor(r))
+      setRequisito(
+        r.tipo === 'ok' ? textoRequisito(r.datos, servidor.actividades.datos) : mensajeErrorServidor(r),
+      )
     })
     return () => {
       vigente = false
     }
-  }, [servidor.estado, intento])
+  }, [servidor.actividades.datos, intento])
   return {
     requisito,
     error,
     setIntento,
     mostrarRequisito: modoApi,
     progreso: modoApi
-      ? progresoCamino(servidor.estado).porcentaje
+      ? progresoCamino(servidor.actividades.datos).porcentaje
       : (fieldMissions.filter((item) => adventure.completedMissionIds.includes(item.id)).length /
           fieldMissions.length) *
         100,

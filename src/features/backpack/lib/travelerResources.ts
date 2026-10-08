@@ -1,6 +1,6 @@
 import { activities, catalog } from '@/data/activities/content'
 import { modoApi } from '@/config/env'
-import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+import { obtenerEstadoServidor } from '@/store/servidor/sesion'
 import { fichaDisponible } from '@/lib/servidor/adaptadores'
 import type { JourneyState } from '@/types/activities'
 import type { Recurso } from '@/types/activities'
@@ -116,7 +116,7 @@ export function getTravelResources(): TravelResource[] {
     ? resources.filter(
         (resource) =>
           resource.kind === 'sheet' &&
-          obtenerEstadoServidor().estado?.fichas.some((f) => f.codigo === resource.id),
+          obtenerEstadoServidor().fichas.datos?.some((f) => f.codigo === resource.id),
       )
     : resources
 }
@@ -127,7 +127,7 @@ export function isTravelResourceUnlocked(
   adventure: AdventureState,
 ) {
   if (modoApi)
-    return resource.kind === 'sheet' && fichaDisponible(obtenerEstadoServidor().estado, resource.id)
+    return resource.kind === 'sheet' && fichaDisponible(obtenerEstadoServidor().fichas.datos, resource.id)
   if ('activityId' in resource.requirement)
     return journey.progress[resource.requirement.activityId]?.estado === 'completada'
   if ('caseId' in resource.requirement) return adventure.solvedCaseIds.includes(resource.requirement.caseId)

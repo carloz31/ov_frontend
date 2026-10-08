@@ -2,12 +2,9 @@ import { useRef, useState } from 'react'
 import { modoApi } from '@/config/env'
 import { responderItems } from '@/store/servidor/operaciones'
 import { textoBloqueo } from '@/lib/servidor/adaptadores'
-import {
-  mensajeErrorServidor,
-  obtenerEstadoServidor,
-  consultarRespuestas,
-  cargarResultadoRiasec,
-} from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, obtenerEstadoServidor } from '@/store/servidor/sesion'
+import { cargarResultadoRiasec } from '@/store/servidor/resultado'
+import { consultarRespuestas } from '@/store/servidor/consultas'
 import type { RespuestaItemsGuardados } from '@/types/servidor'
 import type { InstrumentoServidor } from '@/features/activities/components/MaraInteractionPlayer'
 import { catalog } from '@/data/activities/content'
@@ -111,7 +108,7 @@ export function useInstrumentResponses({
               await cargarResultadoRiasec()
               if (!montado.current) return
             }
-            setErrorServidor(textoBloqueo(respuesta.detalle, obtenerEstadoServidor().estado))
+            setErrorServidor(textoBloqueo(respuesta.detalle, obtenerEstadoServidor().actividades.datos))
           } else
             setErrorServidor(
               respuesta.tipo === 'sin_conexion'

@@ -2,11 +2,8 @@ import { useEffect } from 'react'
 
 import { modoApi } from '@/config/env'
 import { areasRiasec } from '@/lib/servidor/adaptadores'
-import {
-  cargarResultadoRiasec,
-  mensajeErrorServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/sesion'
+import { cargarResultadoRiasec } from '@/store/servidor/resultado'
 import { catalog, tipActivityIds } from '@/data/activities/content'
 import { calculateResult, applyCompletion } from '@/lib/activities/logic'
 import type { Actividad } from '@/types/activities'

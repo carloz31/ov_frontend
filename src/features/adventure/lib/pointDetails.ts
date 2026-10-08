@@ -1,6 +1,6 @@
 import type { JourneyState } from '@/types/activities'
 import { modoApi } from '@/config/env'
-import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+import { obtenerEstadoServidor } from '@/store/servidor/sesion'
 import { actividadServidor, interaccionMara } from '@/lib/servidor/adaptadores'
 import { activityById } from '@/data/activities/content'
 import { getForestFireCaseStatus } from '@/features/cases/lib/forestFireCaseLogic'
@@ -42,7 +42,7 @@ export function getPointDetails(
   journey: JourneyState,
 ): PointDetails {
   if (modoApi) {
-    const actividad = actividadServidor(obtenerEstadoServidor().estado, point.specActivityId ?? '')
+    const actividad = actividadServidor(obtenerEstadoServidor().actividades.datos, point.specActivityId ?? '')
     const enCurso = actividad?.estado === 'EN_CURSO'
     const badge =
       point.status === 'completed'
@@ -90,7 +90,7 @@ export function getPointDetails(
         href: appPaths.student.exploration,
       }
     if (point.id === 'mara-test') {
-      const mara = interaccionMara(obtenerEstadoServidor().estado)
+      const mara = interaccionMara(obtenerEstadoServidor().actividades.datos)
       return {
         title: point.title,
         region: 'Molino de la ciudad',
@@ -109,7 +109,7 @@ export function getPointDetails(
         activityId: mara.actividad?.codigo,
         revision: point.status === 'completed',
         reviewActivities: obtenerEstadoServidor()
-          .estado?.bloques.flatMap((b) => b.actividades)
+          .actividades.datos?.flatMap((b) => b.actividades)
           .filter((a) => /^act-tip-\d{2}$/.test(a.codigo) && a.estado === 'COMPLETADA')
           .map((a) => ({
             codigo: a.codigo,

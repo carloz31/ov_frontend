@@ -1,9 +1,11 @@
+import { esConsultaDominio, respuestaDominio } from './servidor-ayudas.mjs'
+import { cargarAlmacen, escenarioServidor } from './servidor-ayudas.mjs'
 import { fixtureServidor, jsonServidor, copia, elementos } from './servidor-ayudas.mjs'
 
 // DATO DE PRUEBA: servidor en memoria derivado de los fixtures exportados por el backend.
 export async function iniciarMara({ cantidad = 0, completada = false, resultado = null, ruta } = {}) {
   const app = fixtureServidor({ ruta }),
-    estado = jsonServidor('estado-ciudad'),
+    estado = escenarioServidor('ciudad'),
     items = jsonServidor('items-act-tip-01')
   const respuestas = new Map(items.slice(0, cantidad).map((i) => [i.codigo, 4]))
   const actividad = estado.bloques.flatMap((b) => b.actividades).find((a) => a.codigo === 'act-tip-01')
@@ -19,7 +21,7 @@ export async function iniciarMara({ cantidad = 0, completada = false, resultado 
       actualizada_en: '2026-10-07T10:00:00',
     }))
   const servidor = (req) => {
-    if (req.url.endsWith('/estado')) return { body: estado }
+    if (esConsultaDominio(req)) return respuestaDominio(req, estado)
     if (req.url.includes('/desbloqueos?')) return { body: [] }
     if (req.url.endsWith('/resultado'))
       return resultado
@@ -63,7 +65,9 @@ export async function iniciarMara({ cantidad = 0, completada = false, resultado 
   app.fetch(servidor)
   const cuenta = app.load('src/store/servidor/cuenta.ts')
   cuenta.seleccionarCuenta([estado.cuenta])
-  const almacen = app.load('src/store/servidor/estadoServidor.ts')
+  const almacen = cargarAlmacen(app)
+  // DATO DE PRUEBA: ingreso ya confirmado para aislar reproducción y consultas.
+  almacen.publicar({ consultasHabilitadas: true })
   await almacen.refrescar()
   const adaptadores = app.load('src/lib/servidor/adaptadores.ts')
   const activity = adaptadores.construirInteraccionMara(
@@ -77,9 +81,7 @@ export async function iniciarMara({ cantidad = 0, completada = false, resultado 
     soloLectura = !!resultado,
     nodoInicialId = adaptadores.inicioInteraccionMara(activity, publicas(), revision),
   } = {}) {
-    const { StudentActivityPlayer } = app.load(
-      'src/features/activities/components/StudentActivityPlayer.tsx',
-    )
+    const { StudentActivityPlayer } = app.load('src/features/activities/components/StudentActivityPlayer.tsx')
     return app.mount(StudentActivityPlayer, {
       activity,
       instrumentoServidor: { items, respuestas: copia(publicas()), nodoInicialId, revision, soloLectura },

@@ -1,5 +1,6 @@
+import { useLogrosServidor } from '@/store/servidor/secciones'
 import { modoApi } from '@/config/env'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
 import { progresoCamino, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
 
 import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
@@ -19,13 +20,14 @@ export function useStudentProfile() {
     journey = useJourney(),
     discovery = useDiscovery()
   const context = useOccupationExplorationContext()
+  useLogrosServidor()
   const servidor = useEstadoServidor()
-  const nivelApi = modoApi ? getTravelerLevel(adventure, servidor.estado?.nivel_actual ?? null) : null
-  const gruposApi = modoApi ? insigniasServidor(servidor.estado, getAchievementPresentations()) : []
+  const nivelApi = modoApi ? getTravelerLevel(adventure, servidor.resumen.datos?.nivel_actual ?? null) : null
+  const gruposApi = modoApi ? insigniasServidor(servidor.logros.datos, getAchievementPresentations()) : []
   const insigniasApi = modoApi
     ? getProfileBadges(adventure, discovery, journey, {
         grupos: gruposApi,
-        cuenta: servidor.estado?.cuenta.codigo ?? '',
+        cuenta: servidor.resumen.datos?.cuenta.codigo ?? '',
       })
     : []
 
@@ -35,15 +37,24 @@ export function useStudentProfile() {
       journey,
       context,
       ficha: {
-        nombre: servidor.estado?.cuenta.nombre ?? 'Mi perfil',
-        progreso: progresoCamino(servidor.estado).porcentaje,
+        nombre: servidor.resumen.datos?.cuenta.nombre ?? 'Mi perfil',
+        progreso: progresoCamino(servidor.actividades.datos).porcentaje,
         nivel: nivelApi,
         insignias: insigniasApi,
         textoIntereses:
-          paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery).state === 'ready'
+          paginaInteresesServidor(
+            servidor.actividades.datos,
+            servidor.resultadoRiasec,
+            discovery,
+            servidor.resumen.datos?.cuenta.codigo ?? null,
+          ).state === 'ready'
             ? 'Tu página de intereses está lista para revelar.'
-            : paginaInteresesServidor(servidor.estado, servidor.resultadoRiasec, discovery).state ===
-                'revealed'
+            : paginaInteresesServidor(
+                  servidor.actividades.datos,
+                  servidor.resultadoRiasec,
+                  discovery,
+                  servidor.resumen.datos?.cuenta.codigo ?? null,
+                ).state === 'revealed'
               ? 'Tu página de intereses está descifrada.'
               : servidor.errorResultado
                 ? 'No se pudo consultar tu resultado.'

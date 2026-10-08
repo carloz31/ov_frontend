@@ -1,6 +1,6 @@
 import type { JourneyState } from '@/types/activities'
 import { modoApi } from '@/config/env'
-import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+import { obtenerEstadoServidor } from '@/store/servidor/sesion'
 import { progresoCamino } from '@/lib/servidor/adaptadores'
 import { type LucideIcon } from 'lucide-react'
 import { cityCases, fieldMissions } from '@/data/content/adventure'
@@ -30,8 +30,8 @@ export type StudentZone = 'missions' | 'central'
 
 export function getZoneProgress(zone: StudentZone, adventure: AdventureState, journey: JourneyState) {
   if (modoApi) {
-    const estado = obtenerEstadoServidor().estado
-    const ciudad = estado?.bloques.find((b) => b.codigo === 'CIUDAD')?.actividades ?? []
+    const estado = obtenerEstadoServidor().actividades.datos
+    const ciudad = estado?.find((b) => b.codigo === 'CIUDAD')?.actividades ?? []
     return zone === 'missions'
       ? { label: 'Nivel de recorrido', value: progresoCamino(estado).porcentaje }
       : {

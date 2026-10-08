@@ -1,6 +1,6 @@
 import type { JourneyState } from '@/types/activities'
 import { modoApi } from '@/config/env'
-import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+import { obtenerEstadoServidor } from '@/store/servidor/sesion'
 import { actividadServidor, ciudadDisponible, estadoPunto } from '@/lib/servidor/adaptadores'
 import { activityById } from '@/data/activities/content'
 import { Feather, KeyRound, type LucideIcon } from 'lucide-react'
@@ -49,7 +49,7 @@ export function getNextCaminoActivity(points: StudentMapPoint[]) {
 
 export function getCaminoPoints(adventure: AdventureState, journey: JourneyState): StudentMapPoint[] {
   if (modoApi) {
-    const estado = obtenerEstadoServidor().estado
+    const estado = obtenerEstadoServidor().actividades.datos
     return [
       ...orderedMissions
         .filter((m) => specActivityByMission[m.id])

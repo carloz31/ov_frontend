@@ -1,13 +1,15 @@
+import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.mjs'
+import { cargarAlmacen, escenarioServidor } from './soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { fixtureServidor, jsonServidor, esperar, elementos } from './soporte/servidor-ayudas.mjs'
 
 async function iniciar() {
   const app = fixtureServidor(),
-    estado = jsonServidor('estado-inicial')
+    estado = escenarioServidor('inicial')
   let pendientes = jsonServidor('desbloqueos-no-vistos')
   const servidor = (r) => {
-    if (r.url.endsWith('/estado')) return { body: estado }
+    if (esConsultaDominio(r)) return respuestaDominio(r, estado)
     if (r.url.includes('/desbloqueos?')) return { body: pendientes }
     if (r.url.endsWith('/marcar-vistos')) {
       const n = pendientes.length
@@ -18,8 +20,10 @@ async function iniciar() {
   }
   app.fetch(servidor)
   app.load('src/store/servidor/cuenta.ts').seleccionarCuenta([estado.cuenta])
-  const store = app.load('src/store/servidor/estadoServidor.ts'),
+  const store = cargarAlmacen(app),
     acciones = app.load('src/store/servidor/operaciones.ts')
+  // DATO DE PRUEBA: ingreso confirmado antes de las pruebas de avisos.
+  store.publicar({ consultasHabilitadas: true })
   await store.refrescar()
   return {
     app,
@@ -187,9 +191,7 @@ test('cola automática solo en mapas, pausada por actividad y guía; la campana 
     ...s,
     introsSeen: { ...s.introsSeen, missions: true, central: true },
     cityArrivalSeen: true,
-    checkInPromptDismissedOn: f.app
-      .load('src/features/adventure/lib/checkIn.ts')
-      .localDateKey(new Date()),
+    checkInPromptDismissedOn: f.app.load('src/features/adventure/lib/checkIn.ts').localDateKey(new Date()),
   }))
   const props = { view: 'profile-general', activityOpen: false, children: null }
   const queue = f.app.mount(
@@ -265,7 +267,8 @@ test('la campana puede solicitar el lote desde su menú, pero espera a que el me
   queue.render()
   f.app.overlayOpen(true)
   const tree = queue.render()
-  f.app.load('src/features/adventure/context/overlayContext.ts').StudentOverlayContext._currentValue = tree.props.value
+  f.app.load('src/features/adventure/context/overlayContext.ts').StudentOverlayContext._currentValue =
+    tree.props.value
   const { NoveltiesMenu } = f.app.load('src/features/adventure/components/overlays/NoveltiesMenu.tsx')
   const servidorMenu = NoveltiesMenu({})
   const menu = servidorMenu.type(servidorMenu.props)

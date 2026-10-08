@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import { modoApi } from '@/config/env'
 import { fichaDisponible } from '@/lib/servidor/adaptadores'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
 
 import { catalog } from '@/data/activities/content'
 import { updateJourney, useJourney } from '@/store/journeyStore'
@@ -33,7 +33,7 @@ export function useActivityResources(ids: string[]) {
     resources: resources.map((resource) => ({
       ...resource,
       mostrarDisponibilidad: modoApi && resource.guardableEnRecursos,
-      disponible: fichaDisponible(servidor.estado, resource.id),
+      disponible: fichaDisponible(servidor.fichas.datos, resource.id),
       puedeGuardar: !modoApi && resource.guardableEnRecursos && !!(resource.url || resource.contenido),
     })),
     marcarLeida,

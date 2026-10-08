@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router'
 import '@/index.css'
 import App from '@/App'
 import { configurarServidor, modoApi } from '@/config/env'
-import { prepararAlmacenesApi } from '@/store/servidor/estadoServidor'
+import { prepararAlmacenesApi } from '@/store/servidor/sesion'
 
 configurarServidor(import.meta.env)
 if (modoApi) prepararAlmacenesApi()

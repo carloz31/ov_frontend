@@ -1,4 +1,4 @@
-// Contratos de app/schemas.py y app/esquemas_instrumentos.py de ov_backend.
+// Contratos de app/schemas/ de ov_backend.
 export type TipoObjetivo =
   | 'ACTIVIDAD'
   | 'BLOQUE'
@@ -175,3 +175,18 @@ export type ResultadoPublico = {
   coincidencias?: CoincidenciaPublica[] | null
   carreras_recomendadas?: CarreraRecomendada[] | null
 }
+
+export type ResumenCuenta = { cuenta: CuentaResumen; nivel_actual: NivelActual | null }
+export type ActividadCuenta = ActividadEstado & {
+  tipo: 'INFORMATIVA' | 'REGISTRO' | 'CUESTIONARIO' | 'CASO'
+  orden: number
+  contenido: string
+  visibilidad: 'SIEMPRE' | 'AL_DESBLOQUEAR'
+  visible: boolean
+}
+export type BloqueActividades = Omit<BloqueEstado, 'actividades'> & {
+  numero: number
+  actividades: ActividadCuenta[]
+}
+export type NivelEstado = NivelActual & { estado: 'BLOQUEADO' | 'OBTENIDO' }
+export type LogrosCuenta = { insignias: InsigniaEstado[]; niveles: NivelEstado[] }

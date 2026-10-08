@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { modoApi } from '@/config/env'
-import { avisosPendientes, mostrarAviso, useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
+import { avisosPendientes, mostrarAviso } from '@/store/servidor/avisos'
 import { marcarVistos } from '@/store/servidor/operaciones'
 
 import { useNavigate } from 'react-router'
@@ -33,7 +34,7 @@ export function useNoveltyQueue(view: StudentView, activityOpen: boolean) {
   const [avisosManual, setAvisosManual] = useState(false)
   useEffect(() => {
     setAvisosManual(false)
-  }, [servidor.estado?.cuenta.codigo])
+  }, [servidor.resumen.datos?.cuenta.codigo])
   const [arrivalDismissed, setArrivalDismissed] = useState(false)
   const [automatic, setAutomatic] = useState<AutomaticOverlay | null>(null)
   const [manual, setManual] = useState<ManualOverlay | null>(null)

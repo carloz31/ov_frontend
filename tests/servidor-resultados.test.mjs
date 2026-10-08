@@ -1,3 +1,4 @@
+import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
@@ -41,21 +42,36 @@ test('el sello requiere resultado y se guarda por cuenta y calculado_en sin toca
     d = f.app.load('src/store/discoveryStore.ts')
   d.updateDiscovery((s) => ({ ...s, revealedPages: ['intereses'] }))
   const resultado = jsonServidor('resultado-riasec')
-  assert.equal(a.paginaInteresesServidor(f.estado, null, d.getDiscovery()).state, 'sealed')
-  assert.equal(a.paginaInteresesServidor(f.estado, resultado, d.getDiscovery()).state, 'ready')
+  assert.equal(
+    a.paginaInteresesServidor(f.estado.bloques, null, d.getDiscovery(), f.estado.cuenta.codigo).state,
+    'sealed',
+  )
+  assert.equal(
+    a.paginaInteresesServidor(f.estado.bloques, resultado, d.getDiscovery(), f.estado.cuenta.codigo).state,
+    'ready',
+  )
   d.revelarPaginaApi('est-ana', resultado.calculado_en, 'intereses')
-  const pagina = a.paginaInteresesServidor(f.estado, resultado, d.getDiscovery())
+  const pagina = a.paginaInteresesServidor(
+    f.estado.bloques,
+    resultado,
+    d.getDiscovery(),
+    f.estado.cuenta.codigo,
+  )
   assert.equal(pagina.state, 'revealed')
   assert.equal(pagina.result.areas[0].score, 100)
   // DATO DE PRUEBA: otra cuenta y un resultado nuevo tras reinicio.
   const luis = copia(f.estado)
   luis.cuenta.codigo = 'est-luis'
-  assert.equal(a.paginaInteresesServidor(luis, resultado, d.getDiscovery()).state, 'ready')
+  assert.equal(
+    a.paginaInteresesServidor(luis.bloques, resultado, d.getDiscovery(), luis.cuenta.codigo).state,
+    'ready',
+  )
   assert.equal(
     a.paginaInteresesServidor(
-      f.estado,
+      f.estado.bloques,
       { ...resultado, calculado_en: '2026-10-08T10:00:00' },
       d.getDiscovery(),
+      f.estado.cuenta.codigo,
     ).state,
     'ready',
   )
@@ -108,11 +124,11 @@ test('al fallar la consulta del resultado después del POST 14 se reintenta solo
   let falla = true
   f.app.fetch((req) => {
     if (req.url.endsWith('/completar-actividad')) return { body: recibo }
-    if (req.url.endsWith('/estado')) {
+    if (esConsultaDominio(req)) {
       const estado = copia(f.estado)
       estado.bloques.flatMap((b) => b.actividades).find((a) => a.codigo === 'act-tip-final').estado =
         'DISPONIBLE'
-      return { body: estado }
+      return respuestaDominio(req, estado)
     }
     if (req.url.endsWith('/resultado')) {
       if (falla) throw Error('DATO DE PRUEBA: fallo de resultado')

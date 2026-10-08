@@ -1,8 +1,16 @@
+import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.mjs'
+import { cargarAlmacen, escenarioServidor } from './soporte/servidor-ayudas.mjs'
 import { loadMapPoints } from './soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
-import { fixtureServidor, servidorInicial, jsonServidor, esperar, elementos } from './soporte/servidor-ayudas.mjs'
+import {
+  fixtureServidor,
+  servidorInicial,
+  jsonServidor,
+  esperar,
+  elementos,
+} from './soporte/servidor-ayudas.mjs'
 
 async function iniciar(options) {
   const app = fixtureServidor(options)
@@ -37,9 +45,7 @@ function ultimoDialogo(app) {
       [activity.id]: { ...s.progress[activity.id], nodoActualId: activity.nodos.at(-1).id },
     },
   }))
-  const { StudentActivityPlayer } = app.load(
-    'src/features/activities/components/StudentActivityPlayer.tsx',
-  )
+  const { StudentActivityPlayer } = app.load('src/features/activities/components/StudentActivityPlayer.tsx')
   const player = app.mount(StudentActivityPlayer, { activity, onClose() {} })
   const tree = player.render()
   const escena = elementos(tree, (e) => e.type?.name === 'DialogueBox' || e.type?.name === 'SlideNode')[0]
@@ -92,18 +98,20 @@ test('el ingreso confirmado conserva sus avisos si falla la consulta y reintenta
   const app = fixtureServidor()
   const recibo = jsonServidor('completar-mission-welcome')
   // DATO DE PRUEBA: desbloqueos durante el ingreso y desconexión posterior.
-  const inicial = jsonServidor('estado-inicial')
+  const inicial = escenarioServidor('inicial')
   let falla = true
   app.fetch((r) => {
     if (r.url === '/api/cuentas') return { body: [inicial.cuenta] }
     if (r.url === '/api/acciones/ingresar') return { body: recibo }
-    if (r.url.endsWith('/estado'))
-      return falla ? { status: 503, body: 'DATO DE PRUEBA: conexión interrumpida' } : { body: inicial }
+    if (esConsultaDominio(r))
+      return falla
+        ? { status: 503, body: 'DATO DE PRUEBA: conexión interrumpida' }
+        : respuestaDominio(r, inicial)
     if (r.url.includes('/desbloqueos?')) return { body: [] }
     throw Error(r.url)
   })
   const acciones = app.load('src/store/servidor/operaciones.ts')
-  const almacen = app.load('src/store/servidor/estadoServidor.ts')
+  const almacen = cargarAlmacen(app)
   assert.equal((await acciones.ingresar()).tipo, 'http')
   assert.ok(almacen.avisosPendientes().some((a) => a.title === 'La primera chispa'))
   falla = false
@@ -120,7 +128,7 @@ test('un ingreso anterior no cambia la cuenta nueva cuando llega tarde', async (
   app.fetch(
     () =>
       new Promise((resolve) => {
-        liberar = () => resolve({ body: [jsonServidor('estado-inicial').cuenta] })
+        liberar = () => resolve({ body: [escenarioServidor('inicial').cuenta] })
       }),
   )
   const acciones = app.load('src/store/servidor/operaciones.ts'),
@@ -133,19 +141,16 @@ test('un ingreso anterior no cambia la cuenta nueva cuando llega tarde', async (
   liberar()
   assert.equal((await anterior).tipo, 'http')
   assert.equal(cuenta.cuentaActiva(), 'est-luis')
-  assert.equal(
-    app.load('src/store/servidor/estadoServidor.ts').obtenerEstadoServidor().estado.cuenta.codigo,
-    'est-luis',
-  )
+  assert.equal(cargarAlmacen(app).obtenerEstadoServidor().resumen.datos.cuenta.codigo, 'est-luis')
   assert.equal(app.requests.filter((r) => r.url === '/api/acciones/ingresar').length, 1)
 })
 
 test('un ingreso sin servidor expone error y reintenta sin crear estado ficticio', async () => {
   const app = fixtureServidor(),
     acciones = app.load('src/store/servidor/operaciones.ts'),
-    estado = app.load('src/store/servidor/estadoServidor.ts')
+    estado = cargarAlmacen(app)
   assert.equal((await acciones.ingresar()).tipo, 'sin_conexion')
-  assert.equal(estado.obtenerEstadoServidor().estado, null)
+  assert.equal(estado.obtenerEstadoServidor().resumen.datos, null)
   assert.equal(estado.obtenerEstadoServidor().error.tipo, 'sin_conexion')
   servidorInicial(app)
   assert.equal((await acciones.ingresar()).tipo, 'ok')
@@ -185,7 +190,7 @@ test('move informa $fin una sola vez ante doble clic, espera el refresco y muest
       await bloqueo
       return { body: jsonServidor('completar-mission-welcome') }
     }
-    if (r.url.endsWith('/estado')) return { body: jsonServidor('estado-ciudad') }
+    if (esConsultaDominio(r)) return respuestaDominio(r, escenarioServidor('ciudad'))
     if (r.url.includes('/desbloqueos?')) return { body: jsonServidor('desbloqueos-no-vistos') }
     throw Error('Solicitud inesperada')
   })
@@ -209,7 +214,7 @@ test('un POST confirmado con refresco fallido reintenta solo la consulta', async
   app.fetch((r) => {
     if (r.url === '/api/acciones/completar-actividad')
       return { body: jsonServidor('completar-mission-welcome') }
-    if (r.url.endsWith('/estado') && conConexion) return { body: jsonServidor('estado-ciudad') }
+    if (esConsultaDominio(r) && conConexion) return respuestaDominio(r, escenarioServidor('ciudad'))
     if (r.url.includes('/desbloqueos?')) return { body: [] }
     throw Error('Sin conexión')
   })
@@ -268,7 +273,7 @@ test('repetir una informativa llega nuevamente al servidor sin fabricar logros',
             : jsonServidor('completar-mission-welcome').nuevos_desbloqueos,
         },
       }
-    if (r.url.endsWith('/estado')) return { body: jsonServidor('estado-ciudad') }
+    if (esConsultaDominio(r)) return respuestaDominio(r, escenarioServidor('ciudad'))
     if (r.url.includes('/desbloqueos?')) return { body: [] }
   })
   assert.equal((await acciones.completarActividad('mission-welcome')).datos.nuevos_desbloqueos.length, 3)
@@ -321,7 +326,7 @@ test('hidratar sin espacio corrige el estado obsoleto y conserva el borrador y e
     },
   }))
   app.failWrites(true)
-  await app.load('src/store/servidor/estadoServidor.ts').refrescar()
+  await cargarAlmacen(app).refrescar()
   assert.equal(store.getJourneySnapshot().progress['mission-welcome'].estado, 'no_iniciada')
   assert.equal(store.getJourneySnapshot().progress['mission-welcome'].nodoActualId, 'welcome-02')
   assert.equal(store.getJourneySnapshot().drafts.prueba, 'DATO DE PRUEBA: texto pendiente')
@@ -366,8 +371,8 @@ test('recuperar un cierre confirmado no crea otro evento y una URL bloqueada no 
   assert.equal(elementos(screen.render(), (e) => e.type?.name === 'StudentActivityPlayer').length, 0)
   assert.equal(app.query.has('actividad'), false)
   screen.unmount()
-  app.fetch((r) => (r.url.endsWith('/estado') ? { body: jsonServidor('estado-ciudad') } : { body: [] }))
-  await app.load('src/store/servidor/estadoServidor.ts').refrescar()
+  app.fetch((r) => (esConsultaDominio(r) ? respuestaDominio(r, escenarioServidor('ciudad')) : { body: [] }))
+  await cargarAlmacen(app).refrescar()
   const activity = app.load('src/data/activities/content.ts').activityById('mission-welcome')
   const player = app.mount(
     app.load('src/features/activities/components/StudentActivityPlayer.tsx').StudentActivityPlayer,

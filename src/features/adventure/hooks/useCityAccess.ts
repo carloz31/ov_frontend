@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router'
 import { modoApi } from '@/config/env'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
 import { actividadServidor, ciudadDisponible } from '@/lib/servidor/adaptadores'
 
 import { challenges } from '@/data/content/challenges'
@@ -17,9 +17,9 @@ export function useCityAccess() {
   const journey = useJourney()
   const [params, setParams] = useSearchParams()
   const codigo = params.get('actividad') ?? ''
-  const actividadApi = actividadServidor(servidor.estado, codigo)
+  const actividadApi = actividadServidor(servidor.actividades.datos, codigo)
   const permitido =
-    ciudadDisponible(servidor.estado) &&
+    ciudadDisponible(servidor.actividades.datos) &&
     /^act-tip-(0[1-9]|1[0-4]|final)$/.test(codigo) &&
     actividadApi &&
     actividadApi.estado !== 'BLOQUEADA'
@@ -43,7 +43,7 @@ export function useCityAccess() {
     setParams,
     interaccion:
       modoApi && permitido
-        ? { codigo, clave: `${servidor.estado?.cuenta.codigo}/${codigo}/${params.get('revision')}` }
+        ? { codigo, clave: `${servidor.resumen.datos?.cuenta.codigo}/${codigo}/${params.get('revision')}` }
         : undefined,
     challenge: !modoApi && canAccessCity(adventure) ? challenge : undefined,
     activity:

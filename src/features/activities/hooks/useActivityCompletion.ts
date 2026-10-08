@@ -1,7 +1,7 @@
 import { modoApi } from '@/config/env'
 import { completarActividad } from '@/store/servidor/operaciones'
 import { textoBloqueo } from '@/lib/servidor/adaptadores'
-import { mensajeErrorServidor, obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, obtenerEstadoServidor } from '@/store/servidor/sesion'
 import { applyCompletion, isActivityComplete, studentId } from '@/lib/activities/logic'
 import type { JourneyState } from '@/types/activities'
 import type { Nodo, NodoDialogo } from '@/types/activities'
@@ -87,7 +87,7 @@ export function useActivityCompletion({
             setNodeId(undefined)
             setReactions(response)
           } else if (respuesta.tipo === 'bloqueado')
-            setErrorServidor(textoBloqueo(respuesta.detalle, obtenerEstadoServidor().estado))
+            setErrorServidor(textoBloqueo(respuesta.detalle, obtenerEstadoServidor().actividades.datos))
           else if (respuesta.tipo === 'guardado_sin_refrescar')
             setErrorServidor(
               'La actividad se guardó, pero no se pudo actualizar el camino. Reintenta la consulta.',

@@ -5,14 +5,9 @@ import {
   inicioInteraccionMara,
   actividadServidor,
 } from '@/lib/servidor/adaptadores'
-import {
-  cargarResultadoRiasec,
-  consultarItems,
-  consultarRespuestas,
-  mensajeErrorServidor,
-  obtenerEstadoServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, obtenerEstadoServidor, useEstadoServidor } from '@/store/servidor/sesion'
+import { cargarResultadoRiasec } from '@/store/servidor/resultado'
+import { consultarItems, consultarRespuestas } from '@/store/servidor/consultas'
 import type { Actividad } from '@/types/activities'
 import type { ItemPublico, RespuestaPublica } from '@/types/servidor'
 import { StudentActivityPlayer } from './StudentActivityPlayer'
@@ -37,11 +32,11 @@ export function MaraInteractionPlayer({
   const [carga, setCarga] = useState<{ activity: Actividad; instrumento: InstrumentoServidor }>()
   const [error, setError] = useState('')
   const [intento, setIntento] = useState(0)
-  const cuenta = servidor.estado?.cuenta.codigo
+  const cuenta = servidor.resumen.datos?.cuenta.codigo
   useEffect(() => {
     let vigente = true
     void (async () => {
-      const actividad = actividadServidor(obtenerEstadoServidor().estado, codigo)
+      const actividad = actividadServidor(obtenerEstadoServidor().actividades.datos, codigo)
       if (!actividad || actividad.estado === 'BLOQUEADA') return
       const resultado = await cargarResultadoRiasec()
       if (!vigente) return

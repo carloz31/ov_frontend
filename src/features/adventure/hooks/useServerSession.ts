@@ -1,7 +1,9 @@
+import { useResumenServidor, useActividadesServidor, errorSeccionesActivas } from '@/store/servidor/secciones'
 import { useEffect } from 'react'
 import { modoApi } from '@/config/env'
 import { ingresar } from '@/store/servidor/operaciones'
-import { refrescar, useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
+import { refrescar } from '@/store/servidor/refresco'
 import { useLocation } from 'react-router'
 import { useJourney } from '@/store/journeyStore'
 import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
@@ -16,6 +18,8 @@ export function useServerSession() {
   const location = useLocation()
   const context = useOccupationExplorationContext()
   const adventure = useAdventure()
+  useResumenServidor()
+  useActividadesServidor()
   const servidor = useEstadoServidor()
   const journey = useJourney()
   const { completedMissionIds } = adventure
@@ -61,9 +65,9 @@ export function useServerSession() {
     view,
     isMap,
     activityOpen,
-    esperandoIngreso: modoApi && !servidor.estado,
+    esperandoIngreso: modoApi && (!servidor.actividades.datos || !servidor.resumen.datos),
     errorIngreso: servidor.error,
-    errorConsulta: modoApi ? servidor.error : null,
+    errorConsulta: modoApi ? (servidor.error ?? errorSeccionesActivas()) : null,
     cargando: servidor.cargando,
     reintentarIngreso: ingresar,
     reintentarConsulta: refrescar,

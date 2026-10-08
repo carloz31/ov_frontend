@@ -1,18 +1,21 @@
 # Origen de los datos
 
-Inventario al cerrar R7 (8 de octubre de 2026), conforme a la iteración 1. Las rutas parten de `src/`. No cambia disponibilidad, persistencia ni contratos; describe el código resultante del refactor. Para las reglas de capas y tamaño, consulta `AGENTS.md`.
+Inventario al cerrar F2 de actividades por dominio (8 de octubre de 2026), conforme a la iteración 1. Las rutas parten de `src/`. Conserva presentación y persistencia; describe las consultas por dominio de §7.1–7.3. Para las reglas de capas y tamaño, consulta `AGENTS.md`.
 
 ## 1. Del servidor (`VITE_DATOS=api`)
 
-Trece peticiones a través de `store/servidor/estadoServidor.ts` y `store/servidor/operaciones.ts`, agrupadas en `services/api/` como los routers del backend. `services/api/cliente.ts` contiene el único `fetch` y exporta `obtener` (GET), `enviar` (POST), `actualizar` (PATCH) y `eliminar` (DELETE), que solo se importan dentro de `services/api/`. Los otros cuatro módulos arman URL y cuerpo y eligen la función del método definido por la ruta, sin guardar estado ni leer la cuenta activa. Las trece peticiones actuales usan únicamente GET y POST; no se agregan peticiones PATCH ni DELETE. Una respuesta 204 devuelve datos `undefined` sin leer JSON:
+Dieciséis peticiones a través de los módulos concretos de `store/servidor/`: `sesion.ts`, `secciones.ts`, `avisos.ts`, `resultado.ts`, `consultas.ts`, `refresco.ts` y `operaciones.ts`. `cuenta.ts` conserva la cuenta seleccionada y su almacenamiento. `services/api/cliente.ts` contiene el único `fetch` y exporta `obtener` (GET), `enviar` (POST), `actualizar` (PATCH) y `eliminar` (DELETE), que solo se importan dentro de `services/api/`. Los siete módulos de recursos arman URL y cuerpo sin guardar estado ni leer la cuenta activa. Las peticiones actuales usan GET y POST; una respuesta 204 devuelve datos `undefined` sin leer JSON.
 
 | Módulo | Función | Petición | La usa |
 |---|---|---|---|
 | `services/api/cuentas.ts` | `listarCuentas()` | `GET /cuentas` | ingreso |
-| | `obtenerEstado(cuenta)` | `GET /cuentas/{c}/estado` | `refrescar` |
+| | `obtenerResumen(cuenta)` | `GET /cuentas/{c}/resumen` | ingreso, panel y nivel |
 | | `obtenerProgreso(cuenta, tipo, codigo)` | `GET /cuentas/{c}/progreso/{tipo}/{codigo}` | `consultarProgreso` |
 | | `obtenerDesbloqueosNoVistos(cuenta)` | `GET /cuentas/{c}/desbloqueos?solo_no_vistos=true` | `consultarNoVistos` |
 | | `marcarDesbloqueosVistos(cuenta)` | `POST /cuentas/{c}/desbloqueos/marcar-vistos` `{}` | `marcarVistos` |
+| `services/api/actividades.ts` | `obtenerActividades(cuenta)` | `GET /cuentas/{c}/actividades` | ingreso, mapa y acciones |
+| `services/api/fichas.ts` | `obtenerFichas(cuenta)` | `GET /cuentas/{c}/fichas` | apertura de mochila o recurso |
+| `services/api/logros.ts` | `obtenerLogros(cuenta)` | `GET /cuentas/{c}/logros` | apertura de perfil, pasaporte o insignia |
 | `services/api/acciones.ts` | `ingresar(cuenta)` | `POST /acciones/ingresar` `{cuenta}` | ingreso |
 | | `completarActividad(cuenta, actividad)` | `POST /acciones/completar-actividad` `{cuenta, actividad}` | `completarActividad` |
 | | `responderItems(cuenta, actividad, respuestas)` | `POST /acciones/responder-items` `{cuenta, actividad, respuestas}` | `responderItems` |
@@ -23,6 +26,10 @@ Trece peticiones a través de `store/servidor/estadoServidor.ts` y `store/servid
 | `services/api/demo.ts` | `reiniciar()` | `POST /demo/reiniciar` `{}` | `reiniciarDatosDePrueba` |
 
 Con eso el servidor decide disponibilidad y finalización de actividades, acceso a la Ciudad, respuestas de Mara, resultado RIASEC y carreras afines, fichas obtenidas, insignias, nivel y avisos de desbloqueo.
+
+Cada dominio guarda `datos`, `estado` (`sin_cargar`, `cargando`, `listo`, `vencido`, `error`) y `error`, solo en memoria. El ingreso confirmado habilita las consultas: resumen, actividades y no vistos en paralelo; RIASEC después si Elena está disponible. Fichas y logros se piden al abrir sus vistas. Los recursos cerrados dejan de contar como consumidores aunque sigan montados. Una acción actualiza actividades y avisos; `FICHA` vence fichas, `INSIGNIA` vence logros y `NIVEL` vence logros y resumen. Las secciones visibles se recargan inmediatamente; las demás esperan su apertura. Los reintentos conservan los recibos de escritura y solo repiten consultas.
+
+`ActividadCuenta` incluye tipo, orden, contenido, visibilidad y visible; F2 los conserva en la sección sin cambiar la construcción del mapa, reservada para F3. `EstadoCuenta` y los fixtures anteriores permanecen hasta X, pero `obtenerEstado` se retira en F2. Testimonios, preguntas del diario y conversaciones siguen sin servicio ni vista API en el front; están registrados en `docs/pendientes-interfaz.md`.
 
 ## 2. Contenido del front (se queda en el front)
 

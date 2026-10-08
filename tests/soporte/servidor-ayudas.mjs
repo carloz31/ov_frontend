@@ -137,10 +137,7 @@ export function fixtureServidor({
   })
   function load(file) {
     const full = path.resolve(file)
-    assert.ok(
-      !/[\\/]features[\\/](parent|counselor)[\\/]/.test(full),
-      'No se leen las áreas protegidas',
-    )
+    assert.ok(!/[\\/]features[\\/](parent|counselor)[\\/]/.test(full), 'No se leen las áreas protegidas')
     if (cache.has(full)) return cache.get(full)
     if (full.endsWith('.json')) return JSON.parse(readFileSync(full, 'utf8'))
     const exports = {}
@@ -261,7 +258,7 @@ export function elementos(tree, predicate) {
   return encontrados
 }
 export function servidorInicial(app) {
-  const inicial = jsonServidor('estado-inicial')
+  const inicial = escenarioServidor('inicial')
   app.fetch((request) => {
     if (request.url === '/api/cuentas')
       return {
@@ -273,9 +270,52 @@ export function servidorInicial(app) {
       }
     if (request.url === '/api/acciones/ingresar')
       return { body: { eventos_registrados: [], nuevos_desbloqueos: [] } }
-    if (request.url.endsWith('/estado'))
-      return { body: { ...inicial, cuenta: { ...inicial.cuenta, codigo: request.url.split('/')[3] } } }
+    if (esConsultaDominio(request))
+      return respuestaDominio(request, {
+        ...inicial,
+        cuenta: { ...inicial.cuenta, codigo: request.url.split('/')[3] },
+      })
     if (request.url.includes('/desbloqueos?')) return { body: [] }
     throw Error(`Solicitud no configurada: ${request.url}`)
   })
+}
+
+// DATO DE PRUEBA: escenarios compuestos con los fixtures de las consultas por dominio.
+export function escenarioServidor(etapa) {
+  const resumen = jsonServidor('resumen-inicial'),
+    logros = jsonServidor('logros-' + etapa)
+  if (etapa === 'ciudad') {
+    const actual = logros.niveles.filter((n) => n.estado === 'OBTENIDO').at(-1)
+    resumen.nivel_actual = actual ? { numero: actual.numero, titulo: actual.titulo } : null
+  }
+  return {
+    ...resumen,
+    bloques: jsonServidor('actividades-' + etapa),
+    fichas: jsonServidor('fichas-' + etapa),
+    ...logros,
+  }
+}
+export const esConsultaDominio = (r) => /\/(resumen|actividades|fichas|logros)$/.test(r.url)
+export function respuestaDominio(r, escenario) {
+  switch (r.url.split('/').at(-1)) {
+    case 'resumen':
+      return { body: { cuenta: escenario.cuenta, nivel_actual: escenario.nivel_actual } }
+    case 'actividades':
+      return { body: escenario.bloques }
+    case 'fichas':
+      return { body: escenario.fichas }
+    case 'logros':
+      return { body: { insignias: escenario.insignias, niveles: escenario.niveles } }
+    default:
+      throw Error('Consulta de dominio inesperada: ' + r.url)
+  }
+}
+// Ayuda de pruebas: importa los módulos concretos, sin un barril en la aplicación.
+export function cargarAlmacen(app) {
+  return Object.assign(
+    {},
+    ...['sesion', 'secciones', 'avisos', 'resultado', 'consultas', 'refresco'].map((n) =>
+      app.load('src/store/servidor/' + n + '.ts'),
+    ),
+  )
 }

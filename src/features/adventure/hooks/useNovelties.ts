@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { modoApi } from '@/config/env'
-import { avisosPendientes, useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
+import { avisosPendientes } from '@/store/servidor/avisos'
 import { useStudentOverlays } from '@/features/adventure/context/overlayContext'
 
 import { useDiscovery } from '@/store/discoveryStore'

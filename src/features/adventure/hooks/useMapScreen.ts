@@ -1,11 +1,7 @@
 import { useEffect, useState } from 'react'
 import { modoApi } from '@/config/env'
-import {
-  consultarItems,
-  consultarProgreso,
-  mensajeErrorServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/sesion'
+import { consultarItems, consultarProgreso } from '@/store/servidor/consultas'
 import { textoRequisito } from '@/lib/servidor/adaptadores'
 import { actividadServidor } from '@/lib/servidor/adaptadores'
 import type { JourneyState } from '@/types/activities'
@@ -45,7 +41,7 @@ export function useMapScreen({
   const progress = getZoneProgress(zone, adventure, journey)
   const selected = points.find((point) => point.id === selectedId)
   const baseDetails = selected ? getPointDetails(selected, adventure, journey) : undefined
-  const claveDetalle = `${servidor.estado?.cuenta.codigo}/${selected?.id}/${selected?.specActivityId}/${selected?.status}`
+  const claveDetalle = `${servidor.resumen.datos?.cuenta.codigo}/${selected?.id}/${selected?.specActivityId}/${selected?.status}`
   const details =
     baseDetails && detalleServidor?.clave === claveDetalle
       ? { ...baseDetails, ...detalleServidor }
@@ -59,7 +55,8 @@ export function useMapScreen({
     let vigente = true
     const consultaRequisito =
       selectedStatus === 'locked' &&
-      (selectedPointId === 'city' || !!actividadServidor(servidor.estado, selectedActivityId ?? ''))
+      (selectedPointId === 'city' ||
+        !!actividadServidor(servidor.actividades.datos, selectedActivityId ?? ''))
     setDetalleServidor({
       clave: claveDetalle,
       ...(consultaRequisito ? { requirement: 'Consultando el requisito en el servidor…' } : {}),
@@ -83,7 +80,7 @@ export function useMapScreen({
           ? {
               requirement:
                 requirement.tipo === 'ok'
-                  ? textoRequisito(requirement.datos, servidor.estado)
+                  ? textoRequisito(requirement.datos, servidor.actividades.datos)
                   : mensajeErrorServidor(requirement),
               error: requirement.tipo !== 'ok',
             }
@@ -103,7 +100,7 @@ export function useMapScreen({
     }
   }, [
     claveDetalle,
-    servidor.estado,
+    servidor.actividades.datos,
     selectedPointId,
     selectedActivityId,
     selectedStatus,

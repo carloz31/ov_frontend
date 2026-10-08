@@ -1,6 +1,6 @@
 import type { JourneyState } from '@/types/activities'
 import { modoApi } from '@/config/env'
-import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+import { obtenerEstadoServidor } from '@/store/servidor/sesion'
 import { actividadServidor, estadoPunto, interaccionMara } from '@/lib/servidor/adaptadores'
 import { BookOpen, Building2, ClipboardList, Swords } from 'lucide-react'
 import { challenges } from '@/data/content/challenges'
@@ -10,7 +10,7 @@ import type { AdventureState } from '@/types/adventure'
 import type { StudentMapPoint } from './mapPoints'
 export function getCiudadPoints(adventure: AdventureState, journey: JourneyState): StudentMapPoint[] {
   if (modoApi) {
-    const mara = interaccionMara(obtenerEstadoServidor().estado)
+    const mara = interaccionMara(obtenerEstadoServidor().actividades.datos)
     return [
       ...cityCases.map((c): StudentMapPoint => ({
         id: c.id,
@@ -44,9 +44,10 @@ export function getCiudadPoints(adventure: AdventureState, journey: JourneyState
         zone: 'ciudad',
         icon: BookOpen,
         specActivityId: 'act-tip-final',
-        status: estadoPunto(actividadServidor(obtenerEstadoServidor().estado, 'act-tip-final')),
+        status: estadoPunto(actividadServidor(obtenerEstadoServidor().actividades.datos, 'act-tip-final')),
         actionEnabled:
-          estadoPunto(actividadServidor(obtenerEstadoServidor().estado, 'act-tip-final')) !== 'locked',
+          estadoPunto(actividadServidor(obtenerEstadoServidor().actividades.datos, 'act-tip-final')) !==
+          'locked',
       },
       ...challenges.map((c, i): StudentMapPoint => ({
         id: c.id,

@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { desarrollo, modoApi } from '@/config/env'
 import { reiniciarDatosDePrueba } from '@/store/servidor/operaciones'
-import { mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/sesion'
 
 import { useNavigate } from 'react-router'
 
 export function useStudentAccount() {
   const servidor = useEstadoServidor()
-  const nombre = modoApi ? (servidor.estado?.cuenta.nombre ?? 'Estudiante') : 'Alex'
+  const nombre = modoApi ? (servidor.resumen.datos?.cuenta.nombre ?? 'Estudiante') : 'Alex'
   const navigate = useNavigate()
   const [confirmar, setConfirmar] = useState(false)
   const [ocupado, setOcupado] = useState(false)

@@ -1,8 +1,9 @@
+import { useFichasServidor } from '@/store/servidor/secciones'
 import { useActivityCompletion } from './useActivityCompletion'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { modoApi } from '@/config/env'
 import { actividadServidor } from '@/lib/servidor/adaptadores'
-import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+import { obtenerEstadoServidor } from '@/store/servidor/sesion'
 import type { RespuestaCompletarActividad } from '@/types/servidor'
 import type { InstrumentoServidor } from '@/features/activities/components/MaraInteractionPlayer'
 import { catalog } from '@/data/activities/content'
@@ -34,7 +35,10 @@ export function useActivityPlayer({
   const [nodeId, setNodeId] = useState(() => {
     if (modoApi && instrumentoServidor) return instrumentoServidor.nodoInicialId
     if (edit) return nodes[0]?.id
-    if (modoApi && actividadServidor(obtenerEstadoServidor().estado, activity.id)?.estado === 'COMPLETADA')
+    if (
+      modoApi &&
+      actividadServidor(obtenerEstadoServidor().actividades.datos, activity.id)?.estado === 'COMPLETADA'
+    )
       return undefined
     return nextPendingNode(activity, state, direct)?.id ?? (modoApi ? nodes.at(-1)?.id : undefined)
   })
@@ -79,6 +83,7 @@ export function useActivityPlayer({
   }, [])
   const [reactions, setReactions] = useState<NodoDialogo[]>([])
   const [resourceOpen, setResourceOpen] = useState(false)
+  useFichasServidor(resourceOpen)
   const [resourceIds, setResourceIds] = useState<string[]>([])
   const matrix = activity.plantilla?.tipo === 'matriz' && node?.tipo === 'consigna'
   const reaction = reactions[0]

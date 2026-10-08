@@ -6,9 +6,12 @@ import type { AchievementGroup } from '@/types/profile'
 import type { PassportBadge } from '@/types/profile'
 import type {
   ActividadEstado,
+  ActividadCuenta,
   DesbloqueoNuevo,
   DetalleError,
-  EstadoCuenta,
+  BloqueActividades,
+  ContenidoEstado,
+  LogrosCuenta,
   ProgresoObjetivo,
   TipoObjetivo,
   ItemPublico,
@@ -79,13 +82,13 @@ export function avisosServidor(desbloqueos: (DesbloqueoNuevo | DesbloqueoLegible
     }
   })
 }
-export const insigniasOcultasPendientes = (estado: EstadoCuenta | null) =>
-  estado?.insignias.filter((i) => i.codigo === '???' && i.estado !== 'OBTENIDA').length ?? 0
+export const insigniasOcultasPendientes = (logros: LogrosCuenta | null) =>
+  logros?.insignias.filter((i) => i.codigo === '???' && i.estado !== 'OBTENIDA').length ?? 0
 export function insigniasServidor(
-  estado: EstadoCuenta | null,
+  logros: LogrosCuenta | null,
   presentaciones: AchievementGroup[],
 ): AchievementGroup[] {
-  const publicas = estado?.insignias.filter((i) => i.estado === 'OBTENIDA' || i.codigo !== '???') ?? []
+  const publicas = logros?.insignias.filter((i) => i.estado === 'OBTENIDA' || i.codigo !== '???') ?? []
   const conocidas = new Set(presentaciones.flatMap((g) => g.items.map((i) => i.code)))
   const grupos = presentaciones
     .map((g) => ({
@@ -128,40 +131,43 @@ export function insigniasServidor(
 }
 export function textoRequisitoInsignia(
   progreso: ProgresoObjetivo,
-  estado: EstadoCuenta | null,
+  bloques: BloqueActividades[] | null,
   codigo: string,
+  logros: LogrosCuenta | null,
 ) {
   const requisito =
-    estado?.insignias.find((i) => i.codigo === codigo)?.requisito ?? 'El requisito sigue pendiente.'
+    logros?.insignias.find((i) => i.codigo === codigo)?.requisito ?? 'El requisito sigue pendiente.'
   if (progreso.reglas.some((r) => r.evaluador_especial)) {
     const completadas =
-      estado?.bloques
-        .find((b) => b.codigo === 'CAMINO')
+      bloques
+        ?.find((b) => b.codigo === 'CAMINO')
         ?.actividades.filter((a) => a.codigo !== 'mission-welcome' && a.estado === 'COMPLETADA').length ?? 0
     return `${requisito} · ${Math.min(3, completadas)} de 3 misiones.`
   }
   return requisito
 }
 
-export const actividadServidor = (estado: EstadoCuenta | null, codigo: string): ActividadEstado | undefined =>
-  estado?.bloques.flatMap((b) => b.actividades).find((a) => a.codigo === codigo)
-export const ciudadDisponible = (estado: EstadoCuenta | null) =>
-  estado?.bloques.some((b) => b.codigo === 'CIUDAD' && b.estado === 'DISPONIBLE') === true
-export const fichaDisponible = (estado: EstadoCuenta | null, codigo: string) =>
-  estado?.fichas.some((f) => f.codigo === codigo && f.estado === 'DISPONIBLE') === true
+export const actividadServidor = (
+  bloques: BloqueActividades[] | null,
+  codigo: string,
+): ActividadCuenta | undefined => bloques?.flatMap((b) => b.actividades).find((a) => a.codigo === codigo)
+export const ciudadDisponible = (bloques: BloqueActividades[] | null) =>
+  bloques?.some((b) => b.codigo === 'CIUDAD' && b.estado === 'DISPONIBLE') === true
+export const fichaDisponible = (fichas: ContenidoEstado[] | null, codigo: string) =>
+  fichas?.some((f) => f.codigo === codigo && f.estado === 'DISPONIBLE') === true
 export const estadoPunto = (actividad?: ActividadEstado): 'locked' | 'available' | 'completed' =>
   actividad?.estado === 'COMPLETADA'
     ? 'completed'
     : actividad?.estado === 'DISPONIBLE' || actividad?.estado === 'EN_CURSO'
       ? 'available'
       : 'locked'
-export function siguienteActividad(estado: EstadoCuenta | null, bloque = 'CAMINO') {
-  return estado?.bloques
-    .find((b) => b.codigo === bloque)
+export function siguienteActividad(bloques: BloqueActividades[] | null, bloque = 'CAMINO') {
+  return bloques
+    ?.find((b) => b.codigo === bloque)
     ?.actividades.find((a) => a.estado === 'DISPONIBLE' || a.estado === 'EN_CURSO')
 }
-export function progresoCamino(estado: EstadoCuenta | null) {
-  const actividades = estado?.bloques.find((b) => b.codigo === 'CAMINO')?.actividades ?? []
+export function progresoCamino(bloques: BloqueActividades[] | null) {
+  const actividades = bloques?.find((b) => b.codigo === 'CAMINO')?.actividades ?? []
   const completadas = actividades.filter((a) => a.estado === 'COMPLETADA').length
   return {
     completadas,
@@ -169,21 +175,25 @@ export function progresoCamino(estado: EstadoCuenta | null) {
     porcentaje: actividades.length ? (completadas / actividades.length) * 100 : 0,
   }
 }
-export function interaccionMara(estado: EstadoCuenta | null) {
+export function interaccionMara(bloques: BloqueActividades[] | null) {
   const actividades =
-    estado?.bloques
-      .find((b) => b.codigo === 'CIUDAD')
+    bloques
+      ?.find((b) => b.codigo === 'CIUDAD')
       ?.actividades.filter((a) => /^act-tip-\d{2}$/.test(a.codigo)) ?? []
   const actividad = actividades.find((a) => a.estado !== 'COMPLETADA') ?? actividades.at(-1)
   return { actividad, numero: actividad ? Number(actividad.codigo.slice(-2)) : 1, total: actividades.length }
 }
-export function proyectarJourney(estado: EstadoCuenta, actual: JourneyState): JourneyState {
+export function proyectarJourney(
+  bloques: BloqueActividades[],
+  actual: JourneyState,
+  cuenta: string,
+): JourneyState {
   const progress = { ...actual.progress }
-  for (const actividad of estado.bloques.flatMap((b) => b.actividades)) {
+  for (const actividad of bloques.flatMap((b) => b.actividades)) {
     const anterior = progress[actividad.codigo]
     progress[actividad.codigo] = {
       ...anterior,
-      estudianteId: estado.cuenta.codigo,
+      estudianteId: cuenta,
       actividadId: actividad.codigo,
       estado:
         actividad.estado === 'COMPLETADA'
@@ -196,31 +206,34 @@ export function proyectarJourney(estado: EstadoCuenta, actual: JourneyState): Jo
   }
   // Las actividades ausentes del servidor nunca conservan una finalización autoritativa.
   for (const codigo of Object.keys(progress)) {
-    if (!actividadServidor(estado, codigo))
+    if (!actividadServidor(bloques, codigo))
       progress[codigo] = { ...progress[codigo], estado: 'no_iniciada', completadaEn: undefined }
   }
   return { ...actual, progress }
 }
-export function misionesCompletadas(estado: EstadoCuenta, ruta: readonly (readonly [string, string])[]) {
+export function misionesCompletadas(
+  bloques: BloqueActividades[],
+  ruta: readonly (readonly [string, string])[],
+) {
   return ruta
-    .filter(([, codigo]) => actividadServidor(estado, codigo)?.estado === 'COMPLETADA')
+    .filter(([, codigo]) => actividadServidor(bloques, codigo)?.estado === 'COMPLETADA')
     .map(([id]) => id)
 }
-export function textoRequisito(progreso: ProgresoObjetivo, estado: EstadoCuenta | null) {
+export function textoRequisito(progreso: ProgresoObjetivo, bloques: BloqueActividades[] | null) {
   if (progreso.objetivo.tipo === 'BLOQUE' && progreso.objetivo.codigo === 'CIUDAD') {
-    return `Completa todas las misiones del camino (${progresoCamino(estado).completadas} de 9).`
+    return `Completa todas las misiones del camino (${progresoCamino(bloques).completadas} de 9).`
   }
   const condicion = progreso.reglas
     .filter((r) => !r.cumplida)
     .flatMap((r) => r.condiciones)
     .find((c) => !c.cumplida)
   if (condicion?.tipo_evento === 'COMPLETA_ACTIVIDAD' && condicion.referencia) {
-    return `Requisito: completa “${actividadServidor(estado, condicion.referencia)?.titulo ?? condicion.referencia}”.`
+    return `Requisito: completa “${actividadServidor(bloques, condicion.referencia)?.titulo ?? condicion.referencia}”.`
   }
   return progreso.disponible ? 'Requisito cumplido.' : 'El requisito de esta actividad aún está pendiente.'
 }
-export function textoBloqueo(detalle: DetalleError, estado: EstadoCuenta | null) {
-  if (detalle.progreso) return textoRequisito(detalle.progreso, estado)
+export function textoBloqueo(detalle: DetalleError, bloques: BloqueActividades[] | null) {
+  if (detalle.progreso) return textoRequisito(detalle.progreso, bloques)
   if (detalle.items_faltantes?.length)
     return `Faltan ${detalle.items_faltantes.length} ítems por responder: ${detalle.items_faltantes.join(', ')}.`
   return detalle.mensaje ?? 'La actividad sigue bloqueada.'
@@ -325,14 +338,15 @@ export function coincidenciasRiasec(resultado: ResultadoPublico | null) {
 export const textoAjuste = (ajuste: CoincidenciaPublica['ajuste']) =>
   ({ BEST_FIT: 'Mejor ajuste', GREAT_FIT: 'Gran ajuste', GOOD_FIT: 'Buen ajuste' })[ajuste]
 export function paginaInteresesServidor(
-  estado: EstadoCuenta | null,
+  bloques: BloqueActividades[] | null,
   resultado: ResultadoPublico | null,
   discovery: StudentDiscoveryState,
+  cuenta: string | null,
 ): HelenaPage {
   const revelado =
-    !!estado &&
+    !!cuenta &&
     !!resultado &&
-    discovery.revealedPagesApi?.[estado.cuenta.codigo]?.[resultado.calculado_en]?.includes('intereses')
+    discovery.revealedPagesApi?.[cuenta]?.[resultado.calculado_en]?.includes('intereses')
   return {
     id: 'intereses',
     numeral: 'I',
@@ -342,14 +356,14 @@ export function paginaInteresesServidor(
     state: !resultado ? 'sealed' : revelado ? 'revealed' : 'ready',
     missions: {
       done:
-        estado?.bloques
-          .flatMap((b) => b.actividades)
+        bloques
+          ?.flatMap((b) => b.actividades)
           .filter((a) => /^act-tip-\d{2}$/.test(a.codigo) && a.estado === 'COMPLETADA').length ?? 0,
       total: 14,
     },
     demo: false,
     teaser: 'Esta página aún guarda pistas sobre lo que te atrae hacer.',
-    activityHref: `/student/exploration?actividad=${interaccionMara(estado).actividad?.codigo ?? 'act-tip-01'}`,
+    activityHref: `/student/exploration?actividad=${interaccionMara(bloques).actividad?.codigo ?? 'act-tip-01'}`,
     perfilPlano: resultado?.perfil_plano,
     result: revelado
       ? {

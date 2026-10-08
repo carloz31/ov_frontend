@@ -2,7 +2,7 @@ import { ForestFireCaseProgress } from '@/features/cases/components/ForestFireCa
 import { JournalEntryCard } from '@/features/journal/components/JournalEntryCard'
 import { AdditionalReveal } from '@/features/activities/components/reflection/AdditionalReveal'
 import { useEffect } from 'react'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
 import { useSearchParams } from 'react-router'
 import { activityById } from '@/data/activities/content'
 import { StudentActivityPlayer } from '@/features/activities/components/StudentActivityPlayer'

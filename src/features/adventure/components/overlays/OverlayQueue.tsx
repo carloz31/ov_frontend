@@ -1,7 +1,7 @@
 import { useNoveltyQueue } from '../../hooks/useNoveltyQueue'
 import { type ReactNode } from 'react'
 
-import { mensajeErrorServidor } from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor } from '@/store/servidor/sesion'
 import { UnlockToast } from './UnlockToast'
 
 import { appPaths } from '@/routes/paths'
@@ -25,8 +25,23 @@ export function OverlayQueue({
   activityOpen: boolean
   children: ReactNode
 }) {
-  const { adventure, navigate, today, setManual, setAutomatic, active, context, badge, aviso,
-    guide, closeGuide, dismissSignal, mostrarAviso, marcarVistos, errorAvisos } = useNoveltyQueue(view, activityOpen)
+  const {
+    adventure,
+    navigate,
+    today,
+    setManual,
+    setAutomatic,
+    active,
+    context,
+    badge,
+    aviso,
+    guide,
+    closeGuide,
+    dismissSignal,
+    mostrarAviso,
+    marcarVistos,
+    errorAvisos,
+  } = useNoveltyQueue(view, activityOpen)
 
   return (
     <StudentOverlayContext.Provider value={context}>

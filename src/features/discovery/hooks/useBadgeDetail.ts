@@ -1,6 +1,8 @@
+import { useLogrosServidor } from '@/store/servidor/secciones'
 import { useEffect, useState } from 'react'
 import { modoApi } from '@/config/env'
-import { consultarProgreso, mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor, useEstadoServidor } from '@/store/servidor/sesion'
+import { consultarProgreso } from '@/store/servidor/consultas'
 import { insigniasServidor, textoRequisitoInsignia } from '@/lib/servidor/adaptadores'
 import { getAchievementPresentations } from '@/features/discovery/lib/achievements'
 
@@ -22,11 +24,12 @@ export function useBadgeDetail(badge?: PassportBadge) {
     journey = useJourney(),
     discovery = useDiscovery(),
     returnFocus = useReturnFocus()
+  useLogrosServidor(!!badge)
   const servidor = useEstadoServidor()
   const api = modoApi
     ? {
-        grupos: insigniasServidor(servidor.estado, getAchievementPresentations()),
-        cuenta: servidor.estado?.cuenta.codigo ?? '',
+        grupos: insigniasServidor(servidor.logros.datos, getAchievementPresentations()),
+        cuenta: servidor.resumen.datos?.cuenta.codigo ?? '',
       }
     : undefined
   const [requisito, setRequisito] = useState('Consultando el requisito en el servidor…')
@@ -39,7 +42,10 @@ export function useBadgeDetail(badge?: PassportBadge) {
     setError('')
     void consultarProgreso('INSIGNIA', badge.code).then((r) => {
       if (!vigente) return
-      if (r.tipo === 'ok') setRequisito(textoRequisitoInsignia(r.datos, servidor.estado, badge.code))
+      if (r.tipo === 'ok')
+        setRequisito(
+          textoRequisitoInsignia(r.datos, servidor.actividades.datos, badge.code, servidor.logros.datos),
+        )
       else {
         setRequisito('')
         setError(mensajeErrorServidor(r))
@@ -48,7 +54,7 @@ export function useBadgeDetail(badge?: PassportBadge) {
     return () => {
       vigente = false
     }
-  }, [badge, servidor.estado, intento])
+  }, [badge, servidor.actividades.datos, servidor.logros.datos, intento])
   const selected = getProfileBadges(adventure, discovery, journey, api),
     visible = selected.some((b) => b.code === badge?.code)
   const hidden = badge?.hidden && !badge.done

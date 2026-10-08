@@ -1,6 +1,6 @@
 import { modoApi } from '@/config/env'
 import { actividadServidor, textosDesbloqueos } from '@/lib/servidor/adaptadores'
-import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+import { obtenerEstadoServidor } from '@/store/servidor/sesion'
 import type { DesbloqueoNuevo } from '@/types/servidor'
 import { useNavigate } from 'react-router'
 import { catalog } from '@/data/activities/content'
@@ -18,7 +18,7 @@ export function useActivityFinish(activity: Actividad, desbloqueosServidor?: Des
       navigate,
       registro: {
         titulo:
-          actividadServidor(obtenerEstadoServidor().estado, activity.id)?.estado === 'COMPLETADA'
+          actividadServidor(obtenerEstadoServidor().actividades.datos, activity.id)?.estado === 'COMPLETADA'
             ? 'Este hallazgo viaja contigo.'
             : 'Consultando tu avance.',
         desbloqueos: textosDesbloqueos(desbloqueosServidor ?? []),

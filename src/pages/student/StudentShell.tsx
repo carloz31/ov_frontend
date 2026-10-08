@@ -1,5 +1,5 @@
 import { useServerSession } from '@/features/adventure/hooks/useServerSession'
-import { mensajeErrorServidor } from '@/store/servidor/estadoServidor'
+import { mensajeErrorServidor } from '@/store/servidor/sesion'
 import { Outlet } from 'react-router'
 import { StudentModuleLayout } from '@/features/adventure/components/StudentModuleLayout'
 import { OverlayQueue } from '@/features/adventure/components/overlays/OverlayQueue'

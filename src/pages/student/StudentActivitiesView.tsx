@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
 import { CheckCheck, Compass, Footprints, MapPin } from 'lucide-react'
 import { Link } from 'react-router'
 import { useJourney } from '@/store/journeyStore'

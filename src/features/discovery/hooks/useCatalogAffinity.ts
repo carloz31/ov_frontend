@@ -1,6 +1,7 @@
 import { paginasReveladasApi } from '@/store/discoveryStore'
 import { modoApi } from '@/config/env'
-import { cargarResultadoRiasec, useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useEstadoServidor } from '@/store/servidor/sesion'
+import { cargarResultadoRiasec } from '@/store/servidor/resultado'
 import { coincidenciasRiasec, textoAjuste } from '@/lib/servidor/adaptadores'
 
 import { occupationDetails } from '@/features/discovery/lib/catalogDetails'
@@ -14,7 +15,7 @@ export function useCatalogAffinity(discovery: StudentDiscoveryState, soloAfines 
     modoApi &&
     paginasReveladasApi(
       discovery,
-      servidor.estado?.cuenta.codigo,
+      servidor.resumen.datos?.cuenta.codigo,
       servidor.resultadoRiasec?.calculado_en,
     ).includes('intereses')
   const afinidadApi = modoApi ? { resultado: servidor.resultadoRiasec, revelado } : undefined

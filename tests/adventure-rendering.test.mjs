@@ -1478,6 +1478,8 @@ function immersivePlayerHarness(name, overrides = {}) {
     if (specifier === 'react') return react
     if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
     const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
+    // F2: los hooks extraídos a secciones conservan el React simulado de la vista.
+    if (base === path.resolve('src/store/servidor/secciones')) return loadMovedHook(`${base}.ts`, require)
     if (/[\\/]features[\\/](adventure|auth|activities|backpack|discovery|cases|journal|family-conversations)[\\/]hooks[\\/]use[^\\/]+$/.test(base))
       return loadMovedHook(`${base}.ts`, require)
     if (["NodeRenderer","ForestFireWorkspace","ChallengeStage","ResearchHeader","ResearchGuideSteps","ResearchOccupationPicker","ResearchReplacementDialog","HelenaBookPages"].includes(path.basename(base))) return loadMovedHook(`${base}.tsx`, require)

@@ -1,7 +1,9 @@
+import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.mjs'
+import { escenarioServidor } from './soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { iniciarMara, botonEn } from './soporte/servidor-mara-ayudas.mjs'
-import { jsonServidor, copia, elementos, esperar, fixtureServidor } from './soporte/servidor-ayudas.mjs'
+import { copia, elementos, esperar, fixtureServidor } from './soporte/servidor-ayudas.mjs'
 
 const texto = (n) =>
   Array.isArray(n)
@@ -15,6 +17,7 @@ async function iniciar() {
   const f = await iniciarMara(),
     a = f.app.load('src/lib/servidor/adaptadores.ts'),
     p = f.app.load('src/features/discovery/lib/passport.ts')
+  await f.almacen.asegurarSeccion('logros')
   const presentaciones = f.app
     .load('src/features/discovery/lib/achievements.ts')
     .getAchievementPresentations()
@@ -62,7 +65,8 @@ test('oculta obtenida y código desconocido usan su información pública sin in
   assert.equal(badges.find((b) => b.code === 'I10').description, 'Vence un desafío intacto.')
   assert.equal(badges.find((b) => b.code === 'I99').icon, 'sparkles')
   assert.equal(f.a.insigniasOcultasPendientes(estado), 0)
-  f.app.fetch((r) => ({ body: r.url.endsWith('/estado') ? estado : [] }))
+  f.app.fetch((r) => (esConsultaDominio(r) ? respuestaDominio(r, estado) : { body: [] }))
+  await f.almacen.reintentarSeccion('logros')
   await f.almacen.refrescar()
   const View = f.app.load('src/features/discovery/components/StudentPassportView.tsx').StudentPassportView
   const tree = View()
@@ -138,11 +142,10 @@ test('cada título del pasaporte respeta número, nombre y estado remoto', async
     { numero: 1, titulo: 'Título obtenido remoto', estado: 'OBTENIDO' },
     { numero: 3, titulo: 'Título actual remoto', estado: 'OBTENIDO' },
   ]
-  f.app.fetch((r) => (r.url.endsWith('/estado') ? { body: estado } : { body: [] }))
+  f.app.fetch((r) => (esConsultaDominio(r) ? respuestaDominio(r, estado) : { body: [] }))
+  await f.almacen.reintentarSeccion('logros')
   await f.almacen.refrescar()
-  const View = f.app.load(
-    'src/features/discovery/components/StudentPassportView.tsx',
-  ).StudentPassportView
+  const View = f.app.load('src/features/discovery/components/StudentPassportView.tsx').StudentPassportView
   const items = elementos(View(), (e) => e.type === 'li')
   assert.deepEqual(
     items.map((e) => e.props['data-state']),
@@ -165,9 +168,9 @@ test('requisitos de insignia con evaluador cuentan Camino y consultas tardías s
       },
     ],
   }
-  const inicial = jsonServidor('estado-inicial')
-  assert.match(f.a.textoRequisitoInsignia(progreso, inicial, 'I2'), /0 de 3 misiones/)
-  assert.match(f.a.textoRequisitoInsignia(progreso, f.estado, 'I2'), /3 de 3 misiones/)
+  const inicial = escenarioServidor('inicial')
+  assert.match(f.a.textoRequisitoInsignia(progreso, inicial.bloques, 'I2', inicial), /0 de 3 misiones/)
+  assert.match(f.a.textoRequisitoInsignia(progreso, f.estado.bloques, 'I2', f.estado), /3 de 3 misiones/)
   let resolver
   f.app.fetch(
     () =>
