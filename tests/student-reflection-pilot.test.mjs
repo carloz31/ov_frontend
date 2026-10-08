@@ -336,7 +336,7 @@ test('new sequential content preserves private synthesis, retires future entry, 
     assert.equal(node.entregable.maxCaracteres, 800)
     assert.equal(node.visibilidad, 'estudiante_orientadora')
   }
-  const raw = JSON.parse(readFileSync('src/data/activities/registro_linea_tiempo.json', 'utf8'))
+  const raw = JSON.parse(readFileSync('src/data/activities/contenidos/registro_linea_tiempo.json', 'utf8'))
   assert.deepEqual(copy(app.content.activityById('act-06').nodos), raw.nodos)
   assert.ok(
     !Object.keys(app.config.criteria).some(

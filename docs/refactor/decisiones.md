@@ -1,5 +1,22 @@
 # Decisiones del refactor de estructura
 
+## Actividades por dominio · F1 · Contenidos JSON (8 de octubre de 2026)
+
+- Se mueven los seis JSON de actividades a `src/data/activities/contenidos/` y se crean los siete de §5.2 a partir de los seis objetos de `standardActivities.ts` y de `finalActivity`. `catalogo.json` permanece fuera de esa carpeta. `standardActivities.ts` conserva únicamente `compassInstrument`, sin cambiarlo.
+- Antes de retirar las definiciones TypeScript se ejecuta la comprobación temporal `deepEqual` de los trece contenidos. Solo se añade `mapa` a los nueve del Camino, Mara y Elena, con posiciones, etiquetas e íconos actuales. Los dos contenidos de apoderado no reciben un punto de mapa.
+- `contenidos.ts` usa trece imports explícitos, exporta el registro y `contenidoPorClave`; las claves desconocidas devuelven `undefined`, incluidas las heredadas de Object. No se usa `import.meta.glob`. El import de este módulo lleva `.ts` explícito para que los cargadores existentes no confundan `contenidos.ts` con la carpeta `contenidos/`; no se cambian los cargadores ni se agrega resolución de carpetas.
+- `ContenidoActividad` extiende `Actividad` con `mapa?`. La traducción de nombres de ícono a Lucide está en `features/adventure/lib/iconosMapa.ts`, y el selector actual del Camino la reutiliza sin cambiar sus resultados.
+- `content.ts` mantiene la lista y el orden anteriores a partir de las claves del registro. Al construir el catálogo local omite únicamente `mapa`; conserva `configureStudentActivities` y sus ajustes. La comparación temporal contra F0 confirma exactamente `activities` (13), `parentActivities` (2), `finalActivity`, `activityById`, `catalog` y `compassInstrument`. El resultado y el catálogo de instrumentos permanecen separados de la lista local de actividades, como antes.
+- Adaptaciones autorizadas por §9.2.2 de la ampliación: solo las rutas de JSON movidos, sin cambiar ninguna aserción. Archivos y pruebas tocadas:
+  - `tests/mission-logic.test.mjs`: las cuatro cargas globales de línea de tiempo, mitos, Mara y pregones apuntan a `contenidos/`; el catálogo sigue en su ruta anterior. Se conservan todas las pruebas del archivo.
+  - `tests/student-progress-challenges.test.mjs`: `student checks resolve binary questions immediately and reveal other questions on attempt two`.
+  - `tests/student-reflection-pilot.test.mjs`: `new sequential content preserves private synthesis, retires future entry, and leaves test and matrix cells intact`.
+  La comparación del AST de las llamadas `assert.*`, normalizando finales de línea, confirma que las aserciones de los tres archivos permanecen idénticas a F0. No se adaptan fixtures, simulaciones HTTP ni conteos de peticiones: corresponden a F2.
+- `tests/contenidos.test.mjs` agrega siete casos: registro bidireccional con archivos e imports, claves de plataforma, ausencia deliberada del piloto, metadatos del Camino, Ciudad y apoderados, catálogo local y equivalencia de contenidos entre modos sin peticiones HTTP.
+- Validación: F0 tenía **379 pruebas, 364 correctas y 15 fallas**; F1 tiene **386 pruebas, 371 correctas y las mismas 15 fallas**, cero omitidas y cero canceladas, en 17,71 segundos. Coinciden los nombres, orden, mensajes y detalles de las fallas, excluyendo duraciones y ubicaciones de pila. Las siete nuevas pasan. `npm run build` y `npm run lint` pasan; estructura: **524 archivos, cero infracciones y cero excepciones**. Permanece el aviso previo de bundle mayor de 500 kB.
+- Se actualizan README y el inventario de origen de datos con las rutas finales. No se modifican vistas, componentes, estilos, textos, almacenamiento, servicios, hooks ni disponibilidad en ninguno de los modos. No hay dependencias nuevas ni datos sin vista adicionales; siguen pendientes los ya registrados en `docs/pendientes-interfaz.md`.
+- Los registros y las comprobaciones temporales permanecen fuera de ambos repos. Se registra la validación compartida en `ov_backend/docs/iteraciones/decisiones-iteracion-1.md`; el backend solo recibe documentación. Un commit F1 por repo en `iteracion-1`, sin push. Se detiene antes de F2.
+
 ## Actividades por dominio · F0 · Línea base (8 de octubre de 2026)
 
 - Se lee completo el AGENTS.md del frontend y la especificación vigente de actividades por dominio. Rama: iteracion-1; punto de partida: 90d76f6, cierre de B3.

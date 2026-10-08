@@ -295,7 +295,7 @@ test('first-attempt metric counts one first result per student in timestamp orde
 test('student checks resolve binary questions immediately and reveal other questions on attempt two', () => {
   const f = fixture(),
     { evaluateStudentCheck: check } = f.load('src/features/activities/lib/checks.ts')
-  const myths = JSON.parse(readFileSync('src/data/activities/encuentro_mitos.json', 'utf8'))
+  const myths = JSON.parse(readFileSync('src/data/activities/contenidos/encuentro_mitos.json', 'utf8'))
   const single = myths.nodos.find((n) => n.id === 'e08'),
     binary = myths.nodos.find((n) => n.id === 'e11')
   const hint = check(single, ['a'], 0)

@@ -30,7 +30,7 @@ Lo define la regla compartida: el backend no interpreta el contenido narrativo.
 
 | Qué | Destino |
 |---|---|
-| Nodos de las actividades (7 JSON) y su catálogo (`data/activities/content.ts`, `data/activities/standardActivities.ts`) | `data/activities/` |
+| Nodos de las actividades (13 JSON con metadatos de mapa), registro por clave y catálogo local | `data/activities/contenidos/<clave>.json`, `data/activities/contenidos.ts` y `data/activities/content.ts`; `standardActivities.ts` conserva únicamente el catálogo `compassInstrument` |
 | Configuración del piloto de reflexión (escenarios, criterios, misiones adicionales) | `data/activities/reflectionConfig.ts` |
 | Personajes, textos de guía | `data/content/characters.ts`, `data/content/guideTexts.ts` |
 | Recuerdos de Lumi | `features/journal/data/lumiMemories.ts` |

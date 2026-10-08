@@ -7,10 +7,15 @@
   "bloque": 1,
   "orden": 2,
   "obligatoria": true,
-  "requisitos": ["mission-welcome"],
+  "requisitos": [
+    "mission-welcome"
+  ],
   "ubicacion": "Plaza de los rumores",
   "duracionEstimadaMin": 15,
-  "personajeIds": ["aurelio", "companero"],
+  "personajeIds": [
+    "aurelio",
+    "companero"
+  ],
   "objetivoAprendizaje": "Al terminar, el estudiante sabe qué es un mito vocacional, conoce la realidad detrás de cuatro mitos frecuentes y puede aplicar tres preguntas para revisar críticamente cualquier creencia sobre estudios y trabajo.",
   "nodos": [
     {
@@ -216,7 +221,9 @@
           "url": "https://www.ponteencarrera.pe"
         }
       ],
-      "recursoIds": ["rec-ponteencarrera"]
+      "recursoIds": [
+        "rec-ponteencarrera"
+      ]
     },
     {
       "id": "e11",
@@ -292,7 +299,9 @@
           "texto": "UNESCO (2017). Descifrar el código: la educación de las niñas y las mujeres en ciencias, tecnología, ingeniería y matemáticas (STEM)."
         }
       ],
-      "recursoIds": ["rec-unesco-stem"]
+      "recursoIds": [
+        "rec-unesco-stem"
+      ]
     },
     {
       "id": "e14",
@@ -418,7 +427,9 @@
           "texto": "Es normal sentir presión o miedo frente a esta decisión. No necesitas la respuesta perfecta: necesitas una decisión informada y hecha por ti."
         }
       ],
-      "recursoIds": ["rec-video-mitos"]
+      "recursoIds": [
+        "rec-video-mitos"
+      ]
     },
     {
       "id": "e19",
@@ -490,7 +501,9 @@
           "texto": "Esta ficha se guardó en tu sección Recursos."
         }
       ],
-      "recursoIds": ["ficha-mitos"]
+      "recursoIds": [
+        "ficha-mitos"
+      ]
     },
     {
       "id": "e21",
@@ -554,9 +567,17 @@
   "recompensa": {
     "afinidad": 1,
     "piezaLlave": "pieza-plaza",
-    "recursoIds": ["ficha-mitos"],
+    "recursoIds": [
+      "ficha-mitos"
+    ],
     "mensajeFin": "Obtuviste: Diente de la llave · Plaza · Ficha guardada en Recursos"
   },
   "siguienteSugerida": "act-07",
-  "promptDiario": "¿Cuál de estas frases has escuchado más cerca de ti? ¿Qué sentiste al revisarla?"
+  "promptDiario": "¿Cuál de estas frases has escuchado más cerca de ti? ¿Qué sentiste al revisarla?",
+  "mapa": {
+    "x": 400,
+    "y": 140,
+    "etiqueta": "Informativa · A tu ritmo",
+    "icono": "informativa"
+  }
 }

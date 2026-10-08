@@ -3,7 +3,7 @@ import { modoApi } from '@/config/env'
 import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
 import { actividadServidor, ciudadDisponible, estadoPunto } from '@/lib/servidor/adaptadores'
 import { activityById } from '@/data/activities/content'
-import { BookOpen, ClipboardList, Feather, KeyRound, type LucideIcon } from 'lucide-react'
+import { Feather, KeyRound, type LucideIcon } from 'lucide-react'
 import { fieldMissions, type FieldMission } from '@/data/content/adventure'
 import { canAccessCity } from '@/store/adventureStore'
 import type { AdventureState } from '@/types/adventure'
@@ -13,6 +13,7 @@ import { isWithinStudentDemo } from '@/config/studentDemoScope'
 import { specActivityByMission } from './missionSync'
 import { missionComplete } from './missionSync'
 import type { StudentMapPoint } from './mapPoints'
+import { iconosMapa } from './iconosMapa'
 export function getActivityType(mission: FieldMission) {
   if (mission.id === 'beliefs' || mission.kind === 'information') return 'Informativa'
   if (mission.kind === 'questionnaire') return 'Test'
@@ -29,7 +30,7 @@ export function getMissionMeta(mission: FieldMission) {
 
 export function getMissionIcon(mission: FieldMission): LucideIcon {
   const type = getActivityType(mission)
-  return type === 'Informativa' ? BookOpen : type === 'Test' ? ClipboardList : Feather
+  return iconosMapa[type === 'Informativa' ? 'informativa' : type === 'Test' ? 'test' : 'registro']
 }
 
 export const caminoSequence = baseRoute.map(([id]) => id)

@@ -7,9 +7,13 @@
   "bloque": 1,
   "orden": 7,
   "obligatoria": true,
-  "requisitos": ["mission-compass"],
+  "requisitos": [
+    "mission-compass"
+  ],
   "duracionEstimadaMin": 20,
-  "personajeIds": ["companero"],
+  "personajeIds": [
+    "companero"
+  ],
   "plantilla": {
     "tipo": "matriz",
     "estilo": "linea_tiempo",
@@ -50,7 +54,9 @@
         "icono": "✅"
       }
     ],
-    "consignasFuera": ["g-identidad"],
+    "consignasFuera": [
+      "g-identidad"
+    ],
     "alternativa": {
       "nodoId": "g-archivo",
       "reemplazaSlots": true,
@@ -307,7 +313,11 @@
       "premisa": "Si prefieres dibujar tu línea de tiempo en papel, súbela aquí. Debe incluir dónde te ves en 1, 3 y 5 años, y qué necesitas y qué te podría frenar el primer año.",
       "entregable": {
         "tipo": "archivo",
-        "formatos": ["jpg", "png", "pdf"],
+        "formatos": [
+          "jpg",
+          "png",
+          "pdf"
+        ],
         "maxArchivos": 3,
         "maxMB": 10
       },
@@ -326,5 +336,11 @@
     "afinidad": 1,
     "mensajeFin": "Mapa de ruta guardado · Afinidad con la aldea +1"
   },
-  "promptDiario": "¿Qué sentiste al imaginarte dentro de cinco años?"
+  "promptDiario": "¿Qué sentiste al imaginarte dentro de cinco años?",
+  "mapa": {
+    "x": 400,
+    "y": 550,
+    "etiqueta": "Registro · 5 min",
+    "icono": "registro"
+  }
 }

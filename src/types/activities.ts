@@ -243,6 +243,15 @@ export interface Actividad {
   promptDiario?: string
 }
 
+export interface ContenidoActividad extends Actividad {
+  mapa?: {
+    x: number
+    y: number
+    etiqueta?: string
+    icono: 'informativa' | 'test' | 'registro'
+  }
+}
+
 /* =====================================================================
  * B) REGISTROS DEL ESTUDIANTE
  * ===================================================================== */

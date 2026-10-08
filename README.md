@@ -103,7 +103,7 @@ src/
 │       ├── instrumentos.ts  # /actividades/{a}/items, /cuentas/{c}/instrumentos…
 │       └── demo.ts          # /demo/reiniciar
 ├── data/                    # datos fijos que usan dos o más dominios
-│   ├── activities/          # nodos JSON de las actividades + content.ts, standardActivities.ts, reflectionConfig.ts
+│   ├── activities/          # contenidos/ (13 JSON), contenidos.ts, content.ts, catálogo de brújula y reflectionConfig.ts
 │   ├── catalog/             # ocupaciones, carreras e instituciones
 │   ├── content/             # textos y contenido narrativo (guías, personajes, casos, diario, investigación, familia…)
 │   └── demo/                # perfiles de estudiantes ficticios para orientadora y apoderado

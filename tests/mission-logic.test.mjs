@@ -8,11 +8,11 @@ const code = ts.transpileModule(readFileSync('src/lib/activities/logic.ts', 'utf
 }).outputText
 const logic = await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`)
 const json = (name) => JSON.parse(readFileSync(`src/data/activities/${name}.json`, 'utf8'))
-const map = json('registro_linea_tiempo')
-const myths = json('encuentro_mitos')
-const mara = json('instrumento_mara')
+const map = json('contenidos/registro_linea_tiempo')
+const myths = json('contenidos/encuentro_mitos')
+const mara = json('contenidos/instrumento_mara')
 const catalog = json('catalogo')
-const pregones = json('registro_mis_pregones')
+const pregones = json('contenidos/registro_mis_pregones')
 
 test('ACT-07 requires three valid submissions and keeps versions, affinity and journal prompt', () => {
   let state = logic.initialJourney()

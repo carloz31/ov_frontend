@@ -10,7 +10,9 @@
   "requisitos": [],
   "ubicacion": "Molino",
   "duracionEstimadaMin": 4,
-  "personajeIds": ["mara"],
+  "personajeIds": [
+    "mara"
+  ],
   "presentacion": "narrativa",
   "nodos": [
     {
@@ -25,8 +27,14 @@
       "tipo": "eleccion",
       "registrar": false,
       "opciones": [
-        { "id": "m02a", "texto": "Sí, recién llego" },
-        { "id": "m02b", "texto": "Estoy dando una vuelta" }
+        {
+          "id": "m02a",
+          "texto": "Sí, recién llego"
+        },
+        {
+          "id": "m02b",
+          "texto": "Estoy dando una vuelta"
+        }
       ]
     },
     {
@@ -35,7 +43,6 @@
       "hablanteId": "mara",
       "texto": "Ah, qué bien. Yo paso casi todo el día por esta zona, así que termino conversando con medio pueblo. Ven, acompáñame un rato mientras ordeno esto."
     },
-
     {
       "id": "m04",
       "tipo": "dialogo",
@@ -68,7 +75,6 @@
         ]
       }
     },
-
     {
       "id": "m06",
       "tipo": "dialogo",
@@ -101,7 +107,6 @@
         ]
       }
     },
-
     {
       "id": "m08",
       "tipo": "dialogo",
@@ -134,7 +139,6 @@
         ]
       }
     },
-
     {
       "id": "m10",
       "tipo": "dialogo",
@@ -167,7 +171,6 @@
         ]
       }
     },
-
     {
       "id": "m12",
       "tipo": "dialogo",
@@ -200,7 +203,6 @@
         ]
       }
     },
-
     {
       "id": "m14",
       "tipo": "dialogo",
@@ -233,7 +235,6 @@
         ]
       }
     },
-
     {
       "id": "m16",
       "tipo": "dialogo",
@@ -266,7 +267,6 @@
         ]
       }
     },
-
     {
       "id": "m18",
       "tipo": "dialogo",
@@ -285,5 +285,10 @@
     "afinidad": 1,
     "mensajeFin": "Fin de la interacción · Afinidad con la aldea +1"
   },
-  "siguienteSugerida": "act-tip-02"
+  "siguienteSugerida": "act-tip-02",
+  "mapa": {
+    "x": 875,
+    "y": 530,
+    "icono": "test"
+  }
 }
