@@ -93,6 +93,7 @@ test('piloto dibuja cinco actividades, abre Ciudad al segundo paso y revela Elen
       ciudad.some((a) => a.specActivityId === 'cdd-sin-contenido'),
       false,
     )
+    assert.ok(ciudad.every((a) => !a.additional && !a.revealing && !a.revealQueued))
     const progreso = m.app.load('src/lib/servidor/contenidos.ts').progresoBloque(m.bloques)
     assert.equal(progreso.total, 5)
     assert.equal(progreso.completadas, etapa === 'inicial' ? 0 : 2)

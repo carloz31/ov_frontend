@@ -10,7 +10,7 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
   1. Mantenerla como prueba de contenido ausente, descartada por el mapa según §7.4.
   2. Definir posteriormente un contenido y su presentación en el mapa.
   3. Retirarla del conjunto cuando deje de necesitarse esa prueba.
-- **Si no se muestra:** en F3 se descartará y se avisará en desarrollo según D3; su disponibilidad sigue en la API y queda cubierta por los fixtures. B3 solo exporta los datos.
+- **Si no se muestra:** desde F3 se descarta y se avisa en desarrollo según D3; su disponibilidad sigue en la API y queda cubierta por los fixtures. B3 solo exporta los datos.
 - **Estado:** pendiente de interfaz; la ausencia del contenido es intencional en este piloto.
 
 ## 2026-10-08 · B3 · Texto de la llave con Ciudad abierta al segundo paso
@@ -32,7 +32,7 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
   1. Mostrar el punto al actualizar su visibilidad, sin animación.
   2. Definir una animación para su aparición.
   3. Definir un aviso de revelado con la interacción que decida el usuario.
-- **Si no se muestra:** F3 podrá aplicar la visibilidad enviada por el servidor, pero la aparición no tendrá una transición especial. B3 no modifica vistas ni animaciones.
+- **Si no se muestra:** F3 aplica la visibilidad enviada por el servidor, pero la aparición no tendrá una transición especial. B3 no modifica vistas ni animaciones.
 - **Estado:** pendiente.
 
 ## 2026-10-08 · B2 · Testimonios del servidor
@@ -67,3 +67,14 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
   3. Mantener el acceso de próxima iteración hasta integrar lectura y acciones.
 - **Si no se muestra:** el estado sigue disponible en el backend; el front no solicita la consulta y conserva su presentación actual de próxima iteración.
 - **Estado:** pendiente. B2 solo registra el dato; no implementa ninguna opción.
+
+## 2026-10-08 · F4 · Señal de hoy todavía local
+
+- **Dato:** el front conserva la señal en su almacenamiento local; existe `POST /acciones/check-in`, pero falta una consulta de lectura para conectarla como fuente única (D9 y §11).
+- **Dónde se mostraría:** panel del mapa, registro de señal y evolución del diario, con sus elementos actuales.
+- **Opciones:**
+  1. Integrar lectura y escritura juntas en la iteración 3, como está previsto.
+  2. Definir antes el contrato de consulta manteniendo la integración para esa iteración.
+  3. Conservar explícitamente el comportamiento local hasta completar ambos extremos.
+- **Si no se muestra:** la señal del panel sigue siendo local incluso en modo API; el recorrido de F4 no la envía al servidor y no mezcla sus datos con disponibilidad o progreso.
+- **Estado:** pendiente de la iteración 3; no se modifica interfaz ni almacenamiento.
