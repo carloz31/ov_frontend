@@ -111,3 +111,11 @@ La solicitud autoriza ejecutar R0 y R1 en este mismo turno. Tras registrar y con
 - Build y lint pasan. Suite completa **365/350/15**, con los mismos nombres y motivos de R4 y sin canceladas ni omitidas; las 77 pruebas `servidor-*` siguen en verde.
 - Estructura: pasa sobre 328 archivos, **30 excepciones: 20 E3, 7 E5 y 3 E7**. Se retiran cuatro E5 y la E3 de `StudentActivityPlayer`, que queda por debajo de 300 líneas al extraer su lógica. No se regenera la lista ni se divide el marcado.
 - Registros en `logs/refactor-r5-activities-*.log`, ignorados por Git. Continúan Backpack y Discovery; backend, dependencias y documentos entregados permanecen sin cambios.
+
+## R5 · Backpack (8 de octubre de 2026)
+
+- `features/backpack/hooks/useBackpack.ts` concentra selección inicial por URL, filtros, recursos disponibles, favoritos, visitas, lectura de fichas y consulta de requisitos con sus cancelaciones y reintentos. La vista recibe esos datos y acciones, incluida `mostrarRequisito`, sin importar `modoApi`.
+- Se mantienen los tres componentes de la vista y sus exports, el marcado, navegación, textos, estilos y consultas. No se adelanta su división de R6. No se modifican pruebas en este commit.
+- Build y lint pasan. Suite completa **365/350/15**, mismas fallas y motivos de R4, sin canceladas ni omitidas; todas las pruebas `servidor-*` pasan.
+- Estructura: pasa sobre 329 archivos con **29 excepciones: 20 E3, 6 E5 y 3 E7**. Se retira la E5 de la mochila y se actualiza únicamente el detalle de su E3 al reducirse las líneas; no hay excepciones nuevas ni regeneración de la lista.
+- Registros en `logs/refactor-r5-backpack-*.log`, ignorados por Git. Queda Discovery para completar R5; backend, dependencias y documentos entregados permanecen sin cambios.

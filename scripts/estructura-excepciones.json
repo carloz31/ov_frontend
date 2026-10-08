@@ -117,12 +117,7 @@
   {
     "regla": "E3-tamano",
     "archivo": "src/pages/student/StudentBackpackView.tsx",
-    "detalle": "617 líneas (máximo 300)"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/pages/student/StudentBackpackView.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
+    "detalle": "506 líneas (máximo 300)"
   },
   {
     "regla": "E5-modo-datos",

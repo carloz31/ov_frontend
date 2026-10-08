@@ -1,60 +1,29 @@
-import { useEffect, useRef, useState } from 'react'
-import { modoApi } from '@/config/env'
+import { useBackpack } from '@/features/backpack/hooks/useBackpack'
+
 import { appPaths } from '@/routes/paths'
-import {
-  consultarProgreso,
-  mensajeErrorServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
-import { textoRequisito } from '@/lib/servidor/adaptadores'
-import {
-  Backpack,
-  BookOpen,
-  Check,
-  Compass,
-  ExternalLink,
-  FileText,
-  Flame,
-  Languages,
-  LockKeyhole,
-  MessageSquareQuote,
-  Play,
-  ScrollText,
-  Search,
-  Sparkles,
-  Star,
-  type LucideIcon,
-} from 'lucide-react'
-import { useNavigate, useSearchParams } from 'react-router'
+
+import { Backpack, BookOpen, Check, Compass, ExternalLink, FileText, Flame, Languages, LockKeyhole, MessageSquareQuote, Play, ScrollText, Search, Sparkles, Star, type LucideIcon } from 'lucide-react'
+
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { Dialog, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
 import { BackpackViewerFrame as DialogContent } from '@/features/backpack/components/BackpackViewerFrame'
 import { ResourceText } from '@/features/activities/components/JourneyContent'
-import { updateJourney, useJourney } from '@/store/journeyStore'
+
 import { activities } from '@/data/activities/content'
-import { updateAdventure, useAdventure } from '@/store/adventureStore'
-import {
-  isTravelResourceUnlocked,
-  resourceFileUrl,
-  youtubeEmbedUrl,
-  type TravelResource,
-} from '@/features/backpack/lib/travelerResources'
-import {
-  getStudentTravelResources as getTravelResources,
-  studentResourceRequirement as resourceRequirement,
-} from '@/features/backpack/lib/challengeResources'
+
+import { resourceFileUrl, youtubeEmbedUrl, type TravelResource } from '@/features/backpack/lib/travelerResources'
+import { studentResourceRequirement as resourceRequirement } from '@/features/backpack/lib/challengeResources'
 import { cityCases } from '@/data/content/adventure'
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
 import { TrailBar } from '@/components/student/TrailBar'
 import { FavoriteButton } from '@/components/student/FavoriteButton'
-import { getCiudadPoints } from '@/features/adventure/lib/mapPoints'
+
 import '@/styles/student/journey.css'
 import '@/styles/student/resources.css'
 import '@/features/backpack/styles/backpack.css'
 
-type KindFilter = 'all' | 'sheet' | 'testimonial'
 const resourceIcons: Record<TravelResource['icon'], LucideIcon> = {
   compass: Compass,
   scroll: ScrollText,
@@ -72,86 +41,11 @@ const kinds = [
 ] as const
 
 function StudentBackpackView() {
-  const servidor = useEstadoServidor()
-  const adventure = useAdventure(),
-    journey = useJourney(),
-    navigate = useNavigate()
-  const [params, setParams] = useSearchParams()
-  const rawKind = params.get('kind')
-  const kind: KindFilter = rawKind === 'sheet' || rawKind === 'testimonial' ? rawKind : 'all'
-  const tabs = useRef<(HTMLButtonElement | null)[]>([])
-  const [query, setQuery] = useState(''),
-    [favoritesOnly, setFavoritesOnly] = useState(false),
-    [selectedId, setSelectedId] = useState<string | null>(modoApi ? params.get('ficha') : null)
-  const [requisitoId, setRequisitoId] = useState<string | null>(null)
-  const [requisito, setRequisito] = useState('')
-  const [requisitoPendiente, setRequisitoPendiente] = useState(false)
-  const [errorRequisito, setErrorRequisito] = useState(false)
-  const [intentoRequisito, setIntentoRequisito] = useState(0)
-  useEffect(() => {
-    if (!modoApi || !requisitoId) return
-    let vigente = true
-    setRequisitoPendiente(true)
-    setErrorRequisito(false)
-    setRequisito('Consultando el requisito en el servidor…')
-    void consultarProgreso('FICHA', requisitoId).then((respuesta) => {
-      if (!vigente) return
-      setRequisito(
-        respuesta.tipo === 'ok'
-          ? textoRequisito(respuesta.datos, servidor.estado)
-          : mensajeErrorServidor(respuesta),
-      )
-      setRequisitoPendiente(false)
-      setErrorRequisito(respuesta.tipo !== 'ok')
-    })
-    return () => {
-      vigente = false
-    }
-  }, [requisitoId, servidor.estado, intentoRequisito])
-  const resources = getTravelResources(),
-    selected = resources.find((r) => r.id === selectedId)
-  const isUnlocked = (r: TravelResource) => isTravelResourceUnlocked(r, journey, adventure)
-  const visible = resources.filter(
-    (item) =>
-      (!favoritesOnly || (isUnlocked(item) && adventure.bookmarks.includes(item.id))) &&
-      `${item.title} ${item.summary} ${isUnlocked(item) ? (item.author ?? '') : ''}`
-        .toLocaleLowerCase()
-        .includes(query.trim().toLocaleLowerCase()),
-  )
-  const sheets = resources.filter((r) => r.kind === 'sheet'),
-    voices = resources.filter((r) => r.kind === 'testimonial')
-  const cityPoints = getCiudadPoints(adventure, journey)
-  function chooseKind(next: KindFilter) {
-    setParams((current) => {
-      const nextParams = new URLSearchParams(current)
-      nextParams.set('kind', next)
-      return nextParams
-    })
-  }
-  function toggleFavorite(id: string) {
-    const item = resources.find((r) => r.id === id)
-    if (!item || !isUnlocked(item)) return
-    updateAdventure((current) => ({
-      ...current,
-      bookmarks: current.bookmarks.includes(id)
-        ? current.bookmarks.filter((saved) => saved !== id)
-        : [...current.bookmarks, id],
-    }))
-  }
-  function openResource(resource: TravelResource) {
-    if (!isUnlocked(resource)) return
-    setSelectedId(resource.id)
-    updateAdventure((current) =>
-      current.visits.includes(resource.id)
-        ? current
-        : { ...current, visits: [...current.visits, resource.id] },
-    )
-  }
-  const clear = () => {
-    setQuery('')
-    chooseKind('all')
-    setFavoritesOnly(false)
-  }
+  const { adventure, journey, navigate, kind, tabs, query, setQuery, favoritesOnly, setFavoritesOnly,
+    selected, setSelectedId, requisitoId, setRequisitoId, requisito, requisitoPendiente, errorRequisito,
+    setIntentoRequisito, mostrarRequisito, isUnlocked, visible, sheets, voices, cityPoints,
+    chooseKind, toggleFavorite, openResource, clear, consultarRequisito, marcarLeida } = useBackpack()
+
   return (
     <DiscoveryStage ambient="backpack">
       <header className="sx-d-header">
@@ -279,7 +173,7 @@ function StudentBackpackView() {
                         onOpen={() => openResource(resource)}
                         onFavorite={() => toggleFavorite(resource.id)}
                         onRequirement={() =>
-                          modoApi ? setRequisitoId(resource.id) : navigate(resourceRequirement(resource).url)
+                          consultarRequisito(resource)
                         }
                       />
                     ))}
@@ -341,12 +235,7 @@ function StudentBackpackView() {
                   variant="outline"
                   disabled={(journey.readResourceIds ?? journey.resources).includes(selected.id)}
                   onClick={() =>
-                    updateJourney((current) => ({
-                      ...current,
-                      readResourceIds: [
-                        ...new Set([...(current.readResourceIds ?? current.resources), selected.id]),
-                      ],
-                    }))
+                    marcarLeida(selected)
                   }
                 >
                   <Check size={18} />
@@ -375,7 +264,7 @@ function StudentBackpackView() {
           </DialogContent>
         )}
       </Dialog>
-      {modoApi && (
+      {mostrarRequisito && (
         <Dialog
           open={!!requisitoId}
           onOpenChange={(open) => {
