@@ -1,9 +1,9 @@
 import { ArrowLeft } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router'
-import { Badge } from '@/components/ui/Badge'
+
 import { Button } from '@/components/ui/Button'
-import { Card } from '@/components/ui/Card'
-import { StaffEntityHeader } from '@/components/staff/StaffPatterns'
+
+import { StaffEntityHeader } from '@/components/staff/StaffEntityHeader'
 import { appPaths } from '@/routes/paths'
 import { getActivity } from '@/features/counselor/lib/counselorPortalSelectors'
 import { useCounselorPortal } from '@/features/counselor/context/counselorPortalContext'
@@ -66,27 +66,6 @@ function FamilyRecordDetailView() {
   )
 }
 
-function AnswerCard({
-  answer,
-  participant,
-  prompt,
-}: {
-  answer?: string
-  participant: string
-  prompt: string
-}) {
-  return (
-    <Card className="p-6">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="font-bold">Pregunta para {participant.toLocaleLowerCase('es-PE')}</h2>
-        <Badge variant={answer ? 'success' : 'outline'}>{answer ? 'Respondida' : 'Pendiente'}</Badge>
-      </div>
-      <p className="mt-4 text-sm font-medium leading-6">{prompt}</p>
-      <div className="mt-4 min-h-28 rounded-xl bg-muted/50 p-4 text-sm leading-7 whitespace-pre-wrap">
-        {answer || 'Sin respuesta registrada.'}
-      </div>
-    </Card>
-  )
-}
+import { AnswerCard } from '@/features/counselor/components/family-record/AnswerCard'
 
 export { FamilyRecordDetailView }

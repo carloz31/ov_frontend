@@ -2,7 +2,7 @@ import { Save } from 'lucide-react'
 import { PageHeader } from '@/components/common/PageHeader'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
+
 import { counselorProfile } from '@/features/counselor/data/counselorPortal'
 
 const notificationOptions = [
@@ -47,24 +47,6 @@ function CounselorSettingsView() {
   )
 }
 
-function Field({
-  defaultValue,
-  disabled,
-  label,
-  placeholder,
-}: {
-  defaultValue?: string
-  disabled?: boolean
-  label: string
-  placeholder?: string
-}) {
-  const id = label.toLowerCase().replaceAll(' ', '-')
-  return (
-    <label className="space-y-2 text-sm" htmlFor={id}>
-      <span className="font-medium">{label}</span>
-      <Input defaultValue={defaultValue} disabled={disabled} id={id} placeholder={placeholder} />
-    </label>
-  )
-}
+import { Field } from '@/features/counselor/components/Field'
 
 export { CounselorSettingsView }

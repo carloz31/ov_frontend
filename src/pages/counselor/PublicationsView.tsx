@@ -1,6 +1,10 @@
-import { Eye, EyeOff, MoreHorizontal, Star } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router'
+import { PublicationCards } from '@/features/counselor/components/PublicationCards'
+import { PublicationTable } from '@/features/counselor/components/PublicationTable'
+import { usePublications } from '@/features/counselor/hooks/usePublications'
+
+import { EyeOff, MoreHorizontal, Star } from 'lucide-react'
+
+import { Link } from 'react-router'
 import { PageHeader } from '@/components/common/PageHeader'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -13,58 +17,30 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { useAdventure, updateAdventure } from '@/store/adventureStore'
-import { InterviewDetail } from '@/features/counselor/components/ResourcePreviews'
+
+import { updateAdventure } from '@/store/adventureStore'
+import { InterviewDetail } from '@/features/counselor/components/InterviewDetail'
 import { interviewDetails, reactionOptions } from '@/features/counselor/data/interviewDetails'
-import { useCounselorPortal } from '@/features/counselor/context/counselorPortalContext'
-import { getPublishedInterviews, moderateInterview } from '@/features/counselor/lib/interviewSelectors'
-import type { Interview } from '@/features/counselor/types'
+
+import { moderateInterview } from '@/features/counselor/lib/interviewSelectors'
 
 function PublicationsView() {
-  const { state } = useCounselorPortal()
-  const adventure = useAdventure()
-  const [params, setParams] = useSearchParams()
-  const { interviewId } = useParams()
-  const navigate = useNavigate()
-  const [confirmHide, setConfirmHide] = useState(false)
-  const salon = state.classrooms.some((item) => item.id === params.get('salon'))
-    ? params.get('salon')!
-    : 'all'
-  const query = salon === 'all' ? '' : `?salon=${encodeURIComponent(salon)}`
-  const listUrl = `/counselor/publications${query}`
-  const interviews = getPublishedInterviews(state.interviews, adventure)
-  const visible = interviews.filter((item) => salon === 'all' || item.classroomId === salon)
-  const classroom = (item: Interview) => {
-    const room = state.classrooms.find((room) => room.id === item.classroomId)
-    return room ? `${room.grade.split(' ')[0]} ${room.section}` : 'Sin asignar'
-  }
-  const profession = (item: Interview) => interviewDetails[item.videoId ?? item.id]?.career ?? item.subject
-  const videoId = (item: Interview) => item.videoId ?? item.id
-  const reports = (item: Interview) => adventure.reports.filter((report) => report.postId === videoId(item))
-  const comments = (item: Interview) =>
-    interviewDetails[videoId(item)]?.comments.filter((comment) => comment.text).length ?? 0
-  const date = (item: Interview) => new Date(item.date).toLocaleDateString('es-PE')
-  const status = (item: Interview) => (
-    <div className="flex flex-wrap justify-center gap-2">
-      {reports(item).length > 0 && <Badge variant="aviso">Reportado</Badge>}
-      {item.hidden ? (
-        <Badge variant="secondary">Ocultada</Badge>
-      ) : item.featured ? (
-        <Badge variant="secondary">Destacada</Badge>
-      ) : (
-        <Badge variant="outline">Sin destacar</Badge>
-      )}
-    </div>
-  )
-  const openButton = (item: Interview) => (
-    <Button asChild variant="outline" className="min-h-11 whitespace-normal">
-      <Link to={`/counselor/publications/interviews/${encodeURIComponent(item.id)}${query}`}>
-        <Eye className="size-4 shrink-0" /> Ver entrevista
-      </Link>
-    </Button>
-  )
-
+  const model = usePublications()
+  const {
+    state,
+    adventure,
+    setParams,
+    interviewId,
+    navigate,
+    confirmHide,
+    setConfirmHide,
+    salon,
+    listUrl,
+    interviews,
+    visible,
+    videoId,
+    reports,
+  } = model
   if (interviewId) {
     const item = interviews.find((item) => item.id === interviewId || videoId(item) === interviewId)
     if (!item)
@@ -212,15 +188,6 @@ function PublicationsView() {
     )
   }
 
-  const headers = [
-    'Autores',
-    'Salón',
-    'Profesión u ocupación',
-    'Fecha de publicación',
-    'Comentarios',
-    'Estado',
-    'Acciones',
-  ]
   return (
     <div className="min-w-0 space-y-6 p-4 sm:p-6 lg:p-8">
       <PageHeader
@@ -248,61 +215,8 @@ function PublicationsView() {
           <p className="p-6 text-muted-foreground">No hay entrevistas en este salón.</p>
         ) : (
           <>
-            <div className="hidden xl:block">
-              <Table className="table-fixed text-base [&_th:first-child]:pl-2.5 [&_td:first-child]:pl-2.5 [&_th:last-child]:pr-2.5 [&_td:last-child]:pr-2.5">
-                <TableHeader className="bg-muted">
-                  <TableRow className="hover:bg-transparent">
-                    {headers.map((header, index) => (
-                      <TableHead
-                        key={header}
-                        scope="col"
-                        className={`px-2.5 py-2.5 text-base font-semibold whitespace-normal text-muted-foreground ${index >= 3 ? 'text-center' : ''} ${index === 0 ? 'w-[20%]' : index === 1 ? 'w-[8%]' : index === 2 ? 'w-[20%]' : index === 6 ? 'w-[16%]' : 'w-[12%]'}`}
-                      >
-                        {header}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visible.map((item) => (
-                    <TableRow key={item.id} className="hover:bg-transparent">
-                      <TableCell className="px-2.5 py-3 whitespace-normal break-words">
-                        {item.authors.filter(Boolean).join(', ')}
-                      </TableCell>
-                      <TableCell className="px-2.5 py-3 whitespace-normal">{classroom(item)}</TableCell>
-                      <TableCell className="px-2.5 py-3 whitespace-normal break-words">
-                        {profession(item)}
-                      </TableCell>
-                      <TableCell className="px-2.5 py-3 text-center">{date(item)}</TableCell>
-                      <TableCell className="px-2.5 py-3 text-center">{comments(item)}</TableCell>
-                      <TableCell className="px-2.5 py-3">{status(item)}</TableCell>
-                      <TableCell className="px-2.5 py-3 text-center">{openButton(item)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="space-y-3 p-3 xl:hidden">
-              {visible.map((item) => (
-                <Card key={item.id} className="min-w-0 space-y-4 p-4">
-                  <h2 className="font-semibold break-words">{item.subject}</h2>
-                  <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
-                    <dt className="text-muted-foreground">Autores</dt>
-                    <dd className="min-w-0 break-words">{item.authors.filter(Boolean).join(', ')}</dd>
-                    <dt className="text-muted-foreground">Profesión</dt>
-                    <dd className="min-w-0 break-words">{profession(item)}</dd>
-                    <dt className="text-muted-foreground">Salón</dt>
-                    <dd>{classroom(item)}</dd>
-                    <dt className="text-muted-foreground">Publicación</dt>
-                    <dd>{date(item)}</dd>
-                    <dt className="text-muted-foreground">Comentarios</dt>
-                    <dd>{comments(item)}</dd>
-                  </dl>
-                  {status(item)}
-                  {openButton(item)}
-                </Card>
-              ))}
-            </div>
+            <PublicationTable model={model} />
+            <PublicationCards model={model} />
           </>
         )}
       </Card>

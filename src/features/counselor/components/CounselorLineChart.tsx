@@ -1,4 +1,3 @@
-import { Eye, TrendingDown, TrendingUp, TriangleAlert, CircleCheck } from 'lucide-react'
 import {
   CartesianGrid,
   Legend,
@@ -11,66 +10,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { Badge } from '@/components/ui/Badge'
-import { cn } from '@/lib/utils'
-import { alertLabels } from '../lib/counselorPortalSelectors'
-import type { AlertCode, TrafficLight } from '../types'
-
-const trafficLabels: Record<TrafficLight, string> = {
-  priority: 'Prioritario',
-  attention: 'Atención',
-  'on-track': 'En ruta',
-}
-
-export function TrafficBadge({ status }: { status: TrafficLight }) {
-  return (
-    <Badge
-      className={cn(
-        status === 'priority' && 'bg-warning-soft text-warning-text',
-        status === 'attention' && 'bg-warning-soft text-warning-text',
-      )}
-      variant={status === 'on-track' ? 'neutral' : 'aviso'}
-    >
-      {status === 'on-track' ? (
-        <CircleCheck className="size-3.5" aria-hidden />
-      ) : (
-        <TriangleAlert className="size-3.5" aria-hidden />
-      )}
-      {trafficLabels[status]}
-    </Badge>
-  )
-}
-
-export function AlertChips({ alerts, compact = false }: { alerts: AlertCode[]; compact?: boolean }) {
-  return (
-    <div className="flex flex-wrap gap-1">
-      {alerts.map((alert) => (
-        <Badge key={alert} title={alertLabels[alert]} variant="aviso">
-          {compact ? alert : alertLabels[alert]}
-        </Badge>
-      ))}
-    </div>
-  )
-}
-
-export function WatchIcon({ active }: { active: boolean }) {
-  return <Eye className={cn('size-4', active ? 'text-primary' : 'text-muted-foreground')} />
-}
-
-export function Delta({ value }: { value?: number }) {
-  if (value === undefined) return <span className="text-muted-foreground">—</span>
-  if (Math.abs(value) < 0.05) return <span className="text-muted-foreground">= 0.0</span>
-  const UpIcon = value > 0 ? TrendingUp : TrendingDown
-  return (
-    <span className={cn('inline-flex items-center gap-1 font-semibold', 'text-muted-foreground')}>
-      <UpIcon className="size-4" /> {Math.abs(value).toFixed(1)}
-    </span>
-  )
-}
 
 type ChartDatum = { label: string } & Record<string, string | number>
 type ChartSeries = { key: string; label: string; color: string }
-
 export function CounselorLineChart({
   data,
   label,

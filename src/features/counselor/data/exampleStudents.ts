@@ -1,3 +1,4 @@
+// DATO DE PRUEBA: estudiantes de ejemplo; se reemplazarán por los estudiantes vinculados a la orientadora.
 import { activities, studentProfiles } from '@/data/demo/studentProfiles'
 import { priorityProgress, profileAlerts } from '@/features/student-tracking/lib/selectors'
 import type { ProfileActivity, ProfileAlertCode, QuestionnaireDefinition } from '@/types/studentProfile'

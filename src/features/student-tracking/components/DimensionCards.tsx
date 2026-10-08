@@ -1,4 +1,4 @@
-import { ChangeLabel } from './ProfileShared'
+import { ChangeLabel } from '@/features/student-tracking/components/ChangeLabel'
 import { dimensionIcon } from '../lib/presentation'
 import { Badge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'

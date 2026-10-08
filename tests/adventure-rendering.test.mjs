@@ -166,7 +166,7 @@ test('staff routes receive the calm theme and the student keeps its own theme', 
 
 test('instrument series use emphasis and reference colors, including pending exits and flat profiles', () => {
   const { ThemeProvider } = load(path.resolve('src/components/common/ThemeScope.tsx'))
-  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/Questionnaires.tsx'))
+  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/QuestionnaireBars.tsx'))
   const { questionnaires, studentProfiles } = load(
     path.resolve('src/data/demo/studentProfiles.ts'),
   )
@@ -202,7 +202,7 @@ test('instrument series use emphasis and reference colors, including pending exi
 })
 test('highlight results share one prominent summary after bars, including ties and empty values', () => {
   const { ThemeProvider } = load(path.resolve('src/components/common/ThemeScope.tsx'))
-  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/Questionnaires.tsx'))
+  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/QuestionnaireBars.tsx'))
   const { questionnaires } = load(path.resolve('src/data/demo/studentProfiles.ts'))
   const renderResult = (definition, values) => renderToStaticMarkup(
     React.createElement(ThemeProvider, { theme: 'staff' },
@@ -2594,7 +2594,7 @@ test('classroom makes an empty priority configuration explicit without claiming 
 
 
 test('family presentation adapts flat profiles without generating a code or exposing choices', () => {
-  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/Questionnaires.tsx'))
+  const { QuestionnaireBars } = load(path.resolve('src/features/student-tracking/components/QuestionnaireBars.tsx'))
   const { questionnaires, studentProfiles } = load(path.resolve('src/data/demo/studentProfiles.ts'))
   const student = studentProfiles.find(s=>s.id === 'ejemplo-06')
   const application = student.questionnaires.find(q=>q.questionnaireId === 'interests')

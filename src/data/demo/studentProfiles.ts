@@ -1,3 +1,4 @@
+// DATO DE PRUEBA: estudiantes, cuestionarios y planes inventados; se reemplazarán por los datos de seguimiento del servidor.
 import { careerCatalog } from '@/data/catalog/careersAndInstitutions'
 import { occupationCatalog } from '@/data/catalog/occupations'
 import type {

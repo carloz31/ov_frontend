@@ -1,3 +1,4 @@
+// DATO DE PRUEBA: estado demostrativo de la orientadora; se reemplazará por los datos de su institución.
 import type {
   Activity,
   ActivityProgress,

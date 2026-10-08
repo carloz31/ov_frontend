@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
 import { displayDate, securityLabel, signalSummary } from '../lib/selectors'
-import { EmptyMessage, Panel, TrendValue } from './ProfileShared'
+import { EmptyMessage } from '@/features/student-tracking/components/EmptyMessage'
+import { Panel } from '@/features/student-tracking/components/Panel'
+import { TrendValue } from '@/features/student-tracking/components/TrendValue'
 import type { StudentProfile } from '@/types/studentProfile'
 
 function SignalTooltip({

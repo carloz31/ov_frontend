@@ -1,6 +1,6 @@
 import { useSelectedSalon } from '@/features/counselor/hooks/useSelectedSalon'
 import { Progress } from '@/components/ui/Progress'
-import { AlertBadge } from '@/components/ui/Status'
+
 import { Bell, Gauge, ListFilter, Search, UsersRound } from 'lucide-react'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { Button } from '@/components/ui/Button'
@@ -8,14 +8,10 @@ import { Card } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table'
-import { projectStudents, type AlertCode, type ExampleStudent } from '@/features/counselor/data/exampleStudents'
+import { projectStudents, type ExampleStudent } from '@/features/counselor/data/exampleStudents'
 import { studentProfiles } from '@/data/demo/studentProfiles'
 import { usePriorityCatalog } from '@/features/counselor/hooks/usePrioritySettings'
-import {
-  priorityProgress,
-  profileAlertLabels as alertLabels,
-  relativeAccess as lastAccess,
-} from '@/features/student-tracking/lib/selectors'
+import { priorityProgress, relativeAccess as lastAccess } from '@/features/student-tracking/lib/selectors'
 import { profileUrl } from '@/features/student-tracking/lib/navigation'
 
 const collator = new Intl.Collator('es', { sensitivity: 'base' })
@@ -25,18 +21,7 @@ const normalize = (value: string) =>
     .replace(/[\u0300-\u036f]/g, '')
     .toLocaleLowerCase('es')
 
-function AlertList({ alertas, centered = false }: { alertas: AlertCode[]; centered?: boolean }) {
-  if (!alertas.length) return <span className="text-muted-foreground">Ninguna</span>
-  return (
-    <div className={`flex flex-wrap gap-1.5 ${centered ? 'justify-center' : ''}`}>
-      {alertas.map((alerta) => (
-        <AlertBadge key={alerta} className="text-sm">
-          {alertLabels[alerta]}
-        </AlertBadge>
-      ))}
-    </div>
-  )
-}
+import { AlertList } from '@/features/counselor/components/AlertList'
 
 function StudentsView() {
   const { activities, questionnaires } = usePriorityCatalog()

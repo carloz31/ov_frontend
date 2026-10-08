@@ -9,7 +9,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/Table'
-import { ChangeLabel, EmptyMessage } from './ProfileShared'
+import { ChangeLabel } from '@/features/student-tracking/components/ChangeLabel'
+import { EmptyMessage } from '@/features/student-tracking/components/EmptyMessage'
 import { changes, levelLabel } from '../lib/selectors'
 import type { DimensionValue, QuestionnaireDefinition, QuestionnaireResult } from '@/types/studentProfile'
 

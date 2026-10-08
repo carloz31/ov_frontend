@@ -3,14 +3,19 @@ import { ArrowLeft } from 'lucide-react'
 import { Link, useParams } from 'react-router'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
-import { StaffEntityHeader } from '@/components/staff/StaffPatterns'
+import { StaffEntityHeader } from '@/components/staff/StaffEntityHeader'
 import { studentProfiles, questionnaires } from '@/data/demo/studentProfiles'
 import { displayDate } from '@/features/student-tracking/lib/selectors'
-import { QuestionnaireDetailContent } from '@/features/student-tracking/components/Questionnaires'
+import { QuestionnaireDetailContent } from '@/features/student-tracking/components/QuestionnaireDetailContent'
 import { usePrioritySettings } from '@/features/counselor/hooks/usePrioritySettings'
 import { parentActivities, parentChildren } from '@/features/parent/data/parentPortal'
 import { useParentPortalContext } from '@/features/parent/context/parentPortalContext'
-import { completeFamilyResult, familySharedIds, parentHomeUrl, parentRoute } from '@/features/parent/lib/selectors'
+import {
+  completeFamilyResult,
+  familySharedIds,
+  parentHomeUrl,
+  parentRoute,
+} from '@/features/parent/lib/selectors'
 
 export function ParentQuestionnaireDetailView() {
   const { childId, questionnaireId } = useParams()

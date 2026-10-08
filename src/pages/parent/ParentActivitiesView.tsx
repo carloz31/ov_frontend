@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { StaffEntityHeader, StaffMetric } from '@/components/staff/StaffPatterns'
+import { StaffEntityHeader } from '@/components/staff/StaffEntityHeader'
+import { StaffMetric } from '@/components/staff/StaffMetric'
 import { appPaths } from '@/routes/paths'
 import { ParentActivityCard } from '@/features/parent/components/ParentActivityCard'
 import { ParentResourceDialog } from '@/features/parent/components/ParentResourceDialog'

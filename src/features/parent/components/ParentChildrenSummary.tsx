@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { CardIcon } from '@/components/ui/Status'
 
-import { StaffEntityHeader, StaffMetric } from '@/components/staff/StaffPatterns'
+import { StaffEntityHeader } from '@/components/staff/StaffEntityHeader'
+import { StaffMetric } from '@/components/staff/StaffMetric'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/Accordion'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/Tabs'
 import { appPaths } from '@/routes/paths'
@@ -14,7 +15,7 @@ import { parentChildren } from '@/features/parent/data/parentPortal'
 
 import { completeFamilyResult, parentResultUrl } from '@/features/parent/lib/selectors'
 import { displayDate } from '@/features/student-tracking/lib/selectors'
-import { QuestionnaireBars } from '@/features/student-tracking/components/Questionnaires'
+import { QuestionnaireBars } from '@/features/student-tracking/components/QuestionnaireBars'
 
 export function ParentChildrenSummary({ model }: { model: ReturnType<typeof useParentOverview> }) {
   const { params, setParams, child, route, shared, student, progress } = model
