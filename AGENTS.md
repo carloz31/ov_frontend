@@ -27,7 +27,7 @@ src/
   components/    reutilizables sin lógica de dominio: ui/ (shadcn), common/, layout/, staff/, student/
   context/       contextos que usan varios dominios
   store/         estado global; servidor/ es el estado sincronizado con el backend
-  services/api/  el único acceso al backend: cliente.ts (pedir) y un archivo por grupo de rutas
+  services/api/  el único acceso al backend: cliente.ts (obtener, enviar, actualizar, eliminar) y un archivo por grupo de rutas
   data/          datos fijos de varios dominios: activities/, catalog/, content/, demo/
   lib/           lógica pura compartida; lib/activities (motor), lib/servidor (adaptadores)
   hooks/         hooks globales
@@ -43,7 +43,7 @@ src/
 | Un componente de un dominio | `features/<dominio>/components/`. |
 | Un componente que usan dos dominios | `components/student/`, `components/staff/` o `components/common/` si no conoce el dominio. Si lo conoce, detente y pregunta. |
 | Una primitiva de interfaz | `components/ui/`. Usa la de shadcn antes de crear otra. |
-| Una llamada al backend | `services/api/<recurso>.ts`, con el mismo agrupamiento que los routers del backend (`cuentas`, `acciones`, `instrumentos`, `demo`). |
+| Una llamada al backend | `services/api/<recurso>.ts`, con el mismo agrupamiento que los routers del backend (`cuentas`, `acciones`, `instrumentos`, `demo`). Usa la función del método que define la ruta del backend (GET → `obtener`, POST → `enviar`, PATCH → `actualizar`, DELETE → `eliminar`). Si el backend define una ruta PUT, detente y avisa antes de agregar un método nuevo al cliente. |
 | Un tipo del contrato | `types/servidor.ts`, copiado tal cual del esquema Pydantic. |
 | Convertir una respuesta en datos para la vista | `lib/servidor/adaptadores.ts`. |
 | Estado que viene del servidor | `store/servidor/`. |
@@ -62,7 +62,7 @@ Si una iteración trae un dominio nuevo (por ejemplo, favoritos), créale su car
 
 - `routes → pages → features → store → services/api`. Todas pueden usar `components`, `hooks`, `lib`, `data`, `types` y `config`, salvo lo que sigue.
 - `components/` no importa `features`, `pages`, `store`, `services` ni `context`.
-- `services/api/` solo importa `config` y `types`. `fetch` solo existe en `services/api/cliente.ts`; `pedir` solo se usa dentro de `services/api/`.
+- `services/api/` solo importa `config` y `types`. `fetch` solo existe en `services/api/cliente.ts`, que exporta `obtener`, `enviar`, `actualizar` y `eliminar`; estas funciones solo se importan dentro de `services/api/`.
 - `store/` no importa `features`, `pages`, `components` ni `context`. `lib/`, `data/`, `types/` y `config/` no importan capas superiores.
 - `pages/` y `features/` no importan `services/`: los datos del backend llegan por `store/servidor/` y los hooks.
 - Una feature no usa componentes de otra. Las únicas features compartidas, cuyos componentes pueden usar otras, son `family-conversations` y `student-tracking`. Si hace falta un componente ajeno, pásalo desde la vista de ruta como prop o `children`, o súbelo a `components/`.

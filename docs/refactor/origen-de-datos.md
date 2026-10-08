@@ -4,7 +4,7 @@ Inventario al cerrar R7 (8 de octubre de 2026), conforme a la iteración 1. Las 
 
 ## 1. Del servidor (`VITE_DATOS=api`)
 
-Trece peticiones a través de `store/servidor/estadoServidor.ts` y `store/servidor/operaciones.ts`, agrupadas en `services/api/` como los routers del backend. `services/api/cliente.ts` contiene el único `fetch` y `pedir`; los otros cuatro módulos arman URL, método y cuerpo sin guardar estado ni leer la cuenta activa:
+Trece peticiones a través de `store/servidor/estadoServidor.ts` y `store/servidor/operaciones.ts`, agrupadas en `services/api/` como los routers del backend. `services/api/cliente.ts` contiene el único `fetch` y exporta `obtener` (GET), `enviar` (POST), `actualizar` (PATCH) y `eliminar` (DELETE), que solo se importan dentro de `services/api/`. Los otros cuatro módulos arman URL y cuerpo y eligen la función del método definido por la ruta, sin guardar estado ni leer la cuenta activa. Las trece peticiones actuales usan únicamente GET y POST; no se agregan peticiones PATCH ni DELETE. Una respuesta 204 devuelve datos `undefined` sin leer JSON:
 
 | Módulo | Función | Petición | La usa |
 |---|---|---|---|

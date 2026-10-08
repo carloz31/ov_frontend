@@ -188,3 +188,83 @@ for (const caso of casos) {
     assert.equal(peticiones.length, 4, 'Una petición por llamada, sin reintentos en el servicio')
   })
 }
+
+test('actualizar envía PATCH con cabecera y cuerpo JSON', async () => {
+  const peticiones = []
+  const cargar = cargarServicios(async (url, opciones) => {
+    peticiones.push({ url, opciones })
+    return { ok: true, status: 200, json: async () => ({ cambiado: true }) }
+  })
+  // DATO DE PRUEBA: recurso parcial para comprobar el transporte, sin una ruta real nueva.
+  const respuesta = await cargar('cliente').actualizar('/recurso', { nombre: 'Actualizado' })
+  assert.deepEqual(JSON.parse(JSON.stringify(peticiones)), [{
+    url: '/api-pruebas/recurso',
+    opciones: {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre: 'Actualizado' }),
+    },
+  }])
+  assert.deepEqual(JSON.parse(JSON.stringify(respuesta)), { tipo: 'ok', datos: { cambiado: true } })
+})
+
+test('eliminar envía DELETE sin cuerpo ni cabecera', async () => {
+  const peticiones = []
+  const cargar = cargarServicios(async (url, opciones) => {
+    peticiones.push({ url, opciones })
+    return { ok: true, status: 200, json: async () => ({ eliminado: true }) }
+  })
+  const respuesta = await cargar('cliente').eliminar('/recurso')
+  assert.deepEqual(JSON.parse(JSON.stringify(peticiones)), [{
+    url: '/api-pruebas/recurso',
+    opciones: { method: 'DELETE' },
+  }])
+  assert.equal(Object.hasOwn(peticiones[0].opciones, 'headers'), false)
+  assert.equal(Object.hasOwn(peticiones[0].opciones, 'body'), false)
+  assert.deepEqual(JSON.parse(JSON.stringify(respuesta)), { tipo: 'ok', datos: { eliminado: true } })
+})
+
+// DATO DE PRUEBA: llamadas a los cuatro métodos para comprobar respuestas y errores del cliente.
+const metodos = [
+  { nombre: 'obtener', argumentos: ['/recurso'] },
+  { nombre: 'enviar', argumentos: ['/recurso', { nombre: 'Nuevo' }] },
+  { nombre: 'actualizar', argumentos: ['/recurso', { nombre: 'Actualizado' }] },
+  { nombre: 'eliminar', argumentos: ['/recurso'] },
+]
+
+for (const { nombre, argumentos } of metodos) {
+  test(`${nombre}: 204 devuelve datos undefined sin leer JSON`, async () => {
+    let lecturas = 0
+    const cargar = cargarServicios(async () => ({
+      ok: true,
+      status: 204,
+      json: async () => {
+        lecturas += 1
+        throw Error('Una respuesta 204 no tiene JSON')
+      },
+    }))
+    assert.deepEqual({ ...await cargar('cliente')[nombre](...argumentos) }, { tipo: 'ok', datos: undefined })
+    assert.equal(lecturas, 0)
+  })
+
+  test(`${nombre}: 409 conserva el bloqueo y su detalle`, async () => {
+    const detalle = { mensaje: 'No disponible', items_faltantes: [items[0].codigo] }
+    const cargar = cargarServicios(async () => ({
+      ok: false,
+      status: 409,
+      json: async () => ({ detail: detalle }),
+    }))
+    const respuesta = await cargar('cliente')[nombre](...argumentos)
+    assert.deepEqual(JSON.parse(JSON.stringify(respuesta)), { tipo: 'bloqueado', detalle })
+  })
+
+  test(`${nombre}: un error de red devuelve sin_conexion`, async () => {
+    let peticiones = 0
+    const cargar = cargarServicios(async () => {
+      peticiones += 1
+      throw Error('Sin conexión')
+    })
+    assert.deepEqual({ ...await cargar('cliente')[nombre](...argumentos) }, { tipo: 'sin_conexion' })
+    assert.equal(peticiones, 1, 'El cliente no reintenta la petición')
+  })
+}

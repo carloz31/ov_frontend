@@ -1,4 +1,4 @@
-import { pedir } from './cliente'
+import { enviar, obtener } from './cliente'
 import type {
   CuentaResumen,
   DesbloqueoLegible,
@@ -10,11 +10,11 @@ import type {
 } from '@/types/servidor'
 
 export function listarCuentas(): Promise<RespuestaServidor<CuentaResumen[]>> {
-  return pedir('/cuentas')
+  return obtener('/cuentas')
 }
 
 export function obtenerEstado(cuenta: string): Promise<RespuestaServidor<EstadoCuenta>> {
-  return pedir(`/cuentas/${encodeURIComponent(cuenta)}/estado`)
+  return obtener(`/cuentas/${encodeURIComponent(cuenta)}/estado`)
 }
 
 export function obtenerProgreso(
@@ -22,13 +22,13 @@ export function obtenerProgreso(
   tipo: TipoObjetivo,
   codigo: string,
 ): Promise<RespuestaServidor<ProgresoObjetivo>> {
-  return pedir(`/cuentas/${encodeURIComponent(cuenta)}/progreso/${tipo}/${encodeURIComponent(codigo)}`)
+  return obtener(`/cuentas/${encodeURIComponent(cuenta)}/progreso/${tipo}/${encodeURIComponent(codigo)}`)
 }
 
 export function obtenerDesbloqueosNoVistos(cuenta: string): Promise<RespuestaServidor<DesbloqueoLegible[]>> {
-  return pedir(`/cuentas/${encodeURIComponent(cuenta)}/desbloqueos?solo_no_vistos=true`)
+  return obtener(`/cuentas/${encodeURIComponent(cuenta)}/desbloqueos?solo_no_vistos=true`)
 }
 
 export function marcarDesbloqueosVistos(cuenta: string): Promise<RespuestaServidor<DesbloqueosMarcados>> {
-  return pedir(`/cuentas/${encodeURIComponent(cuenta)}/desbloqueos/marcar-vistos`, {})
+  return enviar(`/cuentas/${encodeURIComponent(cuenta)}/desbloqueos/marcar-vistos`, {})
 }

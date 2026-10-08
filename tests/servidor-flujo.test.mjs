@@ -48,12 +48,12 @@ function ultimoDialogo(app) {
 }
 test('el cliente distingue 409, red y errores HTTP sin perder el detalle', async () => {
   const app = fixtureServidor(),
-    { pedir } = app.load('src/services/api/cliente.ts')
+    { enviar, obtener } = app.load('src/services/api/cliente.ts')
   app.fetch(() => ({
     status: 409,
     body: { detail: { mensaje: 'Faltan ítems', items_faltantes: ['RIA-1'] } },
   }))
-  const conflicto = await pedir('/acciones/completar-actividad', {
+  const conflicto = await enviar('/acciones/completar-actividad', {
     cuenta: 'est-ana',
     actividad: 'act-tip-01',
   })
@@ -63,9 +63,9 @@ test('el cliente distingue 409, red y errores HTTP sin perder el detalle', async
   app.fetch(() => {
     throw Error('Sin red')
   })
-  assert.equal((await pedir('/cuentas')).tipo, 'sin_conexion')
+  assert.equal((await obtener('/cuentas')).tipo, 'sin_conexion')
   app.fetch(() => ({ status: 404, body: { detail: 'No existe' } }))
-  assert.equal((await pedir('/cuentas')).estado, 404)
+  assert.equal((await obtener('/cuentas')).estado, 404)
 })
 test('el ingreso deduplica el montaje, elige solo estudiantes y no marca avisos vistos', async () => {
   for (const [usuario, esperado] of [
