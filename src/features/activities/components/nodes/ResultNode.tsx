@@ -1,46 +1,28 @@
-import { useEffect } from 'react'
+import { useInstrumentResult } from '../../hooks/useInstrumentResult'
+
 import { Link } from 'react-router'
-import { modoApi } from '@/config/env'
-import { areasRiasec } from '@/lib/servidor/adaptadores'
-import {
-  cargarResultadoRiasec,
-  mensajeErrorServidor,
-  useEstadoServidor,
-} from '@/store/servidor/estadoServidor'
-import { catalog, tipActivityIds } from '@/data/activities/content'
-import { calculateResult, applyCompletion } from '@/lib/activities/logic'
+
 import type { Actividad } from '@/types/activities'
-import { updateJourney, useJourney } from '@/store/journeyStore'
+
 import { CharacterAvatar } from '@/components/student/CharacterAvatar'
 
 export function ResultNode({ activity, instrumentId }: { activity: Actividad; instrumentId: string }) {
-  const state = useJourney()
-  const servidor = useEstadoServidor()
-  const instrument = catalog.instrumentos.find((item) => item.id === instrumentId)
-  const result = state.results.find((result) => result.instrumentoId === instrumentId)
-  useEffect(() => {
-    if (modoApi || !instrument || result) return
-    const calculated = calculateResult(instrument, state, tipActivityIds)
-    if (calculated)
-      updateJourney((current) =>
-        applyCompletion(activity, { ...current, results: [...current.results, calculated] }),
-      )
-  }, [activity, instrument, result, state])
-  if (modoApi)
+  const { instrument, result, resultado } = useInstrumentResult(activity, instrumentId)
+  if (resultado)
     return (
       <>
         <CharacterAvatar id="elena" size="md" />
         <h2 className="sx-result-title">Las pistas que hablan de ti</h2>
-        {servidor.estadoResultado === 'error' ? (
+        {resultado.error !== undefined ? (
           <>
-            <p role="alert">{mensajeErrorServidor(servidor.errorResultado)}</p>
-            <button className="sx-secondary-button" onClick={() => void cargarResultadoRiasec()}>
+            <p role="alert">{resultado.error}</p>
+            <button className="sx-secondary-button" onClick={() => void resultado.reintentar()}>
               Reintentar consulta
             </button>
           </>
-        ) : !servidor.resultadoRiasec ? (
+        ) : !resultado.datos ? (
           <p>Elena te espera al completar los 14 encuentros con Mara.</p>
-        ) : servidor.resultadoRiasec.perfil_plano ? (
+        ) : resultado.datos.perfil_plano ? (
           <>
             <p>Tus respuestas todavía no distinguen un interés. Puedes revisar tus encuentros con Mara.</p>
             <Link className="sx-secondary-button" to="/student/exploration?punto=mara-test">
@@ -49,7 +31,7 @@ export function ResultNode({ activity, instrumentId }: { activity: Actividad; in
           </>
         ) : (
           <>
-            {areasRiasec(servidor.resultadoRiasec).map((d) => (
+            {resultado.areas.map((d) => (
               <p key={d.codigo}>
                 <strong>{d.nombre}</strong>: {d.porcentaje}%
               </p>

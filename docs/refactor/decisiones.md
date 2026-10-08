@@ -101,3 +101,13 @@ La solicitud autoriza ejecutar R0 y R1 en este mismo turno. Tras registrar y con
 - `npm run build` y `npm run lint`: pasan, con el aviso existente de tamaño del bundle. `npm test`: **365/350/15**, mismos nombres y motivos de las 15 fallas de R4, sin canceladas ni omitidas; todas las pruebas `servidor-*` pasan dentro de la suite completa.
 - `npm run check:estructura`: pasa sobre 323 archivos con **35 excepciones: 21 E3, 11 E5 y 3 E7**. Se retiran nueve E5 (ocho de Adventure y una de autenticación) y la E3 de `MapScreenLayout`, que queda por debajo de 300 líneas. No se regenera la lista ni se modifica el verificador.
 - Registros en `logs/refactor-r5-adventure-*.log`, ignorados por Git. No hay dependencias nuevas, cambios en backend ni push. Continúan Activities, Backpack y Discovery dentro de R5.
+
+## R5 · Activities (8 de octubre de 2026)
+
+- `useActivityCompletion` recibe actividad, modo directo, edición, instrumento y cierre; devuelve el modelo de navegación y sus acciones. `useInstrumentResponses` recibe las mismas referencias de envío y montaje, los setters y la función de avance, conservando bloqueo de envíos, confirmaciones parciales, revisión y recuperación de respuestas.
+- Una comparación de los cuerpos completos de `move`, `advance` e `itemResponse`, mediante el AST de TypeScript sin comentarios ni diferencias de formato, confirma que son idénticos a los anteriores. Sigue existiendo una sola llamada a `await completarActividad(` en todo `src/`, dentro del movimiento al llegar a `$fin`.
+- `useActivityResources`, `useActivityFinish` y `useInstrumentResult` preparan disponibilidad y acciones de fichas, recibo de cierre y resultados. Las cuatro vistas dejan de importar `modoApi`; sus componentes, marcado, textos, estilos y exports se conservan. Los cinco hooks quedan por debajo de 400 líneas.
+- Adaptación A3: `tests/servidor-flujo.test.mjs` cuenta la llamada de finalización en `useActivityCompletion.ts`, con la misma aserción. El cargador específico de recursos de `tests/adventure-rendering.test.mjs` aplica su fixture de catálogo al hook trasladado. Ninguna aserción ni valor esperado cambia.
+- Build y lint pasan. Suite completa **365/350/15**, con los mismos nombres y motivos de R4 y sin canceladas ni omitidas; las 77 pruebas `servidor-*` siguen en verde.
+- Estructura: pasa sobre 328 archivos, **30 excepciones: 20 E3, 7 E5 y 3 E7**. Se retiran cuatro E5 y la E3 de `StudentActivityPlayer`, que queda por debajo de 300 líneas al extraer su lógica. No se regenera la lista ni se divide el marcado.
+- Registros en `logs/refactor-r5-activities-*.log`, ignorados por Git. Continúan Backpack y Discovery; backend, dependencias y documentos entregados permanecen sin cambios.

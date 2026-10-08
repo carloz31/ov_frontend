@@ -1653,6 +1653,7 @@ test('immersive resources show their content, normalize YouTube and preserve sav
     if (specifier === '@/data/activities/content') return { catalog: { recursos: resources } }
     if (!specifier.startsWith('.') && !specifier.startsWith('@/')) return nativeRequire(specifier)
     const base = specifier.startsWith('@/') ? path.resolve('src', specifier.slice(2)) : path.resolve(path.dirname(file), specifier)
+    if (base === path.resolve('src/features/activities/hooks/useActivityResources')) return loadMovedHook(`${base}.ts`, require)
     return load([`${base}.tsx`, `${base}.ts`].find(existsSync))
   }
   const exports = {}

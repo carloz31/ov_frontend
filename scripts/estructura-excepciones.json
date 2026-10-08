@@ -5,31 +5,6 @@
     "detalle": "368 líneas (máximo 300)"
   },
   {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/activities/components/FinishScreen.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/activities/components/nodes/ResultNode.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/activities/components/ResourceSheet.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/features/activities/components/StudentActivityPlayer.tsx",
-    "detalle": "569 líneas (máximo 300)"
-  },
-  {
-    "regla": "E5-modo-datos",
-    "archivo": "src/features/activities/components/StudentActivityPlayer.tsx",
-    "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
     "regla": "E7-features",
     "archivo": "src/features/adventure/components/ActivityDrawer.tsx",
     "detalle": "usa un componente de la feature cases: src/features/cases/components/ForestFireCaseProgress.tsx"

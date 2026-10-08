@@ -301,7 +301,7 @@ test('el mapa y los enlaces directos no usan límites de demo ni abren TIP o des
   )
   assert.equal(app.query.has('actividad'), false)
   mounted.unmount()
-  const source = readFileSync('src/features/activities/components/StudentActivityPlayer.tsx', 'utf8')
+  const source = readFileSync('src/features/activities/hooks/useActivityCompletion.ts', 'utf8')
   assert.equal((source.match(/await completarActividad\(/g) ?? []).length, 1)
 })
 test('hidratar sin espacio corrige el estado obsoleto y conserva el borrador y el nodo local', async () => {

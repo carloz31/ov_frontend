@@ -1,16 +1,14 @@
+import { useActivityFinish } from '../hooks/useActivityFinish'
 import { ArrowRight, BookOpen } from 'lucide-react'
-import { modoApi } from '@/config/env'
-import { actividadServidor, textosDesbloqueos } from '@/lib/servidor/adaptadores'
-import { obtenerEstadoServidor } from '@/store/servidor/estadoServidor'
+
 import type { DesbloqueoNuevo } from '@/types/servidor'
-import { useNavigate } from 'react-router'
+
 import { catalog } from '@/data/activities/content'
 import type { Actividad } from '@/types/activities'
-import { useJourney } from '@/store/journeyStore'
+
 import { appPaths } from '@/routes/paths'
 import { LumiMedallion } from '@/components/student/LumiMedallion'
 import { RewardCard } from './RewardCard'
-import { additionalMissions } from '@/data/activities/reflectionConfig'
 
 export function FinishScreen({
   activity,
@@ -25,9 +23,8 @@ export function FinishScreen({
   desbloqueosServidor?: DesbloqueoNuevo[]
   resultadosGenerados?: { instrumento: string; aplicacion: string }[]
 }) {
-  const state = useJourney()
-  const navigate = useNavigate()
-  if (modoApi)
+  const { state, navigate, registro, piece, badge, sheets } = useActivityFinish(activity, desbloqueosServidor)
+  if (registro)
     return (
       <div className="sx-card-stage">
         <section className="sx-glass sx-player-card sx-finish-card case-scrollbar">
@@ -36,9 +33,7 @@ export function FinishScreen({
             <small>Lumi</small>
           </div>
           <h2>
-            {actividadServidor(obtenerEstadoServidor().estado, activity.id)?.estado === 'COMPLETADA'
-              ? 'Este hallazgo viaja contigo.'
-              : 'Consultando tu avance.'}
+            {registro.titulo}
           </h2>
           <p>Tu actividad quedó registrada en el servidor.</p>
           {activity.id === 'act-tip-14' &&
@@ -50,11 +45,11 @@ export function FinishScreen({
                 </button>
               </section>
             )}
-          {textosDesbloqueos(desbloqueosServidor ?? []).length > 0 && (
+          {registro.desbloqueos.length > 0 && (
             <section className="sx-finish-section">
               <h3>Lo que se abrió en tu camino</h3>
               <ul>
-                {textosDesbloqueos(desbloqueosServidor ?? []).map((d) => (
+                {registro.desbloqueos.map((d) => (
                   <li key={`${d.tipo}:${d.codigo}`}>
                     <p>{d.texto}</p>
                     {d.tipo === 'FICHA' && (
@@ -101,20 +96,7 @@ export function FinishScreen({
         </section>
       </div>
     )
-  const piece = catalog.piezasLlave.find((piece) => piece.id === activity.recompensa?.piezaLlave)
-  const badge =
-    state.progress[activity.id]?.estado === 'completada' &&
-    additionalMissions.find((m) => m.id === activity.id)?.insignia
-  const ids = [
-    ...new Set([
-      ...activity.nodos.flatMap((node) => (node.tipo === 'diapositiva' ? (node.recursoIds ?? []) : [])),
-      ...(activity.recompensa?.recursoIds ?? []),
-    ]),
-  ]
-  const sheets = catalog.recursos.filter(
-    (resource) =>
-      ids.includes(resource.id) && resource.tipo === 'ficha' && state.resources.includes(resource.id),
-  )
+
   return (
     <div className="sx-card-stage">
       <section className="sx-glass sx-player-card sx-finish-card case-scrollbar">

@@ -1,22 +1,14 @@
-import { useRef } from 'react'
-import { modoApi } from '@/config/env'
-import { fichaDisponible } from '@/lib/servidor/adaptadores'
-import { useEstadoServidor } from '@/store/servidor/estadoServidor'
+import { useActivityResources } from '../hooks/useActivityResources'
+
 import { BookOpen, Check, ExternalLink, FileText, Headphones, Link2, Play } from 'lucide-react'
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/Sheet'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/Collapsible'
-import { catalog } from '@/data/activities/content'
-import { updateJourney, useJourney } from '@/store/journeyStore'
+
 import { youtubeEmbedUrl } from '@/features/backpack/lib/travelerResources'
 import { ResourceText } from './ContentBlocks'
 
 export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: string[]; onClose: () => void }) {
-  const state = useJourney()
-  const servidor = useEstadoServidor()
-  const returnFocus = useRef<HTMLElement | null>(null)
-  const resources = [...new Set(ids)].flatMap(
-    (id) => catalog.recursos.find((resource) => resource.id === id) ?? [],
-  )
+  const { state, returnFocus, resources, marcarLeida, guardarRecurso } = useActivityResources(ids)
   const icons = { ficha: BookOpen, video: Play, lectura: FileText, enlace: Link2, audio: Headphones }
   return (
     <Sheet
@@ -78,15 +70,7 @@ export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: stri
                       className="sx-secondary-button"
                       disabled={(state.readResourceIds ?? state.resources).includes(resource.id)}
                       onClick={() =>
-                        updateJourney((current) => ({
-                          ...current,
-                          resources: modoApi
-                            ? current.resources
-                            : [...new Set([...current.resources, resource.id])],
-                          readResourceIds: [
-                            ...new Set([...(current.readResourceIds ?? current.resources), resource.id]),
-                          ],
-                        }))
+                        marcarLeida(resource)
                       }
                     >
                       <Check size={18} />
@@ -98,23 +82,20 @@ export function ResourceSheet({ open, ids, onClose }: { open: boolean; ids: stri
                   {!resource.url && !resource.contenido && (
                     <p>Este material estará disponible cuando lo prepare orientación.</p>
                   )}
-                  {modoApi && resource.guardableEnRecursos && (
+                  {resource.mostrarDisponibilidad && (
                     <p>
-                      {fichaDisponible(servidor.estado, resource.id)
+                      {resource.disponible
                         ? 'En tu mochila'
                         : 'La ficha se obtiene al completar la actividad.'}
                     </p>
                   )}
-                  {!modoApi && resource.guardableEnRecursos && (resource.url || resource.contenido) && (
+                  {!resource.mostrarDisponibilidad && (resource.url || resource.contenido) && (
                     <button
                       type="button"
                       className="sx-secondary-button"
                       disabled={state.resources.includes(resource.id)}
                       onClick={() =>
-                        updateJourney((current) => ({
-                          ...current,
-                          resources: [...new Set([...current.resources, resource.id])],
-                        }))
+                        guardarRecurso(resource)
                       }
                     >
                       {state.resources.includes(resource.id) ? (
