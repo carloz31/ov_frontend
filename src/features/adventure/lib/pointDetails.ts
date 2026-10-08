@@ -1,7 +1,8 @@
 import type { JourneyState } from '@/types/activities'
 import { modoApi } from '@/config/env'
 import { obtenerEstadoServidor } from '@/store/servidor/sesion'
-import { actividadServidor, interaccionMara } from '@/lib/servidor/adaptadores'
+import { actividadServidor } from '@/lib/servidor/adaptadores'
+import { idPuntoContenido } from './puntosServidor'
 import { activityById } from '@/data/activities/content'
 import { getForestFireCaseStatus } from '@/features/cases/lib/forestFireCaseLogic'
 import { challenges } from '@/data/content/challenges'
@@ -52,7 +53,8 @@ export function getPointDetails(
           : enCurso
             ? 'En progreso'
             : 'Disponible'
-    const mission = fieldMissions.find((m) => m.id === point.id)
+    const idPresentacion = actividad ? idPuntoContenido(actividad.contenido, actividad.codigo) : point.id
+    const mission = fieldMissions.find((m) => m.id === idPresentacion)
     if (mission)
       return {
         title: point.title,
@@ -90,12 +92,13 @@ export function getPointDetails(
         href: appPaths.student.exploration,
       }
     if (point.id === 'mara-test') {
-      const mara = interaccionMara(obtenerEstadoServidor().actividades.datos)
+      const secuencia = point.secuencia ?? []
+      const numero = Math.max(1, secuencia.findIndex((a) => a.codigo === point.specActivityId) + 1)
       return {
         title: point.title,
         region: 'Molino de la ciudad',
         badge,
-        meta: `Interacción ${mara.numero} de 14`,
+        meta: `Interacción ${numero} de ${secuencia.length}`,
         type: 'Test',
         description: 'Conversa con Mara. No hay respuestas correctas o incorrectas.',
         requirement: point.status === 'locked' ? 'Consultando el requisito en el servidor…' : undefined,
@@ -106,15 +109,13 @@ export function getPointDetails(
               ? 'Revisar encuentro'
               : 'Conversar con Mara',
         disabled: point.status === 'locked',
-        activityId: mara.actividad?.codigo,
+        activityId: point.specActivityId,
         revision: point.status === 'completed',
-        reviewActivities: obtenerEstadoServidor()
-          .actividades.datos?.flatMap((b) => b.actividades)
-          .filter((a) => /^act-tip-\d{2}$/.test(a.codigo) && a.estado === 'COMPLETADA')
-          .map((a) => ({
-            codigo: a.codigo,
-            titulo: `Interacción ${Number(a.codigo.slice(-2))} · ${a.titulo}`,
-          })),
+        reviewActivities: secuencia.flatMap((a, i) =>
+          a.estado === 'COMPLETADA'
+            ? [{ codigo: a.codigo, titulo: `Interacción ${i + 1} · ${a.titulo}` }]
+            : [],
+        ),
       }
     }
     if (point.id === 'elena-result')
@@ -128,7 +129,7 @@ export function getPointDetails(
         requirement: point.status === 'locked' ? 'Completa los 14 encuentros con Mara.' : undefined,
         actionLabel: point.status === 'completed' ? 'Revisar resultado' : 'Conversar con Elena',
         disabled: point.status === 'locked',
-        activityId: 'act-tip-final',
+        activityId: point.specActivityId,
         revision: point.status === 'completed',
       }
     return {

@@ -1,8 +1,9 @@
+import { progresoBloque } from '@/lib/servidor/contenidos'
 import { useEffect, useState } from 'react'
 import { modoApi } from '@/config/env'
 import { useEstadoServidor, mensajeErrorServidor } from '@/store/servidor/sesion'
 import { consultarProgreso } from '@/store/servidor/consultas'
-import { progresoCamino, textoRequisito } from '@/lib/servidor/adaptadores'
+import { textoRequisito } from '@/lib/servidor/adaptadores'
 
 import { fieldMissions } from '@/data/content/adventure'
 import type { AdventureState } from '@/types/adventure'
@@ -34,7 +35,7 @@ export function useCityRequirement(adventure: AdventureState) {
     setIntento,
     mostrarRequisito: modoApi,
     progreso: modoApi
-      ? progresoCamino(servidor.actividades.datos).porcentaje
+      ? progresoBloque(servidor.actividades.datos).porcentaje
       : (fieldMissions.filter((item) => adventure.completedMissionIds.includes(item.id)).length /
           fieldMissions.length) *
         100,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { activityById, finalActivity } from '@/data/activities/content'
+import { actividadPorContenido } from '@/lib/servidor/contenidos'
 import {
   construirInteraccionMara,
   inicioInteraccionMara,
@@ -45,23 +45,25 @@ export function MaraInteractionPlayer({
         return
       }
       const revisar = revision || actividad.estado === 'COMPLETADA'
-      if (codigo === 'act-tip-final') {
+      const contenido = actividadPorContenido(obtenerEstadoServidor().actividades.datos, codigo)
+      if (!contenido) return
+      if (contenido.nodos.some((n) => n.tipo === 'resultado')) {
         if (!resultado.datos) {
           setError('El resultado todavía no está disponible.')
           return
         }
         setCarga({
           activity: {
-            ...finalActivity,
+            ...contenido,
             titulo: actividad.titulo,
-            nodos: finalActivity.nodos.map((n) =>
+            nodos: contenido.nodos.map((n) =>
               n.tipo === 'resultado' ? { ...n, instrumentoId: 'TEST-RIASEC' } : n,
             ),
           },
           instrumento: {
             items: [],
             respuestas: [],
-            nodoInicialId: finalActivity.nodos[0].id,
+            nodoInicialId: contenido.nodos[0].id,
             revision: revisar,
             soloLectura: true,
           },
@@ -80,7 +82,7 @@ export function MaraInteractionPlayer({
         setError('Esta interacción no tiene ítems disponibles.')
         return
       }
-      const saludo = activityById('act-tip-01')?.nodos.find((n) => n.tipo === 'dialogo')
+      const saludo = contenido.nodos.find((n) => n.tipo === 'dialogo')
       const activity = construirInteraccionMara(
         actividad,
         items.datos,

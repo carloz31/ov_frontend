@@ -1,7 +1,8 @@
 import type { JourneyState } from '@/types/activities'
 import { modoApi } from '@/config/env'
 import { obtenerEstadoServidor } from '@/store/servidor/sesion'
-import { progresoCamino } from '@/lib/servidor/adaptadores'
+import { progresoBloque } from '@/lib/servidor/contenidos'
+import type { ActividadCuenta } from '@/types/servidor'
 import { type LucideIcon } from 'lucide-react'
 import { cityCases, fieldMissions } from '@/data/content/adventure'
 import { canAccessCity } from '@/store/adventureStore'
@@ -19,6 +20,7 @@ export type StudentMapPoint = {
   zone: 'camino' | 'ciudad'
   specActivityId?: string
   bloque?: number
+  secuencia?: ActividadCuenta[]
   actionEnabled: boolean
   additional?: boolean
   originId?: string
@@ -31,15 +33,9 @@ export type StudentZone = 'missions' | 'central'
 export function getZoneProgress(zone: StudentZone, adventure: AdventureState, journey: JourneyState) {
   if (modoApi) {
     const estado = obtenerEstadoServidor().actividades.datos
-    const ciudad = estado?.find((b) => b.codigo === 'CIUDAD')?.actividades ?? []
     return zone === 'missions'
-      ? { label: 'Nivel de recorrido', value: progresoCamino(estado).porcentaje }
-      : {
-          label: 'Recorrido por la ciudad',
-          value: ciudad.length
-            ? (ciudad.filter((a) => a.estado === 'COMPLETADA').length / ciudad.length) * 100
-            : 0,
-        }
+      ? { label: 'Nivel de recorrido', value: progresoBloque(estado).porcentaje }
+      : { label: 'Recorrido por la ciudad', value: progresoBloque(estado, 'CIUDAD').porcentaje }
   }
   return zone === 'missions'
     ? {
@@ -61,8 +57,9 @@ export function getZoneProgress(zone: StudentZone, adventure: AdventureState, jo
 export function getRecommendedPoint(points: StudentMapPoint[]) {
   if (points[0]?.zone === 'camino')
     return (
-      points.find((point) => !point.additional && point.id !== 'city' && point.status === 'available') ??
-      points.find((point) => point.id === 'city' && point.status === 'available')
+      points.find(
+        (point) => (modoApi || !point.additional) && point.id !== 'city' && point.status === 'available',
+      ) ?? points.find((point) => point.id === 'city' && point.status === 'available')
     )
   return points.find(
     (point) => point.status === 'available' && (point.actionEnabled || (modoApi && point.id === 'mara-test')),

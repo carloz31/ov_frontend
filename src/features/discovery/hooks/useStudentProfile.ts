@@ -1,7 +1,8 @@
+import { progresoBloque } from '@/lib/servidor/contenidos'
 import { useLogrosServidor } from '@/store/servidor/secciones'
 import { modoApi } from '@/config/env'
 import { useEstadoServidor } from '@/store/servidor/sesion'
-import { progresoCamino, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
+import { paginaInteresesServidor } from '@/lib/servidor/adaptadores'
 
 import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
 import { getTravelerLevel, useAdventure } from '@/store/adventureStore'
@@ -38,7 +39,7 @@ export function useStudentProfile() {
       context,
       ficha: {
         nombre: servidor.resumen.datos?.cuenta.nombre ?? 'Mi perfil',
-        progreso: progresoCamino(servidor.actividades.datos).porcentaje,
+        progreso: progresoBloque(servidor.actividades.datos).porcentaje,
         nivel: nivelApi,
         insignias: insigniasApi,
         textoIntereses:

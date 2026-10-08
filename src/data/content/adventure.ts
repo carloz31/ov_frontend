@@ -10,7 +10,7 @@ export const fieldMissions = [
   },
   {
     id: 'beliefs',
-    title: 'Más allá de los mitos',
+    title: 'La plaza de los rumores',
     kind: 'reflection',
     region: 'Puente de las preguntas',
     description:
@@ -58,7 +58,7 @@ export const fieldMissions = [
   },
   {
     id: 'plan',
-    title: 'Un camino propio',
+    title: 'Mi mapa de ruta',
     kind: 'deliverable',
     region: 'Sendero de posibilidades',
     description: '¿Qué deseas construir y qué pequeño paso puedes dar esta semana?',

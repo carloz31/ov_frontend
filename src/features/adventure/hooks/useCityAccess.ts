@@ -4,6 +4,8 @@ import { modoApi } from '@/config/env'
 import { useEstadoServidor } from '@/store/servidor/sesion'
 import { actividadServidor, ciudadDisponible } from '@/lib/servidor/adaptadores'
 
+import { actividadPorContenido } from '@/lib/servidor/contenidos'
+import { idPuntoContenido } from '../lib/puntosServidor'
 import { challenges } from '@/data/content/challenges'
 
 import { activityById } from '@/data/activities/content'
@@ -18,11 +20,17 @@ export function useCityAccess() {
   const [params, setParams] = useSearchParams()
   const codigo = params.get('actividad') ?? ''
   const actividadApi = actividadServidor(servidor.actividades.datos, codigo)
+  const contenidoApi = actividadPorContenido(servidor.actividades.datos, codigo)
+  const esEncuentro = contenidoApi?.nodos.some((n) => n.tipo === 'item' || n.tipo === 'resultado')
   const permitido =
     ciudadDisponible(servidor.actividades.datos) &&
-    /^act-tip-(0[1-9]|1[0-4]|final)$/.test(codigo) &&
+    servidor.actividades.datos?.some(
+      (b) => b.codigo === 'CIUDAD' && b.actividades.some((a) => a.codigo === codigo),
+    ) &&
     actividadApi &&
-    actividadApi.estado !== 'BLOQUEADA'
+    actividadApi.visible &&
+    actividadApi.estado !== 'BLOQUEADA' &&
+    !!actividadPorContenido(servidor.actividades.datos, codigo)
   useEffect(() => {
     if (!modoApi || !params.has('actividad') || permitido) return
     const next = new URLSearchParams(params)
@@ -30,9 +38,9 @@ export function useCityAccess() {
     next.delete('actividad')
     next.delete('revision')
     next.delete('modo')
-    next.set('punto', /^act-tip-/.test(codigo) ? 'mara-test' : codigo)
+    next.set('punto', actividadApi ? idPuntoContenido(actividadApi.contenido, codigo) : codigo)
     setParams(next, { replace: true })
-  }, [params, setParams, permitido])
+  }, [params, setParams, permitido, actividadApi])
 
   const challenge = challenges.find((c) => c.id === params.get('actividad'))
   const activity = activityById('act-tip-01')
@@ -42,12 +50,15 @@ export function useCityAccess() {
     params,
     setParams,
     interaccion:
-      modoApi && permitido
+      modoApi && permitido && esEncuentro
         ? { codigo, clave: `${servidor.resumen.datos?.cuenta.codigo}/${codigo}/${params.get('revision')}` }
         : undefined,
     challenge: !modoApi && canAccessCity(adventure) ? challenge : undefined,
-    activity:
-      !modoApi && canAccessCity(adventure) && activity && params.get('actividad') === activity.id
+    activity: modoApi
+      ? permitido && !esEncuentro
+        ? contenidoApi
+        : undefined
+      : !modoApi && canAccessCity(adventure) && activity && params.get('actividad') === activity.id
         ? activity
         : undefined,
   }

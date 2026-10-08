@@ -1,16 +1,15 @@
 import type { JourneyState } from '@/types/activities'
 import { modoApi } from '@/config/env'
 import { obtenerEstadoServidor } from '@/store/servidor/sesion'
-import { actividadServidor, estadoPunto, interaccionMara } from '@/lib/servidor/adaptadores'
-import { BookOpen, Building2, ClipboardList, Swords } from 'lucide-react'
+import { Building2, ClipboardList, Swords } from 'lucide-react'
 import { challenges } from '@/data/content/challenges'
 import { canStartChallenge } from '@/lib/challenges'
 import { cityCases } from '@/data/content/adventure'
 import type { AdventureState } from '@/types/adventure'
 import type { StudentMapPoint } from './mapPoints'
+import { puntosServidor } from './puntosServidor'
 export function getCiudadPoints(adventure: AdventureState, journey: JourneyState): StudentMapPoint[] {
   if (modoApi) {
-    const mara = interaccionMara(obtenerEstadoServidor().actividades.datos)
     return [
       ...cityCases.map((c): StudentMapPoint => ({
         id: c.id,
@@ -23,32 +22,7 @@ export function getCiudadPoints(adventure: AdventureState, journey: JourneyState
         status: 'locked',
         actionEnabled: false,
       })),
-      {
-        id: 'mara-test',
-        title: mara.actividad?.titulo ?? 'Una vuelta por el molino',
-        subtitle: `Test · Interacción ${mara.numero} de 14`,
-        x: 875,
-        y: 530,
-        zone: 'ciudad',
-        icon: ClipboardList,
-        specActivityId: mara.actividad?.codigo,
-        status: estadoPunto(mara.actividad),
-        actionEnabled: true,
-      },
-      {
-        id: 'elena-result',
-        title: 'Las pistas que hablan de ti',
-        subtitle: 'Encuentro con Elena',
-        x: 1030,
-        y: 610,
-        zone: 'ciudad',
-        icon: BookOpen,
-        specActivityId: 'act-tip-final',
-        status: estadoPunto(actividadServidor(obtenerEstadoServidor().actividades.datos, 'act-tip-final')),
-        actionEnabled:
-          estadoPunto(actividadServidor(obtenerEstadoServidor().actividades.datos, 'act-tip-final')) !==
-          'locked',
-      },
+      ...puntosServidor(obtenerEstadoServidor().actividades.datos, 'CIUDAD', 'ciudad'),
       ...challenges.map((c, i): StudentMapPoint => ({
         id: c.id,
         title: c.titulo,

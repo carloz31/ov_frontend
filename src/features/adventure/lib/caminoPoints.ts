@@ -1,7 +1,7 @@
 import type { JourneyState } from '@/types/activities'
 import { modoApi } from '@/config/env'
 import { obtenerEstadoServidor } from '@/store/servidor/sesion'
-import { actividadServidor, ciudadDisponible, estadoPunto } from '@/lib/servidor/adaptadores'
+import { ciudadDisponible } from '@/lib/servidor/adaptadores'
 import { activityById } from '@/data/activities/content'
 import { Feather, KeyRound, type LucideIcon } from 'lucide-react'
 import { fieldMissions, type FieldMission } from '@/data/content/adventure'
@@ -14,6 +14,8 @@ import { specActivityByMission } from './missionSync'
 import { missionComplete } from './missionSync'
 import type { StudentMapPoint } from './mapPoints'
 import { iconosMapa } from './iconosMapa'
+import { puntosServidor } from './puntosServidor'
+import { actividadPorContenido } from '@/lib/servidor/contenidos'
 export function getActivityType(mission: FieldMission) {
   if (mission.id === 'beliefs' || mission.kind === 'information') return 'Informativa'
   if (mission.kind === 'questionnaire') return 'Test'
@@ -42,30 +44,20 @@ export const orderedMissions = [
 
 export function getNextCaminoActivity(points: StudentMapPoint[]) {
   const next = points.find(
-    (point) => !point.additional && point.id !== 'city' && point.status === 'available',
+    (point) => (modoApi || !point.additional) && point.id !== 'city' && point.status === 'available',
   )
-  return activityById(next?.specActivityId ?? '') ?? null
+  return (
+    (modoApi
+      ? actividadPorContenido(obtenerEstadoServidor().actividades.datos, next?.specActivityId ?? '')
+      : activityById(next?.specActivityId ?? '')) ?? null
+  )
 }
 
 export function getCaminoPoints(adventure: AdventureState, journey: JourneyState): StudentMapPoint[] {
   if (modoApi) {
     const estado = obtenerEstadoServidor().actividades.datos
     return [
-      ...orderedMissions
-        .filter((m) => specActivityByMission[m.id])
-        .map((mission): StudentMapPoint => ({
-          id: mission.id,
-          title: mission.title,
-          x: mission.x,
-          y: mission.y,
-          subtitle: `${getActivityType(mission)} · ${getMissionMeta(mission)}`,
-          icon: getMissionIcon(mission),
-          zone: 'camino',
-          bloque: 1,
-          specActivityId: specActivityByMission[mission.id],
-          status: estadoPunto(actividadServidor(estado, specActivityByMission[mission.id]!)),
-          actionEnabled: true,
-        })),
+      ...puntosServidor(estado, 'CAMINO', 'camino'),
       {
         id: 'city',
         title: 'La llave de la ciudad',

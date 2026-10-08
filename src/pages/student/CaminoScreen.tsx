@@ -4,7 +4,7 @@ import { AdditionalReveal } from '@/features/activities/components/reflection/Ad
 import { useEffect } from 'react'
 import { useEstadoServidor } from '@/store/servidor/sesion'
 import { useSearchParams } from 'react-router'
-import { activityById } from '@/data/activities/content'
+import { useCaminoActivity } from '@/features/adventure/hooks/useCaminoActivity'
 import { StudentActivityPlayer } from '@/features/activities/components/StudentActivityPlayer'
 import { useJourney } from '@/store/journeyStore'
 import { useAdventure } from '@/store/adventureStore'
@@ -19,7 +19,7 @@ export function CaminoScreen() {
   useReflections()
   const [params, setParams] = useSearchParams()
   const points = getCaminoPoints(adventure, journey)
-  const activity = activityById(params.get('actividad') ?? '')
+  const activity = useCaminoActivity(params.get('actividad') ?? '')
   const requestedPoint = activity ? points.find((point) => point.specActivityId === activity.id) : undefined
   const allowed = !!activity && !!requestedPoint && requestedPoint.status !== 'locked'
   useEffect(() => {
