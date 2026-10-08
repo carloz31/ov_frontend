@@ -1,6 +1,6 @@
 import { catalog } from '@/data/activities/content'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
-import { ParentResourceText } from './ParentContent'
+import { ParentResourceText } from '@/features/parent/components/ParentResourceText'
 
 export function ParentResourceDialog({
   ids,

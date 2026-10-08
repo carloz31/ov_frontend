@@ -6,11 +6,6 @@
   },
   {
     "regla": "E3-tamano",
-    "archivo": "src/features/family-conversations/components/FamilyConversationsView.tsx",
-    "detalle": "612 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
     "archivo": "src/features/student-tracking/components/ProfileSections.tsx",
     "detalle": "641 líneas (máximo 300)"
   },
@@ -38,15 +33,5 @@
     "regla": "E3-tamano",
     "archivo": "src/pages/counselor/StudentDetailView.tsx",
     "detalle": "1485 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/pages/parent/ParentActivityView.tsx",
-    "detalle": "652 líneas (máximo 300)"
-  },
-  {
-    "regla": "E3-tamano",
-    "archivo": "src/pages/parent/ParentOverviewView.tsx",
-    "detalle": "355 líneas (máximo 300)"
   }
 ]

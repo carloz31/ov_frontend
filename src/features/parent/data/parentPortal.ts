@@ -1,3 +1,4 @@
+// DATO DE PRUEBA: perfil, hijos y actividades del apoderado; se reemplazarán por los datos de su cuenta.
 import { parentActivities } from '@/data/activities/content'
 import type { ParentChild } from '../types'
 
