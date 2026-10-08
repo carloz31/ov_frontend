@@ -1,5 +1,9 @@
 # Central de casos: Incendio forestal
 
+> Los registros de verificación y cierre conservan su configuración histórica.
+> Para preparar el backend actual, seguir el README y
+> `ov_backend/docs/spec-refactor-estructura.md`: migración y carga explícitas.
+
 ## Corrección de interacción y presentación — 6 de octubre de 2026
 
 Por solicitud directa del usuario, la especificación actualizada `(1).md` y las dos imágenes de referencia sustituyen el acuerdo inicial sobre Escuchar y asignación de contactos. Se conserva la ilustración de cada fase en todo el fondo. La escena cubre su ventana y se recorre arrastrándola dentro de límites; las pistas se abren una por una y Escuchar ya no ofrece lista. Lumi explica mediante «?» y recuerda la primera apertura por fase. Tab lleva a la vista los puntos que quedan fuera de pantalla.

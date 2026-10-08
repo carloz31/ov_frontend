@@ -29,10 +29,18 @@ VITE_API_URL=/api
 En otra terminal, desde la raíz de **ov_backend**, arranca la plataforma con el evaluador falso:
 
 ```powershell
-$env:SEMILLA="plataforma"
+uv sync
 $env:EVALUADOR="falso"
+uv run alembic upgrade head
+uv run python -m datos.cargar plataforma
 uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
+
+La migración y la carga se ejecutan una vez sobre una base nueva. En los siguientes
+arranques basta con Uvicorn. El backend usa `DATABASE_URL` (por defecto,
+`sqlite:///ov.db` en su raíz); para otra base, definirla antes de migrar y cargar.
+`POST /demo/reiniciar` borra el estado y conserva el catálogo. La preparación
+vigente se define en `ov_backend/docs/spec-refactor-estructura.md`.
 
 Reinicia Vite al cambiar variables. Su proxy de desarrollo dirige `/api` a `http://127.0.0.1:8000` y quita ese prefijo. El proxy no forma parte del build de producción; el entorno que sirva `dist` debe resolver `/api` o proporcionar una URL accesible del backend.
 

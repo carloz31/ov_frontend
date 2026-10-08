@@ -1,5 +1,9 @@
 # Iteración 1 · F7 · Informe de verificación
 
+> Este informe conserva el entorno y las evidencias históricas de F7. Para
+> preparar el backend actual, seguir el README y
+> `ov_backend/docs/spec-refactor-estructura.md`: migración y carga explícitas.
+
 Fecha: 2026-10-07. Rama `iteracion-1` en ambos repositorios.
 
 **F6 cerrada y revalidada.** Las catorce HU pasan en el alcance comprobado. El recorrido inicial de F7 detectó dos defectos de F6; la solicitud posterior del usuario autorizó corregirlos. Este informe conserva el recorrido original y actualiza HU-073, HU-074 y los pasos 11–12 con la verificación del cierre. La aprobación formal de la iteración corresponde al usuario.
