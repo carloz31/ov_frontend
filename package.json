@@ -9,6 +9,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "oxlint",
+    "check:estructura": "node scripts/verificar-estructura.mjs",
     "test": "node --test tests/*.test.mjs",
     "preview": "vite preview"
   },
