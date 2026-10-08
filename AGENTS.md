@@ -89,6 +89,19 @@ Si una iteración trae un dominio nuevo (por ejemplo, favoritos), créale su car
 - No cambies claves ni formatos de `localStorage`, `sessionStorage` o IndexedDB sin una migración que conserve lo guardado (las claves están en `docs/refactor/origen-de-datos.md`).
 - Para la red basta `fetch`. El proxy de desarrollo `/api` apunta a `http://127.0.0.1:8000`.
 
+## Datos del servidor sin vista
+
+La interfaz la decide el usuario. Un agente conecta datos a la interfaz que ya existe; no diseña interfaz nueva para mostrarlos.
+
+- **Conectar sí:** que un elemento que ya existe (un contador, una insignia, un estado de candado, un texto) pase a tomar su valor del servidor en lugar del dato local, con el mismo marcado, los mismos textos y el mismo estilo.
+- **Agregar no:** si el backend entrega un dato que ninguna vista muestra hoy, o mostrarlo exige algo que no existe (una pantalla, sección, tarjeta, columna, pestaña, texto, ícono, estado visual o ruta), **no crees ni modifiques interfaz para mostrarlo**. Tampoco lo resuelvas reutilizando un componente en otro lugar ni con un texto provisional.
+- Hasta ahí sí puedes llevar el dato: `types/servidor.ts`, `services/api/`, `store/servidor/`, `lib/servidor/adaptadores.ts` y el hook del dominio. Se queda sin pintar.
+- **Detente y avisa.** Al terminar la fase (o antes, si bloquea), lista cada dato en `docs/pendientes-interfaz.md` y en tu resumen, con: dato y campo de la respuesta (`LogrosCuenta.insignias[].requisito`), petición que lo trae, dónde crees que se mostraría, 2 o 3 opciones de interfaz y qué pasa si no se muestra. El usuario decide; no implementes ninguna opción hasta que responda.
+- **Lo mismo al revés:** si una vista necesita un dato que el servidor no entrega, no lo inventes ni lo calcules en el front para cubrir el hueco; anótalo en el mismo documento y avisa.
+- Si crees que la tarea no se puede terminar sin tocar una vista, **detente antes de tocarla** y pide autorización. Nunca cambies una vista esperando aprobarla después: el usuario prefiere hacer esos cambios aparte, con los datos que ya llegan del backend.
+- Solo se agrega o cambia interfaz cuando el usuario lo pide o la spec vigente lo describe expresamente (qué vista, qué elemento, qué texto). Cita en el resumen la línea de la spec que lo autoriza.
+- Estados de carga y error: usa los mensajes y componentes que ya existen (`mensajeErrorServidor`, los avisos actuales). Un estado visual nuevo también se consulta.
+
 ## Interfaz del estudiante
 
 - Para el piloto de evaluación, registros personalizados y misiones adicionales del Bloque 1 prevalecen las decisiones aprobadas en `docs/student-experience/implementacion-piloto-bloque1.md`; el contenido de referencia está en `docs/student-experience/especificacion-registros-personalizados-adicionales.md`.
@@ -141,6 +154,7 @@ Si dos fuentes se contradicen, detente y explica la contradicción. No la resuel
 
 - Los códigos del backend son los ids del front (`mission-welcome`, `act-tip-01`, `I1`, `psychologist`). No hay tablas de traducción.
 - El JSON usa los nombres en español y `snake_case` de los esquemas Pydantic. El front los copia tal cual en `src/types/servidor.ts` y accede al backend solo desde `src/services/api/` (un archivo por router del backend); las vistas leen esos datos a través de `src/store/servidor/`.
+- Si el backend entrega un dato que ninguna vista del front muestra, o una vista necesita un dato que el backend no entrega, no se crea ni se modifica interfaz para cubrirlo: se registra en `ov_frontend/docs/pendientes-interfaz.md` y se avisa al usuario, que decide la interfaz (detalle en «Datos del servidor sin vista» del `AGENTS.md` del front). Vale también al trabajar solo en el backend: si agregas o cambias un campo de una respuesta, revisa si el front tiene dónde mostrarlo y, si no, anótalo igual.
 - Si una tarea cambia una respuesta que consume el front, en la misma tarea se actualizan el esquema y las pruebas del backend, `src/types/servidor.ts`, `src/services/api/` y `src/lib/servidor/adaptadores.ts` del front, los fixtures (`scripts/exportar_fixtures_front.py` de `ov_backend`, con `--destino` apuntando a `tests/fixtures/servidor/` de `ov_frontend`) y las pruebas del front.
 
 **Git.** No hagas push salvo que se pida. Trabaja en una rama `iteracion-N` en cada repo, con un commit por fase y por repo y mensaje en español (`Iteración 1 · F2: semilla plataforma`). Nunca versiones `.env`, `.env.local` ni archivos `*.db`.
