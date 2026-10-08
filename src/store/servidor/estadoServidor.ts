@@ -13,19 +13,16 @@ import {
   avisosServidor,
   claveDesbloqueo,
 } from '@/lib/servidor/adaptadores'
-import { pedir } from '@/services/api/cliente'
+import * as apiCuentas from '@/services/api/cuentas'
+import * as apiInstrumentos from '@/services/api/instrumentos'
 import { modoApi } from '@/config/env'
 import { cuentaActiva } from './cuenta'
 import type {
   DesbloqueoLegible,
   ErrorServidor,
   EstadoCuenta,
-  ItemPublico,
-  ProgresoObjetivo,
   RespuestaServidor,
   TipoObjetivo,
-  RespuestasActividad,
-  AvanceInstrumento,
   ResultadoPublico,
   DesbloqueoNuevo,
 } from '@/types/servidor'
@@ -118,7 +115,7 @@ export async function refrescar(): Promise<RespuestaServidor<EstadoCuenta>> {
     return { tipo: 'http', estado: 400, detalle: 'No hay una cuenta de servidor activa.' }
   const turno = ++revision
   publicar({ cargando: true, error: null })
-  const respuesta = await pedir<EstadoCuenta>(`/cuentas/${encodeURIComponent(cuenta)}/estado`)
+  const respuesta = await apiCuentas.obtenerEstado(cuenta)
   if (turno !== revision || cuenta !== cuentaActiva())
     return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la consulta.' }
   if (respuesta.tipo !== 'ok') {
@@ -151,19 +148,21 @@ const cambioCuenta = (): ErrorServidor => ({
   estado: 409,
   detalle: 'La cuenta activa cambió durante la consulta.',
 })
-async function consultarCuenta<T>(ruta: string): Promise<RespuestaServidor<T>> {
+async function consultarCuenta<T>(
+  consulta: (cuenta: string) => Promise<RespuestaServidor<T>>,
+): Promise<RespuestaServidor<T>> {
   const cuenta = cuentaActiva(),
     sesion = revisionCuenta
   if (!modoApi || !cuenta)
     return { tipo: 'http', estado: 400, detalle: 'No hay una cuenta de servidor activa.' }
-  const respuesta = await pedir<T>(`/cuentas/${encodeURIComponent(cuenta)}${ruta}`)
+  const respuesta = await consulta(cuenta)
   return cuenta === cuentaActiva() && sesion === revisionCuenta ? respuesta : cambioCuenta()
 }
 export function consultarRespuestas(actividad: string) {
-  return consultarCuenta<RespuestasActividad>(`/actividades/${encodeURIComponent(actividad)}/respuestas`)
+  return consultarCuenta((cuenta) => apiInstrumentos.obtenerRespuestas(cuenta, actividad))
 }
 export function consultarAvanceInstrumentos() {
-  return consultarCuenta<AvanceInstrumento[]>('/instrumentos')
+  return consultarCuenta(apiInstrumentos.obtenerAvance)
 }
 export async function cargarResultadoRiasec(): Promise<RespuestaServidor<ResultadoPublico | null>> {
   const cuenta = cuentaActiva(),
@@ -182,7 +181,7 @@ async function consultarResultadoRiasec(): Promise<RespuestaServidor<ResultadoPu
   if (!modoApi) return { tipo: 'http', estado: 400, detalle: 'El servidor no se usa en modo local.' }
   const turno = ++revisionResultado
   publicar({ estadoResultado: 'cargando', errorResultado: null })
-  const respuesta = await consultarCuenta<ResultadoPublico>('/instrumentos/TEST-RIASEC/resultado')
+  const respuesta = await consultarCuenta((cuenta) => apiInstrumentos.obtenerResultado(cuenta, 'TEST-RIASEC'))
   if (turno !== revisionResultado) return cambioCuenta()
   if (respuesta.tipo === 'ok') {
     publicar({ resultadoRiasec: respuesta.datos, estadoResultado: 'listo', errorResultado: null })
@@ -196,7 +195,7 @@ async function consultarResultadoRiasec(): Promise<RespuestaServidor<ResultadoPu
   return respuesta
 }
 export function consultarProgreso(tipo: TipoObjetivo, codigo: string) {
-  return consultarCuenta<ProgresoObjetivo>(`/progreso/${tipo}/${encodeURIComponent(codigo)}`)
+  return consultarCuenta((cuenta) => apiCuentas.obtenerProgreso(cuenta, tipo, codigo))
 }
 
 export function incorporarDesbloqueos(desbloqueos: DesbloqueoNuevo[]) {
@@ -225,7 +224,7 @@ export function terminarAvisosMarcados(ids: string[]) {
   })
 }
 export async function consultarNoVistos() {
-  const respuesta = await consultarCuenta<DesbloqueoLegible[]>('/desbloqueos?solo_no_vistos=true')
+  const respuesta = await consultarCuenta(apiCuentas.obtenerDesbloqueosNoVistos)
   if (respuesta.tipo === 'ok') {
     const fechas = { ...almacen.fechasInsignias }
     respuesta.datos
@@ -238,7 +237,7 @@ export async function consultarNoVistos() {
   return respuesta
 }
 export function consultarItems(actividad: string) {
-  return pedir<ItemPublico[]>(`/actividades/${encodeURIComponent(actividad)}/items`)
+  return apiInstrumentos.obtenerItems(actividad)
 }
 export function mensajeErrorServidor(error: ErrorServidor | null) {
   if (!error) return ''

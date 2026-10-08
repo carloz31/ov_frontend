@@ -223,15 +223,5 @@
     "regla": "E5-modo-datos",
     "archivo": "src/pages/student/StudentShell.tsx",
     "detalle": "usa modoApi/desarrollo en una vista; muévelo a un hook o selector"
-  },
-  {
-    "regla": "E4-red",
-    "archivo": "src/store/servidor/estadoServidor.ts",
-    "detalle": "importa el cliente HTTP fuera de services/api"
-  },
-  {
-    "regla": "E4-red",
-    "archivo": "src/store/servidor/operaciones.ts",
-    "detalle": "importa el cliente HTTP fuera de services/api"
   }
 ]

@@ -1,4 +1,6 @@
-import { pedir } from '@/services/api/cliente'
+import * as apiCuentas from '@/services/api/cuentas'
+import * as apiAcciones from '@/services/api/acciones'
+import * as apiDemo from '@/services/api/demo'
 import { desarrollo, modoApi } from '@/config/env'
 import { cuentaActiva, seleccionarCuenta } from './cuenta'
 import {
@@ -15,14 +17,12 @@ import {
   terminarAvisosMarcados,
 } from './estadoServidor'
 import type {
-  CuentaResumen,
   ErrorServidor,
   RespuestaAccion,
   RespuestaCompletarActividad,
   RespuestaServidor,
   RespuestaItemEntrada,
   RespuestaItemsGuardados,
-  DesbloqueosMarcados,
 } from '@/types/servidor'
 
 let inicio: Promise<RespuestaServidor<RespuestaAccion>> | null = null
@@ -46,7 +46,7 @@ export function ingresar(): Promise<RespuestaServidor<RespuestaAccion>> {
   })
   const pendiente = (async () => {
     if (!ingresoRegistrado) {
-      const cuentas = await pedir<CuentaResumen[]>('/cuentas')
+      const cuentas = await apiCuentas.listarCuentas()
       if (turno !== revisionIngreso) return cambioDeCuenta()
       if (cuentas.tipo !== 'ok') {
         informarErrorServidor(cuentas)
@@ -54,7 +54,7 @@ export function ingresar(): Promise<RespuestaServidor<RespuestaAccion>> {
       }
       const cuenta = seleccionarCuenta(cuentas.datos)
       prepararAlmacenesApi(cuenta)
-      const respuesta = await pedir<RespuestaAccion>('/acciones/ingresar', { cuenta })
+      const respuesta = await apiAcciones.ingresar(cuenta)
       if (turno !== revisionIngreso) return cambioDeCuenta()
       if (respuesta.tipo !== 'ok') {
         informarErrorServidor(respuesta)
@@ -89,7 +89,7 @@ export async function completarActividad(
     return { tipo: 'http', estado: 400, detalle: 'No hay una cuenta de servidor activa.' }
   const respuesta: RespuestaServidor<RespuestaCompletarActividad> = confirmada
     ? { tipo: 'ok', datos: confirmada }
-    : await pedir('/acciones/completar-actividad', { cuenta, actividad })
+    : await apiAcciones.completarActividad(cuenta, actividad)
   if (respuesta.tipo !== 'ok') return respuesta
   if (cuenta !== cuentaActiva() || sesion !== sesionServidor())
     return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la acción.' }
@@ -117,10 +117,7 @@ export function marcarVistos(): Promise<RespuestaServidor<'terminado' | 'nuevos'
       if (consulta.tipo !== 'ok') return consulta
       if (avisosPendientes().length) return { tipo: 'ok', datos: 'nuevos' }
       ids = [...obtenerEstadoServidor().avisosMostrados]
-      const respuesta = await pedir<DesbloqueosMarcados>(
-        `/cuentas/${encodeURIComponent(cuenta)}/desbloqueos/marcar-vistos`,
-        {},
-      )
+      const respuesta = await apiCuentas.marcarDesbloqueosVistos(cuenta)
       if (!vigente())
         return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante el marcado.' }
       if (respuesta.tipo !== 'ok') return respuesta
@@ -155,7 +152,7 @@ export async function responderItems(
     return { tipo: 'http', estado: 400, detalle: 'No hay una cuenta de servidor activa.' }
   const respuesta: RespuestaServidor<RespuestaItemsGuardados> = confirmada
     ? { tipo: 'ok', datos: confirmada }
-    : await pedir('/acciones/responder-items', { cuenta, actividad, respuestas })
+    : await apiAcciones.responderItems(cuenta, actividad, respuestas)
   if (cuenta !== cuentaActiva() || sesion !== sesionServidor())
     return { tipo: 'http', estado: 409, detalle: 'La cuenta activa cambió durante la acción.' }
   if (respuesta.tipo !== 'ok') return respuesta
@@ -171,7 +168,7 @@ export async function reiniciarDatosDePrueba(): Promise<RespuestaServidor<{ mens
       estado: 403,
       detalle: 'El reinicio solo está disponible en desarrollo con datos del servidor.',
     }
-  const respuesta = await pedir<{ mensaje: string }>('/demo/reiniciar', {})
+  const respuesta = await apiDemo.reiniciar()
   if (respuesta.tipo === 'ok') {
     localStorage.removeItem('ov.missions.v2.api')
     localStorage.removeItem('ov.student-adventure.v1.api')

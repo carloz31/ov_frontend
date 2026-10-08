@@ -77,3 +77,17 @@ La solicitud autoriza ejecutar R0 y R1 en este mismo turno. Tras registrar y con
 - Registros en `logs/refactor-r3b-*.log` y `logs/r3b-auditoria.json`, ignorados por Git. Los cuatro documentos entregados continúan sin seguimiento, sin modificaciones.
 - No se modifica `ov_backend`; no corresponde ejecutar sus pruebas. No se agregan dependencias ni se hace push.
 - Pendiente: R4 (servicios del backend, que resolverá las dos E4); R5 debe incluir también el modo de datos de `LoginRoute` al reducir E5; R6 resolverá tamaño y dependencias entre componentes. El trabajo se detiene antes de R4.
+
+## R4 · Servicios del backend (8 de octubre de 2026)
+
+- Se extraen las 13 peticiones de §5.1 a `services/api/cuentas.ts` (5), `acciones.ts` (3), `instrumentos.ts` (4) y `demo.ts` (1). Las funciones reciben sus argumentos, construyen la URL y el cuerpo y devuelven `Promise<RespuestaServidor<T>>`, sin estado ni acceso a la cuenta activa o al modo de datos.
+- `store/servidor/operaciones.ts` y `estadoServidor.ts` usan imports de espacio de nombres de esos servicios. El ayudante privado `consultarCuenta` recibe una función de consulta para conservar sus comprobaciones de modo, cuenta y sesión sin construir URLs. Se mantienen revisiones, cachés, orden de llamadas, avisos y mensajes de error.
+- `services/api/cliente.ts`, `store/servidor/cuenta.ts` y `types/servidor.ts` permanecen sin cambios. `fetch` sigue únicamente en el cliente; ningún almacén importa `pedir` ni construye rutas HTTP.
+- Se añade únicamente `tests/servidor-servicios.test.mjs`, con 13 pruebas, una por función. Comprueban URL completa con base configurada, codificación de caracteres reservados, GET sin opciones, POST con método, cabecera y cuerpo JSON exactos, respuesta correcta, errores 409/503 y desconexión sin reintentos. Se usan los fixtures existentes y se marcan los datos adicionales como `DATO DE PRUEBA`. No se modifican pruebas existentes ni sus aserciones.
+- Se retiran solo las dos excepciones E4 resueltas, sin regenerar la lista. `npm run check:estructura`: pasa sobre 314 archivos con **45 excepciones: 22 E3, 20 E5 y 3 E7**. Se conserva la diferencia de E5 de `LoginRoute` registrada en R3b, pendiente de R5.
+- `node --test tests/servidor-*.test.mjs`: **77 pruebas, 77 pasan**, sin canceladas ni omitidas.
+- `npm run build` y `npm run lint`: pasan. El build mantiene el aviso por tamaño del bundle; no hay errores de compilación ni de lint.
+- `npm test`: antes **352/337/15**; después **365/350/15** (total/correctas/fallas), sin canceladas ni omitidas. Las 13 nuevas pasan. Las 15 fallas de R3b conservan nombres y errores completos, excluyendo únicamente duraciones. No se corrigen fallas previas ni aparecen nuevas.
+- Registros de validación: `logs/refactor-r4-build.log`, `refactor-r4-lint.log`, `refactor-r4-test.log`, `refactor-r4-estructura.log` y `refactor-r4-servidor.log`, todos dentro de `logs/`, ignorado por Git.
+- No se modifica `ov_backend` ni el contrato; no corresponde ejecutar sus pruebas. No se agregan dependencias ni se hace push. Los cuatro documentos entregados continúan sin seguimiento y sin modificaciones.
+- Pendiente: R5 (origen de datos fuera de las vistas) y fases posteriores. El trabajo se detiene al terminar R4.
