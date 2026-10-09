@@ -372,7 +372,7 @@ export function paginaInteresesServidor(
             code: d.codigo,
             name: d.nombre,
             score: d.porcentaje,
-            description: `Te atraen actividades vinculadas con ${d.nombre.toLocaleLowerCase()}.`,
+            description: d.descripcion,
           })),
         }
       : undefined,

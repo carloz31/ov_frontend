@@ -28,7 +28,7 @@ export function obtenerResultado(
   cuenta: string,
   instrumento: string,
 ): Promise<RespuestaServidor<ResultadoPublico>> {
-  return obtener(
+  return obtener<ResultadoPublico>(
     `/cuentas/${encodeURIComponent(cuenta)}/instrumentos/${encodeURIComponent(instrumento)}/resultado`,
   )
 }

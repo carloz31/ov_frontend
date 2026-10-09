@@ -3344,6 +3344,7 @@ test('Helena prefers complete valid real results over examples and invalid older
   vm.runInContext(`(function(require,exports){${js}\n})`, context)(name => {
     if (name.endsWith('/content')) return { catalog: { instrumentos: [instrument] }, tipActivityIds: ids }
     if (name.endsWith('/logic')) return { calculateResult: () => calculated }
+    if (name === '../data/dimensionExamples') return load(path.resolve('src/features/discovery/data/dimensionExamples.ts'))
     throw Error(name)
   }, exported)
   const d = load(path.resolve('src/store/discoveryStore.ts'))

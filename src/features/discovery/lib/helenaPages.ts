@@ -4,6 +4,7 @@ import { catalog, tipActivityIds } from '@/data/activities/content'
 import { calculateResult } from '@/lib/activities/logic'
 import type { JourneyState } from '@/types/activities'
 import type { InstrumentPageId, StudentDiscoveryState } from '@/types/discovery'
+import { descripcionesLocales } from '../data/dimensionExamples'
 export function getHelenaPagesApi(intereses: HelenaPage, reveladas: InstrumentPageId[]): HelenaPage[] {
   // Se conservan los ejemplos de los otros instrumentos; sus misiones aún no existen en la API.
   const ejemplos: HelenaPage[] = [
@@ -46,20 +47,19 @@ export const demoInterests: HelenaResult = {
       code: 'S',
       name: 'Social',
       score: 78,
-      description:
-        'En este ejemplo, despierta curiosidad acompañar a otras personas y compartir conocimientos.',
+      description: descripcionesLocales.S,
     },
     {
       code: 'I',
       name: 'Investigador',
       score: 72,
-      description: 'Explorar preguntas, observar y comprender cómo funcionan las cosas.',
+      description: descripcionesLocales.I,
     },
     {
       code: 'A',
       name: 'Artístico',
       score: 66,
-      description: 'Expresar ideas y explorar distintas formas de crear.',
+      description: descripcionesLocales.A,
     },
   ],
 }
@@ -115,7 +115,7 @@ export function getHelenaPages(journey: JourneyState, discovery: StudentDiscover
               code: name[0],
               name,
               score: s.puntaje,
-              description: `Te atraen actividades vinculadas con ${name.toLocaleLowerCase()}.`,
+              description: descripcionesLocales[s.dimensionId],
             }
           })
           .sort((a, b) => b.score - a.score)

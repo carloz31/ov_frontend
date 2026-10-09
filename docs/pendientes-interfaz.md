@@ -2,6 +2,17 @@
 
 Datos que el backend entrega (o que una vista necesita) y que la interfaz todavía no muestra. Los resuelve el usuario.
 
+## 2026-10-09 · Anexo F2 · Descripciones fuera del resumen de Helena
+
+- **Dato:** `ResultadoPublico.dimensiones[].descripcion` de las seis dimensiones y `dimensiones_destacadas[].descripcion` de los instrumentos DESTACADAS; `GET /cuentas/{c}/instrumentos/{instrumento}/resultado`.
+- **Dónde se mostraría:** perfil por dimensión y guía de la vista de resultado completo de Helena. Hoy el resumen de intereses usa las tres áreas de `codigo_interes`; el resto de las descripciones permanece en el resultado remoto. TEST-INT y TEST-HAB reales solo están en demo del backend, no en la semilla plataforma; TEST-HAB conserva sus textos de demostración según F2.
+- **Opciones:**
+  1. Usar el perfil por dimensión y la guía descritos y autorizados en F4 del anexo (decisión ya aprobada; pendiente de esa fase).
+  2. Conservar únicamente las descripciones del resumen actual hasta ejecutar F4.
+  3. Integrar posteriormente el resultado real de TEST-INT cuando se incorpore a plataforma; requiere su iteración y sustituye la demostración señalada.
+- **Si no se muestra:** el contrato y los resultados conservan todas las descripciones, pero el resumen no permite consultar todas las dimensiones. F2 no agrega controles ni secciones. F4 también usará la demostración de inteligencias; los instrumentos reales se integrarán en su iteración.
+- **Estado:** presentación completa de intereses autorizada para F4; TEST-INT y TEST-HAB reales pendientes de su iteración. No se implementa ninguna opción adicional en F2.
+
 ## 2026-10-08 · B3 · Actividad de prueba sin contenido
 
 - **Dato:** `ActividadCuenta.contenido = "sin_contenido_prueba"`, código `cdd-sin-contenido`, en `GET /cuentas/{c}/actividades` con el conjunto `piloto`.

@@ -27,6 +27,13 @@ Dieciséis peticiones a través de los módulos concretos de `store/servidor/`: 
 
 Con eso el servidor decide disponibilidad y finalización de actividades, acceso a la Ciudad, respuestas de Mara, resultado RIASEC y carreras afines, fichas obtenidas, insignias, nivel y avisos de desbloqueo.
 
+Desde F2 del anexo de cierre, perfil y resultados, `ResultadoPublico.dimensiones[].descripcion`
+y `dimensiones_destacadas[].descripcion` vienen del servidor en la consulta de resultado.
+El adaptador de Helena conserva el texto recibido; no lo genera a partir del nombre.
+Las descripciones locales RIASEC y los ejemplos por código son contenido de presentación
+en `features/discovery/data/dimensionExamples.ts`. Los ejemplos permanecen en el front
+también en modo API; su uso en la vista completa corresponde a F4 del anexo.
+
 Cada dominio guarda `datos`, `estado` (`sin_cargar`, `cargando`, `listo`, `vencido`, `error`) y `error`, solo en memoria. El ingreso confirmado habilita las consultas: resumen, actividades y no vistos en paralelo; RIASEC después si Elena está disponible. Fichas y logros se piden al abrir sus vistas. Los recursos cerrados dejan de contar como consumidores aunque sigan montados. Una acción actualiza actividades y avisos; `FICHA` vence fichas, `INSIGNIA` vence logros y `NIVEL` vence logros y resumen. Las secciones visibles se recargan inmediatamente; las demás esperan su apertura. Los reintentos conservan los recibos de escritura y solo repiten consultas.
 
 `ActividadCuenta` incluye tipo, orden, contenido, visibilidad y visible. Desde F3, la lista y el orden de puntos en modo API vienen de esa sección; posición, etiqueta e ícono vienen del JSON por clave. Las secuencias consecutivas se agrupan y el reproductor recibe el código del servidor. Solo el modo local conserva su lista fija. El progreso cuenta actividades SIEMPRE visibles con contenido y mapa, sin extras. En X se retiran el tipo global y los dos fixtures anteriores; `obtenerEstado` ya se retiró en F2. Los dieciséis fixtures vigentes se exportan por dominio y conservan su contenido. Testimonios, preguntas del diario y conversaciones siguen sin servicio ni vista API en el front; están registrados en `docs/pendientes-interfaz.md`.
@@ -37,6 +44,7 @@ Lo define la regla compartida: el backend no interpreta el contenido narrativo.
 
 | Qué | Destino |
 |---|---|
+| Ejemplos por código de dimensión y descripciones RIASEC solo para modo local | `features/discovery/data/dimensionExamples.ts` (`ejemplosDimension`, `descripcionesLocales`) |
 | Nodos de las actividades (13 JSON con metadatos de mapa), registro por clave y catálogo local | `data/activities/contenidos/<clave>.json`, `data/activities/contenidos.ts` y `data/activities/content.ts`; `standardActivities.ts` conserva únicamente el catálogo `compassInstrument` |
 | Configuración del piloto de reflexión (escenarios, criterios, misiones adicionales) | `data/activities/reflectionConfig.ts` |
 | Personajes, textos de guía | `data/content/characters.ts`, `data/content/guideTexts.ts` |

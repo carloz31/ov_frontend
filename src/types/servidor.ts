@@ -135,6 +135,7 @@ export type AvanceInstrumento = { instrumento: string; aplicaciones: AvanceAplic
 export type DimensionResultado = {
   codigo: string
   nombre: string
+  descripcion: string
   puntaje: number
   puntaje_maximo: number
   porcentaje: number
