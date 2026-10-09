@@ -21,7 +21,7 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
   1. Definir un texto que sirva para ambos conjuntos.
   2. Mostrar la condición real de apertura desde el progreso del servidor.
   3. Conservar el texto actual durante las pruebas del piloto.
-- **Si no se muestra:** el estado de la llave podrá ser correcto al integrar F3, pero el texto describirá una condición distinta en piloto. No se cambia texto ni marcado en B3.
+- **Si no se muestra:** F3 muestra correctamente la llave disponible, confirmado en F4, pero el texto describe una condición distinta en piloto. Se conserva sin cambios según §8.
 - **Estado:** pendiente.
 
 ## 2026-10-08 · B3 · Revelado sin animación
@@ -32,7 +32,7 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
   1. Mostrar el punto al actualizar su visibilidad, sin animación.
   2. Definir una animación para su aparición.
   3. Definir un aviso de revelado con la interacción que decida el usuario.
-- **Si no se muestra:** F3 aplica la visibilidad enviada por el servidor, pero la aparición no tendrá una transición especial. B3 no modifica vistas ni animaciones.
+- **Si no se muestra:** F3 aplica la visibilidad enviada por el servidor; F4 confirma la aparición sin una transición especial. No se reutiliza el mecanismo local de misiones adicionales.
 - **Estado:** pendiente.
 
 ## 2026-10-08 · B2 · Testimonios del servidor

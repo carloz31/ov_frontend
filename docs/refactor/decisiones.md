@@ -295,3 +295,44 @@ excepciones**. Persiste el aviso previo de tamaño del bundle.
 Backend: **1103 aprobadas, 4 omitidas y 2 advertencias previas**, evaluador
 falso, suite completa en **778,98 segundos**. F4 queda cerrada; se continúa
 con X por autorización del usuario. Sin dependencias, Gemini ni push.
+
+## Actividades por dominio · X · 2026-10-08
+
+Se retiran `EstadoCuenta` y los dos fixtures `estado-*.json` según §10.
+`obtenerEstado` ya se retiró en F2. No cambia ninguna prueba del frontend:
+las suites usan las consultas por dominio desde F2. La regeneración del
+exportador produce dieciséis JSON idénticos a los vigentes. Se mantienen
+los tipos base de actividades usados por los contratos y adaptadores.
+
+AGENTS incorpora las dos ubicaciones y las dos reglas compartidas de §13;
+la sección compartida es idéntica en ambos repos. El inventario refleja el
+retiro. No cambian vistas, estilos, textos, almacenamiento ni dependencias.
+Los pendientes de interfaz de F4 continúan sin implementación.
+
+Validación X: build y lint correctos (aviso previo del bundle); **413 pruebas,
+398 aprobadas y las mismas 15 fallas previas**, con nombres y detalles
+idénticos a F4 excluyendo tiempos y ubicaciones de pila, cero omitidas o
+canceladas. Estructura: **536 archivos, cero infracciones y excepciones**.
+Los dieciséis fixtures son idénticos byte por byte al contenido Git de F4.
+La auditoría no encuentra símbolos ni ruta global retirados en src, tests
+o scripts. El mapa funciona contra el backend que ya no ofrece esa ruta.
+
+Validación final de X: backend **1091 aprobadas, 4 omitidas, cero fallas y
+2 advertencias previas**, con evaluador falso, en **1308,99 segundos**.
+Se ejecuta la suite completa `uv run --no-sync --offline python -m pytest -q`
+con caché desactivada y temporales externos. Se conservan las cuatro omisiones
+de PostgreSQL sin TEST_POSTGRES_URL y los avisos de Starlette/httpx y GenAI.
+Pasan todos los escenarios, invariantes y límites SQL. La caída de doce
+casos corresponde exclusivamente a las equivalencias temporales retiradas.
+
+Frontend final: **413 pruebas, 398 aprobadas y las mismas 15 fallas previas**,
+comparadas también después de actualizar pendientes; cero omitidas o
+canceladas. Build, lint y estructura pasan: **536 archivos, cero infracciones
+y excepciones**. La auditoría de símbolos/ruta retirada está vacía en ambos
+repos y la sección compartida de AGENTS es idéntica. Los dieciséis fixtures
+conservan exactamente los bytes del contenido Git anterior.
+
+Un commit X por repo en `iteracion-1`, sin push. F3, F4 y X quedan cerradas.
+Los servidores y pestañas temporales se cierran; bases, capturas y logs
+permanecen fuera de los repos. No se agregan dependencias ni se llama a Gemini.
+Los pendientes de interfaz registrados siguen sujetos a decisión del usuario.

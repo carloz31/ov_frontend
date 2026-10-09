@@ -39,6 +39,8 @@ src/
 
 | Si agregas… | Va en… |
 |---|---|
+| Un contenido de actividad | `src/data/activities/contenidos/<clave>.json`, registrado en `contenidos.ts`. La clave es la que indica el backend en `contenido`. |
+| Una sección nueva de datos del servidor | `services/api/<dominio>.ts` y una sección en `store/servidor/` que se pide al abrir su vista. |
 | Una ruta | `routes/AppRoutes.tsx` + su vista en `pages/<portal>/`. La vista lee parámetros, llama a hooks y compone; no contiene lógica de dominio. |
 | Un componente de un dominio | `features/<dominio>/components/`. |
 | Un componente que usan dos dominios | `components/student/`, `components/staff/` o `components/common/` si no conoce el dominio. Si lo conoce, detente y pregunta. |
@@ -152,6 +154,8 @@ Si dos fuentes se contradicen, detente y explica la contradicción. No la resuel
 
 **Contrato.**
 
+- El backend lista bloques y actividades, con su orden, tipo, `contenido` y `visibilidad`. El front solo guarda el contenido de cada actividad (`src/data/activities/contenidos/<clave>.json`) y lo encuentra por la clave `contenido`. Una actividad cuyo contenido no existe en el front no se muestra y se anota en `ov_frontend/docs/pendientes-interfaz.md`.
+- Cada dominio tiene su propia consulta de lectura (`GET /cuentas/{c}/<dominio>`). El front pide al ingresar solo lo que se ve siempre y el resto al abrir su vista.
 - Los códigos del backend son los ids del front (`mission-welcome`, `act-tip-01`, `I1`, `psychologist`). No hay tablas de traducción.
 - El JSON usa los nombres en español y `snake_case` de los esquemas Pydantic. El front los copia tal cual en `src/types/servidor.ts` y accede al backend solo desde `src/services/api/` (un archivo por router del backend); las vistas leen esos datos a través de `src/store/servidor/`.
 - Si el backend entrega un dato que ninguna vista del front muestra, o una vista necesita un dato que el backend no entrega, no se crea ni se modifica interfaz para cubrirlo: se registra en `ov_frontend/docs/pendientes-interfaz.md` y se avisa al usuario, que decide la interfaz (detalle en «Datos del servidor sin vista» del `AGENTS.md` del front). Vale también al trabajar solo en el backend: si agregas o cambias un campo de una respuesta, revisa si el front tiene dónde mostrarlo y, si no, anótalo igual.

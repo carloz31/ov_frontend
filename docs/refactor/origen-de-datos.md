@@ -1,6 +1,6 @@
 # Origen de los datos
 
-Inventario al cerrar F2 de actividades por dominio (8 de octubre de 2026), conforme a la iteración 1. Las rutas parten de `src/`. Conserva presentación y persistencia; describe las consultas por dominio de §7.1–7.3. Para las reglas de capas y tamaño, consulta `AGENTS.md`.
+Inventario al cerrar X de actividades por dominio (8 de octubre de 2026), conforme a la iteración 1. Las rutas parten de `src/`. Conserva presentación y persistencia; describe las consultas por dominio y el mapa de §7.1–7.4. Para las reglas de capas y tamaño, consulta `AGENTS.md`.
 
 ## 1. Del servidor (`VITE_DATOS=api`)
 
@@ -29,7 +29,7 @@ Con eso el servidor decide disponibilidad y finalización de actividades, acceso
 
 Cada dominio guarda `datos`, `estado` (`sin_cargar`, `cargando`, `listo`, `vencido`, `error`) y `error`, solo en memoria. El ingreso confirmado habilita las consultas: resumen, actividades y no vistos en paralelo; RIASEC después si Elena está disponible. Fichas y logros se piden al abrir sus vistas. Los recursos cerrados dejan de contar como consumidores aunque sigan montados. Una acción actualiza actividades y avisos; `FICHA` vence fichas, `INSIGNIA` vence logros y `NIVEL` vence logros y resumen. Las secciones visibles se recargan inmediatamente; las demás esperan su apertura. Los reintentos conservan los recibos de escritura y solo repiten consultas.
 
-`ActividadCuenta` incluye tipo, orden, contenido, visibilidad y visible. Desde F3, la lista y el orden de puntos en modo API vienen de esa sección; posición, etiqueta e ícono vienen del JSON por clave. Las secuencias consecutivas se agrupan y el reproductor recibe el código del servidor. Solo el modo local conserva su lista fija. El progreso cuenta actividades SIEMPRE visibles con contenido y mapa, sin extras. `EstadoCuenta` y los fixtures anteriores permanecen hasta X, pero `obtenerEstado` se retira en F2. Testimonios, preguntas del diario y conversaciones siguen sin servicio ni vista API en el front; están registrados en `docs/pendientes-interfaz.md`.
+`ActividadCuenta` incluye tipo, orden, contenido, visibilidad y visible. Desde F3, la lista y el orden de puntos en modo API vienen de esa sección; posición, etiqueta e ícono vienen del JSON por clave. Las secuencias consecutivas se agrupan y el reproductor recibe el código del servidor. Solo el modo local conserva su lista fija. El progreso cuenta actividades SIEMPRE visibles con contenido y mapa, sin extras. En X se retiran el tipo global y los dos fixtures anteriores; `obtenerEstado` ya se retiró en F2. Los dieciséis fixtures vigentes se exportan por dominio y conservan su contenido. Testimonios, preguntas del diario y conversaciones siguen sin servicio ni vista API en el front; están registrados en `docs/pendientes-interfaz.md`.
 
 ## 2. Contenido del front (se queda en el front)
 

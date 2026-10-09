@@ -29,17 +29,6 @@ export type InsigniaEstado = {
   requisito: string | null
   estado: 'BLOQUEADA' | 'OBTENIDA'
 }
-export type EstadoCuenta = {
-  cuenta: CuentaResumen
-  nivel_actual: NivelActual | null
-  bloques: BloqueEstado[]
-  fichas: ContenidoEstado[]
-  testimonios: ContenidoEstado[]
-  preguntas_diario: { codigo: string; pregunta: string; estado: EstadoDisponibilidad; respondida: boolean }[]
-  conversaciones: { estado: EstadoDisponibilidad }
-  insignias: InsigniaEstado[]
-  niveles: (NivelActual & { estado: 'BLOQUEADO' | 'OBTENIDO' })[]
-}
 export type TipoEventoUso =
   | 'INGRESO'
   | 'COMPLETA_ACTIVIDAD'
