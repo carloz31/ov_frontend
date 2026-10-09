@@ -45,7 +45,7 @@ src/
 | Un componente de un dominio | `features/<dominio>/components/`. |
 | Un componente que usan dos dominios | `components/student/`, `components/staff/` o `components/common/` si no conoce el dominio. Si lo conoce, detente y pregunta. |
 | Una primitiva de interfaz | `components/ui/`. Usa la de shadcn antes de crear otra. |
-| Una llamada al backend | `services/api/<recurso>.ts`, con el mismo agrupamiento que los routers del backend (`cuentas`, `acciones`, `instrumentos`, `demo`). Usa la función del método que define la ruta del backend (GET → `obtener`, POST → `enviar`, PATCH → `actualizar`, DELETE → `eliminar`). Si el backend define una ruta PUT, detente y avisa antes de agregar un método nuevo al cliente. |
+| Una llamada al backend | `services/api/<recurso>.ts`, con el mismo agrupamiento que los routers del backend (`cuentas`, `acciones`, `instrumentos`, `desarrollo`). Usa la función del método que define la ruta del backend (GET → `obtener`, POST → `enviar`, PATCH → `actualizar`, DELETE → `eliminar`). Si el backend define una ruta PUT, detente y avisa antes de agregar un método nuevo al cliente. |
 | Un tipo del contrato | `types/servidor.ts`, copiado tal cual del esquema Pydantic. |
 | Convertir una respuesta en datos para la vista | `lib/servidor/adaptadores.ts`. |
 | Estado que viene del servidor | `store/servidor/`. |
@@ -118,10 +118,29 @@ La interfaz la decide el usuario. Un agente conecta datos a la interfaz que ya e
 
 ## Comandos y pruebas
 
-- Instalar: `npm install`
+- Instalar: `npm ci`
 - Desarrollo: `npm run dev` (con `VITE_DATOS=api` en `.env.local` para usar el backend)
-- Verificar, antes de dar por terminada cualquier fase: `npm run build`, `npm run lint`, `npm test` y `npm run check:estructura`.
-- Las pruebas nuevas de la integración van en `tests/servidor-*.test.mjs` y usan los fixtures de `tests/fixtures/servidor/`, generados desde `ov_backend`. Los ayudantes compartidos de prueba van en `tests/soporte/`.
+- Verificar según la política compartida del final y la tabla de impacto de abajo. `npm run check:estructura` sigue siendo obligatorio al terminar cualquier tarea.
+- Las pruebas nuevas de integración van en `tests/servidor/<área>/` y usan los fixtures de `tests/fixtures/servidor/`, generados desde ov_backend. Los ayudantes compartidos van en `tests/soporte/`.
+
+```text
+tests/
+  local/actividades/, local/aventura/, local/casos/, local/perfil/, local/portales/
+  servidor/actividades/, servidor/mapa/, servidor/instrumentos/, servidor/logros/, servidor/perfil/
+  despliegue/
+  fixtures/servidor/          # destino fijo del exportador del backend
+  soporte/                   # ayudantes compartidos
+```
+
+| Si cambias… | Corre primero |
+|---|---|
+| `src/features/servidor/`, `src/store/servidor/`, `src/lib/servidor/`, `src/services/api/`, `src/types/servidor.ts` | `npm run test:servidor` |
+| `src/features/<área>/`, `src/lib/activities/`, `src/data/activities/` | Las carpetas existentes de esa área en `tests/local/` y `tests/servidor/` |
+| Fixtures regenerados desde el backend | `npm run test:servidor` |
+| Cierre | Aplicar la política compartida: impacto y servidor por fase; suite completa, build, lint y estructura al cerrar una iteración o integrar |
+
+Comandos: `npm test` (todo), `npm run test:local`, `npm run test:servidor` y `npm run test:despliegue`. Para una carpeta: `node --test "tests/servidor/instrumentos/**/*.test.mjs"`. Los globs siempre llevan comillas para que los expanda Node y funcionen también en PowerShell.
+
 - Las pruebas cargan archivos por su ruta: si mueves un archivo, actualiza esas rutas en la misma tarea. No agregues resolución de carpetas a los cargadores.
 
 ## Reglas compartidas entre ov_backend y ov_frontend
@@ -145,6 +164,15 @@ Si dos fuentes se contradicen, detente y explica la contradicción. No la resuel
 - Las decisiones que afectan a ambos repos van en `ov_backend/docs/iteraciones/decisiones-iteracion-N.md`.
 - Datos de prueba: si el dato existe en el front, úsalo adaptándolo. Si no existe, créalo y márcalo con `DATO DE PRUEBA` (comentario en código) o `"_dato_de_prueba": true` (JSON).
 - Sin dependencias nuevas en ninguno de los repos sin avisar antes.
+
+
+**Política de ejecución de pruebas.** Las tablas de impacto de cada repo indican las carpetas afectadas. Esta política prevalece sobre las instrucciones antiguas de ejecutar toda la suite en cada fase.
+
+| Momento | Qué se corre |
+|---|---|
+| Durante el desarrollo, tras cada cambio | Solo las carpetas de la tabla de impacto. |
+| Al terminar una fase de una spec | Las carpetas de impacto de todo lo que tocó la fase, más `tests/integration/escenarios` (back) o `npm run test:servidor` (front). Se informa qué carpetas se corrieron. |
+| Al cerrar una iteración o antes de integrar una rama | Suite completa de ambos repos: `uv run pytest -n auto -q`; `npm test`, `npm run build`, `npm run lint` y `npm run check:estructura`. |
 
 **Una sola base de datos.**
 

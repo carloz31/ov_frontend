@@ -9,7 +9,7 @@ La fuente de verdad de la integración es `ov_backend/docs/iteraciones/spec-iter
 Requisitos: Node.js y npm compatibles con las versiones fijadas en `package-lock.json`.
 
 ```powershell
-npm install
+npm ci
 npm run dev
 ```
 
@@ -39,7 +39,7 @@ uv run uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 La migración y la carga se ejecutan una vez sobre una base nueva. En los siguientes
 arranques basta con Uvicorn. El backend usa `DATABASE_URL` (por defecto,
 `sqlite:///ov.db` en su raíz); para otra base, definirla antes de migrar y cargar.
-`POST /demo/reiniciar` borra el estado y conserva el catálogo. La preparación
+`POST /desarrollo/reiniciar` (solo en desarrollo) borra el estado y conserva el catálogo. La preparación
 vigente se define en `ov_backend/docs/spec-refactor-estructura.md`.
 
 Reinicia Vite al cambiar variables. Su proxy de desarrollo dirige `/api` a `http://127.0.0.1:8000` y quita ese prefijo. El proxy no forma parte del build de producción; el entorno que sirva `dist` debe resolver `/api` o proporcionar una URL accesible del backend.
@@ -101,7 +101,7 @@ src/
 │       ├── cuentas.ts       # /cuentas…
 │       ├── acciones.ts      # /acciones/…
 │       ├── instrumentos.ts  # /actividades/{a}/items, /cuentas/{c}/instrumentos…
-│       └── demo.ts          # /demo/reiniciar
+│       └── desarrollo.ts    # /desarrollo/reiniciar
 ├── data/                    # datos fijos que usan dos o más dominios
 │   ├── activities/          # contenidos/ (13 JSON), contenidos.ts, content.ts, catálogo de brújula y reflectionConfig.ts
 │   ├── catalog/             # ocupaciones, carreras e instituciones
@@ -155,7 +155,29 @@ npm test
 npm run check:estructura
 ```
 
-Las pruebas de integración están en `tests/servidor-*.test.mjs` y usan los ocho fixtures de `tests/fixtures/servidor/`, cuyos contratos proceden de ov_backend.
+Las pruebas se organizan por tipo y área:
+
+```text
+tests/
+  local/         # actividades, aventura, casos, perfil, portales (12 archivos)
+  servidor/      # actividades, mapa, instrumentos, logros, perfil (14 archivos)
+  despliegue/    # assets de producción (1 archivo)
+  fixtures/servidor/  # 16 fixtures generados desde ov_backend
+  soporte/
+```
+
+```powershell
+npm run test:local
+npm run test:servidor
+npm run test:despliegue
+node --test "tests/servidor/instrumentos/**/*.test.mjs"
+```
+
+Conserva las comillas del glob para que Node lo expanda también en PowerShell. Durante el desarrollo se ejecutan las carpetas afectadas; al cerrar una fase se añade `servidor`. Para cerrar una iteración o integrar se ejecutan todos los comandos del bloque «Verificar». La tabla de impacto y la política completa están en [AGENTS.md](AGENTS.md).
+
+Cierre del retiro de demo (P6): se conservan 463 pruebas, con 449 aprobadas y las 14 fallas previas de `tests/local/aventura/adventure-rendering.test.mjs`. Esta spec no autoriza corregirlas. Build, lint y estructura pasan. La demo local sigue disponible; se retiraron únicamente los datos, páginas y rutas de demo del backend. El informe de conteos, tiempos y adaptaciones está en `ov_backend/docs/decisiones.md`, sección «Pruebas y retiro de demo».
+
+### Historial de cierres anteriores
 
 **Cierre F6 · 2026-10-07:** HU-073 y HU-074 corregidas y revalidadas; las catorce HU del recorrido F7 pasan en el alcance comprobado. Build y lint pasan. Hay 356 pruebas: 340 pasan y solo quedan las 16 fallas previas, con los mismos nombres y líneas. El backend pasa 1006 pruebas con evaluador falso. Consulta [el informe por HU y las evidencias](docs/student-experience/informe-f7.md); la aprobación formal de la iteración corresponde al usuario.
 
