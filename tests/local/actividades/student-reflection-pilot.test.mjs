@@ -1,4 +1,4 @@
-import { loadMapPoints } from './soporte/refactor-map.mjs'
+import { loadMapPoints } from '../../soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import { existsSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'

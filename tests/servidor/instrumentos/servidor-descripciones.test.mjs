@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { copia, fixtureServidor, jsonServidor } from './soporte/servidor-ayudas.mjs'
+import { copia, fixtureServidor, jsonServidor } from '../../soporte/servidor-ayudas.mjs'
 
 test('el fixture regenerado incluye las seis descripciones y coincide con el contenido local aprobado', () => {
   const app = fixtureServidor()

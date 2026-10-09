@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { copia, elementos, fixtureServidor, jsonServidor } from './soporte/servidor-ayudas.mjs'
-import { iniciarMara } from './soporte/servidor-mara-ayudas.mjs'
+import { copia, elementos, fixtureServidor, jsonServidor } from '../../soporte/servidor-ayudas.mjs'
+import { iniciarMara } from '../../soporte/servidor-mara-ayudas.mjs'
 
 function prepararPerfil(app) {
   const contexto = { decisionSheets: [], careerInterestIds: [], institutionInterestIds: [], profiles: [] }

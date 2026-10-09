@@ -1,9 +1,9 @@
-import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.mjs'
-import { escenarioServidor } from './soporte/servidor-ayudas.mjs'
+import { esConsultaDominio, respuestaDominio } from '../../soporte/servidor-ayudas.mjs'
+import { escenarioServidor } from '../../soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { iniciarMara, botonEn } from './soporte/servidor-mara-ayudas.mjs'
-import { copia, elementos, esperar, fixtureServidor } from './soporte/servidor-ayudas.mjs'
+import { iniciarMara, botonEn } from '../../soporte/servidor-mara-ayudas.mjs'
+import { copia, elementos, esperar, fixtureServidor } from '../../soporte/servidor-ayudas.mjs'
 
 const texto = (n) =>
   Array.isArray(n)

@@ -1,12 +1,12 @@
-import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.mjs'
+import { esConsultaDominio, respuestaDominio } from '../../soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
-import { iniciarMara, botonEn } from './soporte/servidor-mara-ayudas.mjs'
-import { fixtureServidor, jsonServidor, copia, elementos, esperar } from './soporte/servidor-ayudas.mjs'
+import { iniciarMara, botonEn } from '../../soporte/servidor-mara-ayudas.mjs'
+import { fixtureServidor, jsonServidor, copia, elementos, esperar } from '../../soporte/servidor-ayudas.mjs'
 
 const texto = (node) =>
   Array.isArray(node)

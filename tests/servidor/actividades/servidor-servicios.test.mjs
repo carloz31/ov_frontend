@@ -1,11 +1,11 @@
-import { escenarioServidor } from './soporte/servidor-ayudas.mjs'
+import { escenarioServidor } from '../../soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import test from 'node:test'
 import vm from 'node:vm'
 import ts from 'typescript'
-import { jsonServidor } from './soporte/servidor-ayudas.mjs'
+import { jsonServidor } from '../../soporte/servidor-ayudas.mjs'
 
 function cargarServicios(fetch) {
   const cache = new Map()

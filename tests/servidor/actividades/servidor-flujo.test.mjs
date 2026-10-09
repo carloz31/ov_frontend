@@ -1,6 +1,6 @@
-import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.mjs'
-import { cargarAlmacen, escenarioServidor } from './soporte/servidor-ayudas.mjs'
-import { loadMapPoints } from './soporte/refactor-map.mjs'
+import { esConsultaDominio, respuestaDominio } from '../../soporte/servidor-ayudas.mjs'
+import { cargarAlmacen, escenarioServidor } from '../../soporte/servidor-ayudas.mjs'
+import { loadMapPoints } from '../../soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
@@ -10,7 +10,7 @@ import {
   jsonServidor,
   esperar,
   elementos,
-} from './soporte/servidor-ayudas.mjs'
+} from '../../soporte/servidor-ayudas.mjs'
 
 async function iniciar(options) {
   const app = fixtureServidor(options)

@@ -3,8 +3,8 @@ import test from 'node:test'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
-import { copia, elementos, fixtureServidor, jsonServidor } from './soporte/servidor-ayudas.mjs'
-import { iniciarMara } from './soporte/servidor-mara-ayudas.mjs'
+import { copia, elementos, fixtureServidor, jsonServidor } from '../../soporte/servidor-ayudas.mjs'
+import { iniciarMara } from '../../soporte/servidor-mara-ayudas.mjs'
 
 // DATO DE PRUEBA: tipos y cantidades que aún no aparecen juntos en un recibo real.
 const desbloqueo = (tipo_objetivo, codigo, nombre = codigo) => ({

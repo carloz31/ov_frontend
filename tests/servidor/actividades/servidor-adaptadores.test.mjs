@@ -1,9 +1,9 @@
-import { escenarioServidor } from './soporte/servidor-ayudas.mjs'
+import { escenarioServidor } from '../../soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
 import ts from 'typescript'
-import { copia, jsonServidor } from './soporte/servidor-ayudas.mjs'
+import { copia, jsonServidor } from '../../soporte/servidor-ayudas.mjs'
 
 const source = readFileSync('src/lib/servidor/adaptadores.ts', 'utf8')
 const code = ts.transpileModule(source, {

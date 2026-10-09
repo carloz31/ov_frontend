@@ -3,8 +3,8 @@ import test from 'node:test'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter, Routes, Route } from 'react-router'
-import { copia, elementos, fixtureServidor, jsonServidor } from './soporte/servidor-ayudas.mjs'
-import { iniciarMara } from './soporte/servidor-mara-ayudas.mjs'
+import { copia, elementos, fixtureServidor, jsonServidor } from '../../soporte/servidor-ayudas.mjs'
+import { iniciarMara } from '../../soporte/servidor-mara-ayudas.mjs'
 
 const codigos = (dimensiones) => Array.from(dimensiones, (d) => d.code)
 function funciones(app = fixtureServidor()) {

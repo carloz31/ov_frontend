@@ -1,7 +1,7 @@
-import { loadMapPoints } from './soporte/refactor-map.mjs'
+import { loadMapPoints } from '../../soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { fixtureServidor, elementos, esperar } from './soporte/servidor-ayudas.mjs'
+import { fixtureServidor, elementos, esperar } from '../../soporte/servidor-ayudas.mjs'
 
 test('local mantiene claves, finalización y recomendaciones sin consultar al servidor ni usar adaptadores', async () => {
   const app = fixtureServidor({ api: false })

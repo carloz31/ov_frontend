@@ -10,7 +10,7 @@ import {
   jsonServidor,
   copia,
   esperar,
-} from './soporte/servidor-ayudas.mjs'
+} from '../../soporte/servidor-ayudas.mjs'
 
 const rutas = (app) => app.requests.map((r) => r.url)
 const cantidad = (app, seccion) => rutas(app).filter((r) => r.endsWith('/' + seccion)).length

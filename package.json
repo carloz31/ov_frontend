@@ -10,7 +10,10 @@
     "format:check": "prettier --check .",
     "lint": "oxlint",
     "check:estructura": "node scripts/verificar-estructura.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test \"tests/**/*.test.mjs\"",
+    "test:local": "node --test \"tests/local/**/*.test.mjs\"",
+    "test:servidor": "node --test \"tests/servidor/**/*.test.mjs\"",
+    "test:despliegue": "node --test \"tests/despliegue/**/*.test.mjs\"",
     "preview": "vite preview"
   },
   "dependencies": {

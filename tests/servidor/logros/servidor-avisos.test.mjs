@@ -1,8 +1,8 @@
-import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.mjs'
-import { cargarAlmacen, escenarioServidor } from './soporte/servidor-ayudas.mjs'
+import { esConsultaDominio, respuestaDominio } from '../../soporte/servidor-ayudas.mjs'
+import { cargarAlmacen, escenarioServidor } from '../../soporte/servidor-ayudas.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { fixtureServidor, jsonServidor, esperar, elementos } from './soporte/servidor-ayudas.mjs'
+import { fixtureServidor, jsonServidor, esperar, elementos } from '../../soporte/servidor-ayudas.mjs'
 
 async function iniciar() {
   const app = fixtureServidor(),

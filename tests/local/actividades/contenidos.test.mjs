@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync, readdirSync } from 'node:fs'
 import test from 'node:test'
-import { copia, fixtureServidor, jsonServidor } from './soporte/servidor-ayudas.mjs'
+import { copia, fixtureServidor, jsonServidor } from '../../soporte/servidor-ayudas.mjs'
 
 const carpeta = 'src/data/activities/contenidos'
 const app = fixtureServidor({ api: false })

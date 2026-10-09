@@ -1,9 +1,9 @@
-import { esConsultaDominio } from './soporte/servidor-ayudas.mjs'
-import { loadMapPoints } from './soporte/refactor-map.mjs'
+import { esConsultaDominio } from '../../soporte/servidor-ayudas.mjs'
+import { loadMapPoints } from '../../soporte/refactor-map.mjs'
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { iniciarMara, itemEn, botonEn } from './soporte/servidor-mara-ayudas.mjs'
-import { jsonServidor, elementos, esperar } from './soporte/servidor-ayudas.mjs'
+import { iniciarMara, itemEn, botonEn } from '../../soporte/servidor-mara-ayudas.mjs'
+import { jsonServidor, elementos, esperar } from '../../soporte/servidor-ayudas.mjs'
 
 test('construye Mara con los códigos, el orden y las opciones reales; reparte tres saludos', async () => {
   const f = await iniciarMara(),
