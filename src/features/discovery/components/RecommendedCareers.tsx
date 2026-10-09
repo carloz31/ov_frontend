@@ -20,7 +20,7 @@ export function RecommendedCareers({
   crearPlan: (nombre: string, codigo: string) => void
 }) {
   return (
-    <Parchment className="sx-d-result-panel" aria-labelledby="carreras-afines">
+    <Parchment className="sx-d-result-panel sx-d-result-careers" aria-labelledby="carreras-afines">
       <p className="sx-d-eyebrow">Paso 2 · Carreras que conducen a ellas</p>
       <div className="sx-d-result-section-head">
         <h2 id="carreras-afines">
@@ -41,15 +41,30 @@ export function RecommendedCareers({
       </p>
       <div className="sx-d-result-grid">
         {carreras.map((c) => (
-          <article key={c.codigo} className="sx-d-result-card">
-            <h3>{c.nombre}</h3>
-            {c.plan && <p className="sx-d-eyebrow">Ya es tu plan {c.plan}</p>}
-            <p>{c.familia}</p>
-            <p>{c.via.length > 1 ? `Conduce a ${c.via.length} de tus ocupaciones afines:` : 'Conduce a:'}</p>
-            <div className="sx-d-result-chips">
-              {c.via.map((o) => (
-                <span key={o.codigo_onet}>{o.titulo}</span>
-              ))}
+          <article key={c.codigo} className={`sx-d-result-card${c.plan ? ' sx-d-result-planned' : ''}`}>
+            <div className="sx-d-result-career-info">
+              <div className="sx-d-result-career-title">
+                <h3>{c.nombre}</h3>
+                {c.plan && (
+                  <span className="sx-d-result-plan" data-plan={c.plan}>
+                    Ya es tu plan {c.plan}
+                  </span>
+                )}
+              </div>
+              <p>
+                {c.familia}
+                {c.duracion && ` · ${c.duracion}`}
+              </p>
+              <div className="sx-d-result-via">
+                <strong>
+                  {c.via.length > 1 ? `Conduce a ${c.via.length} de tus ocupaciones afines:` : 'Conduce a:'}
+                </strong>
+                <div className="sx-d-result-chips">
+                  {c.via.map((o) => (
+                    <span key={o.codigo_onet}>{o.titulo}</span>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="sx-d-result-actions">
               <button

@@ -40,9 +40,14 @@ export function DimensionGuide({ resumen, cerrar }: { resumen: ResumenResultado;
             key={d.code}
             className={`sx-d-result-card${resumen.protagonistas.some((p) => p.code === d.code) ? ' sx-d-result-highlight' : ''}`}
           >
-            <h3>{d.name}</h3>
-            <p>{d.description}</p>
-            {d.ejemplos && <p>Por ejemplo: {d.ejemplos}</p>}
+            <span className="sx-d-result-guide-id" data-dimension={d.code} aria-hidden="true">
+              {intereses ? d.code : d.name.slice(0, 1)}
+            </span>
+            <div>
+              <h3>{d.name}</h3>
+              <p>{d.description}</p>
+              {d.ejemplos && <p>Por ejemplo: {d.ejemplos}</p>}
+            </div>
           </article>
         ))}
       </div>

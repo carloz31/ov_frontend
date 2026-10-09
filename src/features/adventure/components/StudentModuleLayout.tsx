@@ -1,4 +1,4 @@
-import { type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 import { ArrowLeft, CircleHelp } from 'lucide-react'
 import { Link, useLocation } from 'react-router'
 import { appPaths } from '@/routes/paths'
@@ -12,6 +12,10 @@ import { NoveltiesMenu } from './overlays/NoveltiesMenu'
 export function StudentModuleLayout({ view, children }: { view: StudentView; children: ReactNode }) {
   const ui = useStudentUi()
   const location = useLocation()
+  const content = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    content.current?.scrollTo({ top: 0 })
+  }, [location.pathname])
   const passport =
     view === 'profile-general' && new URLSearchParams(location.search).get('section') === 'passport'
   const { openGuide } = useStudentOverlays()
@@ -40,7 +44,9 @@ export function StudentModuleLayout({ view, children }: { view: StudentView; chi
           <StudentUserMenu />
         </div>
       </header>
-      <div className="sx-module-content">{children}</div>
+      <div ref={content} className="sx-module-content">
+        {children}
+      </div>
     </div>
   )
 }

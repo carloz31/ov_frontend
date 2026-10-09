@@ -3,6 +3,7 @@ import { discoveryPaths } from '@/routes/discoveryPaths'
 import type { ResultadoPublico } from '@/types/servidor'
 import type { InstrumentPageId } from '@/types/discovery'
 import type { CarreraResultado, OcupacionResultado } from '../types'
+import { careerCatalog } from '@/data/catalog/careersAndInstitutions'
 import { careerDetails, occupationDetails } from './catalogDetails'
 import { getFamily, isAffine } from './catalogSelectors'
 
@@ -40,6 +41,7 @@ export function carrerasResultado(
   if (api)
     return (resultado?.carreras_recomendadas ?? []).map((c) => ({
       ...c,
+      duracion: careerCatalog.find((entrada) => entrada.id === c.codigo)?.duration,
       familia: getFamily(c.familia)?.name ?? c.familia,
     }))
   return careerDetails.flatMap((c) => {
@@ -47,7 +49,15 @@ export function carrerasResultado(
       .filter((o) => o.codigo && c.occupationIds.includes(o.codigo))
       .map((o) => ({ codigo_onet: o.clave, titulo: o.titulo }))
     return via.length
-      ? [{ codigo: c.id, nombre: c.name, familia: getFamily(c.familyId)?.name ?? c.familyId, via }]
+      ? [
+          {
+            codigo: c.id,
+            nombre: c.name,
+            duracion: careerCatalog.find((entrada) => entrada.id === c.id)?.duration,
+            familia: getFamily(c.familyId)?.name ?? c.familyId,
+            via,
+          },
+        ]
       : []
   })
 }

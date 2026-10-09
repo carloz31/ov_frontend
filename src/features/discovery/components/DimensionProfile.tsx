@@ -1,4 +1,3 @@
-import { Parchment } from '@/components/student/Parchment'
 import { Info } from 'lucide-react'
 import type { ResumenResultado } from '../types'
 
@@ -17,7 +16,7 @@ export function DimensionProfile({
 }) {
   const intereses = resumen.tipoResultado === 'COINCIDENCIAS'
   return (
-    <Parchment className="sx-d-result-panel" aria-labelledby="perfil-dimensiones">
+    <section className="sx-d-result-profile" aria-labelledby="perfil-dimensiones">
       <div className="sx-d-result-section-head">
         <h2 id="perfil-dimensiones">
           {intereses ? 'Cuánto resonó cada tipo de actividad' : 'Cuánto se expresó cada inteligencia'}
@@ -48,7 +47,16 @@ export function DimensionProfile({
                 aria-controls={`dimension-${d.code}`}
                 onClick={() => alternar(d.code)}
               >
-                <span>{d.name}</span>
+                <span className="sx-d-result-dimension-name">
+                  <span
+                    className={intereses ? 'sx-d-result-letter' : 'sx-d-result-dot'}
+                    data-dimension={d.code}
+                    aria-hidden="true"
+                  >
+                    {intereses ? d.code : null}
+                  </span>
+                  {d.name}
+                </span>
                 <span className="sx-d-result-track" aria-hidden="true">
                   <span style={{ width: `${d.score}%` }} />
                 </span>
@@ -64,6 +72,6 @@ export function DimensionProfile({
           ? 'Toca un tipo para ver qué significa, o abre la guía completa. Ninguno es mejor que otro.'
           : 'Toca una inteligencia para ver qué significa. Un porcentaje bajo no es una carencia: es una capacidad que aún puedes ejercitar.'}
       </p>
-    </Parchment>
+    </section>
   )
 }

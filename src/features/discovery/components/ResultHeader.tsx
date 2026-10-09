@@ -12,7 +12,7 @@ export function ResultHeader({
 }) {
   return (
     <header className="sx-d-result-header">
-      <Link className="sx-d-action sx-d-action-ghost" to={discoveryPaths.helena}>
+      <Link className="sx-d-result-back" to={discoveryPaths.helena}>
         <ChevronLeft aria-hidden="true" />
         El libro de Helena
       </Link>

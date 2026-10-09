@@ -34,6 +34,20 @@ Las descripciones locales RIASEC y los ejemplos por código son contenido de pre
 en `features/discovery/data/dimensionExamples.ts`. Los ejemplos permanecen en el front
 también en modo API; desde F4 aparecen en el perfil completo y su guía.
 
+La corrección visual de F4, aprobada el 9 de octubre de 2026, añade
+`fragmentosResumen` en `features/discovery/data/dimensionExamples.ts`: seis textos
+fijos de presentación autorizados por el usuario. Solo componen la frase del detalle
+en el orden de `codigo_interes`; no sustituyen las descripciones remotas de las filas
+y la guía, ni el resumen anterior de la tarjeta del libro. Si falta un fragmento,
+se muestran las tres descripciones completas como lista.
+
+`CarreraResultado.duracion` es un campo opcional del modelo de presentación de la
+feature, no del contrato API. En ambos modos procede literalmente de
+`data/catalog/careersAndInstitutions.ts`, `careerCatalog.duration`, cruzando
+`CarreraResultado.codigo` con `careerCatalog.id`. Se conserva «aproximadamente»;
+si no existe coincidencia, se omite. Esta autorización sustituye la omisión inicial
+del anexo F4 sin mover el dato al servidor ni modificar persistencia.
+
 F4 usa `features/discovery/data/resultPages.ts` como configuración de `instrumento`
 y `tipoResultado` en ambos modos: el almacén todavía no carga `GET /instrumentos`.
 Es el respaldo expresamente autorizado por el anexo; no añade peticiones ni simula

@@ -35,3 +35,12 @@ export const descripcionesInteligenciasDemo: Record<string, string> = {
   'INT-INTER': 'Entender a otras personas, ponerte en su lugar y trabajar en equipo.',
   'INT-INTRA': 'Conocerte, reconocer lo que sientes y saber qué te motiva.',
 }
+
+export const fragmentosResumen: Record<string, string> = {
+  R: 'trabajas con las manos, con herramientas o al aire libre',
+  I: 'investigas y buscas entender cómo funcionan las cosas',
+  A: 'creas y te expresas con libertad',
+  S: 'ayudas, enseñas o acompañas a otras personas',
+  E: 'lideras, convences u organizas proyectos',
+  C: 'ordenas información y trabajas con datos de forma precisa',
+}

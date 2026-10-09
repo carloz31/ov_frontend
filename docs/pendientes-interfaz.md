@@ -112,7 +112,7 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
 - **Dónde se mostraría:** tarjetas de carreras del resultado completo de intereses.
 - **Opciones:** incorporar duración validada al contrato en su iteración; mantenerla solo en el detalle local que ya dispone de ese catálogo; omitirla del resultado completo.
 - **Si no se muestra:** las tarjetas conservan nombre, familia, vías, favorito y plan, sin atribuir duración a la respuesta remota ni copiar años de demostración.
-- **Estado:** se aplica la omisión expresamente indicada en F4, sección 6 (línea 331). Las otras opciones quedan pendientes de decisión; no se cambia el contrato.
+- **Estado:** resuelto por instrucción directa del usuario en la corrección de F4 del 9 de octubre: se muestra el texto literal de `careerCatalog.duration`, por `codigo`/`id`, en ambos modos. Se omite si no hay coincidencia. Se mantiene fuera del contrato; esta decisión sustituye la omisión inicial de la línea 331 del anexo.
 
 ## 2026-10-09 · Anexo F4 · Descripciones de intereses como lista
 
@@ -120,7 +120,7 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
 - **Dónde se mostraría:** debajo del código de interés.
 - **Opciones:** mostrar las tres descripciones completas como lista; definir fragmentos gramaticales adicionales en el contrato; aprobar una nueva redacción específica para la frase compuesta.
 - **Si no se muestra:** se perdería la interpretación del código; concatenar los textos actuales produciría frases repetidas o incorrectas.
-- **Estado:** resuelto con la lista que autoriza expresamente F4, sección 2a (línea 277). Se conserva el texto remoto íntegro; no se implementan las otras opciones.
+- **Estado:** resuelto por instrucción directa del usuario en la corrección de F4 del 9 de octubre: seis `fragmentosResumen` fijos aprobados componen la plantilla exacta del detalle, con negritas y orden del código. La lista de tres descripciones remotas permanece como respaldo si falta un fragmento. Filas, guía y resumen del libro conservan sus descripciones completas.
 
 ## 2026-10-09 · Anexo F4 · Ocupaciones sin contenido o sin código local
 
@@ -129,3 +129,12 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
 - **Opciones:** completar el catálogo y la correspondencia por código; definir favoritos de ocupaciones sin correspondencia en una iteración posterior; conservar únicamente los datos y acciones que tienen soporte actual.
 - **Si no se muestra:** una ocupación sin catálogo conserva título y ajuste remotos y permite filtrar sus carreras por O*NET; no muestra descripción, letras o enlace inventados. Sin código local tampoco se presenta el corazón, porque los favoritos actuales guardan ese identificador. Una ocupación con contenido pendiente omite el marcador provisional y conserva su detalle existente con sus candados actuales.
 - **Estado:** faltantes registrados; no se inventa correspondencia ni contenido. El fixture actual tiene códigos locales para sus diez coincidencias. La ausencia de código queda cubierta con un escenario DATO DE PRUEBA.
+
+
+## 2026-10-09 · Corrección F4 · Íconos obtenidos en la Central de Casos
+
+- **Dato:** las referencias incluyen una marca «Ícono obtenido en la Central de Casos» por ocupación. `ResultadoPublico.coincidencias[]`, en `GET /cuentas/{c}/instrumentos/TEST-RIASEC/resultado`, no entrega esa marca ni la relación caso/ocupación. `GET /cuentas/{c}/fichas` entrega `ContenidoEstado.codigo`, `titulo` y `estado`, sin esa relación; no permite deducirla.
+- **Dónde se mostraría:** insignia bajo las letras de cada tarjeta de ocupación afín.
+- **Opciones:** definir la relación y el estado de obtención en el contrato de casos en su iteración; aprobar un catálogo explícito de relaciones y leer su estado remoto; mantener la omisión actual.
+- **Si no se muestra:** la tarjeta conserva afinidad, letras y acciones, sin afirmar que el estudiante obtuvo una recompensa que no está confirmada.
+- **Estado:** omitido por instrucción expresa del usuario para esta corrección de F4. Permanece pendiente de datos y decisión de integración futura; no se calcula desde demostraciones ni desde favoritos.

@@ -2,6 +2,7 @@ import { Navigate, useParams } from 'react-router'
 import { discoveryPaths } from '@/routes/discoveryPaths'
 import { useResultPage } from '@/features/discovery/hooks/useResultPage'
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
+import { ResultOverview } from '@/features/discovery/components/ResultOverview'
 import { ResultHeader } from '@/features/discovery/components/ResultHeader'
 import { InterestCode } from '@/features/discovery/components/InterestCode'
 import { HighlightedDimensions } from '@/features/discovery/components/HighlightedDimensions'
@@ -31,20 +32,22 @@ export function HelenaResultView() {
             </button>
           </div>
         )}
-        {resumen.perfilPlano ? (
-          <FlatProfileNotice />
-        ) : resumen.tipoResultado === 'COINCIDENCIAS' ? (
-          <InterestCode dimensiones={resumen.protagonistas} empate={resumen.hayEmpate} />
-        ) : (
-          <HighlightedDimensions dimensiones={resumen.protagonistas} />
-        )}
-        <DimensionProfile
-          resumen={resumen}
-          guia={model.guia}
-          abrirGuia={() => model.setGuia(!model.guia)}
-          expandidas={model.expandidas}
-          alternar={model.alternarDimension}
-        />
+        <ResultOverview>
+          {resumen.perfilPlano ? (
+            <FlatProfileNotice />
+          ) : resumen.tipoResultado === 'COINCIDENCIAS' ? (
+            <InterestCode dimensiones={resumen.protagonistas} empate={resumen.hayEmpate} />
+          ) : (
+            <HighlightedDimensions dimensiones={resumen.protagonistas} />
+          )}
+          <DimensionProfile
+            resumen={resumen}
+            guia={model.guia}
+            abrirGuia={() => model.setGuia(!model.guia)}
+            expandidas={model.expandidas}
+            alternar={model.alternarDimension}
+          />
+        </ResultOverview>
         {model.guia && <DimensionGuide resumen={resumen} cerrar={() => model.setGuia(false)} />}
         {model.mostrarOcupaciones && (
           <AffineOccupations

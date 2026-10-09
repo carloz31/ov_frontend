@@ -302,7 +302,7 @@ test('perfil y guía exponen aria-expanded, texto remoto y ejemplos por código'
   assert.match(guia, /Por ejemplo: reparar o armar objetos/)
 })
 
-test('tarjetas de carreras no muestran duración y ocultan crear plan al alcanzar el límite', async () => {
+test('carreras muestran duración literal y ocultan crear plan al alcanzar el límite', async () => {
   const f = await preparar()
   const { RecommendedCareers } = f.app.load('src/features/discovery/components/RecommendedCareers.tsx')
   const m = f.model()
@@ -312,7 +312,8 @@ test('tarjetas de carreras no muestran duración y ocultan crear plan al alcanza
     guardar() {},
     crearPlan() {},
   })
-  assert.doesNotMatch(marcado, /Hacer mi plan|años/)
+  assert.doesNotMatch(marcado, /Hacer mi plan/)
+  assert.match(marcado, /5 años aproximadamente/)
   assert.match(marcado, /Conduce a 4/)
   assert.match(marcado, /Ver carrera/)
 })
@@ -407,4 +408,83 @@ test('pestañas de ajuste permiten flechas, Home y End con foco en la selección
     assert.equal(seleccionado, esperado)
     assert.equal(enfocado, foco)
   }
+})
+
+test('el libro y todos sus detalles conservan el módulo desplazable de Helena', () => {
+  const { getStudentView, isDiscoveryView } = fixtureServidor().load('src/lib/studentViews.ts')
+  for (const ruta of [
+    '/student/profile/helena',
+    '/student/profile/helena/intereses',
+    '/student/profile/helena/inteligencias',
+    '/student/profile/helena/no-existe',
+  ]) {
+    assert.equal(getStudentView(ruta), 'profile-helena')
+    assert.equal(isDiscoveryView(getStudentView(ruta)), true)
+  }
+  assert.equal(getStudentView('/student/exploration'), 'central')
+  assert.equal(getStudentView('/student/profile'), 'profile-general')
+})
+
+test('resumen de intereses usa la plantilla exacta, negritas y orden del código', () => {
+  const app = fixtureServidor()
+  const { InterestCode } = app.load('src/features/discovery/components/InterestCode.tsx')
+  const { fragmentosResumen } = app.load('src/features/discovery/data/dimensionExamples.ts')
+  const esperados = {
+    R: 'trabajas con las manos, con herramientas o al aire libre',
+    I: 'investigas y buscas entender cómo funcionan las cosas',
+    A: 'creas y te expresas con libertad',
+    S: 'ayudas, enseñas o acompañas a otras personas',
+    E: 'lideras, convences u organizas proyectos',
+    C: 'ordenas información y trabajas con datos de forma precisa',
+  }
+  assert.deepEqual({ ...fragmentosResumen }, esperados)
+  // DATO DE PRUEBA: orden S,A,I distinto de la ordenación alfabética.
+  const dimensiones = ['S', 'A', 'I'].map((code) => ({
+    code,
+    name: code,
+    description: `Descripción completa ${code}.`,
+  }))
+  const marcado = html(InterestCode, { dimensiones, empate: false })
+  assert.ok(
+    marcado.includes(
+      `Te atraen sobre todo las actividades en las que <strong>${esperados.S}</strong>, seguidas de aquellas en las que <strong>${esperados.A}</strong> y de aquellas en las que <strong>${esperados.I}</strong>.`,
+    ),
+  )
+  assert.doesNotMatch(marcado, /<li>/)
+  // DATO DE PRUEBA: dimensión sin fragmento; las tres descripciones deben mantenerse.
+  dimensiones[1].code = 'DESCONOCIDA'
+  const alternativo = html(InterestCode, { dimensiones, empate: false })
+  assert.equal((alternativo.match(/<li>/g) ?? []).length, 3)
+  for (const d of dimensiones) assert.ok(alternativo.includes(d.description))
+  assert.doesNotMatch(alternativo, /Te atraen sobre todo/)
+})
+
+test('duración conocida conserva el texto del catálogo en ambos modos y la desconocida se omite', () => {
+  const app = fixtureServidor()
+  const { carrerasResultado } = app.load('src/features/discovery/lib/resultCatalog.ts')
+  const { careerCatalog } = app.load('src/data/catalog/careersAndInstitutions.ts')
+  const resultado = copia(jsonServidor('resultado-riasec'))
+  const remoto = carrerasResultado(resultado, true, [])
+  for (const c of remoto)
+    assert.equal(c.duracion, careerCatalog.find((entrada) => entrada.id === c.codigo)?.duration)
+  assert.equal(remoto[0].duracion, '5 años aproximadamente')
+  // DATO DE PRUEBA: código ausente del catálogo; no se inventa la duración.
+  resultado.carreras_recomendadas[0].codigo = 'carrera-desconocida'
+  assert.equal(carrerasResultado(resultado, true, [])[0].duracion, undefined)
+  const { occupationDetails } = app.load('src/features/discovery/lib/catalogDetails.ts')
+  const ocupaciones = occupationDetails.map((o) => ({ codigo: o.id, clave: o.onetCode, titulo: o.name }))
+  const locales = carrerasResultado(undefined, false, ocupaciones)
+  assert.ok(locales.length > 0)
+  for (const c of locales)
+    assert.equal(c.duracion, careerCatalog.find((entrada) => entrada.id === c.codigo)?.duration)
+})
+
+test('la tarjeta del libro conserva su resumen con descripciones completas', async () => {
+  const f = await preparar()
+  const { useHelenaPages } = f.app.load('src/features/discovery/hooks/useHelenaPages.ts')
+  const { HelenaBookPages } = f.app.load('src/features/discovery/components/HelenaBookPages.tsx')
+  const model = useHelenaPages()
+  const marcado = html(HelenaBookPages, { model })
+  assert.ok(marcado.includes(model.pages.find((p) => p.id === 'intereses').result.areas[0].description))
+  assert.doesNotMatch(marcado, /Te atraen sobre todo las actividades/)
 })

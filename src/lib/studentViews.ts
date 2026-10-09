@@ -40,7 +40,8 @@ export const studentViews: StudentView[] = [
 ]
 
 export function getStudentView(pathname: string): StudentView {
-  if (pathname === '/student/profile/helena') return 'profile-helena'
+  if (pathname === '/student/profile/helena' || pathname.startsWith('/student/profile/helena/'))
+    return 'profile-helena'
   if (pathname === '/student/research/guion') return 'research-guide'
   if (/^\/student\/catalog\/(careers|professions|institutions)\/[^/]+$/.test(pathname))
     return 'catalog-detail'

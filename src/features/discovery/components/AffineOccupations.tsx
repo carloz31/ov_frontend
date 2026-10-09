@@ -37,37 +37,43 @@ export function AffineOccupations({
   guardar: (codigo: string) => void
 }) {
   return (
-    <Parchment className="sx-d-result-panel" aria-labelledby="ocupaciones-afines">
-      <p className="sx-d-eyebrow">Paso 1 · Ocupaciones afines</p>
-      <h2 id="ocupaciones-afines">Trabajos que se parecen a lo que te atrae</h2>
-      <p>
-        Las ocupaciones cuyo perfil de intereses se parece más al tuyo. Elige una para ver abajo qué carreras
-        conducen a ella.
-      </p>
-      <div
-        className="sx-d-result-tabs"
-        role="tablist"
-        aria-label="Ajuste de las ocupaciones"
-        onKeyDown={(event) => moverFiltro(event, ajuste, filtrar)}
-      >
-        {ajustes.map((f) => (
-          <button
-            key={f}
-            type="button"
-            role="tab"
-            aria-selected={ajuste === f}
-            tabIndex={ajuste === f ? 0 : -1}
-            onClick={() => filtrar(f)}
-          >
-            {f}
-          </button>
-        ))}
+    <Parchment className="sx-d-result-panel sx-d-result-occupations" aria-labelledby="ocupaciones-afines">
+      <div className="sx-d-result-section-head">
+        <div className="sx-d-result-section-intro">
+          <p className="sx-d-eyebrow">Paso 1 · Ocupaciones afines</p>
+          <h2 id="ocupaciones-afines">Trabajos que se parecen a lo que te atrae</h2>
+          <p>
+            Las ocupaciones cuyo perfil de intereses se parece más al tuyo. Elige una para ver abajo qué
+            carreras conducen a ella.
+          </p>
+        </div>
+        <div
+          className="sx-d-result-tabs"
+          role="tablist"
+          aria-label="Ajuste de las ocupaciones"
+          onKeyDown={(event) => moverFiltro(event, ajuste, filtrar)}
+        >
+          {ajustes.map((f) => (
+            <button
+              key={f}
+              type="button"
+              role="tab"
+              aria-selected={ajuste === f}
+              tabIndex={ajuste === f ? 0 : -1}
+              onClick={() => filtrar(f)}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="sx-d-result-grid">
         {ocupaciones.map((o) => (
           <article key={o.clave} className="sx-d-result-card">
             <div className="sx-d-result-section-head">
-              <span className="sx-d-eyebrow">{o.ajuste}</span>
+              <span className="sx-d-result-fit" data-ajuste={o.ajuste}>
+                {o.ajuste}
+              </span>
               {o.codigo && (
                 <FavoriteButton selected={o.favorita} compact onToggle={() => guardar(o.codigo!)} />
               )}
@@ -75,10 +81,12 @@ export function AffineOccupations({
             <h3>{o.titulo}</h3>
             {o.descripcion && <p>{o.descripcion}</p>}
             {!!o.letras?.length && (
-              <>
+              <div className="sx-d-result-shared">
                 <div className="sx-d-result-chips">
                   {o.letras.map((l) => (
-                    <span key={l}>{l}</span>
+                    <span key={l} data-dimension={l}>
+                      {l}
+                    </span>
                   ))}
                 </div>
                 <p>
@@ -86,7 +94,7 @@ export function AffineOccupations({
                     ? 'Comparte tus tres intereses'
                     : `Comparte ${o.compartidas} de tus intereses`}
                 </p>
-              </>
+              </div>
             )}
             <div className="sx-d-result-actions">
               <button

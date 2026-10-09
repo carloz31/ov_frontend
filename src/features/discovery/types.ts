@@ -16,6 +16,7 @@ export type CarreraResultado = {
   codigo: string
   nombre: string
   familia: string
+  duracion?: string
   via: { codigo_onet: string; titulo: string }[]
   favorita: boolean
   plan?: string
