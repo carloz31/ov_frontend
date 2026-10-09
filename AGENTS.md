@@ -106,6 +106,7 @@ La interfaz la decide el usuario. Un agente conecta datos a la interfaz que ya e
 
 ## Interfaz del estudiante
 
+- Para la tarjeta de cierre de actividad, la vista de perfil y la vista de resultado completo prevalece `ov_backend/docs/iteraciones/spec-iteracion-1-cierre-perfil-resultados.md`.
 - Para el piloto de evaluación, registros personalizados y misiones adicionales del Bloque 1 prevalecen las decisiones aprobadas en `docs/student-experience/implementacion-piloto-bloque1.md`; el contenido de referencia está en `docs/student-experience/especificacion-registros-personalizados-adicionales.md`.
 - Para progreso, comprobaciones, cierre de misión, desafíos y exploración inesperada del catálogo prevalece `docs/student-experience/especificacion-progreso-comprobaciones-desafios.md`, con las decisiones y límites registrados en `docs/student-experience/implementacion-progreso-comprobaciones-desafios.md`.
 - El historial de señales y Mis actividades siguen los patrones visuales de descubrimiento por solicitud directa del usuario, registrada en `docs/student-experience/plan.md`; se conservan sus registros y acciones.
