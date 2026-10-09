@@ -154,10 +154,10 @@ const casos = [
     datos: resultado,
   },
   {
-    modulo: 'demo',
+    modulo: 'desarrollo',
     funcion: 'reiniciar',
     argumentos: [],
-    ruta: '/demo/reiniciar',
+    ruta: '/desarrollo/reiniciar',
     cuerpo: {},
     datos: { mensaje: 'Datos reiniciados.' },
   },

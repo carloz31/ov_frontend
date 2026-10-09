@@ -1,6 +1,6 @@
 import * as apiCuentas from '@/services/api/cuentas'
 import * as apiAcciones from '@/services/api/acciones'
-import * as apiDemo from '@/services/api/demo'
+import * as apiDesarrollo from '@/services/api/desarrollo'
 import { desarrollo, modoApi } from '@/config/env'
 import { cuentaActiva, seleccionarCuenta } from './cuenta'
 import {
@@ -172,7 +172,7 @@ export async function reiniciarDatosDePrueba(): Promise<RespuestaServidor<{ mens
       estado: 403,
       detalle: 'El reinicio solo está disponible en desarrollo con datos del servidor.',
     }
-  const respuesta = await apiDemo.reiniciar()
+  const respuesta = await apiDesarrollo.reiniciar()
   if (respuesta.tipo === 'ok') {
     localStorage.removeItem('ov.missions.v2.api')
     localStorage.removeItem('ov.student-adventure.v1.api')
