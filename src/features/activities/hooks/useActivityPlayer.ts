@@ -26,6 +26,11 @@ export function useActivityPlayer({
   onClose: () => void
 }) {
   const state = useJourney()
+  const [yaCompletada] = useState(() =>
+    modoApi
+      ? actividadServidor(obtenerEstadoServidor().actividades.datos, activity.id)?.estado === 'COMPLETADA'
+      : state.progress[activity.id]?.estado === 'completada',
+  )
   useEffect(() => {
     void prepareActivity(activity)
   }, [activity])
@@ -201,6 +206,7 @@ export function useActivityPlayer({
     move,
     confirmacion,
     cierreServidor,
+    yaCompletada,
     openResources,
     itemServidor,
     item,

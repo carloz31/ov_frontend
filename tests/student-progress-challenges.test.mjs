@@ -465,11 +465,11 @@ test('progress has step narration and star spark; finish removes duplicate rewar
   }))
   const finish = render(React.createElement(FinishScreen, { activity, onClose() {}, onResources() {} }))
   assert.doesNotMatch(finish, /Obtuviste:/)
-  assert.match(finish, /FICHA GUARDADA EN TU MOCHILA/)
-  assert.match(finish, /Ver ficha/)
-  assert.match(finish, /Nueva pregunta en tu diario/)
-  assert.equal((finish.match(/>Continuar</g) ?? []).length, 1)
-  assert.doesNotMatch(finish, /Seguir hacia|Revisar mis propias creencias|Volver al mapa|Lo que viene/)
+  assert.match(finish, /Nuevo en tu mochila/)
+  assert.match(finish, /href="\/student\/resources\?ficha=ficha-mitos"/)
+  assert.match(finish, /Una pregunta para tu diario/)
+  assert.equal((finish.match(/Volver al mapa<\/button>/g) ?? []).length, 1)
+  assert.doesNotMatch(finish, /Seguir hacia|Revisar mis propias creencias|Lo que viene/)
 })
 
 test('battle UI prevents sheet access, confirms abandonment and resets after remount without writing a result', () => {

@@ -96,7 +96,7 @@ export function StudentActivityPlayer({
         </div>
       )}
       <main className="sx-player-stage">
-        <NodeRenderer model={model} activity={activity} onClose={onClose} edit={edit} direct={direct} />
+        <NodeRenderer model={model} activity={activity} edit={edit} direct={direct} />
       </main>
       <ResourceSheet open={resourceOpen} ids={resourceIds} onClose={() => setResourceOpen(false)} />
     </div>

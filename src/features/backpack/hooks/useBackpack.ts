@@ -26,7 +26,11 @@ export function useBackpack() {
   const tabs = useRef<(HTMLButtonElement | null)[]>([])
   const [query, setQuery] = useState(''),
     [favoritesOnly, setFavoritesOnly] = useState(false),
-    [selectedId, setSelectedId] = useState<string | null>(modoApi ? params.get('ficha') : null)
+    [selectedId, setSelectedId] = useState<string | null>(params.get('ficha'))
+  const fichaSolicitada = params.get('ficha')
+  useEffect(() => {
+    setSelectedId(fichaSolicitada)
+  }, [fichaSolicitada])
   const [requisitoId, setRequisitoId] = useState<string | null>(null)
   const [requisito, setRequisito] = useState('')
   const [requisitoPendiente, setRequisitoPendiente] = useState(false)

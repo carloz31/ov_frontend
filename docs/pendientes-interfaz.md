@@ -89,3 +89,19 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
   3. Conservar explícitamente el comportamiento local hasta completar ambos extremos.
 - **Si no se muestra:** la señal del panel sigue siendo local incluso en modo API; el recorrido de F4 no la envía al servidor y no mezcla sus datos con disponibilidad o progreso.
 - **Estado:** pendiente de la iteración 3; no se modifica interfaz ni almacenamiento.
+
+## 2026-10-09 · Anexo F3 · Persona, rol, cita y apertura de testimonios
+
+- **Dato:** `RespuestaAccion.nuevos_desbloqueos[].objetivo.codigo` y `.nombre` cuando `tipo_objetivo = TESTIMONIO`, en `POST /acciones/completar-actividad`. El recibo no contiene persona, rol ni cita; `Recurso` de `catalog.recursos` tampoco tiene persona/rol. El contenido puede faltar. `GET /cuentas/{c}/testimonios` entrega `ContenidoEstado[].codigo`, `titulo` y `estado`, pero su integración no corresponde a esta iteración (pendiente B2 anterior).
+- **Dónde se mostraría:** tarjeta de testimonio dentro de «Nuevo en tu mochila» y visor seleccionado mediante `?kind=testimonial&ficha={codigo}`.
+- **Opciones:** completar el catálogo narrativo con metadatos y contenido para esos códigos; definir una respuesta de lectura de testimonios con persona/rol/cita en su iteración; conservar solo el nombre en el cierre hasta disponer de contenido e integración remota.
+- **Si no se muestra:** el cierre presenta el nombre real y su enlace, sin atribuciones o citas inventadas. La selección local funciona cuando el testimonio existe, con sus candados actuales. En API la mochila conserva solo las fichas remotas de esta iteración: un testimonio sin integración no abre un visor de contenido, aunque su enlace ya incluye el código y filtro correctos.
+- **Estado:** se aplica el fallback expresamente autorizado en F3 (línea 143: «Si no existe, solo el nombre. No se inventa una cita.»). La integración y el contenido de testimonios quedan pendientes; ninguna opción adicional se implementa.
+
+## 2026-10-09 · Anexo F3 · Conservar el cierre al volver de una ficha
+
+- **Dato:** `RespuestaCompletarActividad.nuevos_desbloqueos`, recibido en `POST /acciones/completar-actividad`, vive en el estado del reproductor; no se conserva al desmontarlo para abrir una ficha.
+- **Dónde se mostraría:** misma tarjeta de cierre al regresar desde la mochila.
+- **Opciones:** conservar temporalmente el recibo y origen en un estado del dominio; abrir el visor sobre la tarjeta sin abandonar el reproductor; volver al mapa y consultar el historial de desbloqueos.
+- **Si no se muestra:** las fichas permanecen obtenidas, pero regresar por el navegador no recupera el cierre con los desbloqueos de esa finalización. Reabrir la actividad completada muestra el modo repaso sin reutilizar recompensas anteriores.
+- **Estado:** pendiente solicitado expresamente en F5, punto 3. F3 conserva la navegación mediante enlaces que prescribe el anexo y no agrega persistencia ni un flujo de retorno.

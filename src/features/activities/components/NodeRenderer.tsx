@@ -13,13 +13,11 @@ import { ResultNode } from '@/features/activities/components/nodes/ResultNode'
 export function NodeRenderer({
   model,
   activity,
-  onClose,
   edit,
   direct,
 }: {
   model: ReturnType<typeof useActivityPlayer>
   activity: Actividad
-  onClose: () => void
   edit: boolean
   direct: boolean
 }) {
@@ -38,6 +36,7 @@ export function NodeRenderer({
     advance,
     move,
     cierreServidor,
+    yaCompletada,
     openResources,
     itemServidor,
     item,
@@ -64,8 +63,7 @@ export function NodeRenderer({
   ) : !node ? (
     <FinishScreen
       activity={activity}
-      onClose={onClose}
-      onResources={openResources}
+      yaCompletada={yaCompletada}
       desbloqueosServidor={cierreServidor?.nuevos_desbloqueos}
       resultadosGenerados={cierreServidor?.resultados_generados}
     />

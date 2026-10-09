@@ -1700,8 +1700,10 @@ test('immersive finish shows saved sheets, narrative rewards and the prompted jo
   const { FinishScreen } = load(path.resolve('src/features/activities/components/FinishScreen.tsx'))
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), resources: ['ficha-mitos'], progress: { [activity.id]: { estado: 'completada' } } }))
   const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(FinishScreen, { activity, onClose() {} })))
-  for (const text of ['Este hallazgo viaja contigo.', activity.recompensa.mensajeFin, 'Lo que llevas contigo', 'En tu mochila', 'Escribir en mi diario', 'Continuar']) assert.ok(html.includes(text))
-  assert.doesNotMatch(html, /Revisar mis propias creencias|Seguir hacia|Volver al mapa/)
+  for (const text of ['Este hallazgo viaja contigo.', 'Nuevo en tu mochila', 'Una pregunta para tu diario', 'Escribir en mi diario', 'Volver al mapa']) assert.ok(html.includes(text))
+  assert.match(html, /href="\/student\/resources\?ficha=ficha-mitos"/)
+  if (!activity.recompensa.mensajeFin.startsWith('Obtuviste:')) assert.ok(html.includes(activity.recompensa.mensajeFin))
+  assert.doesNotMatch(html, /Revisar mis propias creencias|Seguir hacia/)
   assert.doesNotMatch(html, /\bpuntos\b|\bpts\b|Nueva insignia/)
   const { ResultNode } = load(path.resolve('src/features/activities/components/nodes/ResultNode.tsx'))
   const result = renderToStaticMarkup(React.createElement(ResultNode, { activity: journeyContent.finalActivity, instrumentId: 'tip' }))
@@ -2679,7 +2681,7 @@ test('phase 8 direct links open blocked details instead of starting unavailable 
   guard.dispose()
 })
 
-test('phase 8 finish returns to the map with one continue action at every point of the path', () => {
+test('phase 8 finish returns to the map with one map action at every point of the path', () => {
   const logic = loadMapPoints(load)
   const { FinishScreen } = load(path.resolve('src/features/activities/components/FinishScreen.tsx'))
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
@@ -2690,8 +2692,8 @@ test('phase 8 finish returns to the map with one continue action at every point 
     const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(FinishScreen, {
       activity: journeyContent.activityById('enc-mitos'), onClose() {},
     })))
-    assert.doesNotMatch(html, /Revisar mis propias creencias|Seguir hacia|Volver al mapa/)
-    assert.equal((html.match(/>Continuar</g) ?? []).length, 1)
+    assert.doesNotMatch(html, /Revisar mis propias creencias|Seguir hacia/)
+    assert.equal((html.match(/Volver al mapa<\/button>/g) ?? []).length, 1)
   }
   const player = immersivePlayerHarness('src/features/activities/components/StudentActivityPlayer')
   const activity = journeyContent.activityById('mission-welcome')
@@ -2699,7 +2701,8 @@ test('phase 8 finish returns to the map with one continue action at every point 
   const onClose = () => {}
   const tree = player.draw({ activity, onClose })
   const finish = player.find(tree, element => element.type?.name === 'FinishScreen')
-  assert.equal(finish.props.onClose, onClose)
+  assert.equal(finish.props.onClose, undefined)
+  assert.equal(finish.props.yaCompletada, true)
   assert.equal(finish.props.onNext, undefined)
   assert.equal(finish.props.nextActivity, undefined)
   player.dispose(); journeyStore.updateJourney(() => journeyLogic.initialJourney())
