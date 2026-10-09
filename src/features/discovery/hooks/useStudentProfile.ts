@@ -1,20 +1,17 @@
-import { progresoBloque } from '@/lib/servidor/contenidos'
-import { useLogrosServidor } from '@/store/servidor/secciones'
 import { modoApi } from '@/config/env'
-import { useEstadoServidor } from '@/store/servidor/sesion'
-import { paginaInteresesServidor } from '@/lib/servidor/adaptadores'
-
 import { useOccupationExplorationContext } from '@/context/occupationExplorationContext'
-import { getTravelerLevel, useAdventure } from '@/store/adventureStore'
+import { getZoneProgress } from '@/features/adventure/lib/mapPoints'
+import { ciudadDisponible, insigniasServidor, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
+import { progresoBloque } from '@/lib/servidor/contenidos'
+import { canAccessCity, getTravelerLevel, useAdventure } from '@/store/adventureStore'
+import { paginasReveladasApi, useDiscovery } from '@/store/discoveryStore'
 import { useJourney } from '@/store/journeyStore'
-
-import { useDiscovery } from '@/store/discoveryStore'
-
-import { getProfileBadges, getStudentAchievementGroups } from '@/features/discovery/lib/passport'
-import { getHelenaPages } from '@/features/discovery/lib/helenaPages'
-import { getOrderedPlans } from '@/features/discovery/lib/plans'
-import { insigniasServidor } from '@/lib/servidor/adaptadores'
-import { getAchievementPresentations } from '@/features/discovery/lib/achievements'
+import { useLogrosServidor } from '@/store/servidor/secciones'
+import { useEstadoServidor } from '@/store/servidor/sesion'
+import { getAchievementPresentations } from '../lib/achievements'
+import { getHelenaPages, getHelenaPagesApi } from '../lib/helenaPages'
+import { getProfileBadges, getStudentAchievementGroups } from '../lib/passport'
+import { getOrderedPlans } from '../lib/plans'
 
 export function useStudentProfile() {
   const adventure = useAdventure(),
@@ -23,57 +20,52 @@ export function useStudentProfile() {
   const context = useOccupationExplorationContext()
   useLogrosServidor()
   const servidor = useEstadoServidor()
-  const nivelApi = modoApi ? getTravelerLevel(adventure, servidor.resumen.datos?.nivel_actual ?? null) : null
-  const gruposApi = modoApi ? insigniasServidor(servidor.logros.datos, getAchievementPresentations()) : []
-  const insigniasApi = modoApi
-    ? getProfileBadges(adventure, discovery, journey, {
-        grupos: gruposApi,
-        cuenta: servidor.resumen.datos?.cuenta.codigo ?? '',
-      })
-    : []
-
-  if (modoApi)
-    return {
-      adventure,
-      journey,
-      context,
-      ficha: {
-        nombre: servidor.resumen.datos?.cuenta.nombre ?? 'Mi perfil',
-        progreso: progresoBloque(servidor.actividades.datos).porcentaje,
-        nivel: nivelApi,
-        insignias: insigniasApi,
-        textoIntereses:
-          paginaInteresesServidor(
-            servidor.actividades.datos,
-            servidor.resultadoRiasec,
-            discovery,
-            servidor.resumen.datos?.cuenta.codigo ?? null,
-          ).state === 'ready'
-            ? 'Tu página de intereses está lista para revelar.'
-            : paginaInteresesServidor(
-                  servidor.actividades.datos,
-                  servidor.resultadoRiasec,
-                  discovery,
-                  servidor.resumen.datos?.cuenta.codigo ?? null,
-                ).state === 'revealed'
-              ? 'Tu página de intereses está descifrada.'
-              : servidor.errorResultado
-                ? 'No se pudo consultar tu resultado.'
-                : 'Conversa con Mara para reunir las pistas de tus intereses.',
-      },
-      level: undefined,
-      badges: [],
-      visibleBadges: [],
-      pages: [],
-      plans: [],
-      extraFavorites: 0,
-    }
-  const level = getTravelerLevel(adventure)
-  const badges = getStudentAchievementGroups(adventure, journey).flatMap((g, index) =>
+  const cuenta = servidor.resumen.datos?.cuenta.codigo
+  const nombre = modoApi ? (servidor.resumen.datos?.cuenta.nombre ?? 'Mi perfil') : 'Alex'
+  const iniciales = modoApi
+    ? nombre
+        .trim()
+        .split(/\s+/)
+        .slice(0, 2)
+        .map((parte) => parte[0])
+        .join('')
+        .toLocaleUpperCase()
+    : 'AL'
+  const level = modoApi
+    ? getTravelerLevel(adventure, servidor.resumen.datos?.nivel_actual ?? null)
+    : getTravelerLevel(adventure)
+  const ciudad = modoApi ? ciudadDisponible(servidor.actividades.datos) : canAccessCity(adventure)
+  const recorrido = modoApi
+    ? progresoBloque(servidor.actividades.datos).porcentaje
+    : getZoneProgress('missions', adventure, journey).value
+  const afinidadCiudad = ciudad
+    ? modoApi
+      ? progresoBloque(servidor.actividades.datos, 'CIUDAD').porcentaje
+      : getZoneProgress('central', adventure, journey).value
+    : 0
+  const gruposApi = modoApi
+    ? insigniasServidor(servidor.logros.datos, getAchievementPresentations())
+    : undefined
+  const badges = getStudentAchievementGroups(adventure, journey, gruposApi).flatMap((g, index) =>
     g.items.filter((b) => b.done).map((b) => ({ ...b, group: index })),
   )
-  const visibleBadges = getProfileBadges(adventure, discovery, journey)
-  const pages = getHelenaPages(journey, discovery)
+  const visibleBadges = getProfileBadges(
+    adventure,
+    discovery,
+    journey,
+    gruposApi ? { grupos: gruposApi, cuenta: cuenta ?? '' } : undefined,
+  )
+  const pages = modoApi
+    ? getHelenaPagesApi(
+        paginaInteresesServidor(
+          servidor.actividades.datos,
+          servidor.resultadoRiasec,
+          discovery,
+          cuenta ?? null,
+        ),
+        paginasReveladasApi(discovery, cuenta, servidor.resultadoRiasec?.calculado_en),
+      )
+    : getHelenaPages(journey, discovery)
   const plans = getOrderedPlans(context.decisionSheets, discovery.planOrder)
   const extraFavorites = context.careerInterestIds.filter(
     (id) => !plans.some((p) => p.sourceId === id),
@@ -82,8 +74,12 @@ export function useStudentProfile() {
     adventure,
     journey,
     context,
-    ficha: undefined,
+    nombre,
+    iniciales,
     level,
+    recorrido,
+    ciudad,
+    afinidadCiudad,
     badges,
     visibleBadges,
     pages,

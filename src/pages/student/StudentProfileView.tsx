@@ -1,9 +1,7 @@
 import { useStudentProfile } from '@/features/discovery/hooks/useStudentProfile'
 import { Link } from 'react-router'
 import { Eye, Heart, Sparkles } from 'lucide-react'
-import { canAccessCity } from '@/store/adventureStore'
 import { appPaths } from '@/routes/paths'
-import { getZoneProgress } from '@/features/adventure/lib/mapPoints'
 import { discoveryPaths } from '@/routes/discoveryPaths'
 import { DiscoveryStage } from '@/features/discovery/components/DiscoveryStage'
 import { Parchment } from '@/components/student/Parchment'
@@ -13,70 +11,39 @@ import { CollectionSlot } from '@/components/student/CollectionSlot'
 import { achievementIcons } from '@/features/discovery/lib/passport'
 import { getPlanCompleteness } from '@/features/discovery/lib/plans'
 export function StudentProfileView() {
-  const { adventure, journey, context, ficha, level, badges, visibleBadges, pages, plans, extraFavorites } =
-    useStudentProfile()
-  if (ficha)
-    return (
-      <DiscoveryStage ambient="profile">
-        <Parchment title={ficha.nombre}>
-          <TrailBar label="Recorrido" value={ficha.progreso} />
-          {ficha.nivel ? (
-            <div className="sx-d-row">
-              <span className="sx-level-medallion">
-                <span>NIVEL</span>
-                <strong>{String(ficha.nivel.number).padStart(2, '0')}</strong>
-              </span>
-              <div>
-                <h2>{ficha.nivel.label}</h2>
-                <p>{ficha.nivel.description}</p>
-                <p>{ficha.nivel.nextStep}</p>
-              </div>
-            </div>
-          ) : (
-            <p>No hay un nivel disponible en el servidor.</p>
-          )}
-          <div className="sx-d-seal-row">
-            {ficha.insignias.map((b) => {
-              const Icon = achievementIcons[b.icon]
-              return (
-                <CollectionSlot key={b.code} icon={<Icon />}>
-                  {b.title}
-                </CollectionSlot>
-              )
-            })}
-          </div>
-          <Link className="sx-d-action" to={appPaths.student.passport}>
-            Ver mis logros · Elegir qué muestro
-          </Link>
-          <Link className="sx-d-action" to="/student/profile/helena">
-            Abrir el libro de Helena
-          </Link>
-          <p>{ficha.textoIntereses}</p>
-          <Link className="sx-d-action" to={appPaths.student.resources}>
-            Abrir mi mochila
-          </Link>
-          <Link className="sx-d-action" to={appPaths.student.decisions}>
-            Ver mis planes y favoritos
-          </Link>
-        </Parchment>
-      </DiscoveryStage>
-    )
-
+  const {
+    context,
+    nombre,
+    iniciales,
+    level,
+    recorrido,
+    ciudad,
+    afinidadCiudad,
+    badges,
+    visibleBadges,
+    pages,
+    plans,
+    extraFavorites,
+  } = useStudentProfile()
   return (
     <DiscoveryStage ambient="profile">
       <Parchment className="sx-d-dark">
         <div className="sx-d-traveler">
-          <span className="sx-d-avatar">AL</span>
+          <span className="sx-d-avatar">{iniciales}</span>
           <div>
             <p className="sx-d-eyebrow">Ficha del viajero</p>
-            <h1>Alex</h1>
-            <div className="sx-d-row">
-              <span className="sx-level-medallion">
-                <span>NIVEL</span>
-                <strong>{String(level.number).padStart(2, '0')}</strong>
-              </span>
-              <strong>{level.label}</strong>
-            </div>
+            <h1>{nombre}</h1>
+            {level ? (
+              <div className="sx-d-row">
+                <span className="sx-level-medallion">
+                  <span>NIVEL</span>
+                  <strong>{String(level.number).padStart(2, '0')}</strong>
+                </span>
+                <strong>{level.label}</strong>
+              </div>
+            ) : (
+              <p>No hay un nivel disponible en el servidor.</p>
+            )}
             <p>
               Todo lo que vas descubriendo en el viaje se reúne aquí: lo que has logrado, lo que Helena lee de
               ti y los caminos que estás considerando.
@@ -103,19 +70,21 @@ export function StudentProfileView() {
       </Parchment>
       <div className="sx-d-columns">
         <Parchment label="Capítulo I" title="Lo que he logrado">
-          <div className="sx-d-quote">
-            <strong>
-              {level.number === 5
-                ? 'Llegaste al último nivel del viaje'
-                : `Para el nivel ${level.number + 1}`}
-            </strong>
-            <p>{level.number !== 5 && level.nextStep}</p>
-          </div>
-          <TrailBar label="Recorrido" value={getZoneProgress('missions', adventure, journey).value} />
+          {level && (
+            <div className="sx-d-quote">
+              <strong>
+                {level.number === 5
+                  ? 'Llegaste al último nivel del viaje'
+                  : `Para el nivel ${level.number + 1}`}
+              </strong>
+              <p>{level.number !== 5 && level.nextStep}</p>
+            </div>
+          )}
+          <TrailBar label="Recorrido" value={recorrido} />
           <TrailBar
             label="Afinidad con la ciudad"
-            value={canAccessCity(adventure) ? getZoneProgress('central', adventure, journey).value : 0}
-            text={canAccessCity(adventure) ? undefined : 'Se abre al llegar a la ciudad'}
+            value={afinidadCiudad}
+            text={ciudad ? undefined : 'Se abre al llegar a la ciudad'}
             muted
           />
           <div className="sx-d-row">

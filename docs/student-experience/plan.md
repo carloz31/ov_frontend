@@ -696,3 +696,15 @@ Backend: uv run pytest -q, con SEMILLA=demo, EVALUADOR=falso y temporales propio
 
 Sin dependencias, cambios de contrato, regeneración de fixtures, áreas protegidas, Gemini ni push. Un commit F6 por repo en iteracion-1 con el mensaje acordado; se detiene el trabajo al cerrar la fase.
 
+
+# Iteración 1 · Anexo de cierre, perfil y resultados · F1 · 9 de octubre de 2026
+
+Se ejecuta únicamente F1 de `ov_backend/docs/iteraciones/spec-iteracion-1-cierre-perfil-resultados.md`. La autorización de interfaz está en F1, líneas 41–55: «Una sola vista en ambos modos: la de main» y «se elimina el bloque if (ficha)». Se conserva la composición completa que ya existía en `StudentProfileView.tsx`: ficha del viajero y capítulos de logros, Helena y planes. El encabezado recibe nombre e iniciales del hook; las barras reciben recorrido y afinidad con la ciudad. Sin nivel remoto se muestra «No hay un nivel disponible en el servidor.» y se omiten medallón y recuadro del siguiente nivel, tal como dispone la línea 54 del anexo. No se agregan estilos ni elementos fuera de ese alcance.
+
+`useStudentProfile.ts` entrega la misma forma en API y local, sin `ficha` ni `textoIntereses`. En API toma nombre y nivel del resumen, progreso y acceso a Ciudad de actividades, insignias de logros y páginas de Helena de las mismas funciones que usa el libro. La selección de insignias y la revelación de páginas respetan cuenta y fecha del resultado. Planes y favoritos conservan el estado local en ambos modos. El modo local mantiene Alex, AL y sus cálculos anteriores. No cambian almacenamiento, contrato, fixtures, servicios, datos narrativos ni dependencias.
+
+Se agrega `tests/servidor-perfil.test.mjs`: cinco pruebas sobre el hook real, cargado mediante el entorno de pruebas existente. Usan los fixtures del servidor y cubren intereses pendiente/listo/revelado, resultado IRA y porcentajes, insignias remotas y selección por cuenta, nivel ausente y composición completa, resumen sin cargar y planes/favoritos en ambos modos. No fue necesario limitar las pruebas a funciones puras. Los datos inventados se marcan como DATO DE PRUEBA.
+
+Verificación: build y lint pasan; estructura correcta, **536 archivos, cero infracciones y cero excepciones**. Suite completa: **418 pruebas, 403 aprobadas y las mismas 15 fallas previas**, sin omitidas ni canceladas. Los diagnósticos de las 15 coinciden con F0, excluyendo duraciones y ubicaciones de pila. Se conserva el aviso previo del bundle mayor de 500 kB. No se adaptan pruebas existentes. Los logs quedan fuera del repo, en visualizaciones de esta conversación.
+
+F1 solo toca el frontend; no se repite la suite del backend. Su última verificación, en F0, fue de **1091 aprobadas, cuatro omitidas y cero fallas**. No se realiza aún el recorrido manual en API y local reservado para F5. Sin cambios en el backend, llamadas a Gemini ni push. Un commit A1 en `iteracion-1`; el trabajo se detiene antes de F2.
