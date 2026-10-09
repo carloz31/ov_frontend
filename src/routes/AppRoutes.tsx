@@ -22,6 +22,7 @@ import { InstitutionDetailView } from '@/pages/student/InstitutionDetailView'
 import { StudentPlansView } from '@/pages/student/StudentPlansView'
 import { ProfileRoute } from '@/pages/student/ProfileRoute'
 import { HelenaBookView } from '@/pages/student/HelenaBookView'
+import { HelenaResultView } from '@/pages/student/HelenaResultView'
 import { StudentShell } from '@/pages/student/StudentShell'
 import { StudentThemeScope } from '@/pages/student/StudentThemeScope'
 import { StudentActivitiesView } from '@/pages/student/StudentActivitiesView'
@@ -116,6 +117,7 @@ function AppRoutes() {
           <Route element={<InstitutionDetailView />} path="catalog/institutions/:institutionId" />
           <Route element={<ProfileRoute />} path="profile" />
           <Route element={<HelenaBookView />} path="profile/helena" />
+          <Route element={<HelenaResultView />} path="profile/helena/:pagina" />
           <Route element={<StudentPlansView />} path="profile/decisions" />
           <Route element={<Navigate replace to={appPaths.student.exploration} />} path="*" />
         </Route>

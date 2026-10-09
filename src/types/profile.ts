@@ -1,10 +1,14 @@
 import type { InstrumentPageId } from '@/types/discovery'
 
 export type HelenaPageState = 'sealed' | 'ready' | 'revealed'
+export type TipoResultadoHelena = 'COINCIDENCIAS' | 'DESTACADAS'
+export type HelenaDimension = { code: string; name: string; score: number; description: string }
 
 export type HelenaResult = {
   source: 'real' | 'demo'
-  areas: { code: string; name: string; score: number; description: string }[]
+  areas: HelenaDimension[]
+  dimensiones?: HelenaDimension[]
+  destacadas?: HelenaDimension[]
 }
 
 export type HelenaPage = {

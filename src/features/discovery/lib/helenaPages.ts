@@ -4,7 +4,7 @@ import { catalog, tipActivityIds } from '@/data/activities/content'
 import { calculateResult } from '@/lib/activities/logic'
 import type { JourneyState } from '@/types/activities'
 import type { InstrumentPageId, StudentDiscoveryState } from '@/types/discovery'
-import { descripcionesLocales } from '../data/dimensionExamples'
+import { descripcionesLocales, descripcionesInteligenciasDemo } from '../data/dimensionExamples'
 export function getHelenaPagesApi(intereses: HelenaPage, reveladas: InstrumentPageId[]): HelenaPage[] {
   // Se conservan los ejemplos de los otros instrumentos; sus misiones aún no existen en la API.
   const ejemplos: HelenaPage[] = [
@@ -42,6 +42,20 @@ export function getHelenaPageState(complete: boolean, revealed: boolean): Helena
 // DATO DE PRUEBA: Intereses de ejemplo de Helena; los reemplazarán resultados del servidor.
 export const demoInterests: HelenaResult = {
   source: 'demo',
+  // DATO DE PRUEBA: perfil completo del ejemplo; S/I/A conservan sus valores anteriores.
+  dimensiones: [
+    ['R', 'Realista', 50],
+    ['I', 'Investigador', 72],
+    ['A', 'Artístico', 66],
+    ['S', 'Social', 78],
+    ['E', 'Emprendedor', 45],
+    ['C', 'Convencional', 35],
+  ].map(([code, name, score]) => ({
+    code: String(code),
+    name: String(name),
+    score: Number(score),
+    description: descripcionesLocales[String(code)],
+  })),
   areas: [
     {
       code: 'S',
@@ -65,6 +79,21 @@ export const demoInterests: HelenaResult = {
 }
 const demoIntelligences: HelenaResult = {
   source: 'demo',
+  // DATO DE PRUEBA: siete dimensiones de F4, en el orden del instrumento TEST-INT.
+  dimensiones: [
+    ['INT-LIN', 'Lingüística', 75],
+    ['INT-LOG', 'Lógico-matemática', 43],
+    ['INT-ESP', 'Espacial', 50],
+    ['INT-CIN', 'Cinestésico-corporal', 40],
+    ['INT-MUS', 'Musical', 50],
+    ['INT-INTER', 'Interpersonal', 75],
+    ['INT-INTRA', 'Intrapersonal', 63],
+  ].map(([code, name, score]) => ({
+    code: String(code),
+    name: String(name),
+    score: Number(score),
+    description: descripcionesInteligenciasDemo[String(code)],
+  })),
   areas: [
     {
       code: 'L',
@@ -108,6 +137,12 @@ export function getHelenaPages(journey: JourneyState, discovery: StudentDiscover
   const real: HelenaResult | undefined = valid
     ? {
         source: 'real',
+        dimensiones: raw!.puntajes.map((s) => ({
+          code: s.dimensionId,
+          name: instrument!.clave.dimensiones.find((d) => d.id === s.dimensionId)!.nombre,
+          score: s.puntaje,
+          description: descripcionesLocales[s.dimensionId],
+        })),
         areas: raw!.puntajes
           .map((s) => {
             const name = instrument!.clave.dimensiones.find((d) => d.id === s.dimensionId)!.nombre

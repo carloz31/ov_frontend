@@ -121,6 +121,9 @@ export function HelenaBookPages({ model }: { model: ReturnType<typeof useHelenaP
                 </div>
               )}
               <p className="sx-d-eyebrow">Descifrada</p>
+              <Link className="sx-d-action sx-d-action-gold" to={discoveryPaths.helenaPage(p.id)}>
+                Ver resultado completo
+              </Link>
               {p.id === 'intereses' ? (
                 <>
                   <div className="sx-d-result-seals">

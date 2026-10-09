@@ -1,9 +1,12 @@
-import type { JourneyState } from '@/types/activities'
-import type { Actividad } from '@/types/activities'
-import type { HelenaPage } from '@/types/profile'
+import type { JourneyState, Actividad } from '@/types/activities'
+import type {
+  HelenaPage,
+  HelenaResult,
+  TipoResultadoHelena,
+  AchievementGroup,
+  PassportBadge,
+} from '@/types/profile'
 import type { StudentDiscoveryState } from '@/types/discovery'
-import type { AchievementGroup } from '@/types/profile'
-import type { PassportBadge } from '@/types/profile'
 import type {
   ActividadEstado,
   ActividadCuenta,
@@ -337,6 +340,28 @@ export function coincidenciasRiasec(resultado: ResultadoPublico | null) {
 }
 export const textoAjuste = (ajuste: CoincidenciaPublica['ajuste']) =>
   ({ BEST_FIT: 'Mejor ajuste', GREAT_FIT: 'Gran ajuste', GOOD_FIT: 'Buen ajuste' })[ajuste]
+export function resultadoHelenaCompleto(r: ResultadoPublico, tipo: TipoResultadoHelena): HelenaResult {
+  const adaptar = (d: ResultadoPublico['dimensiones'][number]) => ({
+    code: d.codigo,
+    name: d.nombre,
+    score: d.porcentaje,
+    description: d.descripcion,
+  })
+  return {
+    source: 'real',
+    dimensiones: r.dimensiones.map(adaptar),
+    areas:
+      tipo === 'COINCIDENCIAS' ? areasRiasec(r).map(adaptar) : (r.dimensiones_destacadas ?? []).map(adaptar),
+    destacadas: tipo === 'DESTACADAS' ? (r.dimensiones_destacadas ?? []).map(adaptar) : undefined,
+  }
+}
+export const ocupacionesResultadoServidor = (resultado: ResultadoPublico | null) =>
+  coincidenciasRiasec(resultado).map((c) => ({
+    clave: c.codigo_onet,
+    codigo: c.codigo,
+    titulo: c.titulo,
+    ajuste: textoAjuste(c.ajuste),
+  }))
 export function paginaInteresesServidor(
   bloques: BloqueActividades[] | null,
   resultado: ResultadoPublico | null,
@@ -365,16 +390,6 @@ export function paginaInteresesServidor(
     teaser: 'Esta página aún guarda pistas sobre lo que te atrae hacer.',
     activityHref: `/student/exploration?actividad=${interaccionMara(bloques).actividad?.codigo ?? 'act-tip-01'}`,
     perfilPlano: resultado?.perfil_plano,
-    result: revelado
-      ? {
-          source: 'real',
-          areas: areasRiasec(resultado).map((d) => ({
-            code: d.codigo,
-            name: d.nombre,
-            score: d.porcentaje,
-            description: d.descripcion,
-          })),
-        }
-      : undefined,
+    result: revelado ? resultadoHelenaCompleto(resultado!, 'COINCIDENCIAS') : undefined,
   }
 }

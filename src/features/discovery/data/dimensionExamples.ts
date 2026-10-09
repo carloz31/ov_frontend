@@ -24,3 +24,14 @@ export const descripcionesLocales: Record<string, string> = {
   E: 'Te atrae liderar, convencer, organizar proyectos y tomar decisiones.',
   C: 'Te atrae ordenar información, seguir procedimientos claros y trabajar con datos de forma precisa.',
 }
+
+// Textos aprobados en F2 para la demostración de inteligencias de F4.
+export const descripcionesInteligenciasDemo: Record<string, string> = {
+  'INT-LIN': 'Usar las palabras para expresarte, contar historias, explicar y convencer.',
+  'INT-LOG': 'Razonar con números, patrones y relaciones de causa y efecto.',
+  'INT-ESP': 'Imaginar, dibujar y orientarte en el espacio, viendo las cosas en tu mente.',
+  'INT-CIN': 'Usar el cuerpo con precisión para moverte, crear o expresarte.',
+  'INT-MUS': 'Percibir ritmos, melodías y sonidos, y crear con ellos.',
+  'INT-INTER': 'Entender a otras personas, ponerte en su lugar y trabajar en equipo.',
+  'INT-INTRA': 'Conocerte, reconocer lo que sientes y saber qué te motiva.',
+}

@@ -11,7 +11,7 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
   2. Conservar únicamente las descripciones del resumen actual hasta ejecutar F4.
   3. Integrar posteriormente el resultado real de TEST-INT cuando se incorpore a plataforma; requiere su iteración y sustituye la demostración señalada.
 - **Si no se muestra:** el contrato y los resultados conservan todas las descripciones, pero el resumen no permite consultar todas las dimensiones. F2 no agrega controles ni secciones. F4 también usará la demostración de inteligencias; los instrumentos reales se integrarán en su iteración.
-- **Estado:** presentación completa de intereses autorizada para F4; TEST-INT y TEST-HAB reales pendientes de su iteración. No se implementa ninguna opción adicional en F2.
+- **Estado:** resuelto para intereses en F4: perfil y guía muestran las seis descripciones remotas. Inteligencias muestra las siete descripciones de la demostración aprobada. TEST-INT y TEST-HAB reales permanecen pendientes de su iteración; F4 no los incorpora a plataforma.
 
 ## 2026-10-08 · B3 · Actividad de prueba sin contenido
 
@@ -105,3 +105,27 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
 - **Opciones:** conservar temporalmente el recibo y origen en un estado del dominio; abrir el visor sobre la tarjeta sin abandonar el reproductor; volver al mapa y consultar el historial de desbloqueos.
 - **Si no se muestra:** las fichas permanecen obtenidas, pero regresar por el navegador no recupera el cierre con los desbloqueos de esa finalización. Reabrir la actividad completada muestra el modo repaso sin reutilizar recompensas anteriores.
 - **Estado:** pendiente solicitado expresamente en F5, punto 3. F3 conserva la navegación mediante enlaces que prescribe el anexo y no agrega persistencia ni un flujo de retorno.
+
+## 2026-10-09 · Anexo F4 · Duración de las carreras
+
+- **Dato:** falta duración en `ResultadoPublico.carreras_recomendadas[]` / `CarreraRecomendada`; petición `GET /cuentas/{c}/instrumentos/TEST-RIASEC/resultado`.
+- **Dónde se mostraría:** tarjetas de carreras del resultado completo de intereses.
+- **Opciones:** incorporar duración validada al contrato en su iteración; mantenerla solo en el detalle local que ya dispone de ese catálogo; omitirla del resultado completo.
+- **Si no se muestra:** las tarjetas conservan nombre, familia, vías, favorito y plan, sin atribuir duración a la respuesta remota ni copiar años de demostración.
+- **Estado:** se aplica la omisión expresamente indicada en F4, sección 6 (línea 331). Las otras opciones quedan pendientes de decisión; no se cambia el contrato.
+
+## 2026-10-09 · Anexo F4 · Descripciones de intereses como lista
+
+- **Dato:** `ResultadoPublico.dimensiones[].descripcion`, en `GET /cuentas/{c}/instrumentos/TEST-RIASEC/resultado`, comienza con «Te atrae…» o «Te atraen…» y no encaja naturalmente dentro de la frase compuesta de la sección 2a.
+- **Dónde se mostraría:** debajo del código de interés.
+- **Opciones:** mostrar las tres descripciones completas como lista; definir fragmentos gramaticales adicionales en el contrato; aprobar una nueva redacción específica para la frase compuesta.
+- **Si no se muestra:** se perdería la interpretación del código; concatenar los textos actuales produciría frases repetidas o incorrectas.
+- **Estado:** resuelto con la lista que autoriza expresamente F4, sección 2a (línea 277). Se conserva el texto remoto íntegro; no se implementan las otras opciones.
+
+## 2026-10-09 · Anexo F4 · Ocupaciones sin contenido o sin código local
+
+- **Dato:** `ResultadoPublico.coincidencias[].codigo` puede ser nulo; `titulo` y `codigo_onet` siguen llegando en `GET /cuentas/{c}/instrumentos/TEST-RIASEC/resultado`. Para algunas ocupaciones con código, `occupationDetails.whatTheyDo` solo contiene un marcador de contenido pendiente; no existe una descripción real en ese catálogo.
+- **Dónde se mostraría:** descripción, letras, detalle y corazón de las tarjetas de ocupaciones afines.
+- **Opciones:** completar el catálogo y la correspondencia por código; definir favoritos de ocupaciones sin correspondencia en una iteración posterior; conservar únicamente los datos y acciones que tienen soporte actual.
+- **Si no se muestra:** una ocupación sin catálogo conserva título y ajuste remotos y permite filtrar sus carreras por O*NET; no muestra descripción, letras o enlace inventados. Sin código local tampoco se presenta el corazón, porque los favoritos actuales guardan ese identificador. Una ocupación con contenido pendiente omite el marcador provisional y conserva su detalle existente con sus candados actuales.
+- **Estado:** faltantes registrados; no se inventa correspondencia ni contenido. El fixture actual tiene códigos locales para sus diez coincidencias. La ausencia de código queda cubierta con un escenario DATO DE PRUEBA.

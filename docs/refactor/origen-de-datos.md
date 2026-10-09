@@ -32,7 +32,29 @@ y `dimensiones_destacadas[].descripcion` vienen del servidor en la consulta de r
 El adaptador de Helena conserva el texto recibido; no lo genera a partir del nombre.
 Las descripciones locales RIASEC y los ejemplos por código son contenido de presentación
 en `features/discovery/data/dimensionExamples.ts`. Los ejemplos permanecen en el front
-también en modo API; su uso en la vista completa corresponde a F4 del anexo.
+también en modo API; desde F4 aparecen en el perfil completo y su guía.
+
+F4 usa `features/discovery/data/resultPages.ts` como configuración de `instrumento`
+y `tipoResultado` en ambos modos: el almacén todavía no carga `GET /instrumentos`.
+Es el respaldo expresamente autorizado por el anexo; no añade peticiones ni simula
+la disponibilidad de instrumentos. `useResultPage` elige las secciones por ese tipo.
+En API, todas las dimensiones, código, empate, perfil plano, coincidencias y vías
+de carreras proceden del resultado RIASEC remoto. Los adaptadores solo importan tipos;
+el dominio enriquece las ocupaciones con el catálogo existente cuando corresponde.
+El nombre de una familia se resuelve por su mismo identificador en `careerFamilies`,
+conservando el valor remoto si no hay etiqueta local. No se calculan afinidades en API.
+
+Inteligencias mantiene la demostración en ambos modos, con su aviso explícito de
+instrumento aún no disponible. `demoIntelligences` en `features/discovery/lib/helenaPages.ts`
+contiene las siete dimensiones y porcentajes aprobados en F4, marcados DATO DE PRUEBA;
+sus descripciones proceden de `descripcionesInteligenciasDemo` en `dimensionExamples.ts`.
+Las destacadas locales incluyen todos los máximos empatados. La misma plantilla y hook
+admiten un resultado real con `dimensiones_destacadas`, sin sustituirlo por ese cálculo local.
+El ejemplo local de intereses agrega R=50, E=45 y C=35, marcados DATO DE PRUEBA, para
+completar las seis filas; conserva S=78, I=72 y A=66 y su resumen anterior. Las afinidades
+y relaciones con carreras locales reutilizan `isAffine` y el catálogo existentes.
+Favoritos y planes siguen en los almacenes actuales del navegador; no cambia ninguna
+clave ni formato de persistencia. La guía, filas expandidas y filtros son estado de la vista.
 
 Cada dominio guarda `datos`, `estado` (`sin_cargar`, `cargando`, `listo`, `vencido`, `error`) y `error`, solo en memoria. El ingreso confirmado habilita las consultas: resumen, actividades y no vistos en paralelo; RIASEC después si Elena está disponible. Fichas y logros se piden al abrir sus vistas. Los recursos cerrados dejan de contar como consumidores aunque sigan montados. Una acción actualiza actividades y avisos; `FICHA` vence fichas, `INSIGNIA` vence logros y `NIVEL` vence logros y resumen. Las secciones visibles se recargan inmediatamente; las demás esperan su apertura. Los reintentos conservan los recibos de escritura y solo repiten consultas.
 
@@ -81,7 +103,7 @@ Cada uno de estos archivos empieza con `// DATO DE PRUEBA: <qué es y qué lo re
 | Alias de salón, avisos, videos y lecturas de recursos | `data/content/adventure.ts` (`classroomAliases`, `resourceDemoNotices`, `resourceDemoVideos`, `resourceReading`) |
 | Entradas y check-ins del diario de ejemplo | `data/content/journalPrompts.ts` (`journalDemoEntries`, `readinessDemoCheckIns`) |
 | Perfiles de ocupación de ejemplo | `data/catalog/occupations.ts` (`mockOccupationProfiles`) |
-| Intereses de ejemplo del libro de Helena | `features/discovery/lib/helenaPages.ts` (`demoInterests`) |
+| Intereses e inteligencias de ejemplo del libro de Helena | `features/discovery/lib/helenaPages.ts` (`demoInterests`, `demoIntelligences`); descripciones de inteligencias en `features/discovery/data/dimensionExamples.ts` |
 | Conversaciones familiares de ejemplo | `data/content/familyConversations.ts` (`familyConversationDemoData`) |
 
 `interviewDetails` tiene una sola definición en `data/content/research.ts`. `features/counselor/data/interviewDetails.ts` lo importa y conserva `reactionOptions`. Los dos portales consumen los mismos detalles.
@@ -122,7 +144,7 @@ Los hooks deciden entre datos remotos y locales y devuelven datos preparados, ac
 | Aventura | `features/adventure/hooks/`: sesión, sincronización, nivel, acceso a Ciudad, detalles del mapa, cuenta y novedades. |
 | Actividades | `features/activities/hooks/useActivityCompletion.ts`, `features/activities/hooks/useActivityPlayer.ts`, `features/activities/hooks/useInstrumentResponses.ts`, `features/activities/hooks/useActivityResources.ts`, `features/activities/hooks/useActivityFinish.ts` y `features/activities/hooks/useInstrumentResult.ts`: navegación, respuestas, fichas, guardado y resultados. |
 | Mochila | `features/backpack/hooks/useBackpack.ts`: selección por URL, disponibilidad, requisitos, errores, reintentos y acciones. |
-| Descubrimiento | `features/discovery/hooks/useCatalogAffinity.ts`, `features/discovery/hooks/useStudentProfile.ts`, `features/discovery/hooks/usePassport.ts`, `features/discovery/hooks/useBadgeDetail.ts` y `features/discovery/hooks/useHelenaPages.ts`: afinidades, nivel, insignias y páginas reveladas. |
+| Descubrimiento | `features/discovery/hooks/useCatalogAffinity.ts`, `features/discovery/hooks/useStudentProfile.ts`, `features/discovery/hooks/usePassport.ts`, `features/discovery/hooks/useBadgeDetail.ts`, `features/discovery/hooks/useHelenaPages.ts` y `features/discovery/hooks/useResultPage.ts`: afinidades, nivel, insignias, páginas reveladas y resultado completo por tipo. |
 
 La única llamada a `await completarActividad(` está en `move`, dentro de `features/activities/hooks/useActivityCompletion.ts`, al alcanzar `$fin`. Guardar respuestas, consultar, revelar o revisar no completa una actividad. Las referencias de envío y montaje se comparten con respuestas y cierre para coordinar guardado y navegación.
 
