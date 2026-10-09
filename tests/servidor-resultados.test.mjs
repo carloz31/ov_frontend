@@ -2,6 +2,9 @@ import { esConsultaDominio, respuestaDominio } from './soporte/servidor-ayudas.m
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import test from 'node:test'
+import React from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
+import { MemoryRouter } from 'react-router'
 import { iniciarMara, botonEn } from './soporte/servidor-mara-ayudas.mjs'
 import { fixtureServidor, jsonServidor, copia, elementos, esperar } from './soporte/servidor-ayudas.mjs'
 
@@ -220,20 +223,24 @@ test('el catálogo respeta posición y correlación e incluye códigos desconoci
   assert.equal(elementos(nurse, (e) => !!e.props.to).length, 0)
 })
 
-test('el libro muestra porcentajes, carreras y via del resultado y conserva ejemplos señalados', async () => {
+test('el libro resume las dimensiones remotas y anuncia contenidos, con enlaces al resultado y la guía', async () => {
   const resultado = jsonServidor('resultado-riasec'),
     f = await iniciarMara({ resultado })
   const d = f.app.load('src/store/discoveryStore.ts')
   d.revelarPaginaApi('est-ana', resultado.calculado_en, 'intereses')
   const Book = f.app.load('src/pages/student/HelenaBookView.tsx').HelenaBookView
-  const tree = Book()
-  assert.match(texto(tree), /100\s*%/)
-  assert.match(texto(tree), /Carreras que conducen a ellas/)
-  assert.match(texto(tree), /Geólogo/)
-  assert.match(texto(tree), /Disponible en una próxima iteración/)
-  assert.equal(elementos(tree, (e) => e.props.to?.includes('act-tip-final&revision=1')).length, 1)
-  assert.equal(elementos(tree, (e) => e.props.to === '/student/catalog/careers/civil-engineering').length, 1)
-  assert.ok(elementos(tree, (e) => e.props.to === '/student/catalog/professions/geologist').length > 0)
+  // F4b: render completo de los nuevos componentes; los puntajes/vías viven en el detalle.
+  const marcado = renderToStaticMarkup(React.createElement(MemoryRouter, null, React.createElement(Book)))
+  assert.match(marcado, /Tu código de interés · IRA/)
+  for (const codigo of resultado.codigo_interes.codigo)
+    assert.ok(marcado.includes(resultado.dimensiones.find((dimension) => dimension.codigo === codigo).descripcion))
+  assert.match(marcado, /10 ocupaciones afines/)
+  assert.match(marcado, /3 carreras que conducen a ellas/)
+  assert.doesNotMatch(marcado, /100\s*%|Geólogo|Carreras que conducen a ellas/)
+  assert.match(marcado, /Disponible en una próxima iteración/)
+  assert.match(marcado, /href="\/student\/profile\/helena\/intereses"/)
+  assert.match(marcado, /href="\/student\/profile\/helena\/intereses\?guia=1"/)
+  assert.doesNotMatch(marcado, /act-tip-final&amp;revision=1|catalog\/careers\/civil-engineering|catalog\/professions\/geologist/)
 })
 
 test('act-tip-final muestra el nodo del servidor y la revisión nunca completa el resultado de nuevo', async () => {

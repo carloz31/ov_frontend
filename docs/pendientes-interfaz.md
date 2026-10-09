@@ -105,6 +105,7 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
 - **Opciones:** conservar temporalmente el recibo y origen en un estado del dominio; abrir el visor sobre la tarjeta sin abandonar el reproductor; volver al mapa y consultar el historial de desbloqueos.
 - **Si no se muestra:** las fichas permanecen obtenidas, pero regresar por el navegador no recupera el cierre con los desbloqueos de esa finalización. Reabrir la actividad completada muestra el modo repaso sin reutilizar recompensas anteriores.
 - **Estado:** pendiente solicitado expresamente en F5, punto 3. F3 conserva la navegación mediante enlaces que prescribe el anexo y no agrega persistencia ni un flujo de retorno.
+- **Verificación F5:** reproducido en navegador con shell real, en API contra SQLite desechable y en local. El historial vuelve a un cierre de repaso, sin el recibo original; las fichas obtenidas sí permanecen disponibles. No se implementa ninguna opción en esta fase de verificación.
 
 ## 2026-10-09 · Anexo F4 · Duración de las carreras
 
@@ -138,3 +139,11 @@ Datos que el backend entrega (o que una vista necesita) y que la interfaz todav�
 - **Opciones:** definir la relación y el estado de obtención en el contrato de casos en su iteración; aprobar un catálogo explícito de relaciones y leer su estado remoto; mantener la omisión actual.
 - **Si no se muestra:** la tarjeta conserva afinidad, letras y acciones, sin afirmar que el estudiante obtuvo una recompensa que no está confirmada.
 - **Estado:** omitido por instrucción expresa del usuario para esta corrección de F4. Permanece pendiente de datos y decisión de integración futura; no se calcula desde demostraciones ni desde favoritos.
+
+## 2026-10-09 · Anexo F5 · Recarga directa del resultado API
+
+- **Dato/estado:** durante la carga inicial de `GET /cuentas/{c}/instrumentos` y `GET /cuentas/{c}/instrumentos/TEST-RIASEC/resultado`, `useResultPage` todavía no dispone de una página válida; `HelenaResultView` redirige al libro. No falta un campo en el contrato.
+- **Dónde ocurre:** al recargar o abrir directamente `/student/profile/helena/intereses` en modo API, incluso con la página revelada. Reproducido dos veces contra la SQLite desechable de F5; la entrada mediante el enlace del libro funciona.
+- **Opciones:** diferenciar carga de acceso denegado en el hook y conservar la ruta hasta resolverla usando los componentes existentes; cargar los datos antes de evaluar la guarda de la ruta; mantener por ahora la entrada desde el libro.
+- **Consecuencia actual:** no se pierde el resultado ni su revelación, pero la recarga abandona el detalle y exige volver a entrar desde el libro.
+- **Estado:** pendiente de corrección, detectado en F5. No se elimina la guarda ni se agrega un estado visual durante esta fase de verificación. El scroll del detalle funciona entrando desde el libro.

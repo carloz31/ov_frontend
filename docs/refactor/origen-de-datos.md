@@ -2,6 +2,15 @@
 
 Inventario al cerrar X de actividades por dominio (8 de octubre de 2026), conforme a la iteración 1. Las rutas parten de `src/`. Conserva presentación y persistencia; describe las consultas por dominio y el mapa de §7.1–7.4. Para las reglas de capas y tamaño, consulta `AGENTS.md`.
 
+Verificado el 9 de octubre en F5 del anexo de cierre, perfil y resultados:
+descripciones de F2 y datos del resultado de F4 contrastados con una SQLite
+plataforma desechable y con el modo local. Se mantienen las fuentes descritas
+abajo: fragmentos y ejemplos son presentación del front; duración es catálogo;
+resultados, disponibilidad y progreso API son del servidor. Favoritos y planes
+siguen siendo locales en ambos modos. No cambian claves, formatos ni consultas.
+Recorrido, límites y comparación de suites en
+`docs/student-experience/informe-f5-cierre-perfil-resultados.md`.
+
 ## 1. Del servidor (`VITE_DATOS=api`)
 
 Dieciséis peticiones a través de los módulos concretos de `store/servidor/`: `sesion.ts`, `secciones.ts`, `avisos.ts`, `resultado.ts`, `consultas.ts`, `refresco.ts` y `operaciones.ts`. `cuenta.ts` conserva la cuenta seleccionada y su almacenamiento. `services/api/cliente.ts` contiene el único `fetch` y exporta `obtener` (GET), `enviar` (POST), `actualizar` (PATCH) y `eliminar` (DELETE), que solo se importan dentro de `services/api/`. Los siete módulos de recursos arman URL y cuerpo sin guardar estado ni leer la cuenta activa. Las peticiones actuales usan GET y POST; una respuesta 204 devuelve datos `undefined` sin leer JSON.

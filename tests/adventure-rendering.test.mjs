@@ -3120,7 +3120,10 @@ test('Helena seals protect results and reveal a labeled example without changing
     assert.match(html, /Romper el sello/); assert.doesNotMatch(html, /Social<|Investigador<|Artístico</)
     d.updateDiscovery(state => ({ ...state, revealedPages: ['intereses'] }))
     html = render('/student/profile/helena')
-    assert.match(html, /Descifrada/); assert.match(html, /Ocupaciones afines/); assert.match(html, /Este ejemplo no es tu resultado personal/)
+    // F4b: el libro anuncia contenidos y enlaza al detalle; no despliega ocupaciones.
+    assert.match(html, /Página I · descifrada/); assert.match(html, /ocupaciones afines/); assert.match(html, /Este ejemplo no es tu resultado personal/)
+    assert.match(html, /href="\/student\/profile\/helena\/intereses"/)
+    assert.match(html, /href="\/student\/profile\/helena\/intereses\?guia=1"/)
     assert.equal(journeyStore.useJourney().results.length, 0)
     const unlocks = load(path.resolve('src/features/adventure/lib/unlocks.ts'))
     assert.equal(unlocks.getUnlocks(store.createInitialAdventure(), empty, d.getDiscovery()).filter(u => u.id === 'plans:intereses').length, 1)
