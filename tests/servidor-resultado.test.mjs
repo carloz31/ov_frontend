@@ -13,8 +13,8 @@ function funciones(app = fixtureServidor()) {
     ...app.load('src/lib/servidor/adaptadores.ts'),
   }
 }
-async function preparar(resultado = jsonServidor('resultado-riasec'), pagina = 'intereses') {
-  const f = await iniciarMara({ resultado })
+async function preparar(resultado = jsonServidor('resultado-riasec'), pagina = 'intereses', ruta) {
+  const f = await iniciarMara({ resultado, ruta })
   await f.app.load('src/store/servidor/resultado.ts').cargarResultadoRiasec()
   f.app.load('src/store/discoveryStore.ts').revelarPaginaApi('est-ana', resultado.calculado_en, pagina)
   const { useResultPage } = f.app.load('src/features/discovery/hooks/useResultPage.ts')
@@ -333,7 +333,7 @@ test('siguientes pasos conserva la pregunta como prompt y enlaza familia y pági
   assert.equal(links[2].props.to, '/student/profile/helena/intereses')
 })
 
-test('vista de ruta compone el resultado por parámetro y el libro ofrece su primer enlace', async () => {
+test('vista de ruta compone el resultado por parámetro y el libro enlaza al detalle y la guía', async () => {
   const f = await preparar()
   const { HelenaResultView } = f.app.load('src/pages/student/HelenaResultView.tsx')
   const vista = renderToStaticMarkup(
@@ -357,10 +357,9 @@ test('vista de ruta compone el resultado por parámetro y el libro ofrece su pri
   const { useHelenaPages } = f.app.load('src/features/discovery/hooks/useHelenaPages.ts')
   const { HelenaBookPages } = f.app.load('src/features/discovery/components/HelenaBookPages.tsx')
   const libro = html(HelenaBookPages, { model: useHelenaPages() })
-  assert.match(
-    libro,
-    /Descifrada<\/p><a class="sx-d-action sx-d-action-gold" href="\/student\/profile\/helena\/intereses"[^>]*>Ver resultado completo<\/a>/,
-  )
+  assert.match(libro, /href="\/student\/profile\/helena\/intereses"[^>]*>Ver resultado completo/)
+  assert.match(libro, /href="\/student\/profile\/helena\/intereses\?guia=1"[^>]*>¿Qué significa cada letra\?/)
+  assert.doesNotMatch(libro, /Carreras que conducen a ellas|afines=1/)
 })
 
 test('sin resultado API no sustituye las sugerencias por el ejemplo local', async () => {
@@ -487,4 +486,120 @@ test('la tarjeta del libro conserva su resumen con descripciones completas', asy
   const marcado = html(HelenaBookPages, { model })
   assert.ok(marcado.includes(model.pages.find((p) => p.id === 'intereses').result.areas[0].description))
   assert.doesNotMatch(marcado, /Te atraen sobre todo las actividades/)
+})
+
+test('F4b: resumen COINCIDENCIAS conserva código y descripciones, sin puntajes, con conteos reales', () => {
+  const { resumenPagina, resultadoHelenaCompleto } = funciones()
+  const r = copia(jsonServidor('resultado-riasec'))
+  // DATO DE PRUEBA: código CAS y cantidades distintas de las ilustraciones.
+  r.codigo_interes.codigo = ['C', 'A', 'S']
+  r.coincidencias = r.coincidencias.slice(0, 4)
+  r.carreras_recomendadas = r.carreras_recomendadas.slice(0, 2)
+  const resultado = {
+    ...resultadoHelenaCompleto(r, 'COINCIDENCIAS'),
+    coincidencias: r.coincidencias,
+    carreras_recomendadas: r.carreras_recomendadas,
+  }
+  const page = { state: 'revealed', tipoResultado: 'COINCIDENCIAS' }
+  const resumen = resumenPagina(page, resultado)
+  assert.equal(resumen.rotulo, 'Tu código de interés · CAS')
+  assert.deepEqual(
+    Array.from(resumen.filas, (d) => d.codigo),
+    ['C', 'A', 'S'],
+  )
+  assert.ok(
+    resumen.filas.every(
+      (d) =>
+        d.marcador === 'letra' &&
+        d.descripcion === r.dimensiones.find((dimension) => dimension.codigo === d.codigo).descripcion,
+    ),
+  )
+  assert.doesNotMatch(JSON.stringify(resumen), /score|porcentaje|puntaje|%/)
+  assert.deepEqual(
+    Array.from(resumen.contenidos, (c) => c.texto),
+    ['Tu perfil en los 6 tipos de interés', '4 ocupaciones afines', '2 carreras que conducen a ellas'],
+  )
+  assert.equal(resumen.cierre, 'Ninguno es mejor que otro: son pistas para explorar.')
+  for (const extras of [{}, { coincidencias: [], carreras_recomendadas: [] }]) {
+    const sinDatos = resumenPagina(page, { ...resultadoHelenaCompleto(r, 'COINCIDENCIAS'), ...extras })
+    assert.equal(sinDatos.contenidos.length, 1)
+  }
+  assert.deepEqual(
+    Array.from(resumenPagina(page, { ...resultado, coincidencias: [] }).contenidos, (c) => c.icono),
+    ['perfil', 'carreras'],
+  )
+  assert.deepEqual(
+    Array.from(resumenPagina(page, { ...resultado, carreras_recomendadas: [] }).contenidos, (c) => c.icono),
+    ['perfil', 'ocupaciones'],
+  )
+  for (const state of ['sealed', 'ready'])
+    assert.equal(resumenPagina({ ...page, state }, resultado).contenidos.length, 0)
+})
+
+test('F4b: perfil plano muestra el aviso exacto y solo anuncia el perfil', async () => {
+  const r = copia(jsonServidor('resultado-riasec'))
+  r.perfil_plano = true // DATO DE PRUEBA: caso límite, con sugerencias que se deben omitir.
+  const f = await preparar(r)
+  const model = f.app.load('src/features/discovery/hooks/useHelenaPages.ts').useHelenaPages()
+  const page = model.pages.find((p) => p.id === 'intereses')
+  assert.equal(page.resumen.rotulo, 'Tu código de interés')
+  assert.equal(page.resumen.filas.length, 0)
+  assert.equal(page.resumen.titulo, 'Tus respuestas no marcaron un interés por encima de otro')
+  assert.equal(
+    page.resumen.cierre,
+    'Respondiste de forma muy parecida a todos los tipos de actividad. Revisa tus encuentros con Mara pensando en lo que de verdad disfrutas.',
+  )
+  assert.equal(page.resumen.contenidos.length, 1)
+  const { HelenaPageCard } = f.app.load('src/features/discovery/components/HelenaPageCard.tsx')
+  const marcado = html(HelenaPageCard, { page, model })
+  assert.match(marcado, /href="\/student\/exploration\?punto=mara-test"/)
+  assert.doesNotMatch(marcado, /ocupaciones afines|carreras que|guia=1/)
+})
+
+test('F4b: DESTACADAS comparte filas, admite una o dos y cambia rótulo y cierre', () => {
+  const app = fixtureServidor({ api: false })
+  app.load('src/store/discoveryStore.ts').updateDiscovery((s) => ({ ...s, revealedPages: ['inteligencias'] }))
+  const page = app
+    .load('src/features/discovery/hooks/useHelenaPages.ts')
+    .useHelenaPages()
+    .pages.find((p) => p.tipoResultado === 'DESTACADAS')
+  const { resumenPagina } = funciones(app)
+  const { HelenaPageSummary } = app.load('src/features/discovery/components/HelenaPageSummary.tsx')
+  for (const cantidad of [1, 2]) {
+    // DATO DE PRUEBA: selección explícita de una o dos dimensiones en el mismo resultado.
+    const resultado = { ...page.result, destacadas: page.result.areas.slice(0, cantidad) }
+    const resumen = resumenPagina(page, resultado)
+    assert.equal(resumen.filas.length, cantidad)
+    assert.ok(resumen.filas.every((fila) => fila.marcador === 'inteligencia'))
+    assert.equal(
+      resumen.rotulo,
+      cantidad === 1 ? 'Tu inteligencia más desarrollada' : 'Tus inteligencias más desarrolladas',
+    )
+    assert.equal(
+      resumen.cierre,
+      cantidad === 1
+        ? 'Es la que más usas hoy para aprender y resolver. Todas se pueden desarrollar.'
+        : 'Destacan por igual. Ninguna es mejor que otra: describen cómo te gusta aprender y resolver.',
+    )
+    assert.deepEqual(
+      Array.from(resumen.contenidos, (c) => c.texto),
+      ['Tu perfil en las 7 inteligencias', 'Ideas para aprovecharlo con tu familia y tu diario'],
+    )
+    const marcado = html(HelenaPageSummary, { resumen })
+    assert.doesNotMatch(marcado, /%|sx-d-trail|sx-d-seal/)
+    assert.equal((marcado.match(/class="sx-d-helena-marker"/g) ?? []).length, cantidad)
+  }
+})
+
+test('F4b: guia=1 abre la guía del resultado y permite cerrarla sin reabrirla', async () => {
+  const f = await preparar(
+    jsonServidor('resultado-riasec'),
+    'intereses',
+    '/student/profile/helena/intereses?guia=1',
+  )
+  const montado = f.app.mount(() => f.hook('intereses'))
+  assert.equal(montado.render().guia, true)
+  montado.render().setGuia(false)
+  assert.equal(montado.render().guia, false)
+  montado.unmount()
 })

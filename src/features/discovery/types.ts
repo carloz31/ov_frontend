@@ -1,6 +1,23 @@
 import type { HelenaDimension, TipoResultadoHelena } from '@/types/profile'
 
 export type DimensionPagina = HelenaDimension & { ejemplos?: string }
+export type FilaResumenPagina = {
+  codigo: string
+  nombre: string
+  descripcion: string
+  marcador: 'letra' | 'inteligencia'
+}
+export type ContenidoPagina = {
+  texto: string
+  icono: 'perfil' | 'ocupaciones' | 'carreras' | 'ideas'
+}
+export type ResumenPagina = {
+  rotulo: string
+  filas: FilaResumenPagina[]
+  titulo?: string
+  cierre: string
+  contenidos: ContenidoPagina[]
+}
 export type OcupacionResultado = {
   clave: string
   codigo: string | null

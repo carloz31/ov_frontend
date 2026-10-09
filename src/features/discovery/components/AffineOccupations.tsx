@@ -1,4 +1,5 @@
 import { Parchment } from '@/components/student/Parchment'
+import { appPaths } from '@/routes/paths'
 import { ChevronRight } from 'lucide-react'
 import { Link } from 'react-router'
 import { FavoriteButton } from '@/components/student/FavoriteButton'
@@ -122,6 +123,10 @@ export function AffineOccupations({
         Se muestran hasta 10 ocupaciones, de las que más se parecen a tu perfil a las que menos. Fuente: O*NET
         Interest Profiler.
       </p>
+      <Link className="sx-d-result-catalog-link" to={`${appPaths.student.catalog.professions}?afines=1`}>
+        Ocupaciones afines en el catálogo
+        <ChevronRight aria-hidden="true" />
+      </Link>
     </Parchment>
   )
 }

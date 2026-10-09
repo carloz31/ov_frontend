@@ -38,7 +38,7 @@ La corrección visual de F4, aprobada el 9 de octubre de 2026, añade
 `fragmentosResumen` en `features/discovery/data/dimensionExamples.ts`: seis textos
 fijos de presentación autorizados por el usuario. Solo componen la frase del detalle
 en el orden de `codigo_interes`; no sustituyen las descripciones remotas de las filas
-y la guía, ni el resumen anterior de la tarjeta del libro. Si falta un fragmento,
+y la guía, ni las descripciones completas del resumen del libro. Si falta un fragmento,
 se muestran las tres descripciones completas como lista.
 
 `CarreraResultado.duracion` es un campo opcional del modelo de presentación de la
@@ -59,13 +59,14 @@ El nombre de una familia se resuelve por su mismo identificador en `careerFamili
 conservando el valor remoto si no hay etiqueta local. No se calculan afinidades en API.
 
 Inteligencias mantiene la demostración en ambos modos, con su aviso explícito de
-instrumento aún no disponible. `demoIntelligences` en `features/discovery/lib/helenaPages.ts`
+demostración: el libro avisa que el ejemplo no es personal y el detalle conserva
+el aviso de instrumento aún no disponible. `demoIntelligences` en `features/discovery/lib/helenaPages.ts`
 contiene las siete dimensiones y porcentajes aprobados en F4, marcados DATO DE PRUEBA;
 sus descripciones proceden de `descripcionesInteligenciasDemo` en `dimensionExamples.ts`.
 Las destacadas locales incluyen todos los máximos empatados. La misma plantilla y hook
 admiten un resultado real con `dimensiones_destacadas`, sin sustituirlo por ese cálculo local.
 El ejemplo local de intereses agrega R=50, E=45 y C=35, marcados DATO DE PRUEBA, para
-completar las seis filas; conserva S=78, I=72 y A=66 y su resumen anterior. Las afinidades
+completar las seis filas; conserva S=78, I=72 y A=66 y las descripciones de sus áreas. Las afinidades
 y relaciones con carreras locales reutilizan `isAffine` y el catálogo existentes.
 Favoritos y planes siguen en los almacenes actuales del navegador; no cambia ninguna
 clave ni formato de persistencia. La guía, filas expandidas y filtros son estado de la vista.
@@ -73,6 +74,20 @@ clave ni formato de persistencia. La guía, filas expandidas y filtros son estad
 Cada dominio guarda `datos`, `estado` (`sin_cargar`, `cargando`, `listo`, `vencido`, `error`) y `error`, solo en memoria. El ingreso confirmado habilita las consultas: resumen, actividades y no vistos en paralelo; RIASEC después si Elena está disponible. Fichas y logros se piden al abrir sus vistas. Los recursos cerrados dejan de contar como consumidores aunque sigan montados. Una acción actualiza actividades y avisos; `FICHA` vence fichas, `INSIGNIA` vence logros y `NIVEL` vence logros y resumen. Las secciones visibles se recargan inmediatamente; las demás esperan su apertura. Los reintentos conservan los recibos de escritura y solo repiten consultas.
 
 `ActividadCuenta` incluye tipo, orden, contenido, visibilidad y visible. Desde F3, la lista y el orden de puntos en modo API vienen de esa sección; posición, etiqueta e ícono vienen del JSON por clave. Las secuencias consecutivas se agrupan y el reproductor recibe el código del servidor. Solo el modo local conserva su lista fija. El progreso cuenta actividades SIEMPRE visibles con contenido y mapa, sin extras. En X se retiran el tipo global y los dos fixtures anteriores; `obtenerEstado` ya se retiró en F2. Los dieciséis fixtures vigentes se exportan por dominio y conservan su contenido. Testimonios, preguntas del diario y conversaciones siguen sin servicio ni vista API en el front; están registrados en `docs/pendientes-interfaz.md`.
+
+Desde F4b, `resumenPagina` en `features/discovery/lib/resultPage.ts` compone el
+resumen del libro por `tipoResultado` y estado, sin trasladar puntajes a las filas.
+Los intereses respetan el orden de las áreas adaptadas de `codigo_interes` y
+muestran las tres descripciones completas; inteligencias usa las destacadas y sus
+descripciones existentes. Los conteos API son `coincidencias.length` y
+`carreras_recomendadas.length` del resultado remoto, omitiendo cantidades vacías
+sin sustituirlas por demostraciones. En local se cuentan las mismas afinidades y
+relaciones de catálogo que usa el detalle (`ocupacionesResultado` y
+`carrerasResultado`). Los totales de dimensiones salen del perfil completo.
+El perfil plano anuncia solo ese perfil. Los textos de cierre son contenido de
+presentación aprobado en `docs/student-experience/spec-f4b-libro-helena-resumen.md`.
+`guia=1` abre la guía de la vista completa y sigue siendo estado de interfaz;
+no añade consultas ni modifica almacenamiento, disponibilidad o resultados.
 
 ## 2. Contenido del front (se queda en el front)
 

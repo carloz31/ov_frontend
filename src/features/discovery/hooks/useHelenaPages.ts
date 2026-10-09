@@ -1,4 +1,3 @@
-import { useReturnFocus } from '@/hooks/useReturnFocus'
 import { useEffect, useState } from 'react'
 
 import { useJourney } from '@/store/journeyStore'
@@ -13,8 +12,11 @@ import { cargarResultadoRiasec } from '@/store/servidor/resultado'
 import { consultarAvanceInstrumentos, consultarProgreso } from '@/store/servidor/consultas'
 import { ciudadDisponible, textoRequisito, paginaInteresesServidor } from '@/lib/servidor/adaptadores'
 
+import { resultPages } from '../data/resultPages'
+import { resumenPagina } from '../lib/resultPage'
+import { carrerasResultado, ocupacionesResultado } from '../lib/resultCatalog'
+
 export function useHelenaPages() {
-  const focus = useReturnFocus()
   const journey = useJourney(),
     discovery = useDiscovery(),
     servidor = useEstadoServidor()
@@ -80,7 +82,6 @@ export function useHelenaPages() {
       vigente = false
     }
   }, [servidor.actividades.datos, intento])
-  const [meaning, setMeaning] = useState(false)
   const [opening, setOpening] = useState<InstrumentPageId>()
   useEffect(() => {
     if (!opening) return
@@ -100,29 +101,51 @@ export function useHelenaPages() {
     )
   }
   return {
-    focus,
     requisito,
     errorConsulta,
     setErrorConsulta,
     setIntento,
-    meaning,
-    setMeaning,
     opening,
     revelarPagina,
     errorResultado: servidor.errorResultado
       ? { mensaje: mensajeErrorServidor(servidor.errorResultado) }
       : null,
-    pages: pages.map((p) => ({
-      ...p,
-      etiquetaDemo: modoApi ? 'Disponible en una próxima iteración · ' : 'Demostración · ',
-      mostrarRequisito: modoApi && p.id === 'intereses',
-      revelacionBloqueada: modoApi && !servidor.resultadoRiasec,
-      mostrarPuntajes: modoApi,
-      significadoHref: modoApi
-        ? '/student/exploration?actividad=act-tip-final&revision=1'
-        : '/student/exploration?actividad=act-tip-01&modo=directa',
-      carrerasRecomendadas:
-        modoApi && !p.perfilPlano ? servidor.resultadoRiasec?.carreras_recomendadas : undefined,
-    })),
+    pages: pages.map((p) => {
+      const tipoResultado = resultPages[p.id]?.tipoResultado
+      const coincidencias = tipoResultado === 'COINCIDENCIAS'
+      const remoto = modoApi && coincidencias ? servidor.resultadoRiasec : undefined
+      const ocupaciones =
+        !modoApi && coincidencias && !p.perfilPlano && p.state === 'revealed'
+          ? ocupacionesResultado(
+              undefined,
+              false,
+              discovery.revealedPages,
+              p.result?.areas.map((d) => d.code) ?? [],
+              [],
+            )
+          : []
+      return {
+        ...p,
+        tipoResultado,
+        etiquetaDemo: modoApi ? 'Disponible en una próxima iteración · ' : 'Demostración · ',
+        antetitulo: `Página ${p.numeral} · ${p.state === 'sealed' ? 'sellada' : p.state === 'ready' ? 'lista para revelar' : 'descifrada'}`,
+        avisoDemo: `${modoApi ? 'Disponible en una próxima iteración · ' : 'Demostración · '}${p.state === 'sealed' ? 'Este instrumento aún no está disponible.' : 'Este ejemplo no es tu resultado personal.'}`,
+        textoSello: `Helena terminó de leer tus respuestas. Rompe el sello para descubrir ${coincidencias ? 'tu código de interés' : 'tus inteligencias más desarrolladas'}.`,
+        mostrarRequisito: modoApi && coincidencias,
+        revelacionBloqueada: modoApi && !servidor.resultadoRiasec,
+        resumen: resumenPagina(
+          { ...p, tipoResultado },
+          p.result
+            ? {
+                ...p.result,
+                coincidencias: modoApi ? remoto?.coincidencias : ocupaciones,
+                carreras_recomendadas: modoApi
+                  ? remoto?.carreras_recomendadas
+                  : carrerasResultado(undefined, false, ocupaciones),
+              }
+            : undefined,
+        ),
+      }
+    }),
   }
 }

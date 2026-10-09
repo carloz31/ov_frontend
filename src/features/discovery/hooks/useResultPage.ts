@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useLocation } from 'react-router'
 import { modoApi } from '@/config/env'
 import { resultadoHelenaCompleto } from '@/lib/servidor/adaptadores'
 import { useDiscovery } from '@/store/discoveryStore'
@@ -18,7 +19,11 @@ export function useResultPage(pagina: string | undefined, resultadoRecibido?: Re
   const servidor = useEstadoServidor()
   const discovery = useDiscovery()
   const exploration = useExploration()
-  const [guia, setGuia] = useState(false)
+  const { search } = useLocation()
+  const [guia, setGuia] = useState(() => new URLSearchParams(search).get('guia') === '1')
+  useEffect(() => {
+    if (new URLSearchParams(search).get('guia') === '1') setGuia(true)
+  }, [pagina, search])
   const [expandidas, setExpandidas] = useState<string[]>([])
   const [ajuste, setAjuste] = useState('Todas')
   const [seleccion, setSeleccion] = useState<string | null>(null)
