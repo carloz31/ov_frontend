@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Verifica que src/ respete la estructura de docs/spec-refactor-estructura.md y AGENTS.md.
+// Verifica que src/ respete la estructura y las dependencias definidas en AGENTS.md.
 // Uso:
 //   node scripts/verificar-estructura.mjs                          comprueba (sale con 1 si hay infracciones nuevas)
 //   node scripts/verificar-estructura.mjs --actualizar-excepciones reescribe scripts/estructura-excepciones.json
