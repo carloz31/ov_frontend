@@ -3,6 +3,7 @@ import * as apiAcciones from '@/services/api/acciones'
 import * as apiDesarrollo from '@/services/api/desarrollo'
 import { desarrollo, modoApi } from '@/config/env'
 import { cuentaActiva, seleccionarCuenta } from './cuenta'
+import { limpiarEstadoApoderado } from './apoderado'
 import {
   informarErrorServidor,
   limpiarEstadoServidor,
@@ -36,6 +37,7 @@ export function prepararIngreso() {
   inicio = null
   ingresoRegistrado = null
   limpiarEstadoServidor()
+  limpiarEstadoApoderado()
 }
 export function ingresar(): Promise<RespuestaServidor<RespuestaAccion>> {
   if (!modoApi)

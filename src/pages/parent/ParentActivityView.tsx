@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from 'react-router'
 import { parentActivities } from '@/features/parent/data/parentPortal'
 
 import { parentActivityAvailable } from '@/features/parent/lib/missionLogic'
-import { useParentJourney } from '@/features/parent/store/parentJourneyStore'
+import { useParentJourney } from '@/store/parentJourneyStore'
 
 function ParentActivityView() {
   const { activityId } = useParams()

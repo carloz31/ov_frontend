@@ -8,7 +8,7 @@ import { ParentResourceDialog } from '@/features/parent/components/ParentResourc
 import { parentRoute } from '@/features/parent/lib/selectors'
 import { parentActivities, parentChildren } from '@/features/parent/data/parentPortal'
 import { useParentPortalContext } from '@/features/parent/context/parentPortalContext'
-import { useParentJourney } from '@/features/parent/store/parentJourneyStore'
+import { useParentJourney } from '@/store/parentJourneyStore'
 import { parentActivityAvailable } from '@/features/parent/lib/missionLogic'
 
 function ParentActivitiesView() {

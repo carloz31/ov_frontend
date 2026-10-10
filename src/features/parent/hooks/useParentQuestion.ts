@@ -10,7 +10,7 @@ import {
   parentAccountId,
   updateParentJourney,
   useParentJourney,
-} from '@/features/parent/store/parentJourneyStore'
+} from '@/store/parentJourneyStore'
 
 type PracticeAttempt = Pick<IntentoPregunta, 'opcionIds' | 'correcta' | 'revelada' | 'numeroIntento'>
 export function useParentQuestion({

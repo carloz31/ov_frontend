@@ -18,7 +18,7 @@ import {
   updateParentJourney,
   useParentJourney,
   useParentJourneyError,
-} from '@/features/parent/store/parentJourneyStore'
+} from '@/store/parentJourneyStore'
 
 type PracticeAttempt = Pick<IntentoPregunta, 'opcionIds' | 'correcta' | 'revelada' | 'numeroIntento'>
 export function useParentActivitySession(activity: Actividad, review: boolean) {

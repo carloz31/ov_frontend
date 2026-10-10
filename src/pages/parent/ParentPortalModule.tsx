@@ -6,7 +6,7 @@ import { ThemeProvider } from '@/components/common/ThemeScope'
 import { appPaths } from '@/routes/paths'
 import { parentActivities, parentProfile } from '@/features/parent/data/parentPortal'
 import type { ParentPortalContext } from '@/features/parent/context/parentPortalContext'
-import { useParentJourney } from '@/features/parent/store/parentJourneyStore'
+import { useParentJourney } from '@/store/parentJourneyStore'
 import { completedParentActivities } from '@/features/parent/lib/missionLogic'
 
 function ParentPortalModule() {

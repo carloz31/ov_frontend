@@ -9,7 +9,7 @@ import type { Actividad } from '@/types/activities'
 import { appPaths } from '@/routes/paths'
 
 import { evaluateParentQuestion, startParentActivity } from '@/features/parent/lib/missionLogic'
-import { parentAccountId, updateParentJourney } from '@/features/parent/store/parentJourneyStore'
+import { parentAccountId, updateParentJourney } from '@/store/parentJourneyStore'
 
 import { ParentResourceDialog } from '@/features/parent/components/ParentResourceDialog'
 import { ParentQuestion } from '@/features/parent/components/ParentQuestion'

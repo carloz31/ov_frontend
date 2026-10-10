@@ -66,7 +66,7 @@ const { familyConversationDemoData, familyConversationTopics } = load(
   path.resolve('src/data/content/familyConversations.ts'),
 )
 const { AppRoutes } = load(path.resolve('src/routes/AppRoutes.tsx'))
-const parentMissionStore = load(path.resolve('src/features/parent/store/parentJourneyStore.ts'))
+const parentMissionStore = load(path.resolve('src/store/parentJourneyStore.ts'))
 function completedParentJourney() {
   const { parentActivities } = load(path.resolve('src/data/activities/content.ts'))
   const { initialJourney } = load(path.resolve('src/lib/activities/logic.ts'))

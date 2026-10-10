@@ -82,7 +82,7 @@ function fixture(saved = {}) {
   const content = load('src/data/activities/content.ts'),
     logic = load('src/lib/activities/logic.ts')
   const parent = load('src/features/parent/lib/missionLogic.ts'),
-    store = load('src/features/parent/store/parentJourneyStore.ts')
+    store = load('src/store/parentJourneyStore.ts')
   return {
     content,
     logic,

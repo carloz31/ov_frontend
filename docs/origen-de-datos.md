@@ -92,7 +92,7 @@ Todas en `localStorage`, salvo donde se indica. No se cambian sin una migración
 | `ov.student-reflections.v1` | `store/reflectionStore.ts` | respuestas y evaluaciones del piloto |
 | `ov.student-followups.v1` | `features/activities/store/followUpStore.ts` | preguntas de seguimiento |
 | `ov.student-ui.v1` | `store/studentUiStore.ts` | guías vistas, desbloqueos vistos, preferencias |
-| `ov.parent-missions.v1` | `features/parent/store/parentJourneyStore.ts` | actividades del apoderado |
+| `ov.parent-missions.v1` | `store/parentJourneyStore.ts` | actividades del apoderado |
 | `ov.staff.priorities.v1` (`sessionStorage`) | `features/counselor/store/prioritySettings.ts` | prioridades de la orientadora |
 | `ov.staff.selected-salon.v1` (`sessionStorage`) | `features/counselor/hooks/useSelectedSalon.ts` | salón elegido |
 

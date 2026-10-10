@@ -17,7 +17,7 @@ export type ActividadEstado = { codigo: string; titulo: string; estado: EstadoAc
 export type BloqueEstado = {
   codigo: string
   nombre: string
-  espacio: 'MISIONES_CAMPO' | 'CIUDAD'
+  espacio: 'MISIONES_CAMPO' | 'CIUDAD' | 'PORTAL_FAMILIA'
   estado: EstadoDisponibilidad
   actividades: ActividadEstado[]
 }

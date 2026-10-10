@@ -32,3 +32,4 @@ export function seleccionarCuenta(cuentas: CuentaResumen[]) {
   return codigo
 }
 export const cuentaActiva = () => sesion.codigo
+export const usuarioIngreso = () => sesion.usuario

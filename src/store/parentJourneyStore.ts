@@ -89,6 +89,12 @@ export function updateParentJourney(
 }
 export const useParentJourney = (accountId = parentAccountId) =>
   useSyncExternalStore(subscribe, () => getParentJourney(accountId))
+export function hidratarParentJourney(
+  cuenta: string,
+  transformar: (actual: JourneyState) => JourneyState,
+) {
+  return updateParentJourney(transformar, cuenta)
+}
 export const useParentJourneyError = () => useSyncExternalStore(subscribe, () => error)
 window.addEventListener('storage', (event: StorageEvent) => {
   if (event.key === storageKey || event.key === null) {
