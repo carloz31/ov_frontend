@@ -45,13 +45,13 @@ Bloques de diapositiva: `parrafo`, `lista`, `destacado` (`dato`, `idea_clave`, `
 
 ## Reglas de comportamiento
 
-- **Pregunta:** si acierta, retroalimentación y explicación; si falla, retroalimentación y la siguiente pista, y reintenta. Sin pistas y con `alAgotarPistas: "revelar_y_continuar"`, se revela la correcta y continúa. En opción múltiple, solo es correcta si coincide exactamente el conjunto. No hay puntaje visible.
+- **Pregunta:** seleccionar no registra un intento; se confirma con «Comprobar». Si acierta, muestra explicación y permite continuar. Si falla, permite un segundo intento (en preguntas de dos opciones, revela desde el primero); al agotar los intentos revela las respuestas correctas. Las opciones incorrectas quedan bloqueadas. En opción múltiple, solo es correcta si coincide exactamente el conjunto. No hay puntaje visible; el límite no depende de la cantidad de `pistas` del JSON.
 - **Ítem:** no tiene respuesta correcta; la reacción repite lo respondido sin elogios ni juicios. No se vuelve atrás durante la interacción.
 - **Retomar:** el progreso guarda el nodo actual (`nodoActualId`); al volver, sigue desde el siguiente pendiente.
 - **Completitud de un encuentro:** se llega a `$fin` y todas las `pregunta` con `bloqueante: true` tienen un intento correcto o revelado.
 - **Completitud de un registro:** todas las consignas obligatorias tienen entregable (en plantillas con `alternativa`, el archivo puede reemplazar celdas según `reemplazaSlots`).
 - **Instrumento:** completo cuando todos sus `item` tienen respuesta.
-- **Preguntas de seguimiento:** solo en registros.
+- **Preguntas de seguimiento:** en consignas de texto con criterios y fuera de matrices, tanto la primera entrega como una edición guardan una versión antes de evaluar. El proveedor devuelve `ADECUADA`, `INSUFICIENTE` o `NO_EVALUADA`; la longitud del texto no determina la clasificación. Se permiten hasta dos preguntas, solo si cabe al menos un carácter de respuesta, y el usuario continúa explícitamente al terminar. Las respuestas se condensan en una versión nueva sin alterar la inicial; omitirlas conserva la inicial. Fallos y timeout conservan lo guardado, y abandonar la vista evita publicar preguntas tardías.
 - **Editar después:** una celda editada crea un `Entregable` con versión nueva.
 
 ## Para producir contenido

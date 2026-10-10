@@ -30,6 +30,7 @@ const context = vm.createContext({
   Map,
   Set,
   crypto,
+  AbortController,
   window: { addEventListener() {} },
   localStorage: { getItem: () => null, setItem() {} },
 })
@@ -1500,8 +1501,10 @@ function immersivePlayerHarness(name, overrides = {}) {
 }
 
 test('immersive submission preserves validation, drafts, versions and the keep action', () => {
-  const activity = journeyContent.activities.find(activity => activity.tipo === 'registro' && activity.plantilla?.tipo !== 'matriz')
-  const node = activity.nodos.find(node => node.tipo === 'consigna' && node.entregable.tipo === 'texto')
+  // DATO DE PRUEBA: formulario sin criterios; el seguimiento se prueba por separado.
+  const source = journeyContent.activities.find(activity => activity.tipo === 'registro' && activity.plantilla?.tipo !== 'matriz')
+  const activity = { ...source, id: 'registro-prueba' }
+  const node = { ...source.nodos.find(node => node.tipo === 'consigna' && node.entregable.tipo === 'texto'), id: 'texto-prueba' }
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
   let saved = 0, kept = 0, prevented = false
   const props = { activity, node, edit: true, onSaved: () => saved++, onKeep: () => kept++ }
@@ -1566,39 +1569,41 @@ test('immersive option submissions keep multiple selection and omit optional fil
   mandatory.dispose()
 })
 
-test('immersive questions preserve attempts, hints, revelation, retry and fresh revision behavior', () => {
+test('immersive questions require confirmation, preserve two attempts and allow fresh revision', () => {
   const activity = journeyContent.activities.find(activity => activity.id === 'enc-mitos')
-  const node = activity.nodos.find(node => node.tipo === 'pregunta' && node.formato !== 'opcion_multiple' && node.bloqueante)
+  const node = activity.nodos.find(node => node.tipo === 'pregunta' && node.formato !== 'opcion_multiple' && node.opciones.filter(option => !option.correcta).length >= 2)
   journeyStore.updateJourney(() => journeyLogic.initialJourney())
   let continued = 0, resources
   const props = { activity, node, onContinue: () => continued++, onResources: ids => { resources = ids } }
   const question = immersivePlayerHarness('src/features/activities/components/nodes/QuestionNode')
-  const wrong = node.opciones.find(option => !option.correcta)
+  const wrong = node.opciones.filter(option => !option.correcta)
   let tree = question.draw(props)
-  for (let i = 0; i <= node.pistas.length; i++) {
-    question.button(tree, wrong.texto).props.onClick()
+  assert.equal(question.button(tree, 'Comprobar').props.disabled, true)
+  for (let i = 0; i < 2; i++) {
+    question.find(tree, element => element.type?.name === 'CheckOption' && element.props.text === wrong[i].texto).props.onClick()
+    assert.equal(journeyStore.useJourney().attempts.length, i)
+    tree = question.draw(props)
+    question.button(tree, 'Comprobar').props.onClick()
     tree = question.draw(props)
     const attempt = journeyStore.useJourney().attempts.at(-1)
     assert.equal(attempt.numeroIntento, i + 1)
     assert.equal(attempt.correcta, false)
-    if (i < node.pistas.length) {
-      const hint = question.find(tree, element => element.props.speakerId === node.pistas[i].hablanteId && element.props.text === node.pistas[i].texto)
-      assert.ok(hint)
+    assert.equal(attempt.revelada, i === 1)
+    if (i === 0) {
+      const blocked = question.find(tree, element => element.type?.name === 'CheckOption' && element.props.text === wrong[i].texto)
+      assert.equal(blocked.props.disabled, true)
       question.button(tree, 'Ver ficha').props.onClick()
       assert.ok(resources.length > 0)
-      question.button(tree, 'Volver a intentarlo').props.onClick()
-      tree = question.draw(props)
     } else {
-      assert.equal(attempt.revelada, true)
       assert.ok(question.text(tree).includes(node.explicacion))
       question.button(tree, 'Continuar el camino').props.onClick()
     }
   }
   assert.equal(continued, 1)
   const fresh = immersivePlayerHarness('src/features/activities/components/nodes/QuestionNode')
-  assert.ok(fresh.button(fresh.draw({ ...props, fresh: true }), wrong.texto))
-  fresh.dispose()
-  question.dispose()
+  const option = fresh.find(fresh.draw({ ...props, fresh: true }), element => element.type?.name === 'CheckOption' && element.props.text === wrong[0].texto)
+  assert.equal(option.props.disabled, false)
+  fresh.dispose(); question.dispose()
 })
 
 test('immersive matrix requires all seven submissions even when a legacy alternative is saved', () => {
@@ -1739,6 +1744,10 @@ test('immersive choices preserve recorded responses and show reactions before th
 const followUpService = load(path.resolve('src/features/activities/lib/followUpService.ts'))
 const followUpStore = load(path.resolve('src/features/activities/store/followUpStore.ts'))
 const responseCondenser = load(path.resolve('src/features/activities/lib/responseCondenser.ts'))
+const reflectionStore = load(path.resolve('src/store/reflectionStore.ts'))
+const reflectionProvider = load(path.resolve('src/features/activities/lib/reflection/provider.ts'))
+const reflectionEvaluation = load(path.resolve('src/features/activities/lib/reflection/evaluation.ts'))
+const reflectionPersonalization = load(path.resolve('src/features/activities/lib/reflection/personalization.ts'))
 function followUpClock() {
   const previous = { setTimeout: context.setTimeout, clearTimeout: context.clearTimeout }
   const timers = new Map()
@@ -1761,35 +1770,36 @@ function followUpClock() {
     restore() { Object.assign(context, previous) },
   }
 }
-function followUpFixture() {
-  const activity = journeyContent.activities.find(activity => activity.tipo === 'registro' && activity.plantilla?.tipo !== 'matriz')
-  const node = activity.nodos.find(node => node.tipo === 'consigna' && node.entregable.tipo === 'texto')
+function followUpFixture({ evaluated = true, evaluations = ['INSUFICIENTE', 'INSUFICIENTE', 'INSUFICIENTE'] } = {}) {
+  const source = journeyContent.activities.find(activity => activity.id === 'mission-story')
+  // DATO DE PRUEBA: variante sin criterios para recuperar registros anteriores.
+  const activity = evaluated ? source : { ...source, id: 'registro-anterior' }
+  const node = source.nodos.find(node => node.id === 'story-personas')
   const text = 'Quiero decidir por mí, con apoyo.'
   const entry = { id: crypto.randomUUID(), estudianteId: 'est-prototipo', actividadId: activity.id, nodoId: node.id, contenido: { tipo: 'texto', texto: text }, version: 1, enviadoEn: new Date().toISOString() }
   journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), submissions: [entry], progress: { [activity.id]: { estado: 'en_curso', nodoActualId: node.id } } }))
   followUpStore.updateFollowUps(() => followUpStore.initialFollowUpState())
   const key = activity.id + '/' + node.id
+  reflectionStore.updateReflections(() => ({ ...reflectionStore.initialReflectionState(), escenarios: { [key]: { evaluaciones: evaluations } } }))
+  reflectionEvaluation.beginResponse(activity, node, entry)
   followUpStore.setFollowUpRecord(key, { textoInicial: text, versionInicial: 1, turnos: [] })
   return { activity, node, text, key, entry }
 }
 const followUpTurn = (orden, pregunta, respuesta, omitida = false) => ({ orden, pregunta, respuesta, omitida, creadaEn: '2026-10-03T10:00:00.000Z', ...(respuesta !== undefined || omitida ? { respondidaEn: '2026-10-03T10:01:00.000Z' } : {}) })
 
-test('follow-up service waits 700ms, respects both text thresholds and never asks a third turn', async () => {
-  const clock = followUpClock()
+test('follow-up service uses configured criteria and classification rather than text length', async () => {
+  const fixture = followUpFixture({ evaluations: ['INSUFICIENTE', 'ADECUADA'] }), clock = followUpClock()
   try {
-    const input = { activityId: 'a', nodeId: 'n', premisa: 'Una premisa', texto: 'Una respuesta breve', turnosPrevios: [] }
+    const input = { activityId: fixture.activity.id, nodeId: fixture.node.id, premisa: fixture.node.premisa, texto: 'Una respuesta breve', turnosPrevios: [] }
     let finished = false
     const short = followUpService.mockFollowUpService.evaluate(input).then(value => { finished = true; return value })
-    await clock.tick(699); assert.equal(finished, false)
-    await clock.tick(1); assert.match((await short).pregunta, /momento concreto/)
-    const run = async patch => { const promise = followUpService.mockFollowUpService.evaluate({ ...input, ...patch }); await clock.tick(700); return promise }
-    assert.equal((await run({ texto: 'a'.repeat(80) })).pregunta, undefined)
-    assert.ok((await run({ texto: 'a'.repeat(99), minCaracteres: 50 })).pregunta)
-    assert.equal((await run({ texto: 'a'.repeat(100), minCaracteres: 50 })).pregunta, undefined)
-    assert.equal((await run({ turnosPrevios: [followUpTurn(1, 'Una pregunta', 'a'.repeat(39))] })).pregunta, '¿Hay algo más que te gustaría agregar antes de seguir?')
-    assert.equal((await run({ turnosPrevios: [followUpTurn(1, 'Una pregunta', 'a'.repeat(40))] })).pregunta, undefined)
-    assert.equal((await run({ turnosPrevios: [followUpTurn(1, 'Una pregunta', undefined, true)] })).pregunta, undefined)
-    assert.equal((await run({ turnosPrevios: [followUpTurn(1, 'Una pregunta', 'Sí'), followUpTurn(2, 'Otra', 'Sí')] })).pregunta, undefined)
+    await clock.tick(249); assert.equal(finished, false)
+    await clock.tick(1); assert.ok((await short).pregunta)
+    const long = followUpService.mockFollowUpService.evaluate({ ...input, texto: 'a'.repeat(200) })
+    await clock.tick(250); assert.ok((await long).pregunta)
+    const adequate = followUpService.mockFollowUpService.evaluate({ ...input, turnosPrevios: [followUpTurn(1, 'Una pregunta', 'Sí')] })
+    await clock.tick(250); assert.equal((await adequate).pregunta, undefined)
+    assert.equal((await followUpService.mockFollowUpService.evaluate({ ...input, activityId: 'sin-criterios' })).pregunta, undefined)
     assert.equal(clock.pending, 0)
   } finally { clock.restore() }
 })
@@ -1853,11 +1863,13 @@ test('follow-up store survives remounts and reload events and tolerates corrupt 
   assert.equal(second.getFollowUpRecord('b/n'), undefined)
 })
 
-test('first text submission saves version one before follow-up; edits and matrices use the normal form', async () => {
+test('first and edited evaluated text start follow-up after saving; matrices use the normal form', async () => {
   const fixture = followUpFixture()
   for (const kind of ['first', 'edit', 'matrix']) {
-    journeyStore.updateJourney(() => journeyLogic.initialJourney())
+    journeyStore.updateJourney(() => ({ ...journeyLogic.initialJourney(), submissions: kind === 'edit' ? [fixture.entry] : [] }))
     followUpStore.updateFollowUps(() => followUpStore.initialFollowUpState())
+    reflectionStore.updateReflections(() => reflectionStore.initialReflectionState())
+    await reflectionPersonalization.prepareQuestion(fixture.activity, fixture.node)
     let advanced = 0
     const activity = kind === 'matrix' ? { ...fixture.activity, plantilla: { tipo: 'matriz' } } : fixture.activity
     const props = { activity, node: fixture.node, edit: kind === 'edit', onSaved: () => advanced++ }
@@ -1866,8 +1878,9 @@ test('first text submission saves version one before follow-up; edits and matric
     form.find(tree, element => element.type === 'textarea').props.onChange({ target: { value: fixture.text } })
     tree = form.draw(props); tree.props.onSubmit({ preventDefault() {} })
     tree = form.draw(props)
-    assert.equal(journeyLogic.latestSubmission(journeyStore.useJourney(), activity.id, fixture.node.id).version, 1)
-    if (kind === 'first') {
+    assert.equal(journeyLogic.latestSubmission(journeyStore.useJourney(), activity.id, fixture.node.id).version, kind === 'edit' ? 2 : 1)
+    if (kind === 'edit') assert.deepEqual(journeyStore.useJourney().submissions[0], fixture.entry)
+    if (kind !== 'matrix') {
       assert.equal(advanced, 0)
       assert.equal(tree.type.name, 'FollowUp')
       assert.equal(followUpStore.getFollowUpRecord(fixture.key).textoInicial, fixture.text)
@@ -1898,7 +1911,7 @@ test('follow-up accepts two replies, caps the field at available space and saves
     assert.ok(field)
     field.props.onChange({ target: { value: 'Con el apoyo de mi familia.' } })
     tree = ui.draw(props); ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
-    tree = ui.draw(props); await clock.tick(0); tree = ui.draw(props)
+    tree = ui.draw(props); await clock.tick(250); tree = ui.draw(props)
     assert.equal(advanced, 0)
     const entries = journeyStore.useJourney().submissions
     assert.equal(entries.length, 2); assert.equal(entries[0].contenido.texto, fixture.text)
@@ -1913,9 +1926,9 @@ test('follow-up accepts two replies, caps the field at available space and saves
   } finally { ui.dispose(); clock.restore() }
 })
 
-test('omitting all turns preserves version one, while a long reply ends follow-up after one turn', async () => {
+test('omitting preserves version one; adequate classification ends follow-up after one reply', async () => {
   for (const omit of [true, false]) {
-    const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
+    const fixture = followUpFixture({ evaluations: ['INSUFICIENTE', 'ADECUADA'] }), clock = followUpClock(), ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
     const props = { activity: fixture.activity, node: fixture.node, onContinue() {} }
     try {
       let tree = ui.draw(props); await clock.tick(700); tree = ui.draw(props); tree = ui.draw(props)
@@ -1930,27 +1943,31 @@ test('omitting all turns preserves version one, while a long reply ends follow-u
   }
 })
 
-test('no question, failure, timeout or fewer than 40 free characters advances silently with the original', async () => {
-  const service = followUpService.mockFollowUpService, original = service.evaluate
-  for (const kind of ['long', 'space', 'error', 'timeout']) {
+test('adequate classification, no space, failure and timeout preserve the original until explicit continuation', async () => {
+  const original = reflectionProvider.getReflectionProvider()
+  for (const kind of ['adequate', 'space', 'error', 'timeout']) {
     const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
     let advanced = 0
-    const node = kind === 'space' ? { ...fixture.node, entregable: { ...fixture.node.entregable, maxCaracteres: 80 } } : fixture.node
-    if (kind === 'long') followUpStore.setFollowUpRecord(fixture.key, { textoInicial: 'a'.repeat(200), versionInicial: 1, turnos: [] })
-    if (kind === 'error') service.evaluate = async () => { throw new Error('Service down') }
-    if (kind === 'timeout') service.evaluate = () => new Promise(() => {})
+    const node = kind === 'space' ? { ...fixture.node, entregable: { ...fixture.node.entregable, maxCaracteres: fixture.text.length } } : fixture.node
+    reflectionProvider.setReflectionProvider({ ...original, evaluateResponse: async () => {
+      if (kind === 'error') throw new Error('Servicio caído')
+      if (kind === 'timeout') return new Promise(() => {})
+      return { ...reflectionProvider.metadata(Date.now()), clasificacion: kind === 'space' ? 'INSUFICIENTE' : 'ADECUADA', criteriosFaltantes: [], preguntaSeguimiento: '¿Por qué?' }
+    } })
+    const props = { activity: fixture.activity, node, onContinue: () => advanced++ }
     try {
-      ui.draw({ activity: fixture.activity, node, onContinue: () => advanced++ })
-      await clock.tick(kind === 'timeout' ? 10_000 : 700)
-      assert.equal(advanced, 1)
+      ui.draw(props); await clock.tick(kind === 'timeout' ? 10_000 : 0)
+      const tree = ui.draw(props)
+      assert.equal(advanced, 0)
       assert.equal(journeyStore.useJourney().submissions.length, 1)
       assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 0)
-    } finally { service.evaluate = original; ui.dispose(); clock.restore() }
+      ui.button(tree, 'Continuar').props.onClick(); assert.equal(advanced, 1)
+    } finally { reflectionProvider.setReflectionProvider(original); ui.dispose(); clock.restore() }
   }
 })
 
 test('interrupted follow-up recovers only answered turns and loads the condensed form without duplicate versions', async () => {
-  const fixture = followUpFixture()
+  const fixture = followUpFixture({ evaluated: false })
   followUpStore.setFollowUpRecord(fixture.key, { textoInicial: fixture.text, versionInicial: 1, turnos: [followUpTurn(1, '¿Por qué?', 'Porque es mi decisión.'), followUpTurn(2, '¿Algo más?', undefined)] })
   const form = immersivePlayerHarness('src/features/activities/components/nodes/SubmissionNode')
   const props = { activity: fixture.activity, node: fixture.node, edit: true, onSaved() {} }
@@ -1998,11 +2015,11 @@ test('recovery detects a saved version without its follow-up marker and keeps in
 })
 
 
-test('follow-up requires 40 free characters and stops before a second question that cannot fit', async () => {
-  const service = followUpService.mockFollowUpService, original = service.evaluate
-  service.evaluate = async () => ({ pregunta: '¿Por qué?' })
+test('follow-up requires available capacity and stops before a second question that cannot fit', async () => {
+  const original = reflectionProvider.getReflectionProvider()
+  reflectionProvider.setReflectionProvider({ ...original, evaluateResponse: async () => ({ ...reflectionProvider.metadata(Date.now()), clasificacion: 'INSUFICIENTE', criteriosFaltantes: [], preguntaSeguimiento: '¿Por qué?' }) })
   try {
-    for (const remaining of [39, 40]) {
+    for (const remaining of [0, 1, 40]) {
       const fixture = followUpFixture(), clock = followUpClock(), ui = immersivePlayerHarness('src/features/activities/components/followup/FollowUp')
       let advanced = 0
       const maximum = fixture.text.length + '\n\nPregunta de Lumi: ¿Por qué?\nRespuesta: '.length + remaining
@@ -2011,24 +2028,26 @@ test('follow-up requires 40 free characters and stops before a second question t
       try {
         let tree = ui.draw(props); await clock.tick(0); tree = ui.draw(props); tree = ui.draw(props)
         const field = ui.find(tree, element => element.type === 'textarea')
-        if (remaining === 39) {
-          assert.equal(advanced, 1); assert.equal(field, undefined)
+        assert.equal(advanced, 0)
+        if (remaining === 0) {
+          assert.equal(field, undefined)
+          assert.equal(journeyStore.useJourney().submissions.length, 1)
         } else {
-          assert.equal(advanced, 0); assert.equal(field.props.maxLength, 40)
-          field.props.onChange({ target: { value: 'a'.repeat(41) } }); tree = ui.draw(props)
+          assert.equal(field.props.maxLength, remaining)
+          field.props.onChange({ target: { value: 'a'.repeat(remaining + 1) } }); tree = ui.draw(props)
           ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
           assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos[0].respuesta, undefined)
-          field.props.onChange({ target: { value: 'Una razón.' } }); tree = ui.draw(props)
+          field.props.onChange({ target: { value: 'a'.repeat(remaining) } }); tree = ui.draw(props)
           ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
           tree = ui.draw(props); await clock.tick(0); tree = ui.draw(props)
           assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 1)
           assert.equal(journeyStore.useJourney().submissions.length, 2)
-          assert.ok(ui.button(tree, 'Continuar'))
           assert.equal(journeyLogic.validateSubmission(node, journeyStore.useJourney().submissions.at(-1).contenido), undefined)
         }
+        ui.button(tree, 'Continuar').props.onClick(); assert.equal(advanced, 1)
       } finally { ui.dispose(); clock.restore() }
     }
-  } finally { service.evaluate = original }
+  } finally { reflectionProvider.setReflectionProvider(original) }
 })
 
 test('leaving during evaluation never stores a late question and recovery preserves the replied turn', async () => {
@@ -2038,7 +2057,7 @@ test('leaving during evaluation never stores a late question and recovery preser
     let tree = ui.draw(props); await clock.tick(700); tree = ui.draw(props); tree = ui.draw(props)
     ui.find(tree, element => element.type === 'textarea').props.onChange({ target: { value: 'Quiero elegir.' } })
     tree = ui.draw(props); ui.find(tree, element => element.type === 'form').props.onSubmit({ preventDefault() {} })
-    ui.draw(props); await clock.tick(699); ui.dispose(); await clock.tick(1)
+    ui.draw(props); await clock.tick(249); ui.dispose(); await clock.tick(1)
     assert.equal(followUpStore.getFollowUpRecord(fixture.key).turnos.length, 1)
     assert.equal(journeyStore.useJourney().submissions.length, 1)
     await followUpStore.recoverFollowUp(fixture.activity, fixture.node)
@@ -2325,7 +2344,7 @@ test('reduced-motion zone changes commit the destination immediately without sch
 })
 
 test('every supplied mission node renders, including matrices, slides, questions and instrument items', () => {
-  for (const activity of journeyContent.activities) {
+  for (const activity of journeyContent.activities.filter(activity => activity.audiencia !== 'apoderado')) {
     for (const node of activity.nodos) {
       journeyStore.updateJourney(() => ({
         ...journeyLogic.initialJourney(),
@@ -2343,7 +2362,7 @@ test('every supplied mission node renders, including matrices, slides, questions
       const { StudentActivityPlayer } = load(path.resolve('src/features/activities/components/StudentActivityPlayer.tsx'))
       const html = renderToStaticMarkup(React.createElement(MemoryRouter, {}, React.createElement(StudentActivityPlayer, { activity, onClose() {}, onNext() {} })))
       assert.ok(html.includes(activity.titulo), `${activity.id}/${node.id}`)
-      assert.match(html, /aria-label="Salir de la actividad"/)
+      assert.match(html, /aria-label="Salir de la misión"/)
       assert.match(html, /fixed inset-0 z-40/)
       assert.match(html, /sx-root sx-player location-/)
       assert.doesNotMatch(html, /\bpts\b|\bpuntos\b|type="file"|Volver atrás/)
@@ -2357,7 +2376,7 @@ test('every supplied mission node renders, including matrices, slides, questions
         const heading = renderToStaticMarkup(React.createElement('h2', {}, prompt))
         const headingIndex = html.indexOf(heading)
         assert.ok(headingIndex >= 0 && headingIndex < html.indexOf('sx-player-options'), `${activity.id}/${node.id}: prompt must precede response options`)
-        assert.match(html, node.tipo === 'pregunta' && node.formato === 'opcion_multiple' ? /Selecciona una o más respuestas\./ : /Selecciona una respuesta\./)
+        assert.match(html, node.tipo === 'pregunta' && node.formato === 'opcion_multiple' ? /Marca todas las que correspondan\./ : /Selecciona una respuesta\./)
       }
       if (node.tipo === 'item') assert.match(html, /No hay respuestas correctas o incorrectas/)
       if (node.tipo === 'diapositiva') assert.match(html, /Entendido/)
@@ -2619,7 +2638,7 @@ test('family child selection replaces the entire summary and pending results sta
   } finally { parentChildren.pop() }
 })
 
-test('phase 8 path sequence respects both completion records without changing catalog or real thresholds', () => {
+test('phase 8 path sequence respects completion records within the current demo scope', () => {
   const logic = loadMapPoints(load)
   const originalIds = fieldMissions.map(mission => mission.id)
   const adventure = store.createInitialAdventure(), journey = journeyLogic.initialJourney()
@@ -2635,7 +2654,7 @@ test('phase 8 path sequence respects both completion records without changing ca
   points = logic.getCaminoPoints(adventure, journey)
   assert.equal(points[0].status, 'completed')
   assert.equal(points[1].status, 'available')
-  assert.equal(points.find(point => point.id === 'future').status, 'completed')
+  assert.equal(points.find(point => point.id === 'future').status, 'locked')
   assert.equal(logic.getNextCaminoActivity(points).id, 'enc-mitos')
   journey.progress['enc-mitos'] = { estado: 'completada' }
   points = logic.getCaminoPoints(adventure, journey)
@@ -2649,7 +2668,7 @@ test('phase 8 path sequence respects both completion records without changing ca
   assert.equal(logic.getNextCaminoActivity(points), null)
   assert.equal(logic.getRecommendedPoint(points.map(point => point.id === 'city' ? { ...point, status: 'locked' } : point)), undefined)
   assert.ok(points.slice(4, -1).filter(point => point.id !== 'future').every(point => point.status === 'locked'))
-  assert.equal(logic.getPointDetails(points.find(point => point.id === 'future'), adventure, journey).revision, true)
+  assert.equal(logic.getPointDetails(points.find(point => point.id === 'future'), adventure, journey).revision, false)
   assert.deepEqual(Array.from(fieldMissions, mission => mission.id), Array.from(originalIds))
   assert.equal(store.prototypeAllUnlocked, true)
   assert.equal(store.isCityUnlocked({ ...adventure, completedMissionIds: ['welcome', 'beliefs', 'pregones', 'story'] }), false)
@@ -2661,11 +2680,11 @@ test('phase 8 direct links open blocked details instead of starting unavailable 
   for (const id of ['enc-mitos', 'mission-story', 'mission-future', 'act-06']) {
     const html = render('/student/missions?actividad=' + id)
     assert.match(html, /sx-map-viewport/)
-    assert.doesNotMatch(html, /aria-label="Salir de la actividad"/)
+    assert.doesNotMatch(html, /aria-label="Salir de la misión"/)
   }
-  assert.match(render('/student/missions?actividad=mission-welcome'), /aria-label="Salir de la actividad"/)
-  assert.match(render('/student/missions?actividad=enc-mitos', { completedMissionIds: ['welcome'] }), /aria-label="Salir de la actividad"/)
-  assert.match(render('/student/missions?actividad=mission-future&revision=1', { completedMissionIds: ['future'] }), /aria-label="Salir de la actividad"/)
+  assert.match(render('/student/missions?actividad=mission-welcome'), /aria-label="Salir de la misión"/)
+  assert.match(render('/student/missions?actividad=enc-mitos', { completedMissionIds: ['welcome'] }), /aria-label="Salir de la misión"/)
+  assert.doesNotMatch(render('/student/missions?actividad=mission-future&revision=1', { completedMissionIds: ['future'] }), /aria-label="Salir de la misión"/)
   let params = new URLSearchParams('actividad=enc-mitos&revision=1')
   const guard = immersivePlayerHarness('src/pages/student/CaminoScreen', {
     'react-router': { useSearchParams: () => [params, next => { params = next }] },
@@ -3207,7 +3226,15 @@ test('discovery atlas covers existing IDs, symmetric relations and gated affinit
   assert.ok(data.institutionDetails.some(i => i.type === 'FFAA_POLICIA'))
   for (const career of data.careerDetails) {
     assert.ok(selectors.getFamily(career.familyId))
-    for (const id of career.occupationIds) assert.ok(selectors.getOccupation(id)?.careerIds.includes(career.id), `${career.id}:${id}`)
+    for (const id of career.occupationIds) {
+      const occupation = selectors.getOccupation(id)
+      assert.ok(occupation, `${career.id}:${id}`)
+      // Una ficha pendiente conserva su identidad, sin inventar asociaciones de detalle.
+      if (occupation.contentStatus === 'pending') {
+        assert.deepEqual(Array.from(occupation.careerIds), [])
+        assert.equal(selectors.isAffine(id, ['intereses']), undefined)
+      } else assert.ok(occupation.careerIds.includes(career.id), `${career.id}:${id}`)
+    }
     for (const id of career.institutionIds) assert.ok(selectors.getInstitution(id)?.careerIds.includes(career.id), `${career.id}:${id}`)
   }
   for (const institution of data.institutionDetails) for (const id of institution.careerIds) assert.ok(selectors.getCareer(id)?.institutionIds.includes(institution.id))

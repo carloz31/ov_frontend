@@ -28,7 +28,8 @@ export function useParentActivitySession(activity: Actividad, review: boolean) {
     completedIds,
     serverCompletion,
   } = useParentActivities()
-  const opciones = { disponible: available(activity), servidor: serverCompletion }
+  const disponible = available(activity)
+  const opciones = { disponible, servidor: serverCompletion }
   const storageError = useParentJourneyError()
   const [serverError, setServerError] = useState('')
   const enviando = useRef(false)
@@ -105,8 +106,12 @@ export function useParentActivitySession(activity: Actividad, review: boolean) {
       accountId &&
       (!progress || (serverCompletion && !progress.nodoActualId && progress.estado === 'no_iniciada'))
     )
-      updateParentJourney((current) => startParentActivity(activity, current, accountId, opciones), accountId)
-  }, [activity, review, state.progress, accountId, serverCompletion, opciones.disponible])
+      updateParentJourney(
+        (current) =>
+          startParentActivity(activity, current, accountId, { disponible, servidor: serverCompletion }),
+        accountId,
+      )
+  }, [activity, review, state.progress, accountId, serverCompletion, disponible])
   useEffect(() => {
     heading.current?.focus()
     heading.current?.scrollIntoView({ block: 'nearest' })

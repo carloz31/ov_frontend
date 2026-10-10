@@ -51,7 +51,7 @@ src/
 | Una llamada al backend | `services/api/<recurso>.ts`, agrupado como los routers del backend. GET → `obtener`, POST → `enviar`, PATCH → `actualizar`, DELETE → `eliminar`. Si el backend define un PUT, detente y avisa antes de agregar un método al cliente. |
 | Un tipo del contrato | `types/servidor.ts`, copiado tal cual del esquema Pydantic. |
 | Convertir una respuesta en datos para la vista | `lib/servidor/adaptadores.ts`. |
-| Estado que viene del servidor | `store/servidor/`. |
+| Estado que viene del servidor | `store/servidor/`. El del portal del apoderado, en `store/servidor/apoderado.ts`; no reutiliza el almacén del estudiante. |
 | Elegir entre dato del servidor y dato local | Un hook en `features/<dominio>/hooks/`. Nunca en una vista. |
 | Estado persistente de varios dominios | `store/<nombre>Store.ts`; de un dominio, `features/<dominio>/store/`. |
 | Lógica pura | `features/<dominio>/lib/`; si la usan varios dominios o una capa inferior, `lib/`. |
@@ -121,7 +121,7 @@ tests/
 - Las pruebas nuevas de integración van en `tests/servidor/<área>/` y usan `tests/fixtures/servidor/`.
 - Las pruebas cargan archivos por su ruta: si mueves un archivo, actualiza esas rutas en la misma tarea. No agregues resolución de carpetas a los cargadores.
 - Comandos: `npm test`, `npm run test:local`, `npm run test:servidor`, `npm run test:despliegue`. Una carpeta: `node --test "tests/servidor/instrumentos/**/*.test.mjs"` (con comillas, para que funcione en PowerShell).
-- Fallas previas conocidas: 14 en `tests/local/aventura/adventure-rendering.test.mjs`. No se corrigen salvo que una spec lo pida; ninguna tarea debe agregar fallas.
+- Ninguna tarea debe agregar fallas. Las pruebas de aventura usan el seguimiento por criterios y el alcance vigente de la demo.
 
 | Si cambias… | Corre primero |
 |---|---|
