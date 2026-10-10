@@ -22,6 +22,10 @@ De dónde sale cada dato del front. Las rutas parten de `src/`. Si una tarea mue
 
 Con eso el servidor decide: disponibilidad y finalización de actividades, acceso a la Ciudad, respuestas de Mara, resultado RIASEC (dimensiones con su descripción, código de interés, coincidencias y carreras), fichas obtenidas, insignias, nivel y avisos de desbloqueo.
 
+**Actividades del apoderado.** En api, bloque, lista, orden, títulos, disponibilidad, completitud y progreso vienen de `GET /cuentas/{c}/actividades`, para el espacio `PORTAL_FAMILIA`. Los nodos siguen en los JSON del front, encontrados por `contenido`; una actividad invisible o sin contenido se descarta y no cuenta en el progreso. Los requisitos del JSON solo deciden candados en local.
+
+`store/servidor/apoderado.ts` mantiene una sesión independiente de la del estudiante. Al entrar pide `/cuentas`, elige la cuenta `APODERADO` que coincide con el usuario ingresado (o la primera por código), registra `/acciones/ingresar` y consulta sus actividades. La cuenta elegida vive en memoria y se vuelve a elegir al recargar; no se crea otra clave del navegador. Al terminar, envía `/acciones/completar-actividad` y vuelve a consultar actividades antes de mostrar el cierre. Un error conserva el último paso para reintentar.
+
 **Estado sincronizado (`store/servidor/`).** `sesion.ts`, `secciones.ts`, `avisos.ts`, `resultado.ts`, `consultas.ts`, `refresco.ts`, `operaciones.ts` y `cuenta.ts`. Cada dominio es una sección en memoria con `datos`, `estado` (`sin_cargar`, `cargando`, `listo`, `vencido`, `error`) y `error`. Se descartan respuestas de otra cuenta o sesión y no se duplican pedidos en curso. Qué se pide y cuándo: `ov_backend/docs/sistema/integracion.md`.
 
 **Mapa en modo api.** La lista y el orden de los puntos salen de `actividades`; la posición, la etiqueta y el ícono, del campo `mapa` del JSON de contenido. Las actividades consecutivas con el mismo contenido forman un punto. Un contenido sin `mapa` no se dibuja y se anota en `pendientes-interfaz.md`. El modo local conserva su lista fija (`baseRoute`, `fieldMissions`).
@@ -83,7 +87,7 @@ Todas en `localStorage`, salvo donde se indica. No se cambian sin una migración
 | Clave | Almacén | Contenido |
 |---|---|---|
 | `ov.demo-access.v1` (`sessionStorage`) | `features/auth/lib/demoAccess.ts` | sesión de demostración |
-| `ov.cuenta-servidor.v1` (`sessionStorage`) | `store/servidor/cuenta.ts` | usuario y cuenta activa en api |
+| `ov.cuenta-servidor.v1` (`sessionStorage`) | `store/servidor/cuenta.ts` | usuario ingresado compartido y cuenta activa del estudiante en api; la cuenta del apoderado solo vive en memoria |
 | `ov.missions.v2` / `ov.missions.v2.api` | `store/journeyStore.ts` | progreso, intentos, entregas y borradores |
 | `ov.mission-files` (IndexedDB) | `store/journeyStore.ts` | archivos adjuntos |
 | `ov.student-adventure.v1` / `ov.student-adventure.v1.api` | `store/adventureStore.ts` | aventura, diario, casos, investigación, conversaciones |
@@ -92,11 +96,13 @@ Todas en `localStorage`, salvo donde se indica. No se cambian sin una migración
 | `ov.student-reflections.v1` | `store/reflectionStore.ts` | respuestas y evaluaciones del piloto |
 | `ov.student-followups.v1` | `features/activities/store/followUpStore.ts` | preguntas de seguimiento |
 | `ov.student-ui.v1` | `store/studentUiStore.ts` | guías vistas, desbloqueos vistos, preferencias |
-| `ov.parent-missions.v1` | `store/parentJourneyStore.ts` | actividades del apoderado |
+| `ov.parent-missions.v1` | `store/parentJourneyStore.ts` | nodo, intentos y elecciones por cuenta del apoderado; en api, estado proyectado del servidor |
 | `ov.staff.priorities.v1` (`sessionStorage`) | `features/counselor/store/prioritySettings.ts` | prioridades de la orientadora |
 | `ov.staff.selected-salon.v1` (`sessionStorage`) | `features/counselor/hooks/useSelectedSalon.ts` | salón elegido |
 
 En api, las claves `.api` guardan `por_cuenta[codigo]` y no se mezclan con el modo local ni entre cuentas. `ov.student-discovery.v1` guarda además `profileBadgesApi[cuenta]` y `revealedPagesApi[cuenta][calculado_en]`: revelar una página o elegir insignias es una preferencia local, no completa nada en el servidor. El navegador conserva borradores, nodo actual, comprobaciones, adjuntos, respuestas de la brújula, favoritos y planes.
+
+El apoderado conserva el formato de `ov.parent-missions.v1`: `accounts[apo-prototipo]` para local y `accounts[codigo]` (por ejemplo, `apo-rosa`) para api. `proyectarJourney` conserva nodo, intentos y elecciones al hidratar esa cuenta, pero fija su estado desde el servidor. La lista y el diploma en api usan la completitud remota. Hijos, resultados del hijo y nombre del apoderado siguen siendo demostración; sus pendientes están en `docs/pendientes-interfaz.md`.
 
 ## 6. Recorrido de los datos
 
@@ -107,7 +113,8 @@ En api, las claves `.api` guardan `por_cuenta[codigo]` y no se mezclan con el mo
 | Ingreso | `features/auth/hooks/useLogin.ts` |
 | Aventura | `features/adventure/hooks/` (sesión, sincronización, nivel, Ciudad, detalles del mapa, cuenta, novedades) |
 | Actividades | `features/activities/hooks/` (`useActivityCompletion`, `useActivityPlayer`, `useInstrumentResponses`, `useActivityResources`, `useActivityFinish`, `useInstrumentResult`) |
+| Apoderado | `features/parent/hooks/useParentActivities.ts` elige la fuente; `useParentActivitySession`, `useParentQuestion` y `useParentOverview` consumen la cuenta, ruta y progreso seleccionados |
 | Mochila | `features/backpack/hooks/useBackpack.ts` |
 | Descubrimiento | `features/discovery/hooks/` (`useCatalogAffinity`, `useStudentProfile`, `usePassport`, `useBadgeDetail`, `useHelenaPages`, `useResultPage`) |
 
-La única llamada a `completarActividad` está en `move`, dentro de `useActivityCompletion.ts`, al alcanzar `$fin`.
+El estudiante completa desde `move`, en `useActivityCompletion.ts`, al alcanzar `$fin`. El apoderado completa desde `useParentActivitySession` mediante `completarActividadApoderado`, antes de abandonar el último nodo. Ambos esperan la confirmación y el refresco del servidor en api; en local conservan su completitud local.

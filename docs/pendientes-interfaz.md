@@ -2,6 +2,38 @@
 
 Datos que el backend entrega (o que una vista necesita) y que la interfaz todavía no muestra. Los resuelve el usuario.
 
+## 2026-10-09 · AP-F3 · Carga y error del portal del apoderado
+
+- **Dato:** `useParentActivities().loading` y `.error`, durante el ingreso y `GET /cuentas/{c}/actividades`.
+- **Dónde se mostraría:** inicio y lista de actividades del portal. No tienen aviso de carga ni de error del servidor.
+- **Opciones:** incorporar un aviso de carga y error en esas vistas; conservar el contenido previo con un aviso al fallar una actualización; mantener la presentación actual hasta definirla.
+- **Si no se muestra:** durante la carga se ve «0 de 0 actividades» y, si falla el ingreso o la consulta, la lista queda vacía. El error llega al hook. El detalle devuelve `null` durante la carga para evitar un candado prematuro; el reproductor sí usa su aviso y reintento existentes al fallar un guardado.
+- **Estado:** pendiente según §7 de la spec del apoderado; no se implementa ninguna opción. Verificado en navegador el estado transitorio de la lista.
+
+## 2026-10-09 · AP-F3 · Nombre del apoderado
+
+- **Dato:** `CuentaResumen.nombre` de `GET /cuentas` (también disponible en `ResumenCuenta.cuenta.nombre`).
+- **Dónde se mostraría:** saludo y perfil del portal, que hoy usan `parentProfile.name` de demostración.
+- **Opciones:** conectar el nombre de la cuenta seleccionada al saludo y perfil existentes; definir un nombre preferido editable en su iteración; conservar explícitamente el perfil de demostración.
+- **Si no se muestra:** ingresar con `apo-rosa` sigue mostrando «José», aunque las actividades sí pertenecen a `apo-rosa`.
+- **Estado:** pendiente según §7; no se conecta el nombre ni se solicita resumen adicional.
+
+## 2026-10-09 · AP-F3 · Hijos y progreso del hijo
+
+- **Dato:** el vínculo `VIN-ANA` existe en el backend, pero no tiene consulta de lectura para el portal; hijos, progreso y cuestionarios vienen de `parentPortal.ts` y `studentProfiles`.
+- **Dónde se mostraría:** «Mis hijos», avance y resultados del hijo en el inicio y sus detalles.
+- **Opciones:** definir una consulta del dominio familiar y conectar las vistas actuales; integrar después selección y progreso de hijos en su iteración; conservar la demostración hasta disponer del contrato.
+- **Si no se muestra:** el portal sigue mostrando a Gabriela y su progreso de demostración; completar actividades del apoderado no convierte esos datos en resultados reales de `est-ana`.
+- **Estado:** pendiente según §7; no se agrega consulta ni se deduce el vínculo desde las cuentas.
+
+## 2026-10-09 · AP-F3 · Evento de bloque FAMILIA completado
+
+- **Dato:** `COMPLETA_BLOQUE FAMILIA` en `RespuestaCompletarActividad.eventos_registrados` al terminar la segunda actividad.
+- **Dónde se mostraría:** confirmación del recorrido o diploma; el evento no tiene una vista propia.
+- **Opciones:** mantener el diploma derivado de la ruta completa; mostrar el evento en un historial futuro; definir una confirmación específica del bloque.
+- **Si no se muestra:** el backend registra el evento y el diploma existente se muestra desde `route.complete`, calculado con las actividades completadas del servidor.
+- **Estado:** pendiente de una presentación propia según §7; se conserva el diploma actual sin nuevos elementos.
+
 ## 2026-10-09 · Anexo F2 · Descripciones fuera del resumen de Helena
 
 - **Dato:** `ResultadoPublico.dimensiones[].descripcion` de las seis dimensiones y `dimensiones_destacadas[].descripcion` de los instrumentos DESTACADAS; `GET /cuentas/{c}/instrumentos/{instrumento}/resultado`.
