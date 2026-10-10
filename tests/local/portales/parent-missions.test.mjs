@@ -62,6 +62,11 @@ function fixture(saved = {}) {
           ...nativeRequire(specifier),
           useParams: () => ({ activityId: requestedId }),
           useSearchParams: () => [new URLSearchParams(query)],
+          useOutletContext: () => {
+            const { completedIds: completedActivityIds, ...source } =
+              load('src/features/parent/hooks/useParentActivities.ts').useParentActivities()
+            return { ...source, completedActivityIds }
+          },
         }
       if (specifier.endsWith('data/parentPortal'))
         return {

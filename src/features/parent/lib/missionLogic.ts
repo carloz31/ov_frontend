@@ -2,6 +2,8 @@ import { applyCompletion } from '@/lib/activities/logic'
 import type { JourneyState } from '@/types/activities'
 import type { Actividad, NodoPregunta } from '@/types/activities'
 
+type ParentActivityOptions = { disponible?: boolean; servidor?: boolean }
+
 export function evaluateParentQuestion(node: NodoPregunta, selected: string[], previousAttempts: number) {
   const correctOptions = node.opciones.filter((option) => option.correcta)
   const correct =
@@ -55,6 +57,15 @@ export function isParentActivityComplete(activity: Actividad, state: JourneyStat
     )
   )
 }
+export function readyToCompleteOnServer(activity: Actividad, state: JourneyState) {
+  return isParentActivityComplete(activity, {
+    ...state,
+    progress: {
+      ...state.progress,
+      [activity.id]: { ...state.progress[activity.id], nodoActualId: '$fin' },
+    },
+  })
+}
 export function nextParentPendingNode(activity: Actividad, state: JourneyState) {
   const progress = state.progress[activity.id]
   if (progress?.estado === 'completada') return undefined
@@ -90,13 +101,20 @@ export function startParentActivity(
   activity: Actividad,
   state: JourneyState,
   accountId: string,
+  opciones?: ParentActivityOptions,
 ): JourneyState {
-  if (!parentActivityAvailable(activity, state) || state.progress[activity.id]) return state
+  const progress = state.progress[activity.id]
+  if (
+    !(opciones?.disponible ?? parentActivityAvailable(activity, state)) ||
+    (progress && (!opciones?.servidor || progress.nodoActualId || progress.estado !== 'no_iniciada'))
+  )
+    return state
   return {
     ...state,
     progress: {
       ...state.progress,
       [activity.id]: {
+        ...progress,
         estudianteId: accountId,
         actividadId: activity.id,
         estado: 'en_curso',
@@ -112,9 +130,10 @@ export function answerParentQuestion(
   selected: string[],
   state: JourneyState,
   accountId: string,
+  opciones?: ParentActivityOptions,
 ): JourneyState {
   if (
-    !parentActivityAvailable(activity, state) ||
+    !(opciones?.disponible ?? parentActivityAvailable(activity, state)) ||
     !selected.length ||
     new Set(selected).size !== selected.length ||
     selected.some((id) => !node.opciones.some((option) => option.id === id)) ||
@@ -157,8 +176,9 @@ export function retreatParentActivity(
   activity: Actividad,
   nodeId: string,
   state: JourneyState,
+  opciones?: ParentActivityOptions,
 ): JourneyState {
-  if (!parentActivityAvailable(activity, state)) return state
+  if (!(opciones?.disponible ?? parentActivityAvailable(activity, state))) return state
   const index =
     nodeId === '$fin' ? activity.nodos.length : activity.nodos.findIndex((node) => node.id === nodeId)
   const progress = state.progress[activity.id]
@@ -179,8 +199,9 @@ export function advanceParentActivity(
   state: JourneyState,
   accountId: string,
   optionId?: string,
+  opciones?: ParentActivityOptions,
 ): JourneyState {
-  if (!parentActivityAvailable(activity, state)) return state
+  if (!(opciones?.disponible ?? parentActivityAvailable(activity, state))) return state
   const index = activity.nodos.findIndex((node) => node.id === nodeId)
   const node = activity.nodos[index]
   if (!node) return state
@@ -218,5 +239,5 @@ export function advanceParentActivity(
           },
         },
   }
-  return applyCompletion(activity, next, accountId, isParentActivityComplete)
+  return opciones?.servidor ? next : applyCompletion(activity, next, accountId, isParentActivityComplete)
 }

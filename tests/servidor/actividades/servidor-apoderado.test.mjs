@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { copia, esperar, fixtureServidor, jsonServidor } from '../../soporte/servidor-ayudas.mjs'
+import { fixtureApoderado } from '../../soporte/apoderado-ayudas.mjs'
 
-function fixture(usuario = '', cuentas = jsonServidor('cuentas')) {
-  const app = fixtureServidor()
+function fixture(usuario = '', cuentas = jsonServidor('cuentas'), opciones = {}) {
+  const app = opciones.portal ? fixtureApoderado(opciones) : fixtureServidor(opciones)
   const cuenta = app.load('src/store/servidor/cuenta.ts')
   cuenta.guardarUsuarioIngreso(usuario)
   const alumno = app.load('src/store/servidor/sesion.ts')
@@ -294,3 +295,442 @@ for (const reiniciar of [false, true]) {
     assert.equal(app.store.obtenerEstadoApoderado().actividades.estado, 'sin_cargar')
   })
 }
+
+function prepararUltimoPaso(app, activity) {
+  const logic = app.load('src/features/parent/lib/missionLogic.ts')
+  const opciones = { disponible: true, servidor: true }
+  let state = app.persistencia.getParentJourney('apo-rosa')
+  state = logic.startParentActivity(activity, state, 'apo-rosa', opciones)
+  for (const node of activity.nodos.slice(0, -1)) {
+    if (node.tipo === 'pregunta')
+      state = logic.answerParentQuestion(
+        activity,
+        node,
+        node.opciones.filter((o) => o.correcta).map((o) => o.id),
+        state,
+        'apo-rosa',
+        opciones,
+      )
+    state = logic.advanceParentActivity(
+      activity,
+      node.id,
+      state,
+      'apo-rosa',
+      node.tipo === 'eleccion' ? node.opciones[0].id : undefined,
+      opciones,
+    )
+  }
+  app.persistencia.updateParentJourney(() => state, 'apo-rosa')
+  return state
+}
+
+test('avanzar en servidor llega a $fin sin completitud ni recompensas locales', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  const state = prepararUltimoPaso(app, activity)
+  const logic = app.load('src/features/parent/lib/missionLogic.ts')
+  assert.equal(logic.readyToCompleteOnServer(activity, state), true)
+  const final = logic.advanceParentActivity(
+    activity,
+    activity.nodos.at(-1).id,
+    state,
+    'apo-rosa',
+    undefined,
+    { disponible: true, servidor: true },
+  )
+  assert.equal(final.progress[activity.id].nodoActualId, '$fin')
+  assert.equal(final.progress[activity.id].estado, 'en_curso')
+  assert.deepEqual(copia(final.resources), copia(state.resources))
+  assert.equal(logic.readyToCompleteOnServer(activity, { ...state, attempts: [] }), false)
+})
+
+test('la disponibilidad recibida reemplaza los requisitos locales al iniciar, responder y navegar', () => {
+  const app = fixture('', undefined, { portal: true })
+  const logic = app.load('src/features/parent/lib/missionLogic.ts')
+  const activity = app.load('src/data/activities/content.ts').parentActivities[1]
+  const vacio = app.load('src/lib/activities/logic.ts').initialJourney()
+  const permitir = { disponible: true, servidor: true },
+    bloquear = { disponible: false, servidor: true }
+  assert.equal(logic.startParentActivity(activity, vacio, 'apo-rosa', bloquear), vacio)
+  const state = logic.startParentActivity(activity, vacio, 'apo-rosa', permitir)
+  assert.equal(state.progress[activity.id].nodoActualId, activity.nodos[0].id)
+  assert.equal(
+    logic.advanceParentActivity(activity, activity.nodos[0].id, state, 'apo-rosa', undefined, bloquear),
+    state,
+  )
+  const avanzado = logic.advanceParentActivity(
+    activity,
+    activity.nodos[0].id,
+    state,
+    'apo-rosa',
+    undefined,
+    permitir,
+  )
+  const nodo = avanzado.progress[activity.id].nodoActualId
+  assert.equal(logic.retreatParentActivity(activity, nodo, avanzado, bloquear), avanzado)
+  assert.equal(
+    logic.retreatParentActivity(activity, nodo, avanzado, permitir).progress[activity.id].nodoActualId,
+    activity.nodos[0].id,
+  )
+  const pregunta = activity.nodos.find((n) => n.tipo === 'pregunta')
+  const seleccion = pregunta.opciones.filter((o) => o.correcta).map((o) => o.id)
+  assert.equal(logic.answerParentQuestion(activity, pregunta, seleccion, state, 'apo-rosa', bloquear), state)
+  assert.equal(
+    logic.answerParentQuestion(activity, pregunta, seleccion, state, 'apo-rosa', permitir).attempts.length,
+    1,
+  )
+})
+
+test('el hook api carga la lista sin usar el progreso de apo-prototipo', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  app.persistencia.updateParentJourney((s) => ({
+    ...s,
+    progress: {
+      'pad-01-rol': {
+        estudianteId: 'apo-prototipo',
+        actividadId: 'pad-01-rol',
+        estado: 'completada',
+        nodoActualId: '$fin',
+      },
+    },
+  }))
+  const { useParentActivities } = app.load('src/features/parent/hooks/useParentActivities.ts')
+  const mounted = app.mount(useParentActivities)
+  const inicial = mounted.render()
+  assert.equal(inicial.loading, true)
+  assert.equal(inicial.accountId, '')
+  assert.deepEqual(copia(inicial.activities), [])
+  await esperar()
+  const cargado = mounted.render()
+  assert.equal(cargado.loading, false)
+  assert.equal(cargado.accountId, 'apo-rosa')
+  assert.deepEqual(copia(cargado.completedIds), [])
+  assert.equal(cargado.available(cargado.activities[0]), true)
+  assert.equal(cargado.available(cargado.activities[1]), false)
+  assert.equal(app.alumno.obtenerEstadoServidor(), app.estadoAlumno)
+  assert.equal(app.requests.length, 3)
+  mounted.unmount()
+})
+
+test('el hook local conserva catálogo, cuenta y requisitos sin peticiones', () => {
+  const app = fixture('', undefined, { portal: true, api: false })
+  const { useParentActivities } = app.load('src/features/parent/hooks/useParentActivities.ts')
+  const mounted = app.mount(useParentActivities)
+  const source = mounted.render()
+  assert.equal(source.accountId, 'apo-prototipo')
+  assert.equal(source.loading, false)
+  assert.equal(source.error, null)
+  assert.equal(source.activities, app.load('src/data/activities/content.ts').parentActivities)
+  assert.equal(source.available(source.activities[0]), true)
+  assert.equal(source.available(source.activities[1]), false)
+  assert.deepEqual(app.requests, [])
+  assert.equal(app.local.size, 0)
+})
+
+test('las preguntas guardan los intentos en la cuenta del servidor y conservan la cuenta local', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  const node = activity.nodos.find((n) => n.tipo === 'pregunta')
+  const { useParentQuestion } = app.load('src/features/parent/hooks/useParentQuestion.ts')
+  const mounted = app.mount(useParentQuestion, {
+    activity,
+    node,
+    review: false,
+    practiceAttempts: [],
+    onPracticeAnswer() {},
+  })
+  mounted.render().setSelected(node.opciones.filter((o) => o.correcta).map((o) => o.id))
+  mounted.render().check()
+  assert.equal(mounted.render().feedback.correct, true)
+  const state = app.persistencia.getParentJourney('apo-rosa')
+  assert.equal(state.attempts.length, 1)
+  assert.equal(state.attempts[0].estudianteId, 'apo-rosa')
+  assert.equal(state.progress[activity.id].nodoActualId, activity.nodos[0].id)
+  assert.equal(app.persistencia.getParentJourney().attempts.length, 0)
+})
+
+test('el reproductor inicializa el nodo de un progreso proyectado sin nodo y avanza', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  const { useParentActivitySession } = app.load('src/features/parent/hooks/useParentActivitySession.ts')
+  const mounted = app.mount(useParentActivitySession, activity, false)
+  const inicial = mounted.render()
+  assert.equal(inicial.node.id, activity.nodos[0].id)
+  inicial.advance()
+  assert.equal(mounted.render().node.id, activity.nodos[1].id)
+  assert.equal(
+    app.persistencia.getParentJourney('apo-rosa').progress[activity.id].nodoActualId,
+    activity.nodos[1].id,
+  )
+})
+
+test('la pantalla final espera el POST y la consulta; durante el envío no duplica ni retrocede', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  prepararUltimoPaso(app, activity)
+  const { useParentActivitySession } = app.load('src/features/parent/hooks/useParentActivitySession.ts')
+  const mounted = app.mount(useParentActivitySession, activity, false)
+  let resolverPost, resolverGet
+  app.fetch(
+    (r) =>
+      new Promise((resolve) => {
+        if (r.method === 'POST') resolverPost = resolve
+        else resolverGet = resolve
+      }),
+  )
+  const pendiente = mounted.render().advance()
+  mounted.render().advance()
+  mounted.render().back()
+  await esperar()
+  assert.equal(app.requests.filter((r) => r.url.includes('completar-actividad')).length, 1)
+  assert.equal(mounted.render().node.id, activity.nodos.at(-1).id)
+  assert.equal(mounted.render().celebrate, false)
+  resolverPost({ body: jsonServidor('apoderado-completar-pad-01-rol') })
+  await esperar()
+  assert.equal(mounted.render().node.id, activity.nodos.at(-1).id)
+  const { ParentActivityView } = app.load('src/pages/parent/ParentActivityView.tsx')
+  assert.equal(ParentActivityView(), null, 'La vista espera mientras se refresca la sección (§7)')
+  resolverGet({ body: jsonServidor('apoderado-actividades-pad-01') })
+  await pendiente
+  const final = mounted.render()
+  assert.equal(final.node, undefined)
+  assert.equal(final.celebrate, true)
+  assert.equal(final.route.completed, 1)
+  assert.equal(final.route.next.id, 'pad-02-info')
+  assert.equal(app.persistencia.getParentJourney('apo-rosa').progress[activity.id].nodoActualId, '$fin')
+})
+
+test('un fallo de conexión conserva el último nodo y el botón existente reintenta el envío', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  prepararUltimoPaso(app, activity)
+  const { useParentActivitySession } = app.load('src/features/parent/hooks/useParentActivitySession.ts')
+  const mounted = app.mount(useParentActivitySession, activity, false)
+  let fallar = true
+  app.fetch((r) => {
+    if (r.method === 'POST') {
+      if (fallar) throw Error('Sin conexión')
+      return { body: jsonServidor('apoderado-completar-pad-01-rol') }
+    }
+    return { body: jsonServidor('apoderado-actividades-pad-01') }
+  })
+  await mounted.render().advance()
+  const error = mounted.render()
+  assert.match(error.error, /No se pudo conectar con el servidor/)
+  assert.equal(error.node.id, activity.nodos.at(-1).id)
+  assert.equal(error.celebrate, false)
+  assert.notEqual(app.persistencia.getParentJourney('apo-rosa').progress[activity.id].estado, 'completada')
+  fallar = false
+  await error.retrySaving()
+  assert.equal(mounted.render().node, undefined)
+  assert.equal(mounted.render().error, '')
+})
+
+test('al remontar tras la carga se recupera el final confirmado y se celebra sin reenviar', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  prepararUltimoPaso(app, activity)
+  let resolverGet
+  app.fetch((r) =>
+    r.method === 'POST'
+      ? { body: jsonServidor('apoderado-completar-pad-01-rol') }
+      : new Promise((resolve) => {
+          resolverGet = resolve
+        }),
+  )
+  const { useParentActivitySession } = app.load('src/features/parent/hooks/useParentActivitySession.ts')
+  const anterior = app.mount(useParentActivitySession, activity, false)
+  const pendiente = anterior.render().advance()
+  await esperar()
+  anterior.unmount()
+  resolverGet({ body: jsonServidor('apoderado-actividades-pad-01') })
+  await pendiente
+  const siguiente = app.mount(useParentActivitySession, activity, false)
+  const final = siguiente.render()
+  assert.equal(final.node, undefined)
+  assert.equal(final.celebrate, true)
+  assert.equal(app.persistencia.getParentJourney('apo-rosa').progress[activity.id].nodoActualId, '$fin')
+  assert.equal(app.requests.filter((r) => r.url.includes('completar-actividad')).length, 1)
+  siguiente.unmount()
+  assert.equal(app.mount(useParentActivitySession, activity, false).render().celebrate, false)
+})
+
+test('un 409 se muestra en el error del reproductor sin llegar a la pantalla final', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  prepararUltimoPaso(app, activity)
+  app.fetch(() => ({ status: 409, body: { detail: { mensaje: 'Actividad bloqueada' } } }))
+  const { useParentActivitySession } = app.load('src/features/parent/hooks/useParentActivitySession.ts')
+  const mounted = app.mount(useParentActivitySession, activity, false)
+  await mounted.render().advance()
+  assert.equal(mounted.render().error, 'Actividad bloqueada')
+  assert.equal(mounted.render().node.id, activity.nodos.at(-1).id)
+  assert.equal(mounted.render().route.completed, 0)
+})
+
+test('el enlace directo espera la carga y después muestra el candado del servidor', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  app.setActivityId('pad-02-info')
+  const { ParentActivityView } = app.load('src/pages/parent/ParentActivityView.tsx')
+  const mounted = app.mount(ParentActivityView)
+  assert.equal(mounted.render(), null)
+  await esperar()
+  assert.equal(mounted.render().props.locked, true)
+  app.setActivityId('pad-01-rol')
+  assert.equal(mounted.render().props.activity.id, 'pad-01-rol')
+})
+
+test('la ruta y el diploma se completan con el servidor aunque no haya nodos locales recorridos', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  app.fetch((r) => ({
+    body:
+      r.url === '/api/cuentas'
+        ? jsonServidor('cuentas')
+        : r.url.endsWith('/actividades')
+          ? jsonServidor('apoderado-actividades-final')
+          : { eventos_registrados: [], nuevos_desbloqueos: [] },
+  }))
+  await app.store.ingresarApoderado()
+  const { useParentActivities } = app.load('src/features/parent/hooks/useParentActivities.ts')
+  const source = useParentActivities()
+  const { parentRoute } = app.load('src/features/parent/lib/selectors.ts')
+  const route = parentRoute(source.activities, [], source.completedIds, source.available)
+  assert.equal(route.complete, true)
+  assert.equal(route.percent, 100)
+  assert.equal(source.journey.progress['pad-01-rol'].nodoActualId, undefined)
+  const { useParentOverview } = app.load('src/features/parent/hooks/useParentOverview.ts')
+  assert.equal(app.mount(useParentOverview).render().route.complete, true)
+  const { ParentPortalModule } = app.load('src/pages/parent/ParentPortalModule.tsx')
+  const context = ParentPortalModule().props.children.props.children.props.context
+  assert.equal(context.accountId, 'apo-rosa')
+  assert.equal(context.activities.length, 2)
+  assert.deepEqual(copia(context.completedActivityIds), ['pad-01-rol', 'pad-02-info'])
+})
+
+test('el repaso no envía completitud ni modifica el progreso del servidor', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  const antes = app.local.get('ov.parent-missions.v1')
+  const { useParentActivitySession } = app.load('src/features/parent/hooks/useParentActivitySession.ts')
+  const mounted = app.mount(useParentActivitySession, activity, true)
+  for (const _ of activity.nodos) mounted.render().advance()
+  assert.equal(mounted.render().node, undefined)
+  assert.equal(app.local.get('ov.parent-missions.v1'), antes)
+  assert.equal(app.requests.filter((r) => r.url.includes('completar-actividad')).length, 0)
+})
+
+test('el contenido faltante se descarta y el hook avisa una sola vez en desarrollo', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  const bloques = jsonServidor('apoderado-actividades-final')
+  // DATO DE PRUEBA: actividad deliberadamente ausente del registro de contenidos.
+  bloques[0].actividades.push({
+    ...bloques[0].actividades[0],
+    codigo: 'pad-sin-json',
+    contenido: 'sin_contenido_prueba',
+  })
+  app.fetch((r) => ({
+    body:
+      r.url === '/api/cuentas'
+        ? jsonServidor('cuentas')
+        : r.url.endsWith('/actividades')
+          ? bloques
+          : { eventos_registrados: [], nuevos_desbloqueos: [] },
+  }))
+  await app.store.ingresarApoderado()
+  const avisos = [],
+    anterior = console.warn
+  console.warn = (...values) => avisos.push(values.join(' '))
+  try {
+    const { useParentActivities } = app.load('src/features/parent/hooks/useParentActivities.ts')
+    const mounted = app.mount(useParentActivities)
+    mounted.render()
+    const source = mounted.render()
+    assert.equal(source.activities.length, 2)
+    assert.equal(source.completedIds.length, 2)
+    assert.equal(avisos.length, 1)
+    assert.match(avisos[0], /pad-sin-json → sin_contenido_prueba/)
+  } finally {
+    console.warn = anterior
+  }
+})
+
+test('si falla la consulta tras guardar, el reproductor conserva el paso y permite reintentar', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  prepararUltimoPaso(app, activity)
+  let fallar = true
+  app.fetch((r) => {
+    if (r.method === 'POST') return { body: jsonServidor('apoderado-completar-pad-01-rol') }
+    if (fallar) throw Error('Sin conexión')
+    return { body: jsonServidor('apoderado-actividades-pad-01') }
+  })
+  const { useParentActivitySession } = app.load('src/features/parent/hooks/useParentActivitySession.ts')
+  const mounted = app.mount(useParentActivitySession, activity, false)
+  await mounted.render().advance()
+  assert.match(mounted.render().error, /No se pudo conectar/)
+  assert.equal(mounted.render().node.id, activity.nodos.at(-1).id)
+  assert.equal(mounted.render().celebrate, false)
+  fallar = false
+  await mounted.render().advance()
+  assert.equal(mounted.render().node, undefined)
+})
+
+test('salir y limpiar durante el envío impide guardar $fin con la respuesta tardía', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  await app.store.ingresarApoderado()
+  const activity = app.contenidos.actividadesApoderado(app.store.obtenerEstadoApoderado().actividades.datos)
+    .actividades[0]
+  prepararUltimoPaso(app, activity)
+  let resolver
+  app.fetch(
+    () =>
+      new Promise((resolve) => {
+        resolver = resolve
+      }),
+  )
+  const { useParentActivitySession } = app.load('src/features/parent/hooks/useParentActivitySession.ts')
+  const mounted = app.mount(useParentActivitySession, activity, false)
+  const pendiente = mounted.render().advance()
+  await esperar()
+  mounted.unmount()
+  app.store.limpiarEstadoApoderado()
+  const antes = app.local.get('ov.parent-missions.v1')
+  resolver({ body: jsonServidor('apoderado-completar-pad-01-rol') })
+  await pendiente
+  assert.equal(app.local.get('ov.parent-missions.v1'), antes)
+  assert.equal(app.store.obtenerEstadoApoderado().cuenta, null)
+})
+
+test('sin conexión, el hook expone el error y una lista vacía sin usar el catálogo local', async () => {
+  const app = fixture('apo-rosa', undefined, { portal: true })
+  app.fetch(() => {
+    throw Error('Sin conexión')
+  })
+  const { useParentActivities } = app.load('src/features/parent/hooks/useParentActivities.ts')
+  const mounted = app.mount(useParentActivities)
+  mounted.render()
+  await esperar()
+  const source = mounted.render()
+  assert.equal(source.error.tipo, 'sin_conexion')
+  assert.deepEqual(copia(source.activities), [])
+  assert.deepEqual(copia(source.completedIds), [])
+  assert.equal(app.local.size, 0)
+})

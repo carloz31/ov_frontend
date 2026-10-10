@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 
-import { parentActivities, parentChildren } from '@/features/parent/data/parentPortal'
+import { parentChildren } from '@/features/parent/data/parentPortal'
 
 import { useParentPortalContext } from '@/features/parent/context/parentPortalContext'
 import {
@@ -24,7 +24,7 @@ export function useParentOverview() {
   useEffect(() => {
     mainRef.current?.scrollIntoView({ block: 'start' })
   }, [])
-  const { completedActivityIds } = useParentPortalContext()
+  const { completedActivityIds, activities: parentRouteActivities, available } = useParentPortalContext()
   const state = useAdventure()
   const settings = usePrioritySettings()
   const [params, setParams] = useSearchParams()
@@ -36,7 +36,7 @@ export function useParentOverview() {
       setParams(next, { replace: true })
     }
   }, [child, params, setParams])
-  const route = parentRoute(parentActivities, parentChildren, completedActivityIds)
+  const route = parentRoute(parentRouteActivities, parentChildren, completedActivityIds, available)
   const requestedDiploma = params.get('diploma') === '1'
   useEffect(() => {
     if (!requestedDiploma || !route.complete) return

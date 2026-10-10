@@ -4,16 +4,15 @@ import { Outlet, useLocation, useNavigate } from 'react-router'
 import { AppShell, type AppNavigationGroup } from '@/components/layout/AppShell'
 import { ThemeProvider } from '@/components/common/ThemeScope'
 import { appPaths } from '@/routes/paths'
-import { parentActivities, parentProfile } from '@/features/parent/data/parentPortal'
+import { parentProfile } from '@/features/parent/data/parentPortal'
 import type { ParentPortalContext } from '@/features/parent/context/parentPortalContext'
-import { useParentJourney } from '@/store/parentJourneyStore'
-import { completedParentActivities } from '@/features/parent/lib/missionLogic'
+import { useParentActivities } from '@/features/parent/hooks/useParentActivities'
 
 function ParentPortalModule() {
   const navigate = useNavigate()
   const location = useLocation()
-  const journey = useParentJourney()
-  const completedActivityIds = completedParentActivities(parentActivities, journey)
+  const { completedIds: completedActivityIds, ...source } = useParentActivities()
+  const context = { ...source, completedActivityIds } satisfies ParentPortalContext
   const routeState = getParentRouteState(location.pathname)
   const navigationGroups = useMemo<AppNavigationGroup[]>(
     () => [
@@ -54,7 +53,7 @@ function ParentPortalModule() {
     return (
       <ThemeProvider theme="staff">
         <div className="theme-staff min-h-svh bg-background text-foreground" data-audience="parent">
-          <Outlet context={{ completedActivityIds } satisfies ParentPortalContext} />
+          <Outlet context={context} />
         </div>
       </ThemeProvider>
     )
@@ -71,7 +70,7 @@ function ParentPortalModule() {
       userName={parentProfile.name}
       userRole={parentProfile.relationship}
     >
-      <Outlet context={{ completedActivityIds } satisfies ParentPortalContext} />
+      <Outlet context={context} />
     </AppShell>
   )
 }

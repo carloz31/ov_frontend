@@ -1,6 +1,7 @@
 import { useOutletContext } from 'react-router'
+import type { ParentActivitiesSource } from '../hooks/useParentActivities'
 
-type ParentPortalContext = {
+type ParentPortalContext = Omit<ParentActivitiesSource, 'completedIds'> & {
   completedActivityIds: string[]
 }
 

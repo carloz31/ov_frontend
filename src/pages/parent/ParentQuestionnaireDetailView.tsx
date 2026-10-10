@@ -8,7 +8,7 @@ import { studentProfiles, questionnaires } from '@/data/demo/studentProfiles'
 import { displayDate } from '@/features/student-tracking/lib/selectors'
 import { QuestionnaireDetailContent } from '@/features/student-tracking/components/QuestionnaireDetailContent'
 import { usePrioritySettings } from '@/features/counselor/hooks/usePrioritySettings'
-import { parentActivities, parentChildren } from '@/features/parent/data/parentPortal'
+import { parentChildren } from '@/features/parent/data/parentPortal'
 import { useParentPortalContext } from '@/features/parent/context/parentPortalContext'
 import {
   completeFamilyResult,
@@ -24,13 +24,13 @@ export function ParentQuestionnaireDetailView() {
     mainRef.current?.scrollIntoView({ block: 'start' })
   }, [childId, questionnaireId])
   const settings = usePrioritySettings()
-  const { completedActivityIds } = useParentPortalContext()
+  const { completedActivityIds, activities, available } = useParentPortalContext()
   const child = parentChildren.find((item) => item.id === childId)
   const student = child && studentProfiles.find((item) => item.id === child.id)
   const definition = questionnaires.find(
     (item) => item.id === questionnaireId && familySharedIds(settings).includes(item.id),
   )
-  const route = parentRoute(parentActivities, parentChildren, completedActivityIds)
+  const route = parentRoute(activities, parentChildren, completedActivityIds, available)
   const application = student?.questionnaires.find((item) => item.questionnaireId === definition?.id)
   const back = parentHomeUrl(child?.id ?? parentChildren[0]?.id ?? '')
   if (!child || !student || !definition || !route.complete || !completeFamilyResult(application)) {

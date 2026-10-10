@@ -2,12 +2,14 @@ import type { Actividad } from '@/types/activities'
 import type { ParentChild } from '../types'
 import type { FamilyConversation } from '@/types/adventure'
 import type { QuestionnaireApplication } from '@/types/studentProfile'
-import {
-  shareableQuestionnaireIds,
-  type PrioritySettings,
-} from '@/features/counselor/store/prioritySettings'
+import { shareableQuestionnaireIds, type PrioritySettings } from '@/features/counselor/store/prioritySettings'
 
-export function parentRoute(activities: Actividad[], _children: ParentChild[], completedIds: string[]) {
+export function parentRoute(
+  activities: Actividad[],
+  _children: ParentChild[],
+  completedIds: string[],
+  available?: (activity: Actividad) => boolean,
+) {
   const assigned = activities
     .filter((activity) => activity.audiencia === 'apoderado')
     .sort((a, b) => a.orden - b.orden)
@@ -20,7 +22,8 @@ export function parentRoute(activities: Actividad[], _children: ParentChild[], c
     percent: assigned.length ? (completed / assigned.length) * 100 : 0,
     next: assigned.find(
       (activity) =>
-        !completedIds.includes(activity.id) && activity.requisitos.every((id) => completedIds.includes(id)),
+        !completedIds.includes(activity.id) &&
+        (available ? available(activity) : activity.requisitos.every((id) => completedIds.includes(id))),
     ),
   }
 }

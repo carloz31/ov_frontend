@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/Button'
 import type { Actividad } from '@/types/activities'
 import { appPaths } from '@/routes/paths'
 
-import { evaluateParentQuestion, startParentActivity } from '@/features/parent/lib/missionLogic'
-import { parentAccountId, updateParentJourney } from '@/store/parentJourneyStore'
+import { evaluateParentQuestion } from '@/features/parent/lib/missionLogic'
 
 import { ParentResourceDialog } from '@/features/parent/components/ParentResourceDialog'
 import { ParentQuestion } from '@/features/parent/components/ParentQuestion'
@@ -75,13 +74,7 @@ export function ParentActivitySession({ activity, review }: { activity: Activida
         {!review && error && (
           <div role="alert" className="mb-5 rounded-xl border p-4">
             <p>{error}</p>
-            <Button
-              className="mt-3"
-              variant="outline"
-              onClick={() =>
-                updateParentJourney((current) => startParentActivity(activity, current, parentAccountId))
-              }
-            >
+            <Button className="mt-3" variant="outline" onClick={model.retrySaving}>
               Reintentar guardado
             </Button>
           </div>

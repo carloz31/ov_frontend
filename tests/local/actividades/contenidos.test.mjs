@@ -37,6 +37,14 @@ test('todos los contenidos de plataforma existen y tienen presentación en el ma
   }
 })
 
+test('todos los contenidos de los fixtures del apoderado existen en el registro', () => {
+  for (const fixture of readdirSync('tests/fixtures/servidor')
+    .filter(nombre => nombre.startsWith('apoderado-actividades-') && nombre.endsWith('.json'))) {
+    for (const actividad of actividades(fixture.slice(0, -5)))
+      assert.ok(contenidoPorClave(actividad.contenido), `${fixture}: ${actividad.codigo}`)
+  }
+})
+
 test('el único contenido ausente de los tres momentos del piloto es sin_contenido_prueba', () => {
   for (const fixture of ['piloto-actividades-inicial', 'piloto-actividades-ciudad', 'piloto-actividades-final']) {
     const lista = actividades(fixture)

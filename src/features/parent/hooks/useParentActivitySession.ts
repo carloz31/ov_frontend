@@ -4,35 +4,54 @@ import { useNavigate } from 'react-router'
 import { catalog } from '@/data/activities/content'
 import type { Actividad, IntentoPregunta } from '@/types/activities'
 
-import { parentActivities } from '@/features/parent/data/parentPortal'
+import { useParentActivities } from './useParentActivities'
+import { completarActividadApoderado, obtenerEstadoApoderado } from '@/store/servidor/apoderado'
+import { mensajeErrorServidor } from '@/store/servidor/sesion'
 import { parentRoute } from '@/features/parent/lib/selectors'
 import {
   advanceParentActivity,
-  completedParentActivities,
   nextParentPendingNode,
+  readyToCompleteOnServer,
   retreatParentActivity,
   startParentActivity,
 } from '@/features/parent/lib/missionLogic'
-import {
-  parentAccountId,
-  updateParentJourney,
-  useParentJourney,
-  useParentJourneyError,
-} from '@/store/parentJourneyStore'
+import { updateParentJourney, useParentJourneyError } from '@/store/parentJourneyStore'
 
 type PracticeAttempt = Pick<IntentoPregunta, 'opcionIds' | 'correcta' | 'revelada' | 'numeroIntento'>
 export function useParentActivitySession(activity: Actividad, review: boolean) {
   const navigate = useNavigate()
-  const state = useParentJourney()
-  const error = useParentJourneyError()
+  const {
+    activities,
+    available,
+    accountId,
+    journey: state,
+    completedIds,
+    serverCompletion,
+  } = useParentActivities()
+  const opciones = { disponible: available(activity), servidor: serverCompletion }
+  const storageError = useParentJourneyError()
+  const [serverError, setServerError] = useState('')
+  const enviando = useRef(false)
+  const montado = useRef(true)
   const [nodeId, setNodeId] = useState(() =>
-    review ? activity.nodos[0]?.id : nextParentPendingNode(activity, state)?.id,
+    review
+      ? activity.nodos[0]?.id
+      : (nextParentPendingNode(activity, state)?.id ??
+        (serverCompletion && state.progress[activity.id]?.estado !== 'completada'
+          ? activity.nodos.at(-1)?.id
+          : undefined)),
   )
   const [optionId, setOptionId] = useState<string>()
   const [resources, setResources] = useState<string[]>([])
   const [practice, setPractice] = useState<Record<string, PracticeAttempt[]>>({})
   const [entrance, setEntrance] = useState({ transition: false, resource: true })
-  const [celebrate, setCelebrate] = useState(false)
+  const [celebrate, setCelebrate] = useState(
+    () =>
+      serverCompletion &&
+      !review &&
+      state.progress[activity.id]?.estado === 'completada' &&
+      state.progress[activity.id]?.nodoActualId === activity.nodos.at(-1)?.id,
+  )
   const visited = useRef(new Set(nodeId ? [nodeId] : []))
   const heading = useRef<HTMLHeadingElement>(null)
   const resourceTrigger = useRef<HTMLButtonElement | null>(null)
@@ -50,16 +69,44 @@ export function useParentActivitySession(activity: Actividad, review: boolean) {
   const selected =
     node?.tipo === 'eleccion' ? node.opciones.find((option) => option.id === optionId) : undefined
   const summary = node?.tipo === 'diapositiva' && node.etiqueta?.toLowerCase() === 'resumen'
-  const completedIds = completedParentActivities(parentActivities, state)
-  const route = parentRoute(parentActivities, [], completedIds)
+  const route = parentRoute(activities, [], completedIds, available)
   const summaryResources =
     node?.tipo === 'diapositiva'
       ? catalog.recursos.filter((resource) => node.recursoIds?.includes(resource.id))
       : []
   useEffect(() => {
-    if (!review && !state.progress[activity.id])
-      updateParentJourney((current) => startParentActivity(activity, current, parentAccountId))
-  }, [activity, review, state.progress])
+    montado.current = true
+    return () => {
+      montado.current = false
+    }
+  }, [activity.id, accountId])
+  useEffect(() => {
+    const progress = state.progress[activity.id]
+    if (
+      !review &&
+      serverCompletion &&
+      progress?.estado === 'completada' &&
+      progress.nodoActualId === activity.nodos.at(-1)?.id
+    ) {
+      updateParentJourney(
+        (current) => ({
+          ...current,
+          progress: {
+            ...current.progress,
+            [activity.id]: { ...current.progress[activity.id], nodoActualId: '$fin' },
+          },
+        }),
+        accountId,
+      )
+      return
+    }
+    if (
+      !review &&
+      accountId &&
+      (!progress || (serverCompletion && !progress.nodoActualId && progress.estado === 'no_iniciada'))
+    )
+      updateParentJourney((current) => startParentActivity(activity, current, accountId, opciones), accountId)
+  }, [activity, review, state.progress, accountId, serverCompletion, opciones.disponible])
   useEffect(() => {
     heading.current?.focus()
     heading.current?.scrollIntoView({ block: 'nearest' })
@@ -73,25 +120,76 @@ export function useParentActivitySession(activity: Actividad, review: boolean) {
     setOptionId(undefined)
   }
   function advance() {
-    if (!node) return
+    if (!node || enviando.current) return
     if (review) {
       showNext()
       return
     }
     let changed = false
+    const ultimo = index === activity.nodos.length - 1
     const saved = updateParentJourney((current) => {
-      const started = startParentActivity(activity, current, parentAccountId)
-      const next = advanceParentActivity(activity, node.id, started, parentAccountId, optionId)
+      const started = startParentActivity(activity, current, accountId, opciones)
+      const next = advanceParentActivity(activity, node.id, started, accountId, optionId, opciones)
       changed = next !== started
+      if (serverCompletion && ultimo) {
+        changed = changed && readyToCompleteOnServer(activity, next)
+        if (!changed) return current
+        return {
+          ...next,
+          progress: {
+            ...next.progress,
+            [activity.id]: {
+              ...next.progress[activity.id],
+              nodoActualId: node.id,
+            },
+          },
+        }
+      }
       return next
-    })
+    }, accountId)
     if (saved && changed) {
-      if (index === activity.nodos.length - 1) setCelebrate(true)
+      if (serverCompletion && ultimo) {
+        enviando.current = true
+        setServerError('')
+        return completarActividadApoderado(activity.id)
+          .then((respuesta) => {
+            if (!montado.current || obtenerEstadoApoderado().cuenta !== accountId) return
+            if (respuesta.tipo !== 'ok') {
+              setServerError(mensajeErrorServidor(respuesta))
+              return
+            }
+            const errorConsulta = obtenerEstadoApoderado().actividades.error
+            if (errorConsulta) {
+              setServerError(mensajeErrorServidor(errorConsulta))
+              return
+            }
+            const guardado = updateParentJourney(
+              (current) => ({
+                ...current,
+                progress: {
+                  ...current.progress,
+                  [activity.id]: {
+                    ...current.progress[activity.id],
+                    nodoActualId: '$fin',
+                  },
+                },
+              }),
+              accountId,
+            )
+            if (!guardado) return
+            setCelebrate(true)
+            showNext()
+          })
+          .finally(() => {
+            enviando.current = false
+          })
+      }
+      if (ultimo) setCelebrate(true)
       showNext()
     }
   }
   function back() {
-    if (index <= 0 || !node) return
+    if (index <= 0 || !node || enviando.current) return
     const showPrevious = () => {
       setEntrance({ transition: false, resource: false })
       setNodeId(activity.nodos[index - 1].id)
@@ -103,17 +201,24 @@ export function useParentActivitySession(activity: Actividad, review: boolean) {
     }
     let moved = false
     const saved = updateParentJourney((current) => {
-      const next = retreatParentActivity(activity, node.id, current)
+      const next = retreatParentActivity(activity, node.id, current, opciones)
       moved = next !== current
       return next
-    })
+    }, accountId)
     if (saved && moved) showPrevious()
   }
   return {
     activity,
     review,
     navigate,
-    error,
+    error: serverError || storageError,
+    retrySaving: () =>
+      serverError
+        ? advance()
+        : updateParentJourney(
+            (current) => startParentActivity(activity, current, accountId, opciones),
+            accountId,
+          ),
     optionId,
     setOptionId,
     resources,

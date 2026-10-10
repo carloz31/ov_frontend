@@ -1,17 +1,14 @@
 import { useParams, useSearchParams } from 'react-router'
 
-import { parentActivities } from '@/features/parent/data/parentPortal'
-
-import { parentActivityAvailable } from '@/features/parent/lib/missionLogic'
-import { useParentJourney } from '@/store/parentJourneyStore'
+import { useParentPortalContext } from '@/features/parent/context/parentPortalContext'
 
 function ParentActivityView() {
   const { activityId } = useParams()
   const [params] = useSearchParams()
-  const state = useParentJourney()
-  const activity = parentActivities.find((item) => item.id === activityId)
-  if (!activity || !parentActivityAvailable(activity, state))
-    return <ActivityUnavailable locked={!!activity} />
+  const { activities, available, journey: state, loading } = useParentPortalContext()
+  const activity = activities.find((item) => item.id === activityId)
+  if (loading) return null
+  if (!activity || !available(activity)) return <ActivityUnavailable locked={!!activity} />
   return (
     <ParentActivitySession
       key={`${activity.id}/${params.get('repasar') ?? ''}`}

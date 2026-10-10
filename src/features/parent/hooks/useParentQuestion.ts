@@ -6,11 +6,8 @@ import {
   evaluateParentQuestion,
   startParentActivity,
 } from '@/features/parent/lib/missionLogic'
-import {
-  parentAccountId,
-  updateParentJourney,
-  useParentJourney,
-} from '@/store/parentJourneyStore'
+import { updateParentJourney } from '@/store/parentJourneyStore'
+import { useParentActivities } from './useParentActivities'
 
 type PracticeAttempt = Pick<IntentoPregunta, 'opcionIds' | 'correcta' | 'revelada' | 'numeroIntento'>
 export function useParentQuestion({
@@ -26,7 +23,8 @@ export function useParentQuestion({
   practiceAttempts: PracticeAttempt[]
   onPracticeAnswer: (selected: string[]) => void
 }) {
-  const state = useParentJourney()
+  const { journey: state, accountId, available, serverCompletion } = useParentActivities()
+  const opciones = { disponible: available(activity), servidor: serverCompletion }
   const attempts = review
     ? practiceAttempts
     : state.attempts.filter((attempt) => attempt.actividadId === activity.id && attempt.nodoId === node.id)
@@ -61,12 +59,13 @@ export function useParentQuestion({
         activity,
         node,
         selected,
-        startParentActivity(activity, current, parentAccountId),
-        parentAccountId,
+        startParentActivity(activity, current, accountId, opciones),
+        accountId,
+        opciones,
       )
       changed = next !== current
       return next
-    })
+    }, accountId)
     if (saved && changed) {
       setFeedback(result)
       setRetrying(false)

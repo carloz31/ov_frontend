@@ -1,5 +1,4 @@
 // DATO DE PRUEBA: perfil, hijos y actividades del apoderado; se reemplazarán por los datos de su cuenta.
-import { parentActivities } from '@/data/activities/content'
 import type { ParentChild } from '../types'
 
 import { studentProfiles } from '@/data/demo/studentProfiles'
@@ -48,4 +47,4 @@ const careerGuide = [
   },
 ]
 
-export { careerGuide, parentActivities, parentChildren, parentProfile, conversationChildId }
+export { careerGuide, parentChildren, parentProfile, conversationChildId }
